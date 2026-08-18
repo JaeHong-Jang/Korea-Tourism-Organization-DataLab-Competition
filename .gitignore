@@ -1,0 +1,90 @@
+# ============================================================
+# 한국관광공사 데이터랩 활용 경진대회 - .gitignore
+# ============================================================
+
+# -------------------- 데이터 --------------------
+# 원본 데이터는 절대 커밋하지 않음 (용량 + 저작권)
+data/raw/
+data/external/
+*.csv
+*.xlsx
+*.xls
+*.json
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# 전처리 데이터 중 크기가 큰 파일
+data/processed/*.csv
+data/processed/*.pkl
+
+# -------------------- 모델 --------------------
+models/*.pt
+models/*.pth
+models/*.h5
+models/*.pkl
+models/*.joblib
+models/*.onnx
+*.model
+*.weights
+
+# -------------------- Python --------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.so
+
+# 가상환경
+.venv/
+venv/
+env/
+ENV/
+
+# -------------------- Jupyter Notebook --------------------
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# -------------------- IDE --------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# -------------------- 환경 / 시크릿 --------------------
+.env
+.env.local
+*.secret
+config.local.yaml
+
+# -------------------- OS --------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# -------------------- 기타 --------------------
+*.log
+*.tmp
+*.bak
+.cache/
+
+# -------------------- 허용 (위 규칙 예외) --------------------
+# 작은 샘플 데이터는 커밋 허용
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+# configs 내 JSON/YAML은 허용
+!configs/*.json
+!configs/*.yaml
+!configs/*.yml
