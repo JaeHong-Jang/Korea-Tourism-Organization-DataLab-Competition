@@ -88,3 +88,6 @@ ehthumbs.db
 !configs/*.json
 !configs/*.yaml
 !configs/*.yml
+
+# OMC local session state (not for sharing)
+.omc/
