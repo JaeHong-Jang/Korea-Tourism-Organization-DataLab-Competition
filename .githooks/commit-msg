@@ -1,0 +1,43 @@
+#!/bin/bash
+# 커밋 메시지 형식 검증 hook
+# 허용 형식: <타입>(<범위>): <설명> 또는 <타입>: <설명>
+# 예: feat(analysis): 월별 방문객 분석 추가
+
+commit_msg=$(cat "$1")
+
+# Merge 커밋은 통과
+if echo "$commit_msg" | grep -qE "^Merge "; then
+  exit 0
+fi
+
+# 커밋 메시지 형식 검증
+pattern="^(feat|fix|data|model|viz|docs|refactor|chore|test|style|perf|ci)(\(.+\))?: .+"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo ""
+  echo "🚫 [ERROR] 커밋 메시지 형식이 올바르지 않습니다!"
+  echo ""
+  echo "  올바른 형식: <타입>(<범위>): <설명>"
+  echo ""
+  echo "  타입 목록:"
+  echo "    feat     - 새로운 분석/기능"
+  echo "    fix      - 버그 수정"
+  echo "    data     - 데이터 전처리/수집"
+  echo "    model    - 모델 관련"
+  echo "    viz      - 시각화"
+  echo "    docs     - 문서"
+  echo "    refactor - 리팩토링"
+  echo "    chore    - 환경설정/기타"
+  echo "    test     - 테스트"
+  echo ""
+  echo "  예시:"
+  echo "    feat(analysis): 월별 방문객 추이 분석 추가"
+  echo "    data(raw): 2024년 관광객 데이터 전처리"
+  echo "    fix: 결측치 처리 오류 수정"
+  echo ""
+  echo "  입력된 메시지: $commit_msg"
+  echo ""
+  exit 1
+fi
+
+exit 0
