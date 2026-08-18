@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"ls \\\"C:\\\\Users\\\\USER\\\\.claude\\\\projects\\\\C--Users-USER-Desktop----------------------------\\\\memory\\\\\\\" 2>/dev/null; cat \\\"C:\\\\Users\\\\USER\\\\.claude\\\\projects\\\\C--Users-USER-Desktop---------...",
+  "error": "Exit code 2\n/usr/bin/bash: eval: line 1: unexpected EOF while looking for matching `\"'",
+  "timestamp": "2026-08-18T08:00:31.863Z",
+  "retry_count": 1
+}
