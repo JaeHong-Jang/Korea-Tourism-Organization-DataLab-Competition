@@ -8,3 +8,5 @@
 | T-001 v1.2 | Claude(오케스트레이터) | 되돌림 | — | G2 check 29·79·오류 0 | gpt-6-astra R-01 3차 FAIL(High 1·Med 4) | 8c5e2d2 | b55819206f3c |
 | T-001 v1.3 | Claude(오케스트레이터) | 되돌림 | — | G2 check 29·101·오류 0 | gpt-6-astra R-01 4차 FAIL(High 1 회귀·Med 3) | 6d80b3b | — |
 | T-001 v1.4 | Claude(오케스트레이터) | 되돌림 | — | G2 check 29·118·오류 0 | gpt-6-astra R-01 5차 FAIL(High 1·Med 2) | b34521b | — |
+| T-001 v1.5 | Claude(오케스트레이터) | done | — | G2 check 29·128·오류 0 | gpt-6-astra R-01 6차 **PASS**(High 0·Med 1) | 0590c11 | — |
+| T-001 v1.5.1 | Claude(오케스트레이터) | done | — | G2 check 29·129·오류 0 | R-01 6차 Med 1 반영(masterVersion 재검사) — 다음 교차 리뷰에서 확인 | (이 커밋) | — |

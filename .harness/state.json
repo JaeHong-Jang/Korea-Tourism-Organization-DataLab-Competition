@@ -69,9 +69,9 @@
    "evidence": "contracts v1.5: check 스키마29·픽스처128·오류0(재검사·자연 키·masterVersion 고정·revision 단조)"
   },
   "R-01": {
-   "status": "stale",
-   "updated": "2026-09-24T12:47:48.589Z",
-   "note": "상위 T-001 되돌림"
+   "status": "done",
+   "updated": "2026-09-24T12:56:50.543Z",
+   "evidence": "R-01 6차 PASS(gpt-6-astra, 0590c11): 체크리스트 ①~④ PASS, High 0. Med 1(masterVersion 재검사)은 후속 커밋에서 반영, check 129·오류 0"
   },
   "T-100": {
    "status": "todo"
@@ -492,6 +492,17 @@
    "id": "T-001",
    "status": "done",
    "evidence": "contracts v1.5: check 스키마29·픽스처128·오류0(재검사·자연 키·masterVersion 고정·revision 단조)"
+  },
+  {
+   "at": "2026-09-24T12:50:10.216Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T12:56:50.543Z",
+   "id": "R-01",
+   "status": "done",
+   "evidence": "R-01 6차 PASS(gpt-6-astra, 0590c11): 체크리스트 ①~④ PASS, High 0. Med 1(masterVersion 재검사)은 후속 커밋에서 반영, check 129·오류 0"
   }
  ]
 }

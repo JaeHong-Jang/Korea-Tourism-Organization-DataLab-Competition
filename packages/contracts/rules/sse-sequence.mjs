@@ -22,9 +22,11 @@ export function sequenceProblems(events, ctx = { mode: "new" }) {
       // R4 게이트 전이: A(한 번) → B(실패 뒤 재작성하거나, 새 사실로 revision이 오르면 다시) → publish(한 번). 발행 검사 뒤에는 어떤 게이트도 없고, 스트림에는 integrity를 보내지 않는다
       const g = e.data.gate;
       if (st.publishChecked) out.push(`${at}: 발행 검사 뒤에 게이트 ${g}`);
-      // R11 게이트의 내용 revision은 스트림 안에서 줄지 않는다
+      // R11 게이트의 내용 revision·masterVersion은 스트림 안에서 줄지 않는다
       if (st.lastGateRevision !== undefined && e.data.revision < st.lastGateRevision) out.push(`${at}: revision ${e.data.revision}이 앞 게이트(${st.lastGateRevision})보다 작다`);
       st.lastGateRevision = e.data.revision;
+      if (st.lastGateMaster !== undefined && e.data.masterVersion < st.lastGateMaster) out.push(`${at}: masterVersion ${e.data.masterVersion}이 앞 게이트(${st.lastGateMaster})보다 작다`);
+      st.lastGateMaster = e.data.masterVersion;
       if (g === "A") {
         if (followup) out.push(`${at}: 후속 요청에는 게이트 A가 없다(숫자는 이미 발행됨)`);
         else if (st.gateA !== null) out.push(`${at}: 게이트 A를 두 번`);
@@ -32,7 +34,7 @@ export function sequenceProblems(events, ctx = { mode: "new" }) {
       } else if (g === "B") {
         // B는 실패 뒤(재작성·템플릿, 실패는 최대 2번까지 다시), 또는 통과 뒤 새 사실로 내용 revision이 올랐을 때(재검사) 다시 한다
         if (st.gateA !== true) out.push(`${at}: 게이트 A 통과 전에 게이트 B`);
-        if (st.gateB && !(e.data.revision > st.gateBRevision)) out.push(`${at}: 내용이 그대로인데(revision ${e.data.revision}) 통과한 게이트 B를 다시`);
+        if (st.gateB && !(e.data.revision > st.gateBRevision || e.data.masterVersion > st.gateBMaster)) out.push(`${at}: 내용·기준 그래프가 그대로인데(revision ${e.data.revision}, masterVersion ${e.data.masterVersion}) 통과한 게이트 B를 다시`);
         if (!e.data.passed && ++st.gateBFails > 2) out.push(`${at}: 게이트 B 실패가 2번을 넘음(재작성 1회 → 템플릿 뒤에는 오류로 끝낸다)`);
         st.gateB = e.data.passed;
         st.gateBRevision = e.data.revision;
