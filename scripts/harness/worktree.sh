@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 레인 워크트리를 WSL 홈에 만들고, git 밖 공유 산출물(data·models·traces·reports 일부·.env)을 본 레포로 링크한다
+# 레인 워크트리를 WSL 홈에 만들고, git 밖 공유 산출물(traces·reports 일부·.env)을 본 레포로 링크한다
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -17,16 +17,11 @@ else
   echo "✓ 워크트리: $WT ($BRANCH)"
 fi
 
-# 공유 산출물은 본 레포 한 곳에 두고 링크한다(워크트리마다 복사하지 않는다)
-for rel in data models traces reports/runs reports/evals reports/figures/screens reports/figures/perf .env; do
-  mkdir -p "$REPO/$(dirname "$rel")"
+# git이 추적하지 않는 공유 산출물만 링크한다(추적 파일이 있는 data/·models/는 링크하지 않고 CROWDCAST_DATA_ROOT로 본 레포를 가리킨다)
+for rel in traces reports/runs reports/evals reports/figures/screens reports/figures/perf .env; do
   [ "$rel" = ".env" ] || mkdir -p "$REPO/$rel"
   target="$WT/$rel"
-  if [ ! -e "$target" ] || [ -L "$target" ]; then
-    mkdir -p "$(dirname "$target")"
-    ln -sfn "$REPO/$rel" "$target"
-  elif [ -d "$target" ] && [ -z "$(ls -A "$target" 2>/dev/null | grep -v .gitkeep)" ]; then
-    rm -rf "$target" && ln -sfn "$REPO/$rel" "$target"
-  fi
+  mkdir -p "$(dirname "$target")"
+  if [ ! -e "$target" ] || [ -L "$target" ]; then ln -sfn "$REPO/$rel" "$target"; fi
 done
-echo "✓ 공유 산출물 링크 완료"
+echo "✓ 공유 산출물 링크 완료 (data·models는 CROWDCAST_DATA_ROOT=$REPO)"

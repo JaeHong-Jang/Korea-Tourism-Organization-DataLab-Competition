@@ -125,3 +125,9 @@ vendor/
 **/.omc/
 **/vendor/
 apps/web/public/geo/
+# 워크트리의 공유 산출물 링크(심볼릭 링크는 디렉터리 규칙에 안 걸리므로 따로 적는다)
+/traces
+/reports/runs
+/reports/evals
+/reports/figures/screens
+/reports/figures/perf
