@@ -95,7 +95,12 @@ describe("도메인 부품", () => {
     {
       name: "KeyNumber",
       ready: (
-        <KeyNumber quantity={report.card.peakConcurrent} evidence={evidence} />
+        <KeyNumber
+          quantity={report.card.peakConcurrent}
+          claims={report.claims}
+          evidence={report.evidence}
+          evidenceOrder={report.evidence}
+        />
       ),
       missing: <KeyNumber />,
       loading: <KeyNumber status="loading" />,
@@ -268,5 +273,23 @@ describe("도메인 부품", () => {
     expect(markup).toContain('id="evidence-ev-rule-internal-5000"');
     expect(markup.match(/근거 4, 규정/g)).toHaveLength(2);
     expect(markup.match(/근거 7, 사례/g)).toHaveLength(2);
+    expect(markup).toContain('href="#evidence-ev-model-f-yeongjong-2025"');
+    expect(markup).toContain('href="#evidence-ev-as-concurrency-fireworks"');
+  });
+
+  // 평가 수치의 정보 버튼은 계약에 있는 묶음과 실행 시각만 제공한다.
+  it("KPI 평가 출처", () => {
+    const markup = renderToStaticMarkup(<KpiTile ops={ops} metric="cases" />);
+    expect(markup).toContain("평가 출처 확인");
+    expect(markup).toContain("golden-v1");
+    expect(markup).toContain("09.27(일) 11:40");
+    expect(
+      renderToStaticMarkup(<KpiTile ops={ops} metric="masterTriples" />),
+    ).not.toContain("평가 출처 확인");
+    expect(
+      renderToStaticMarkup(
+        <KpiTile ops={{ ...ops, evals: null }} metric="masterTriples" />,
+      ),
+    ).not.toContain("평가 출처 확인");
   });
 });

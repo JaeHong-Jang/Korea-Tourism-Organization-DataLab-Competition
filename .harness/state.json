@@ -86,7 +86,7 @@
   "T-102": {
    "status": "running",
    "updated": "2026-09-24T15:58:20.593Z",
-   "note": "게이트 3 FAIL(High 1 정정·Med 3) → 피드백 1회차. TourAPI 실호출은 9/26 00시 뒤 오케스트레이터"
+   "note": "1회차: 3건 해결·회차 분리 미해결 → 2회차(마지막): Med 5 + 수면 오탐·유형 매핑·timeOfDay 미상(계약 v1.6)"
   },
   "T-103": {
    "status": "todo"
@@ -181,9 +181,9 @@
    "evidence": "게이트 1~4 통과, 교차 리뷰 PASS"
   },
   "T-303": {
-   "status": "running",
-   "updated": "2026-09-24T15:38:45.126Z",
-   "note": "1회차 7건 해결(sol 확인) → 새 지적 3 + 게이트 4 hazard 확인 질문 → 피드백 2회차(마지막)"
+   "status": "done",
+   "updated": "2026-09-24T17:00:27.136Z",
+   "evidence": "피드백 2회(S04·fake 제한·되묻기 3개·위험 확인·마감·병합 규칙), sol 교차 리뷰 PASS, develop 병합 뒤 gateway 276·build·lint, 수동 확인 실제 Ollama·knowledge"
   },
   "T-304": {
    "status": "todo"
@@ -217,7 +217,8 @@
    "evidence": "test 18·151·stan 0, 실서버 무결성 픽스처 13/13 계약과 같은 판정, 교차 리뷰 astra PASS(Med 2 직접 반영)"
   },
   "T-504": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T16:48:16.212Z"
   },
   "T-503": {
    "status": "done",
@@ -243,14 +244,13 @@
    "evidence": "게이트 1~4 통과: build·test 4·lint·e2e 10·스크린샷 9(직접 확인)·Range 206·색 하드코딩 0, 교차 리뷰 astra PASS(Med 4 → T-402 이월), d5db41a"
   },
   "T-402": {
-   "status": "running",
-   "updated": "2026-09-24T16:20:54.393Z",
-   "evidence": "test 69·build·lint·색 0, 스크린샷 낮·밤·모바일 확인(기준선 정렬·단위 분리), 교차 리뷰 astra PASS",
-   "note": "R-03 되돌림 1회차: 5건 해결(astra PASS) → Med 2(번호 기본값·칩 세로 쌓임)·Low 1·증빙 → 2회차"
+   "status": "done",
+   "updated": "2026-09-24T16:58:02.594Z",
+   "evidence": "R-03 되돌림 2회: 근거 오연결 등 5건 + 칩 배치 해결(astra 확인), 포커스 복귀 Med는 T-406 이월(견본 페이지). test 73·build·lint, 시각 확인"
   },
   "R-03": {
-   "status": "stale",
-   "updated": "2026-09-24T16:20:54.315Z",
+   "status": "running",
+   "updated": "2026-09-24T17:00:51.613Z",
    "note": "상위 T-402 되돌림"
   },
   "T-405": {
@@ -274,7 +274,8 @@
    "evidence": "워커 sol 피드백 2회 + 오케스트레이터 DPR 직접 수정(astra 교차 리뷰 PASS). develop 병합 후 web 71·e2e 17·build·lint 통과, 낮 스크린샷 확인. 수정 전 코드에서 새 DPR 테스트 실패 확인"
   },
   "T-432": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T17:03:52.124Z"
   },
   "T-433": {
    "status": "todo"
@@ -803,6 +804,33 @@
    "id": "T-431",
    "status": "done",
    "evidence": "워커 sol 피드백 2회 + 오케스트레이터 DPR 직접 수정(astra 교차 리뷰 PASS). develop 병합 후 web 71·e2e 17·build·lint 통과, 낮 스크린샷 확인. 수정 전 코드에서 새 DPR 테스트 실패 확인"
+  },
+  {
+   "at": "2026-09-24T16:48:16.212Z",
+   "id": "T-504",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:58:02.594Z",
+   "id": "T-402",
+   "status": "done",
+   "evidence": "R-03 되돌림 2회: 근거 오연결 등 5건 + 칩 배치 해결(astra 확인), 포커스 복귀 Med는 T-406 이월(견본 페이지). test 73·build·lint, 시각 확인"
+  },
+  {
+   "at": "2026-09-24T17:00:27.136Z",
+   "id": "T-303",
+   "status": "done",
+   "evidence": "피드백 2회(S04·fake 제한·되묻기 3개·위험 확인·마감·병합 규칙), sol 교차 리뷰 PASS, develop 병합 뒤 gateway 276·build·lint, 수동 확인 실제 Ollama·knowledge"
+  },
+  {
+   "at": "2026-09-24T17:00:51.613Z",
+   "id": "R-03",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:03:52.124Z",
+   "id": "T-432",
+   "status": "running"
   }
  ]
 }

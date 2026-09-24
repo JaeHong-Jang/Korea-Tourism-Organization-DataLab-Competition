@@ -126,6 +126,7 @@ class TimeOfDay(Enum):
     주간 = '주간'
     야간 = '야간'
     종일 = '종일'
+    미상 = '미상'
 
 
 class Fee(Enum):

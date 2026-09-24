@@ -31,6 +31,7 @@ export function EvidenceCard({
   evidenceOrder,
   context,
   defaultOpen = false,
+  highlighted = false,
   status = "ready",
 }: {
   evidence?: Evidence | null;
@@ -38,6 +39,7 @@ export function EvidenceCard({
   evidenceOrder?: readonly Evidence[];
   context?: EvidenceContext;
   defaultOpen?: boolean;
+  highlighted?: boolean;
   status?: ComponentStatus;
 }) {
   if (status !== "ready" || !evidence)
@@ -61,7 +63,7 @@ export function EvidenceCard({
   return (
     <details
       id={`evidence-${evidence.id}`}
-      className={`evidence-card evidence-card--${evidence.kind}`}
+      className={`evidence-card evidence-card--${evidence.kind}${highlighted ? " evidence-card--highlighted" : ""}`}
       open={defaultOpen}
     >
       <summary

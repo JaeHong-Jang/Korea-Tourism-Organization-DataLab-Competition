@@ -9,12 +9,14 @@ export type ServiceClientOptions = {
   baseUrl: string;
   fetch?: typeof fetch;
   timeoutMs?: number;
+  signal?: AbortSignal;
 };
 
 // HTTP 메서드는 본문 유무와 독립적으로 정하고 오류 스키마는 호출별로 제한한다
 type ServiceRequest = {
   method: "GET" | "POST";
   body?: unknown;
+  bodySchema?: ValidateFunction;
   errorSchemas?: Partial<Record<number, ValidateFunction<unknown>>>;
 };
 
@@ -37,6 +39,14 @@ export async function requestJson<T>(
   validate: ValidateFunction<T>,
   request: ServiceRequest,
 ): Promise<T> {
+  // 요청 타입 단언이나 잘못된 중첩 값이 네트워크 경계를 넘지 못하게 한다
+  options.signal?.throwIfAborted();
+  if (
+    (request.bodySchema && !request.bodySchema(request.body)) ||
+    (request.body !== undefined && !request.bodySchema)
+  ) {
+    throw new Error("서비스 요청 계약 위반");
+  }
   return withRequestDeadline(
     options.timeoutMs ?? SERVICE_TIMEOUT_MS,
     async (signal) => {
@@ -83,5 +93,6 @@ export async function requestJson<T>(
       }
       return data;
     },
+    options.signal,
   );
 }

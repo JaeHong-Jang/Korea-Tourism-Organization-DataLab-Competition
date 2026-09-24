@@ -155,4 +155,22 @@
   --scene-sky-night: #1a2335;
   --scene-window-glow: #ffd98a;
   --scene-shadow: rgba(40, 30, 20, 0.28);
+  /* 블록 인형 옷(데이터 의미 없음 — 등급·팀 색과 겹치지 않게 채도를 낮춘 파스텔 8색)과 칠하지 않은 나무 머리 */
+  --scene-doll-1: #c9b9dd;
+  --scene-doll-2: #e2bcc6;
+  --scene-doll-3: #cfd6c4;
+  --scene-doll-4: #e3d3b4;
+  --scene-doll-5: #b9c6d3;
+  --scene-doll-6: #d7c2d4;
+  --scene-doll-7: #c4ccd0;
+  --scene-doll-8: #e6c9b5;
+  --scene-doll-head: #efe3cf;
+  /* 축제 모형 재료(깃발 색은 --level-1~4) */
+  --scene-model-stage: #8d7f6e;
+  --scene-model-canvas: #f3ede2;
+  --scene-model-roof: #5b6168;
+  --scene-model-metal: #7b8087;
+  --scene-model-bed: #b98a78;
+  --scene-model-bloom: #e8a9bc;
+  --scene-model-banner: #f6f1e7;
 }

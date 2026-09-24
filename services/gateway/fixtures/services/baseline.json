@@ -1,0 +1,82 @@
+{
+  "sigunguCode": "28110",
+  "sigunguName": "인천 중구",
+  "period": {
+    "from": "2025-09-06",
+    "to": "2025-09-27"
+  },
+  "weekdayMean": [
+    {
+      "weekday": 0,
+      "local": 52000,
+      "nonlocal": 48000,
+      "foreign": 3100
+    },
+    {
+      "weekday": 1,
+      "local": 51000,
+      "nonlocal": 46000,
+      "foreign": 2900
+    },
+    {
+      "weekday": 2,
+      "local": 51500,
+      "nonlocal": 46500,
+      "foreign": 3000
+    },
+    {
+      "weekday": 3,
+      "local": 52000,
+      "nonlocal": 47000,
+      "foreign": 3000
+    },
+    {
+      "weekday": 4,
+      "local": 53000,
+      "nonlocal": 52000,
+      "foreign": 3300
+    },
+    {
+      "weekday": 5,
+      "local": 56000,
+      "nonlocal": 61000,
+      "foreign": 3900
+    },
+    {
+      "weekday": 6,
+      "local": 55000,
+      "nonlocal": 58000,
+      "foreign": 3700
+    }
+  ],
+  "nonlocalShare": 0.49,
+  "evidenceId": "ev-baseline-28110",
+  "evidence": [
+    {
+      "quantityIds": [],
+      "period": {
+        "from": "2025-09-06",
+        "to": "2025-09-27"
+      },
+      "source": {
+        "datasetId": "ds-kto-visitors-15101972",
+        "title": "한국관광공사_빅데이터_지역별 방문자수_GW",
+        "publisher": "한국관광공사",
+        "datalabMenu": "빅데이터 > 지역별 방문자수(이동통신)",
+        "accessUrl": "https://www.data.go.kr/data/15101972/openapi.do"
+      },
+      "availableAt": "2025-10-01",
+      "ruleId": null,
+      "clauseId": null,
+      "caseEventId": null,
+      "assumptionId": null,
+      "forecastId": null,
+      "modelVersion": null,
+      "checkResult": null,
+      "id": "ev-baseline-28110",
+      "kind": "data",
+      "title": "인천 중구 평시 토요일 방문",
+      "summary": "행사 전 4주 같은 요일 평균"
+    }
+  ]
+}

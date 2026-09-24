@@ -298,7 +298,7 @@ export interface NoName {
   type: "불꽃" | "공연" | "대학" | "먹거리" | "꽃" | "전통" | "기타";
   startsAt: string;
   endsAt: string;
-  timeOfDay: "주간" | "야간" | "종일";
+  timeOfDay: "주간" | "야간" | "종일" | "미상";
   venue: {
     name: string;
     lat: number;

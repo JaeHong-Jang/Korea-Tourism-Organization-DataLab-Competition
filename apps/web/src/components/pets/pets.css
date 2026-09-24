@@ -50,7 +50,7 @@
 .pets-gallery__intro { display: flex; align-items: center; gap: var(--space-6); margin-bottom: var(--space-6); }
 .pets-gallery__intro h1 { margin: 0 0 var(--space-2); font-size: var(--text-title); }
 .pets-gallery__intro p { margin: 0; color: var(--ink-2); font-size: var(--text-ui); }
-.pets-gallery__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-3); }
+.pets-gallery__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-5); }
 .pets-gallery__state { min-width: 0; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .pets-gallery__state h2 { margin: 0 0 var(--space-3); font-size: var(--text-ui); }
 .pets-gallery__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3) var(--space-1); }

@@ -10,6 +10,7 @@ export function ChecklistItem({
   evidenceOrder,
   checked = false,
   onChange,
+  onOpen,
   status = "ready",
 }: {
   item?: Judgment["checklist"][number] | null;
@@ -17,6 +18,7 @@ export function ChecklistItem({
   evidenceOrder?: readonly Evidence[];
   checked?: boolean;
   onChange?: (checked: boolean) => void;
+  onOpen?: (id: string) => void;
   status?: ComponentStatus;
 }) {
   if (status !== "ready" || !item)
@@ -46,6 +48,7 @@ export function ChecklistItem({
                 key={id}
                 evidence={entry}
                 evidenceOrder={evidenceOrder ?? evidence}
+                onOpen={onOpen}
               />
             ) : null;
           })}

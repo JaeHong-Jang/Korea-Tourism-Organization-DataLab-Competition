@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from . import common_schema
 
@@ -27,12 +28,24 @@ class Status(Enum):
     검토_필요 = '검토 필요'
 
 
+class Name(Enum):
+    p10 = 'p10'
+    p50 = 'p50'
+    p90 = 'p90'
+    value = 'value'
+
+
 class LockedField(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    name: str
-    value: str
+    name: Annotated[Name, Field(description='잠근 수치 칸: 구간 수치는 p10·p50·p90, 단일 수치는 value')]
+    value: Annotated[
+        str,
+        Field(
+            description='스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다'
+        ),
+    ]
     quantityId: common_schema.QuantityId
 
 
