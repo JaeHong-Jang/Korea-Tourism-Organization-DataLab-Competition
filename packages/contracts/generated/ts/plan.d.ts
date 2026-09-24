@@ -26,7 +26,7 @@ export type NoName = {
      */
     name: "p10" | "p50" | "p90" | "value";
     /**
-     * 스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다
+     * 스냅샷 수치의 정규 숫자 표기 + 공백 + 단위 — 정규 표기 = 계약 canonical 규칙(rules/card-projection.mjs `canonical`: 정수 값이면 정수, 그 밖은 가장 짧은 십진 표기, -0은 0). 예: 21000.0 → "21000 명". records는 이 문자열과 정확히 같지 않으면 거부한다
      */
     value: string;
     quantityId: string;
@@ -52,7 +52,7 @@ export type NoName = {
      */
     name: "p10" | "p50" | "p90" | "value";
     /**
-     * 스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다
+     * 스냅샷 수치의 정규 숫자 표기 + 공백 + 단위 — 정규 표기 = 계약 canonical 규칙(rules/card-projection.mjs `canonical`: 정수 값이면 정수, 그 밖은 가장 짧은 십진 표기, -0은 0). 예: 21000.0 → "21000 명". records는 이 문자열과 정확히 같지 않으면 거부한다
      */
     value: string;
     quantityId: string;
@@ -78,7 +78,7 @@ export type NoName = {
      */
     name: "p10" | "p50" | "p90" | "value";
     /**
-     * 스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다
+     * 스냅샷 수치의 정규 숫자 표기 + 공백 + 단위 — 정규 표기 = 계약 canonical 규칙(rules/card-projection.mjs `canonical`: 정수 값이면 정수, 그 밖은 가장 짧은 십진 표기, -0은 0). 예: 21000.0 → "21000 명". records는 이 문자열과 정확히 같지 않으면 거부한다
      */
     value: string;
     quantityId: string;
@@ -104,7 +104,7 @@ export type NoName = {
      */
     name: "p10" | "p50" | "p90" | "value";
     /**
-     * 스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다
+     * 스냅샷 수치의 정규 숫자 표기 + 공백 + 단위 — 정규 표기 = 계약 canonical 규칙(rules/card-projection.mjs `canonical`: 정수 값이면 정수, 그 밖은 가장 짧은 십진 표기, -0은 0). 예: 21000.0 → "21000 명". records는 이 문자열과 정확히 같지 않으면 거부한다
      */
     value: string;
     quantityId: string;
@@ -130,7 +130,7 @@ export type NoName = {
      */
     name: "p10" | "p50" | "p90" | "value";
     /**
-     * 스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다
+     * 스냅샷 수치의 정규 숫자 표기 + 공백 + 단위 — 정규 표기 = 계약 canonical 규칙(rules/card-projection.mjs `canonical`: 정수 값이면 정수, 그 밖은 가장 짧은 십진 표기, -0은 0). 예: 21000.0 → "21000 명". records는 이 문자열과 정확히 같지 않으면 거부한다
      */
     value: string;
     quantityId: string;
@@ -156,7 +156,7 @@ export type NoName = {
      */
     name: "p10" | "p50" | "p90" | "value";
     /**
-     * 스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다
+     * 스냅샷 수치의 정규 숫자 표기 + 공백 + 단위 — 정규 표기 = 계약 canonical 규칙(rules/card-projection.mjs `canonical`: 정수 값이면 정수, 그 밖은 가장 짧은 십진 표기, -0은 0). 예: 21000.0 → "21000 명". records는 이 문자열과 정확히 같지 않으면 거부한다
      */
     value: string;
     quantityId: string;
@@ -182,7 +182,7 @@ export type NoName = {
      */
     name: "p10" | "p50" | "p90" | "value";
     /**
-     * 스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다
+     * 스냅샷 수치의 정규 숫자 표기 + 공백 + 단위 — 정규 표기 = 계약 canonical 규칙(rules/card-projection.mjs `canonical`: 정수 값이면 정수, 그 밖은 가장 짧은 십진 표기, -0은 0). 예: 21000.0 → "21000 명". records는 이 문자열과 정확히 같지 않으면 거부한다
      */
     value: string;
     quantityId: string;
@@ -208,7 +208,7 @@ export type NoName = {
      */
     name: "p10" | "p50" | "p90" | "value";
     /**
-     * 스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다
+     * 스냅샷 수치의 정규 숫자 표기 + 공백 + 단위 — 정규 표기 = 계약 canonical 규칙(rules/card-projection.mjs `canonical`: 정수 값이면 정수, 그 밖은 가장 짧은 십진 표기, -0은 0). 예: 21000.0 → "21000 명". records는 이 문자열과 정확히 같지 않으면 거부한다
      */
     value: string;
     quantityId: string;
@@ -234,7 +234,7 @@ export type NoName = {
      */
     name: "p10" | "p50" | "p90" | "value";
     /**
-     * 스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다
+     * 스냅샷 수치의 정규 숫자 표기 + 공백 + 단위 — 정규 표기 = 계약 canonical 규칙(rules/card-projection.mjs `canonical`: 정수 값이면 정수, 그 밖은 가장 짧은 십진 표기, -0은 0). 예: 21000.0 → "21000 명". records는 이 문자열과 정확히 같지 않으면 거부한다
      */
     value: string;
     quantityId: string;
