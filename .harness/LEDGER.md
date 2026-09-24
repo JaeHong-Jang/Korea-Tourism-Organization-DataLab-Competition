@@ -45,4 +45,4 @@
 | R-04 | gpt-6-sol(검토) + 오케스트레이터(수정) | done | — | FAIL(전회차 실버·분모 공개) → FAIL(단순 모델 무가중) → PASS · 되돌림 T-203: 9a3b5eb·dfd1035 | gpt-6-sol PASS | dfd1035 | 사용 모델 v1-01c9b47895d6cd22c393 |
 | T-604 | gpt-6-astra | done | 0·0 | G1 ✓ · G2 knowledge 284→288·ruff·✓ knowledge·실기동 사용 모델 등록 · G3 sol FAIL(세션 간 같은 문장 id)→PASS · G4 기동 적재 포인터 확인, 기존 저장소 기준 TTL 새 정의 병합(오케스트레이터) | gpt-6-sol PASS | 4bc542f | — |
 | G1 | 오케스트레이터 | done | — | 백테스트 v1(사용 모델 v1-cf7766 단순 49.3%·57.0%) · dev.mjs --check 서비스 5개+Ollama ✓ · SHACL 실사용: 임시 저장소 모델 등록→영종 행사·예보 적재→게이트 A 통과 위반 0 | — | — | — |
-| (오케스트레이터) knowledge 기준 동기화 | 오케스트레이터 | done | — | 기존 저장소에 기준 TTL 새 정의·빠진 술어만 추가(masterVersion +1), 값 충돌·삭제는 저장값 유지+경고, 빈 노드 순환 방지 · knowledge 292 | gpt-6-sol FAIL×3 → PASS | 3e6b… 이후 4커밋 | — |
+| (오케스트레이터) knowledge 기준 동기화 | 오케스트레이터 | done | — | 기존 저장소에 기준 TTL 새 정의·빠진 술어만 추가(masterVersion +1), 값 충돌·삭제는 저장값 유지+경고, 빈 노드 순환 방지 · knowledge 292 | gpt-6-sol FAIL×3 → PASS | 84a4f11�8d5e9a8�a4c5130�6caffa1� | — |
