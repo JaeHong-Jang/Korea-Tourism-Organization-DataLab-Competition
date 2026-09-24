@@ -1,13 +1,13 @@
 """TourAPI 시작일 범위를 제한하고 이름·행정구역 점수와 좌표 검증으로 일정을 보강한다."""
 
+import json
 import re
 import unicodedata
-from datetime import date, datetime
-from difflib import SequenceMatcher
+from datetime import UTC, date, datetime
 
 from crowdcast.data.admin_dict import normalize_sido
 from crowdcast.data.datago_client import DataGoClient
-from crowdcast.data.geocode import Gazetteer
+from crowdcast.data.geocode import Gazetteer, festival_location, match_festival
 from crowdcast.data.tourapi import search_festivals
 
 WINDOW_START, WINDOW_END = date(2026, 9, 29), date(2026, 11, 30)
@@ -21,11 +21,11 @@ def normalized_name(value: str) -> str:
     return re.sub(r"[^가-힣a-z0-9]", "", value)
 
 
-# 날짜가 있는 행은 겹치는 연결 구간으로 나누고 미정 행은 확인된 단일 회차에만 합친다.
-def occurrence_groups(rows: list[dict]) -> list[list[dict]]:
+# 완전한 기간은 겹침으로 묶고 한쪽 날짜만 있으면 그 날짜가 포함된 기간에만 합친다.
+def occurrence_groups(rows: list[dict], held: list[str]) -> list[list[dict]]:
     dated = sorted((row for row in rows if row["start"] and row["end"]),
-                   key=lambda row: (row["start"], row["end"]))
-    undated = [row for row in rows if not (row["start"] and row["end"])]
+                   key=lambda row: (row["start"], row["end"], json.dumps(row, sort_keys=True, default=str)))
+    undated = [row for row in rows if not row["start"] and not row["end"]]
     groups: list[list[dict]] = []
     end = None
     for row in dated:
@@ -33,12 +33,94 @@ def occurrence_groups(rows: list[dict]) -> list[list[dict]]:
             groups.append([])
         groups[-1].append(row)
         end = max(end, row["end"]) if end else row["end"]
+    # 부분 일정이 알려진 완전 기간 밖이면 원문과 양쪽 기간을 보존한 별도 회차로 둔다.
+    periods = [(min(r["start"] for r in g), max(r["end"] for r in g)) for g in groups]
+    partial: dict[date, list[dict]] = {}
+    for row in sorted(rows, key=lambda r: json.dumps(r, sort_keys=True, default=str)):
+        if bool(row["start"]) == bool(row["end"]):
+            continue
+        known = row["start"] or row["end"]
+        matches = [i for i, (start, end) in enumerate(periods) if start <= known <= end]
+        if len(matches) == 1:
+            groups[matches[0]].append(row)
+        else:
+            partial.setdefault(known, []).append(row)
+            if periods:
+                held.append("병합 보류: " + json.dumps({"event_id": row["event_id"], "partial": row,
+                    "complete": dated}, ensure_ascii=False, sort_keys=True, default=str))
+    groups.extend(partial[key] for key in sorted(partial))
     if undated:
         if len(groups) == 1:
             groups[0].extend(undated)
         else:
             groups.append(undated)
     return groups
+
+
+# 떨어진 회차는 시작 월로, 같은 달의 복수 회차는 시작 월일로 ID를 구별한다.
+def merge_duplicates(events: list[dict], audit: list[dict] | None = None) -> tuple[list[dict], list[str]]:
+    from crowdcast.data.events import event_id
+
+    # 기존 ID별로 회차를 분리해 단일 회차 해시는 그대로 둔다.
+    groups: dict[str, list[dict]] = {}
+    for event in events:
+        groups.setdefault(event["event_id"], []).append(event)
+    result, conflicts = [], []
+    for identity, rows in sorted(groups.items()):
+        occurrences = occurrence_groups(rows, conflicts)
+        if audit is not None and len(rows) > 1:
+            audit.append({"event_id": identity, "input_rows": len(rows), "occurrences": len(occurrences)})
+        days = [min((row["start"] or row["end"] for row in group if row["start"] or row["end"]),
+                    default=None) for group in occurrences]
+        months = [day.month if day else 0 for day in days]
+        for day, month, group in zip(days, months, occurrences, strict=True):
+            merged, issues = merge_occurrence(group)
+            if len(occurrences) > 1:
+                merged["planned_month"] = month or None
+                merged["event_id"] = event_id(merged["name"], merged["year"], merged["sigungu_code"],
+                    f"{merged['sido'] or ''}:{merged['sigungu_text'] or ''}", planned_month=month,
+                    planned_day=day if months.count(month) > 1 else None)
+            result.append(merged)
+            conflicts.extend(issues)
+    return sorted(result, key=lambda row: row["event_id"]), conflicts
+
+
+# 같은 회차의 출처·기간은 합치고 서로 다른 발표 수치·정의는 비워 둔다.
+def merge_occurrence(group: list[dict]) -> tuple[dict, list[str]]:
+    from crowdcast.data.events import continuity_break
+
+    # 값 선택 순서가 입력 순서에 좌우되지 않도록 먼저 정렬한다.
+    conflicts = []
+    group.sort(key=lambda row: json.dumps(row, ensure_ascii=False, sort_keys=True, default=str))
+    merged = dict(group[0])
+    identity = merged["event_id"]
+    for field in merged:
+        if isinstance(merged[field], list):
+            merged[field] = sorted({value for row in group for value in row[field]})
+            continue
+        values = {json.dumps(row[field], ensure_ascii=False, sort_keys=True, default=str): row[field]
+                  for row in group if row[field] is not None}
+        if len(values) == 1:
+            merged[field] = next(iter(values.values()))
+        elif len(values) > 1 and field not in {
+            "name", "sigungu_text", "venue", "date_text", "sigungu_match"
+        }:
+            conflicts.append(f"{identity}: {field} = {sorted(values)}")
+            if field in {"budget_krw", "edition", "planned_month", "visitors_announced",
+                         "visitors_announced_meaning", "time_of_day"}:
+                merged[field] = None
+    # 겹침을 확인한 완전한 기간끼리만 합집합을 취하고 원문 감사 열도 함께 보존한다.
+    for fields in (("start", "end"), ("start_mcst", "end_mcst")):
+        periods = [(row[fields[0]], row[fields[1]]) for row in group
+                   if row[fields[0]] is not None and row[fields[1]] is not None]
+        if periods:
+            merged[fields[0]], merged[fields[1]] = min(p[0] for p in periods), max(p[1] for p in periods)
+    # 결측은 충돌이 아니며 실제 수치나 의미가 상충할 때만 잘못된 쌍을 막는다.
+    fields = ("visitors_announced", "visitors_announced_meaning")
+    if any(len({row[field] for row in group if row[field] is not None}) > 1 for field in fields):
+        merged.update(dict.fromkeys(fields))
+    merged["continuity_break"] = continuity_break(merged)
+    return merged, conflicts
 
 
 # 종료일 필터로 11월 시작·12월 종료 축제가 빠지지 않게 시작 하한만 서버에 보낸다.
@@ -60,64 +142,6 @@ def festival_period(item: dict) -> tuple[date, date] | None:
         return None
 
 
-# 주소의 행정명과 점-다각형 결과를 대조하고 불일치 좌표는 채택하지 않는다.
-def festival_location(item: dict, gazetteer: Gazetteer) -> tuple[str | None, float | None, float | None, str]:
-    address = " ".join(str(item.get(key) or "") for key in ("addr1", "addr2"))
-    hits = gazetteer.candidates(address)
-    code = hits[0]["sigunguCode"] if len(hits) == 1 else None
-    try:
-        lat, lng = float(item["mapy"]), float(item["mapx"])
-    except (KeyError, ValueError, TypeError):
-        return code, None, None, "좌표 없음"
-    if code:
-        return (
-            (code, lat, lng, "일치")
-            if gazetteer.covers(code, lat, lng)
-            else (code, None, None, "주소·좌표 불일치")
-        )
-    located = gazetteer.locate(lat, lng)
-    if len(located) == 1 and (not hits or located[0] in {hit["sigunguCode"] for hit in hits}):
-        return located[0], lat, lng, "점-다각형"
-    return None, None, None, "행정구역 모호 또는 좌표 불일치"
-
-
-# 코드가 비어 있으면 같은 시도까지 후보를 넓히되 이름 기준과 차점 간격은 유지한다.
-def match_festival(
-    item: dict, code: str | None, events: list[dict], gazetteer: Gazetteer
-) -> tuple[dict | None, float, str]:
-    if not code:
-        return None, 0.0, "지역 미확정"
-    name = normalized_name(item.get("title", ""))
-    scored, review = [], []
-    region = gazetteer.regions[code]
-    for event in events:
-        target = event["sigungu_code"]
-        if event["year"] != 2026:
-            continue
-        other = normalized_name(event["name"])
-        score = SequenceMatcher(None, name, other).ratio() if name and other else 0.0
-        province = normalize_sido(event["sido"])
-        if not target and not province and score >= 0.92:
-            review.append(event["event_id"])
-        if (target and target not in {code, region["parent_code"]}) or (
-            not target and province != region["sido"]
-        ):
-            continue
-        scored.append((score, event["event_id"], event))
-    scored.sort(key=lambda value: (-value[0], value[1]))
-    review_note = "; 검토 필요: 시도 미확정 " + ", ".join(sorted(review)) if review else ""
-    if not scored:
-        return None, 0.0, "지역 내 후보 없음" + review_note
-    score = scored[0][0]
-    if score < 0.92 or (len(scored) > 1 and score - scored[1][0] < 0.08):
-        return None, score, "이름 점수 미달 또는 동점" + review_note
-    target = scored[0][2]
-    rule = "정규화 이름 일치" if score == 1 else "이름 유사도"
-    if not target["sigungu_code"]:
-        rule += " (동일 시도·코드 미정)"
-    return target, score, rule + review_note
-
-
 # 보강한 행의 ID는 유지하고 원문 일정·발표 방문객은 덮어쓰지 않는다.
 def enrich_events(
     events: list[dict], items: list[dict], gazetteer: Gazetteer
@@ -126,7 +150,8 @@ def enrich_events(
 
     result = [{**event} for event in events]
     audit, proposals = [], {}
-    for item in sorted(items, key=lambda row: str(row.get("contentid", ""))):
+    for item in sorted(items, key=lambda row: (available_key(row.get("available_at")),
+                       str(row.get("contentid", "")), json.dumps(row, sort_keys=True, default=str))):
         period = festival_period(item)
         if period is None or not normalized_name(str(item.get("title") or "")):
             audit.append({"contentid": item.get("contentid"), "action": "범위 밖 또는 날짜·이름 오류"})
@@ -187,12 +212,15 @@ def enrich_events(
             continue
         # 같은 날짜라도 서로 다른 점이 주어지면 행사장 위치를 임의로 고르지 않는다.
         coordinates = {(entry[3], entry[4]) for entry in group if entry[3] is not None}
+        earliest = min((entry[1].get("available_at") for entry in group), key=available_key)
         for event, item, period, lat, lng, record in group:
             if event["start"] is None or event["end"] is None:
                 event.update(start=period[0], end=period[1], planned_month=period[0].month,
-                             date_source="TourAPI", date_available_at=item.get("available_at"))
+                             date_source="TourAPI", date_available_at=earliest)
             elif record["action"] == "보강":
                 record["action"] = "출처 추가"
+            if event["date_source"] == "TourAPI":
+                event["date_available_at"] = min((event["date_available_at"], earliest), key=available_key)
             event["source"] = sorted(set(event["source"]) | {"TourAPI"})
             event["source_refs"] = sorted(
                 set(event["source_refs"])
@@ -216,3 +244,9 @@ def enrich_events(
                     event.update(lat=lat, lng=lng, coord_source="tourapi")
             event["continuity_break"] = continuity_break(event)
     return result, audit
+
+
+# 시간대가 다른 응답도 실제 공개 시각으로 비교하고 결측 시점은 마지막에 둔다.
+def available_key(value: str | None) -> tuple[datetime, str]:
+    instant = datetime.fromisoformat(value).astimezone(UTC) if value else datetime.max.replace(tzinfo=UTC)
+    return instant, value or ""

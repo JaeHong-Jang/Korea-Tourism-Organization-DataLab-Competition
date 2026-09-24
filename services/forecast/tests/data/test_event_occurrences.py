@@ -5,7 +5,6 @@ from itertools import permutations
 from pathlib import Path
 
 import polars as pl
-import pytest
 from crowdcast.data.events import EVENT_DTYPES, event_id, make_event, merge_duplicates, validate_events
 from event_fixtures import gazetteer_fixture, mcst_row
 
@@ -65,10 +64,18 @@ def test_undated_duplicate_merge(tmp_path: Path) -> None:
     assert merged[0]["start"] == known["start"] and merged[0]["end"] == known["end"]
 
 
-# 같은 월의 떨어진 회차는 승인된 월 해시만으로 구별되지 않으므로 조용히 합치지 않는다.
-def test_same_month_identity_collision_is_explicit(tmp_path: Path) -> None:
+# 같은 월의 떨어진 회차는 월일 해시로 구별하고 원문 일정과 재병합 결과를 보존한다.
+def test_same_month_occurrences_have_distinct_ids(tmp_path: Path) -> None:
     gazetteer = gazetteer_fixture(tmp_path)
-    rows = [make_event(mcst_row(start_date=date(2026, 10, day), end_date=date(2026, 10, day)), gazetteer)
-            for day in (9, 16)]
-    with pytest.raises(ValueError, match="같은 시작 월"):
-        merge_duplicates(rows)
+    rows = [make_event(mcst_row(start_date=date(2026, 10, day), end_date=date(2026, 10, day + 1)), gazetteer)
+            for day in (1, 20)]
+    result, _ = merge_duplicates(rows)
+    assert len(result) == len({row["event_id"] for row in result}) == 2
+    assert {(row["start"], row["end"]) for row in result} == {
+        (date(2026, 10, 1), date(2026, 10, 2)), (date(2026, 10, 20), date(2026, 10, 21))
+    }
+    assert {row["event_id"] for row in result} == {
+        event_id(rows[0]["name"], 2026, "41110", planned_day=date(2026, 10, day)) for day in (1, 20)
+    }
+    assert merge_duplicates(list(reversed(rows)))[0] == merge_duplicates(result)[0] == result
+    validate_events(pl.from_dicts(result, schema=EVENT_DTYPES))

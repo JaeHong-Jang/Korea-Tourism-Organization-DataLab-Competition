@@ -77,6 +77,27 @@ def test_cli_merge_and_schedule_conflict_qc(tmp_path: Path, monkeypatch: pytest.
     assert frame.height == 3 and "start_mcst" in frame.columns and "end_mcst" in frame.columns
 
 
+# 명시한 이전 산출물의 분류와 계약 변환 결측 사유를 오프라인 QC에 함께 기록한다.
+def test_cli_revision_counts_and_contract_reasons(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    prepare_cli(tmp_path, monkeypatch)
+    rows = [mcst_row(festival_name="동강뗏목축제", type="꽃", type_raw="생태자연",
+                     start_date=date(2026, 10, 2), end_date=date(2026, 10, 4)),
+            mcst_row(festival_name="수원재즈페스티벌", start_date=date(2026, 10, 5))]
+    pl.from_dicts(rows).write_parquet(tmp_path / "mcst_festivals.parquet")
+    monkeypatch.setattr("sys.argv", ["events", "--offline"])
+    assert events.main() == 0
+    baseline = pl.read_parquet(tmp_path / "events.parquet")
+    baseline.with_columns(pl.lit("꽃").alias("type")).write_parquet(tmp_path / "previous.parquet")
+    monkeypatch.setattr("sys.argv", ["events", "--offline", "--comparison-file",
+                                     str(tmp_path / "previous.parquet")])
+    assert events.main() == 0
+    report = (tmp_path / "events_qc.md").read_text()
+    assert "| type | 꽃 | 2 | 0 |" in report and "| hazard_flags | 수면 | 1 | 1 |" in report
+    assert "ID 유지 2개; 제거 0개; 추가 0개" in report
+    assert "시작 2건; 변환 1건; 미변환 1건" in report and "계약 필수값 미확정: end: 1건" in report
+    assert pl.read_parquet(tmp_path / "events.parquet").equals(baseline)
+
+
 # 사전에 없던 장소도 이미 검증한 TourAPI 행사 좌표가 있으면 공개 후보에 포함한다.
 def test_tourapi_only_geocode_candidate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     gazetteer = gazetteer_fixture(tmp_path)

@@ -104,5 +104,9 @@ def test_event_contract_projection(tmp_path: Path) -> None:
     assert projected["expectedByHost"] is None
     assert projected["source"] == "문체부"
     assert october_counts([event]) == (1, 1)
-    with pytest.raises(ValueError, match="미확정"):
-        contract_event({**event, "time_of_day": None})
+    unknown = contract_event({**event, "time_of_day": None})
+    validate("event", unknown)
+    assert unknown["timeOfDay"] == "미상"
+    for field in ("start", "end", "sigungu_code", "lat", "lng"):
+        with pytest.raises(ValueError, match=field):
+            contract_event({**event, field: None})
