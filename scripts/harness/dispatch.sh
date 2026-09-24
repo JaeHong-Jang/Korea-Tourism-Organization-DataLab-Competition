@@ -22,6 +22,12 @@ trap 'rm -f "$LOCK"' EXIT
 EXTRA=()
 [ "$NET" = "--net" ] && EXTRA=(-c sandbox_workspace_write.network_access=true)
 
+# 본 레포의 공유 산출물 폴더만 쓰기로 연다(원본 데이터 data/20*·data/raw·data/external은 읽기 전용으로 남는다)
+for rel in data/processed data/cache data/app models traces reports/runs reports/evals reports/figures/screens reports/figures/perf; do
+  mkdir -p "$REPO/$rel"
+  EXTRA+=(--add-dir "$REPO/$rel")
+done
+
 # 워커 실행: 마지막 메시지는 리포트로, 이벤트는 jsonl 로그로
 timeout 5400 codex exec -m "$MODEL" -s workspace-write -C "$WT" --json "${EXTRA[@]}" \
   -o "$REPO/.harness/reports/$TASK.md" - < "$REPO/.harness/tasks/$TASK.md" \

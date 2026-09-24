@@ -17,6 +17,7 @@ dependencies = [
   "mapie>=1.0",
   "scikit-learn>=1.5",
   "shap>=0.46",
+  "numba>=0.61",
   "numpy>=1.26",
   "scipy>=1.13",
   "httpx>=0.27",
