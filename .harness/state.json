@@ -132,7 +132,7 @@
   },
   "T-204": {
    "status": "running",
-   "note": "R-04 되돌림(T-203 피처 정의)과 병행 디스패치 — 허용 경로 겹치지 않음, 통합은 R-04 PASS 뒤",
+   "note": "1회차 PARTIAL(계보 인터페이스 BLOCKED) → 오케스트레이터가 피처 계보·계약(modelVerdict·가정 id) 제공, 1회차 재디스패치",
    "updated": "2026-09-24T22:17:04.038Z"
   },
   "T-205": {
@@ -175,9 +175,9 @@
    "evidence": "test 246·ruff·✓ knowledge, 교차 리뷰 sol PASS(Med → T-604)"
   },
   "T-604": {
-   "status": "stale",
-   "updated": "2026-09-24T22:16:22.252Z",
-   "note": "상위 T-203 되돌림"
+   "status": "done",
+   "updated": "2026-09-24T23:08:40.104Z",
+   "evidence": "develop 병합(4bc542f), knowledge 290, sol PASS, 기동 적재 promoted.json"
   },
   "T-605": {
    "status": "todo"
@@ -309,7 +309,9 @@
    "status": "todo"
   },
   "G1": {
-   "status": "todo"
+   "status": "done",
+   "updated": "2026-09-24T23:08:40.179Z",
+   "evidence": "백테스트 v1 수치·서비스 5개 기동·SHACL 게이트 A 실사용 통과(위반 0)"
   },
   "G2": {
    "status": "todo"
@@ -1021,6 +1023,18 @@
    "id": "R-04",
    "status": "done",
    "evidence": "sol r3 PASS — 라벨·가중치/공개 시점 646칸 위반 0/연도 분리/분모 공개 모두 PASS, Med(골드B 영역) → backlog T-203b"
+  },
+  {
+   "at": "2026-09-24T23:08:40.104Z",
+   "id": "T-604",
+   "status": "done",
+   "evidence": "develop 병합(4bc542f), knowledge 290, sol PASS, 기동 적재 promoted.json"
+  },
+  {
+   "at": "2026-09-24T23:08:40.179Z",
+   "id": "G1",
+   "status": "done",
+   "evidence": "백테스트 v1 수치·서비스 5개 기동·SHACL 게이트 A 실사용 통과(위반 0)"
   }
  ]
 }
