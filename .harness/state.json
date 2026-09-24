@@ -97,8 +97,9 @@
    "status": "todo"
   },
   "T-104": {
-   "status": "running",
-   "updated": "2026-09-24T19:22:02.639Z"
+   "status": "done",
+   "updated": "2026-09-24T20:40:11.210Z",
+   "evidence": "develop 병합, forecast 899, 실제 실행 3종(데이터 미수집 → 종료 1 정상), sol PASS"
   },
   "T-105": {
    "status": "todo"
@@ -937,6 +938,12 @@
    "id": "T-505",
    "status": "done",
    "evidence": "develop 병합 40b9b50, records 42·stan, 토큰 마스킹 실측, astra PASS"
+  },
+  {
+   "at": "2026-09-24T20:40:11.210Z",
+   "id": "T-104",
+   "status": "done",
+   "evidence": "develop 병합, forecast 899, 실제 실행 3종(데이터 미수집 → 종료 1 정상), sol PASS"
   }
  ]
 }
