@@ -9,10 +9,12 @@ import { SourceTip } from "./source-tip";
 export function SimilarEventCard({
   event,
   evidenceOrder,
+  onOpen,
   status = "ready",
 }: {
   event?: SimilarEvent | null;
   evidenceOrder?: readonly Evidence[];
+  onOpen?: (id: string) => void;
   status?: ComponentStatus;
 }) {
   if (status !== "ready" || !event)
@@ -63,6 +65,7 @@ export function SimilarEventCard({
             <EvidenceChip
               evidence={evidence}
               evidenceOrder={evidenceOrder ?? event.evidence}
+              onOpen={onOpen}
             />
             <SourceTip evidence={evidence} />
           </>

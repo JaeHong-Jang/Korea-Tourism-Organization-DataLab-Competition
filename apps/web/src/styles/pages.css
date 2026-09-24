@@ -28,7 +28,7 @@
 
 /* 예보서는 문서 폭 880px과 근거 서랍 폭 360px을 유지한다. */
 .forecast-page { padding-block: var(--space-8) var(--space-14); }
-.document-layout { display: grid; grid-template-columns: minmax(0, 880px) minmax(300px, 360px); gap: var(--space-8); align-items: start; }
+.document-layout { display: grid; grid-template-columns: minmax(0, 880px) minmax(300px, 360px); gap: var(--space-10); align-items: start; }
 .document-main { min-width: 0; }
 .document-sheet { min-height: 540px; padding: var(--space-8); border-radius: var(--radius-input); }
 .document-sheet__lines { display: grid; gap: var(--space-5); margin-top: var(--space-10); }

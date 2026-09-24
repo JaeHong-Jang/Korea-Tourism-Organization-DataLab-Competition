@@ -3,16 +3,17 @@ import type { Evidence, Insight } from "@crowdcast/contracts/types";
 import { formatQuantity } from "../../lib/format";
 import { ComponentState, type ComponentStatus } from "./component-state";
 import { EvidenceChip } from "./evidence-chip";
-import { SourceTip } from "./source-tip";
 
 // 지표의 설명은 계약의 headline.text를 그대로 사용한다.
 export function InsightCard({
   insight,
   evidenceOrder,
+  onOpen,
   status = "ready",
 }: {
   insight?: Insight | null;
   evidenceOrder?: readonly Evidence[];
+  onOpen?: (id: string) => void;
   status?: ComponentStatus;
 }) {
   if (status !== "ready" || !insight)
@@ -36,13 +37,12 @@ export function InsightCard({
       </strong>
       <span className="kit-evidence-links">
         {linkedEvidence.map((item) => (
-          <span key={item.id}>
-            <EvidenceChip
-              evidence={item}
-              evidenceOrder={evidenceOrder ?? insight.evidence}
-            />
-            <SourceTip evidence={item} />
-          </span>
+          <EvidenceChip
+            key={item.id}
+            evidence={item}
+            evidenceOrder={evidenceOrder ?? insight.evidence}
+            onOpen={onOpen}
+          />
         ))}
       </span>
       <p>{insight.headline.text}</p>

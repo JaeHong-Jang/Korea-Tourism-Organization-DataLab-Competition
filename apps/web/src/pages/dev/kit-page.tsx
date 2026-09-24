@@ -7,6 +7,7 @@ import type {
   OpsStatus,
   SimilarEvent,
 } from "@crowdcast/contracts/types";
+import { useState } from "react";
 import evidenceFixture from "../../../../../packages/contracts/fixtures/evidence/valid-data.json";
 import festivalFixture from "../../../../../packages/contracts/fixtures/festival-summary/valid-card.json";
 import reportFixture from "../../../../../packages/contracts/fixtures/forecast-report/valid-yeongjong.json";
@@ -28,6 +29,7 @@ import { LevelBadge } from "../../components/common/level-badge";
 import { PageHeading } from "../../components/common/page-heading";
 import { SimilarEventCard } from "../../components/common/similar-event-card";
 import { SourceTip } from "../../components/common/source-tip";
+import { evidenceForQuantity } from "../../lib/evidence-for-quantity";
 import "../../components/common/kit.css";
 import "./kit-page.css";
 
@@ -68,6 +70,15 @@ const evidenceOrder = [
   ...similar.evidence,
   ...(checkEvidence ? [checkEvidence] : []),
 ];
+// 견본 인사이트도 핵심 수치를 인용한 발행 문장의 근거만 사용한다.
+const peakEvidence = evidenceForQuantity(
+  report.claims,
+  report.evidence,
+  report.card.peakConcurrent.id,
+);
+const [peakModelEvidence, peakAssumptionEvidence] = peakEvidence;
+if (!peakModelEvidence || !peakAssumptionEvidence)
+  throw new Error("견본 예보의 순간 최대 근거가 부족해요.");
 const insight: Insight = {
   key: "I1",
   title: "영종 씨사이드파크 불꽃축제 예보",
@@ -80,13 +91,27 @@ const insight: Insight = {
   comparablePairs: null,
   period: { from: "2025-10-18", to: "2025-10-18" },
   series: [],
-  evidenceIds: [evidence.id],
-  evidence: [evidence],
+  evidenceIds: [peakModelEvidence.id, peakAssumptionEvidence.id],
+  evidence: [peakModelEvidence, peakAssumptionEvidence],
   computedAt: report.card.asOf,
 };
 
 // 번호와 계약값을 실제 예보서 견본에서 받아 모든 주요 부품을 한 번씩 그린다.
 export function KitPage() {
+  const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(
+    null,
+  );
+
+  // 견본 칩을 누르면 대상 카드를 열고 화면과 키보드 포커스를 함께 옮긴다.
+  const openEvidence = (id: string) => {
+    const card = document.getElementById(`evidence-${id}`);
+    if (!(card instanceof HTMLDetailsElement)) return;
+    card.open = true;
+    setSelectedEvidenceId(id);
+    card.querySelector("summary")?.focus({ preventScroll: true });
+    card.scrollIntoView({ block: "center" });
+  };
+
   return (
     <div className="page-wrap regular-page kit-page">
       <PageHeading
@@ -100,8 +125,10 @@ export function KitPage() {
           <div className="kit-hero__row">
             <KeyNumber
               quantity={report.card.peakConcurrent}
-              evidence={evidence}
+              claims={report.claims}
+              evidence={report.evidence}
               evidenceOrder={evidenceOrder}
+              onOpen={openEvidence}
             />
             <LevelBadge
               judgment={report.card.judgment}
@@ -119,16 +146,22 @@ export function KitPage() {
           <SourceTip evidence={evidence} />
         </section>
         <section className="kit-column" aria-label="비교와 준비">
-          <SimilarEventCard event={similar} evidenceOrder={evidenceOrder} />
+          <SimilarEventCard
+            event={similar}
+            evidenceOrder={evidenceOrder}
+            onOpen={openEvidence}
+          />
           <FactorList
             factors={report.forecast.factors}
             evidence={report.evidence}
             evidenceOrder={evidenceOrder}
+            onOpen={openEvidence}
           />
           <ChecklistItem
             item={report.forecast.judgment.checklist[0]}
             evidence={report.evidence}
             evidenceOrder={evidenceOrder}
+            onOpen={openEvidence}
           />
           <AskButtons
             draft={{
@@ -151,7 +184,11 @@ export function KitPage() {
           />
         </section>
         <section className="kit-column" aria-label="다른 상태">
-          <InsightCard insight={insight} evidenceOrder={evidenceOrder} />
+          <InsightCard
+            insight={insight}
+            evidenceOrder={evidenceOrder}
+            onOpen={openEvidence}
+          />
           <KpiTile ops={ops} metric="cases" />
           <InsightCard status="loading" />
           <EmptyState action={<button type="button">행사 찾아보기</button>} />
@@ -169,6 +206,7 @@ export function KitPage() {
             evidenceOrder={evidenceOrder}
             context={{ observation: report.forecast.observations[0] }}
             defaultOpen
+            highlighted={selectedEvidenceId === evidence.id}
           />
           {modelEvidence && (
             <EvidenceCard
@@ -176,6 +214,7 @@ export function KitPage() {
               evidenceOrder={evidenceOrder}
               context={{ predictionRun: report.forecast.predictionRun }}
               defaultOpen
+              highlighted={selectedEvidenceId === modelEvidence.id}
             />
           )}
           {ruleEvidence && (
@@ -184,6 +223,7 @@ export function KitPage() {
               evidenceOrder={evidenceOrder}
               context={{ ruleKind: "법정" }}
               defaultOpen
+              highlighted={selectedEvidenceId === ruleEvidence.id}
             />
           )}
           {internalRuleEvidence && (
@@ -192,6 +232,7 @@ export function KitPage() {
               evidenceOrder={evidenceOrder}
               context={{ ruleKind: "자체" }}
               defaultOpen
+              highlighted={selectedEvidenceId === internalRuleEvidence.id}
             />
           )}
           <EvidenceCard
@@ -199,6 +240,7 @@ export function KitPage() {
             evidenceOrder={evidenceOrder}
             context={{ similar }}
             defaultOpen
+            highlighted={selectedEvidenceId === similar.evidence[0]?.id}
           />
           {assumptionEvidence && (
             <EvidenceCard
@@ -206,6 +248,7 @@ export function KitPage() {
               evidenceOrder={evidenceOrder}
               context={{ assumption: report.forecast.assumptions[0] }}
               defaultOpen
+              highlighted={selectedEvidenceId === assumptionEvidence.id}
             />
           )}
           {otherAssumptionEvidence && (
@@ -214,6 +257,7 @@ export function KitPage() {
               evidenceOrder={evidenceOrder}
               context={{ assumption: report.forecast.assumptions[1] }}
               defaultOpen
+              highlighted={selectedEvidenceId === otherAssumptionEvidence.id}
             />
           )}
           {checkEvidence && (
@@ -221,6 +265,7 @@ export function KitPage() {
               evidence={checkEvidence}
               evidenceOrder={evidenceOrder}
               defaultOpen
+              highlighted={selectedEvidenceId === checkEvidence.id}
             />
           )}
         </div>
