@@ -1,32 +1,47 @@
 // 미니 대한민국 장면과 그 위에 놓일 필터·목록·타임라인 자리를 둔다.
-
-import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { MiniKoreaCanvas } from "../components/scene";
-import { sceneFestivals } from "../components/scene/__fixtures__/festivals";
 import { crowdScale } from "../components/scene/crowd-scale";
 import { SceneLegend } from "../components/scene/scene-legend";
 import { Button } from "../components/ui/button";
+import { FestivalFiltersPanel } from "../features/festival-filters/festival-filters";
+import { FestivalList } from "../features/festival-list/festival-list";
+import { KpiStrip } from "../features/kpi-timeline/kpi-strip";
+import { WeeklyTimeline } from "../features/kpi-timeline/weekly-timeline";
+import { SvgKoreaMap } from "../features/map-2d/svg-korea-map";
+import { useUpcomingFestivals } from "../lib/festivals/use-upcoming-festivals";
+import { useSelectionStore } from "../lib/selection-store";
 
-const EMPTY_FESTIVALS: FestivalSummary[] = [];
-
-// 장면이 화면을 차지하고 부가 정보는 가장자리에 머물게 한다.
+// 장면이 화면을 차지하고 부가 정보는 가장자리에 머물게 한다(필터 결과를 판·목록·KPI가 함께 쓴다).
 export function MiniKoreaPage() {
+  const debug = new URLSearchParams(useLocation().search).get("debug") === "1";
+  const filters = useSelectionStore((state) => state.filters);
+  const { festivals, all, status, receivedAt, fixture } =
+    useUpcomingFestivals(filters);
   const [scale, setScale] = useState(() => crowdScale([], "high"));
-  const search = new URLSearchParams(useLocation().search);
-  const debug = search.get("debug") === "1";
-  const festivals =
-    search.get("sceneFixture") === "1" ? sceneFestivals : EMPTY_FESTIVALS;
+  const [svgMode] = useState(() => {
+    if (new URLSearchParams(window.location.search).get("forceSvg") === "1")
+      return true;
+    try {
+      return !document.createElement("canvas").getContext("webgl2");
+    } catch {
+      return true;
+    }
+  });
   return (
     <div className="scene-page">
       <section className="scene-stage" aria-labelledby="scene-title">
         <h1 id="scene-title" className="sr-only">
           미니 대한민국
         </h1>
-        <MiniKoreaCanvas festivals={festivals} onScaleChange={setScale} />
+        {svgMode ? (
+          <SvgKoreaMap festivals={festivals} />
+        ) : (
+          <MiniKoreaCanvas festivals={festivals} onScaleChange={setScale} />
+        )}
       </section>
       <div className="scene-cta">
         <Button asChild size="sm">
@@ -40,24 +55,38 @@ export function MiniKoreaPage() {
         title="필터"
         description="기간·지역·유형·등급으로 행사를 좁혀 보세요."
         className="scene-filter"
-      />
+      >
+        <FestivalFiltersPanel all={all} />
+      </FeaturePanel>
       <FeaturePanel
         id="M1-F3"
         title="행사 목록"
         description="선택한 조건의 행사가 위험 순으로 나타나요."
         className="scene-list"
-      />
+      >
+        <FestivalList festivals={festivals} status={status} />
+      </FeaturePanel>
       <FeaturePanel
         id="M1-F4"
         title="KPI 띠·타임라인"
         description="행사 흐름과 등급별 주간 변화를 살펴보세요."
         className="scene-timeline"
-      />
-      <SceneLegend
-        peoplePerDoll={scale.peoplePerDoll}
-        capExceeded={scale.capExceeded}
-        festivals={festivals}
-      />
+      >
+        <KpiStrip
+          festivals={festivals}
+          receivedAt={receivedAt}
+          fixture={fixture}
+          status={status}
+        />
+        <WeeklyTimeline festivals={festivals} status={status} />
+      </FeaturePanel>
+      {!svgMode && (
+        <SceneLegend
+          peoplePerDoll={scale.peoplePerDoll}
+          capExceeded={scale.capExceeded}
+          festivals={festivals}
+        />
+      )}
       <span className="scene-id" data-feature="M1-F1" aria-hidden="true">
         {debug ? "M1-F1 · 전국 판" : null}
       </span>
