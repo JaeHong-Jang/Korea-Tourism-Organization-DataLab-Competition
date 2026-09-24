@@ -1,0 +1,23 @@
+# 예보팀 에이전트 13명을 규칙 id와 구분되는 평면 IRI로 정의한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix id: <http://crowdcast.local/id/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# 팀장과 분석팀이 행사 입력과 결정적 예보를 준비한다.
+id:agent-lead a cc:TeamAgent ; rdfs:label "팀장"@ko .
+id:agent-dictation a cc:TeamAgent ; rdfs:label "받아쓰기"@ko .
+id:agent-local-guide a cc:TeamAgent ; rdfs:label "동네지기"@ko .
+id:agent-archivist a cc:TeamAgent ; rdfs:label "기록관"@ko .
+id:agent-forecaster a cc:TeamAgent ; rdfs:label "예보관"@ko .
+
+# 검증팀이 근거·수치·규정·불확실성을 검사한다.
+id:agent-source-check a cc:TeamAgent ; rdfs:label "출처확인"@ko .
+id:agent-number-check a cc:TeamAgent ; rdfs:label "숫자대조"@ko .
+id:agent-rule-check a cc:TeamAgent ; rdfs:label "법규담당"@ko .
+id:agent-skeptic a cc:TeamAgent ; rdfs:label "깐깐이"@ko .
+
+# 보고팀이 검증된 결과를 문장과 문서로 구성한다.
+id:agent-explainer a cc:TeamAgent ; rdfs:label "해설가"@ko .
+id:agent-card-maker a cc:TeamAgent ; rdfs:label "카드장인"@ko .
+id:agent-plan-writer a cc:TeamAgent ; rdfs:label "계획서"@ko .
+id:agent-briefer a cc:TeamAgent ; rdfs:label "브리핑"@ko .

@@ -1,0 +1,43 @@
+# 초기 환산 가정의 출처와 기준값·범위를 보관한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix id: <http://crowdcast.local/id/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# 피크일 계수의 기본값은 1일 행사이며 실제 적용값은 예보 서비스가 결정한다.
+id:as-peak-day-factor a cc:Assumption ; dcterms:title "피크일 계수" ; cc:estimated true ;
+    cc:value "1.0"^^xsd:double ; cc:rangeLow "0.8"^^xsd:double ; cc:rangeHigh "1.2"^^xsd:double ;
+    cc:basis "docs/plan/06 §4 초기 가정" ;
+    cc:note "1일 1.0, 2~3일 1.3, 4일 이상 1.5, 주말 포함 +0.1, 각 범위 ±0.2. 추정 산식 기반" .
+
+# 계획의 유형별 동시체류율과 체류시간 ±20% 범위를 기록한다.
+id:as-concurrency-fireworks a cc:Assumption ; dcterms:title "동시체류율(불꽃·드론쇼)" ;
+    cc:value "1.0"^^xsd:double ; cc:rangeLow "0.8"^^xsd:double ; cc:rangeHigh "1.0"^^xsd:double ;
+    cc:estimated true ; cc:basis "docs/plan/06 §4 초기 가정" ;
+    cc:note "운영 3시간·체류 2.5시간·피크계수 1.2. 추정 산식 기반" .
+id:as-concurrency-performance a cc:Assumption ; dcterms:title "동시체류율(공연·음악 야간)" ;
+    cc:value "0.9"^^xsd:double ; cc:rangeLow "0.72"^^xsd:double ; cc:rangeHigh "1.0"^^xsd:double ;
+    cc:estimated true ; cc:basis "docs/plan/06 §4 초기 가정" ;
+    cc:note "운영 4시간·체류 3시간·피크계수 1.2. 추정 산식 기반" .
+id:as-concurrency-university a cc:Assumption ; dcterms:title "동시체류율(대학 축제)" ;
+    cc:value "0.7"^^xsd:double ; cc:rangeLow "0.56"^^xsd:double ; cc:rangeHigh "0.84"^^xsd:double ;
+    cc:estimated true ; cc:basis "docs/plan/06 §4 초기 가정" ;
+    cc:note "운영 6시간·체류 3시간·피크계수 1.4. 추정 산식 기반" .
+id:as-concurrency-food a cc:Assumption ; dcterms:title "동시체류율(먹거리·장터)" ;
+    cc:value "0.36"^^xsd:double ; cc:rangeLow "0.29"^^xsd:double ; cc:rangeHigh "0.43"^^xsd:double ;
+    cc:estimated true ; cc:basis "docs/plan/06 §4 초기 가정" ;
+    cc:note "운영 10시간·체류 2시간·피크계수 1.8. 추정 산식 기반" .
+id:as-concurrency-flower a cc:Assumption ; dcterms:title "동시체류율(꽃·자연)" ;
+    cc:value "0.33"^^xsd:double ; cc:rangeLow "0.27"^^xsd:double ; cc:rangeHigh "0.40"^^xsd:double ;
+    cc:estimated true ; cc:basis "docs/plan/06 §4 초기 가정" ;
+    cc:note "운영 9시간·체류 1.5시간·피크계수 2.0. 추정 산식 기반" .
+
+# 전통·역사와 유형 불명 행사도 계획에서 확정한 초기 가정을 사용한다.
+id:as-concurrency-traditional a cc:Assumption ; dcterms:title "동시체류율(전통·역사)" ;
+    cc:value "0.40"^^xsd:double ; cc:rangeLow "0.32"^^xsd:double ; cc:rangeHigh "0.48"^^xsd:double ;
+    cc:estimated true ; cc:basis "docs/plan/06 §4 초기 가정" ;
+    cc:note "운영 8시간·체류 2시간·피크계수 1.6. 추정 산식 기반" .
+id:as-concurrency-other a cc:Assumption ; dcterms:title "동시체류율(기타)" ;
+    cc:value "0.50"^^xsd:double ; cc:rangeLow "0.40"^^xsd:double ; cc:rangeHigh "0.60"^^xsd:double ;
+    cc:estimated true ; cc:basis "docs/plan/06 §4 초기 가정" ;
+    cc:note "운영 8시간·체류 2.5시간·피크계수 1.6. 추정 산식 기반" .

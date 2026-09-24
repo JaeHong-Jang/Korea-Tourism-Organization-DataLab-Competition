@@ -1,0 +1,63 @@
+# 계약이 참조하는 데이터 출처 14개와 기준 그래프 버전을 정의한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix id: <http://crowdcast.local/id/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+id:master cc:masterVersion 1 .
+
+# 공공데이터포털 주소는 데이터 신청 안내의 식별자를 사용한다.
+id:ds-kto-visitors-15101972 a cc:Dataset ;
+    dcterms:title "한국관광공사_빅데이터_지역별 방문자수_GW" ; dcterms:publisher "한국관광공사" ;
+    cc:datalabMenu "빅데이터 › 지역별 방문자수(이동통신)" ;
+    cc:accessUrl "https://www.data.go.kr/data/15101972/openapi.do"^^xsd:anyURI .
+id:ds-kto-concentration-15128555 a cc:Dataset ;
+    dcterms:title "한국관광공사_관광지 집중률 방문자 추이 예측 정보" ; dcterms:publisher "한국관광공사" ;
+    cc:datalabMenu "관광지 집중률 방문자 추이 예측" ;
+    cc:accessUrl "https://www.data.go.kr/data/15128555/openapi.do"^^xsd:anyURI .
+id:ds-kto-tourapi-15101578 a cc:Dataset ;
+    dcterms:title "한국관광공사_국문 관광정보 서비스_GW" ; dcterms:publisher "한국관광공사" ;
+    cc:accessUrl "https://www.data.go.kr/data/15101578/openapi.do"^^xsd:anyURI .
+id:ds-kasi-holidays-15012690 a cc:Dataset ;
+    dcterms:title "한국천문연구원_특일 정보" ; dcterms:publisher "한국천문연구원" ;
+    cc:accessUrl "https://www.data.go.kr/data/15012690/openapi.do"^^xsd:anyURI .
+id:ds-kma-short-15084084 a cc:Dataset ;
+    dcterms:title "기상청_단기예보 조회서비스" ; dcterms:publisher "기상청" ;
+    cc:accessUrl "https://www.data.go.kr/data/15084084/openapi.do"^^xsd:anyURI .
+id:ds-kma-mid-15059468 a cc:Dataset ;
+    dcterms:title "기상청_중기예보 조회서비스" ; dcterms:publisher "기상청" ;
+    cc:accessUrl "https://www.data.go.kr/data/15059468/openapi.do"^^xsd:anyURI .
+id:ds-mcst-festival-plans a cc:Dataset ;
+    dcterms:title "문화체육관광부_지역축제 정보" ; dcterms:publisher "문화체육관광부" ;
+    cc:accessUrl "https://www.data.go.kr/data/15143175/fileData.do"^^xsd:anyURI .
+
+# 데이터랩 메뉴는 수동 확보 위치를 기록하며 자동 수집하지 않는다.
+id:ds-datalab-festival-status a cc:Dataset ;
+    dcterms:title "문화관광축제 현황" ; dcterms:publisher "한국관광공사" ;
+    cc:datalabMenu "[테마] 문화관광축제 현황" ;
+    cc:accessUrl "https://datalab.visitkorea.or.kr/datalab/portal/fes/getFesDataForm.do"^^xsd:anyURI .
+id:ds-datalab-diy a cc:Dataset ;
+    dcterms:title "행사/축제 DIY 맞춤 분석" ; dcterms:publisher "한국관광공사" ;
+    cc:datalabMenu "행사/축제 DIY 맞춤 분석" ;
+    cc:accessUrl "https://datalab.visitkorea.or.kr/datalab/portal/myd/myFstvList.do"^^xsd:anyURI .
+id:ds-datalab-navi-search a cc:Dataset ;
+    dcterms:title "지역별 검색건수(내비게이션)" ; dcterms:publisher "한국관광공사" ;
+    cc:datalabMenu "빅데이터 › 지역별 검색건수(내비게이션)" ;
+    cc:accessUrl "https://datalab.visitkorea.or.kr/datalab/portal/bda/getDomInqCnt.do"^^xsd:anyURI .
+id:ds-datalab-poi-rank a cc:Dataset ;
+    dcterms:title "지역별 관광지 검색순위(내비게이션)" ; dcterms:publisher "한국관광공사" ;
+    cc:datalabMenu "빅데이터 › 지역별 관광지 검색순위(내비게이션)" ;
+    cc:accessUrl "https://datalab.visitkorea.or.kr/datalab/portal/bda/getTourVisitCnt.do"^^xsd:anyURI .
+id:ds-datalab-region-status a cc:Dataset ;
+    dcterms:title "지역별 관광현황(성/연령·유입유출)" ; dcterms:publisher "한국관광공사" ;
+    cc:datalabMenu "지역별 관광현황(성/연령·유입유출)" ;
+    cc:accessUrl "https://datalab.visitkorea.or.kr/datalab/portal/loc/getAreaDataForm.do"^^xsd:anyURI .
+
+# 매뉴얼과 경계는 파일 확보가 필요한 출처로 남긴다.
+id:ds-mois-crowd-manual a cc:Dataset ;
+    dcterms:title "지역축제 안전관리 매뉴얼" ; dcterms:publisher "행정안전부" ;
+    cc:accessUrl "https://www.mois.go.kr/"^^xsd:anyURI ; cc:note "H5 원문 확보 후 판본·직접 주소 확정" .
+id:ds-admdongkor-boundaries a cc:Dataset ;
+    dcterms:title "시군구 경계(admdongkor ver20251231)" ; dcterms:publisher "vuski/admdongkor · 통계청 SGIS" ;
+    cc:accessUrl "https://github.com/vuski/admdongkor/tree/master/ver20251231"^^xsd:anyURI ;
+    cc:note "docs/plan/06의 2025년 시군구 코드 체계에 맞춘 경계" .
