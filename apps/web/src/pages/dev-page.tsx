@@ -3,10 +3,12 @@
 import { PageHeading } from "../components/common/page-heading";
 import { PetsGallery } from "../components/pets";
 import { Button } from "../components/ui/button";
+import { KitPage } from "./dev/kit-page";
 
 // 공용 버튼의 세 모양을 같은 토큰 환경에서 확인한다.
 export function DevPage() {
   if (window.location.pathname === "/dev/pets") return <PetsGallery />;
+  if (window.location.pathname === "/dev/kit") return <KitPage />;
   return (
     <div className="page-wrap regular-page">
       <PageHeading

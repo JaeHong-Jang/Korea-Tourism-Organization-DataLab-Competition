@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useLocation } from "react-router-dom";
 import {
   getDemoTheme,
   getDemoTime,
@@ -47,7 +48,7 @@ function saveChoice(choice: ThemeChoice): void {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [choice, setChoice] = useState<ThemeChoice>(readChoice);
   const [now, setNow] = useState(() => new Date());
-  const search = window.location.search;
+  const search = useLocation().search;
   const at = getDemoTime(search) ?? now;
   const forcedTheme = getDemoTheme(search);
   const actualSky = getSkyState(at);
