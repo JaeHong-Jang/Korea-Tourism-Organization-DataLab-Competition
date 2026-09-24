@@ -11,6 +11,16 @@ export type TeamOptions = {
   traceAppend?: TraceAppend;
 };
 
+// 기록과 재생은 같은 경로 선택 함수를 사용해 실행 위치와 무관하게 파일을 찾는다
+export function teamTraceDirectory(
+  options: Pick<TeamOptions, "traceDirectory"> = {},
+) {
+  return (
+    options.traceDirectory ??
+    fileURLToPath(new URL("../../../../../traces/", import.meta.url))
+  );
+}
+
 // 앱 설정 파일 수정 없이 task 범위 안에서 런타임 전용 설정을 제공한다
 export function teamSettings(
   config: GatewayConfig,
@@ -36,9 +46,7 @@ export function teamSettings(
     deadlineMs,
     recordings: options.recordings,
     traceAppend: options.traceAppend ?? appendTrace,
-    traceDirectory:
-      options.traceDirectory ??
-      fileURLToPath(new URL("../../../../../traces/", import.meta.url)),
+    traceDirectory: teamTraceDirectory(options),
   };
 }
 

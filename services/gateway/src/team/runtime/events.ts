@@ -35,7 +35,7 @@ type EventData = {
   };
   done: { sessionId: string; forecastId: string | null };
 };
-const validate = contractRegistry.getSchema<SseEvent>(
+export const validateSseEvent = contractRegistry.getSchema<SseEvent>(
   "https://crowdcast.local/schemas/sse-event.schema.json",
 );
 
@@ -71,15 +71,20 @@ export function createEventWriter(
             (data as AgentStatus).state !== "working");
         if (!finishing) deadline.check();
         const envelope = { event, seq, data };
-        if (!validate?.(envelope)) throw new Error("SSE 이벤트 계약 위반");
+        if (!validateSseEvent?.(envelope))
+          throw new Error("SSE 이벤트 계약 위반");
         seq++;
         if (event === "agent_step")
           session.steps.push(structuredClone(data as AgentStep));
 
         // 종료 기록은 짧은 별도 예산으로 보내고 연결이 막히면 전송도 취소한다
+        let at = "";
         await withRequestDeadline(
           finishing ? 250 : settings.deadlineMs,
-          (sendSignal) => write(envelope, sendSignal),
+          (sendSignal) => {
+            at = new Date().toISOString();
+            return write(envelope, sendSignal);
+          },
           finishing ? disconnected : signal,
         );
         if (traceFailed) return;
@@ -91,7 +96,7 @@ export function createEventWriter(
             (traceSignal) =>
               settings.traceAppend(
                 join(settings.traceDirectory, `${session.id}.jsonl`),
-                `${JSON.stringify({ requestId, ...envelope })}\n`,
+                `${JSON.stringify({ requestId, at, ...envelope })}\n`,
                 traceSignal,
               ),
             finishing ? disconnected : signal,

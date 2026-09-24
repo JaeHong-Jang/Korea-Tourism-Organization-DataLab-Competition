@@ -9,6 +9,7 @@ import { createInsightsRoute } from "./routes/insights.js";
 import { createOpsRoute } from "./routes/ops.js";
 import { createRecordsRelayRoute } from "./routes/records-relay.js";
 import { createRegionsRoute } from "./routes/regions.js";
+import { createTeamReplayRoute } from "./routes/team-replay.js";
 import { createTeamSessionsRoute } from "./routes/team-sessions.js";
 import { createValidationRoute } from "./routes/validation.js";
 import { createWeatherRoute } from "./routes/weather.js";
@@ -21,6 +22,7 @@ export function createApp(
   const app = new Hono();
   app.route("/api/health", createHealthRoute(config, fetcher));
   app.route("/api/team/sessions", createTeamSessionsRoute(config, fetcher));
+  app.route("/api/team/replay", createTeamReplayRoute());
   app.route("/api/festivals", createFestivalsRoute(config, fetcher));
   app.route("/api/regions.topojson", createRegionsRoute(config, fetcher));
   app.route("/api/forecasts", createForecastsRoute(config, fetcher));

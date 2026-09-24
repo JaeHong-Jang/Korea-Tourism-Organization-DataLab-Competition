@@ -98,10 +98,14 @@ describe("새 예보 스트림", () => {
         .length,
     ).toBeGreaterThan(0);
     const trace = harness.trace(id);
+    for (const row of trace) {
+      expect(row.at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      expect(new Date(row.at).toISOString()).toBe(row.at);
+    }
     expect(
       trace
         .filter((row) => row.requestId === trace.at(-1).requestId)
-        .map(({ requestId: _requestId, ...event }) => event),
+        .map(({ requestId: _requestId, at: _at, ...event }) => event),
     ).toEqual(events);
     expect(JSON.stringify(harness.trace(id))).not.toContain(fullText);
   });
