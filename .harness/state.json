@@ -64,10 +64,13 @@
    "evidence": "uv lock 81패키지(py3.12.14, lightgbm 4.6.0), check-ignore: graph·package·계약·backtest 추적/데이터·.env 제외, dev.mjs --check: Ollama 172.20.32.1 감지, sigungu.topo.json 252개 = API 코드 252(교집합), 부모 시 코드 12개 이중 계산 주의 기록"
   },
   "T-001": {
-   "status": "todo"
+   "status": "done",
+   "updated": "2026-09-24T10:58:56.789Z",
+   "evidence": "스키마 20(strict Ajv 2020 컴파일), 픽스처 11(유효 6·무효 5) TS·Python·PHP 판정 일치 = 기대, pydantic 생성 모델도 유효 통과·무효 거부, OpenAPI 4종 $ref 확인, SSE 10종 문서화, 재생성 diff 없음"
   },
   "R-01": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T10:58:59.260Z"
   },
   "T-100": {
    "status": "todo"
@@ -327,6 +330,22 @@
    "id": "T-000",
    "status": "done",
    "evidence": "uv lock 81패키지(py3.12.14, lightgbm 4.6.0), check-ignore: graph·package·계약·backtest 추적/데이터·.env 제외, dev.mjs --check: Ollama 172.20.32.1 감지, sigungu.topo.json 252개 = API 코드 252(교집합), 부모 시 코드 12개 이중 계산 주의 기록"
+  },
+  {
+   "at": "2026-09-24T10:50:18.035Z",
+   "id": "T-001",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T10:58:56.789Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "스키마 20(strict Ajv 2020 컴파일), 픽스처 11(유효 6·무효 5) TS·Python·PHP 판정 일치 = 기대, pydantic 생성 모델도 유효 통과·무효 거부, OpenAPI 4종 $ref 확인, SSE 10종 문서화, 재생성 diff 없음"
+  },
+  {
+   "at": "2026-09-24T10:58:59.260Z",
+   "id": "R-01",
+   "status": "running"
   }
  ]
 }
