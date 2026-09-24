@@ -110,7 +110,7 @@
   "T-202": {
    "status": "running",
    "updated": "2026-09-24T13:59:40.626Z",
-   "note": "BLOCKED 해소 후 DONE, 게이트 2 test 125, 게이트 3 FAIL(sol: 확률 표시 0%/100% High, 날씨 null 우천 Med) → 피드백 1회차"
+   "note": "1회차 해결, 재리뷰 FAIL(sol: 경계 직전 확률 표시가 등급과 모순 High) → 피드백 2회차(마지막)"
   },
   "T-203": {
    "status": "todo"
@@ -151,9 +151,9 @@
    "evidence": "게이트 1~4: test 89·ruff·✓ knowledge·경고 37268→1, 교차 리뷰 sol PASS(Python/JS 판정 불일치 0/112, 422 무쓰기 20/20), a97cacd"
   },
   "T-602": {
-   "status": "running",
-   "updated": "2026-09-24T13:59:40.710Z",
-   "note": "게이트 2 test 198·ruff ✓, 게이트 3 FAIL(sol: 발행이 S12만 검사 High, 응답 계약 검증·위반 픽스처 격리 Med) → 피드백 1회차"
+   "status": "done",
+   "updated": "2026-09-24T14:45:40.654Z",
+   "evidence": "test 222·ruff, 교차 리뷰 sol 재리뷰 PASS(S09 발행 거부·응답 계약·위반 집합 확인), 300트리플 76ms"
   },
   "T-603": {
    "status": "todo"
@@ -222,7 +222,8 @@
    "note": "상위 T-301 되돌림"
   },
   "T-430": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T14:41:08.577Z"
   },
   "T-401": {
    "status": "done",
@@ -644,6 +645,17 @@
    "id": "T-100",
    "status": "done",
    "evidence": "10,198행·DIY 60, test 181, 1회차 대비 날짜 교정 12건·모호 원문만 제외 42건(행 대조), 교차 리뷰 sol 반복 → 반례 테스트 고정, 3f45a36"
+  },
+  {
+   "at": "2026-09-24T14:41:08.577Z",
+   "id": "T-430",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T14:45:40.654Z",
+   "id": "T-602",
+   "status": "done",
+   "evidence": "test 222·ruff, 교차 리뷰 sol 재리뷰 PASS(S09 발행 거부·응답 계약·위반 집합 확인), 300트리플 76ms"
   }
  ]
 }
