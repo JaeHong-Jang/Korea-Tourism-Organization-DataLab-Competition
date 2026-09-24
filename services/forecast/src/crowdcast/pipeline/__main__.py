@@ -8,7 +8,6 @@ from time import perf_counter_ns
 from typing import Any
 
 import httpx
-from crowdcast import paths
 from crowdcast.data.call_ledger import korea_today
 from crowdcast.data.datago_client import DataGoError, TransientDataGoError, safe_error
 from crowdcast.pipeline import gates, run_record, stages
@@ -122,10 +121,8 @@ def main(argv: list[str] | None = None) -> int:
     run_record.write_record(record)
 
     # 각 상태 전이도 저장해 긴 실행 도중 운영 화면에서 진행 상황을 읽을 수 있게 한다.
-    # 백테스트 비교 기준은 train이 새 결과를 발행하기 전, 실행 시작 때의 완료 포인터 결과로 고정한다.
+    # 백테스트 비교 기준은 실행 시작 때의 사용 모델 결과로 고정한다(train이 후보를 먼저 발행해도 그대로).
     baseline = gates.previous_result("backtest")
-    pointer = paths.REPORTS / "backtest/latest.json"
-    pointer_start = pointer.read_bytes() if pointer.is_file() else None
     with ExitStack() as stack:
         client = None
         for stage in record["stages"]:
@@ -148,9 +145,6 @@ def main(argv: list[str] | None = None) -> int:
                     stage["artifacts"] = run_record.artifacts(files)
             except Exception as exc:
                 gate = {"passed": False, "message": f"{type(exc).__name__}: {safe_error(exc)}"}
-            # 학습·백테스트가 거부되면 다음 실행·일괄 예보가 그 결과를 쓰지 않게 포인터를 되돌린다.
-            if name in stages.POINTER_STAGES and gate["passed"] is False and not args.dry:
-                gate["message"] += stages.restore_pointer(pointer_start)
             stage["gate"] = gate
             stage["status"] = (
                 "skipped" if gate["passed"] is None else ("passed" if gate["passed"] else "failed")

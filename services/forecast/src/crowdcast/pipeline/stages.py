@@ -4,7 +4,7 @@ import importlib.util
 import json
 import subprocess
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import time_ns
@@ -106,10 +106,10 @@ def input_files(stage: str) -> list[Path]:
         files.append(paths.EXTERNAL / "boundaries/sigungu.topo.json")
     if stage == "labels":
         files += [paths.PROCESSED / "labels_g0.json", paths.PROCESSED / "labels.parquet"]
-    # 일괄 예보는 완료 포인터와 그 포인터가 가리키는 모델 카드가 모두 있어야 한다.
+    # 일괄 예보는 사용 모델 포인터와 그 포인터가 가리키는 모델 카드가 모두 있어야 한다.
     if stage == "batch":
-        files.append(paths.REPORTS / "backtest/latest.json")
-        if (directory := run_record.model_directory()) is not None:
+        files.append(paths.REPORTS / run_record.PROMOTED_POINTER)
+        if (directory := run_record.model_directory(run_record.PROMOTED_POINTER)) is not None:
             files.append(directory / "model_card.json")
     return files
 
@@ -234,11 +234,11 @@ def inspect_stage(stage: str, today: date) -> dict[str, Any]:
     return gate
 
 
-# 일괄 예보가 쓸 모델: 완료 포인터가 있고, 그 버전 폴더의 카드 버전이 포인터와 같아야 한다.
+# 일괄 예보가 쓸 모델: 사용 모델 포인터가 있고, 그 버전 폴더의 카드 버전이 포인터와 같아야 한다.
 def batch_model_problem() -> str | None:
-    directory = run_record.model_directory()
+    directory = run_record.model_directory(run_record.PROMOTED_POINTER)
     if directory is None:
-        return "일괄 예보 입력 없음: reports/backtest/latest.json"
+        return "일괄 예보 입력 없음: reports/backtest/promoted.json(사용 모델 미승격)"
     card = directory / "model_card.json"
     if not card.is_file():
         return f"일괄 예보 입력 없음: models/{directory.name}/model_card.json"
@@ -247,14 +247,18 @@ def batch_model_problem() -> str | None:
     return None
 
 
-# 거부된 학습·백테스트 결과를 가리키는 완료 포인터를 실행 시작 때의 바이트로 되돌린다(처음이면 지운다).
-def restore_pointer(previous: bytes | None) -> str:
-    pointer = paths.REPORTS / "backtest/latest.json"
-    if previous is None:
-        pointer.unlink(missing_ok=True)
-    else:
-        atomic_write(pointer, previous)
-    return "; 완료 포인터를 실행 시작 때 결과로 되돌림"
+# 악화 없이 끝난 백테스트(통과 또는 골든 0건 미검증)만 사용 모델로 원자 승격하고 판정을 함께 남긴다.
+def promote(verdict: str) -> Path:
+    latest = json.loads((paths.REPORTS / run_record.CANDIDATE_POINTER).read_bytes())
+    promoted = {
+        "runId": latest["runId"],
+        "modelVersion": latest["modelVersion"],
+        "promotedAt": datetime.now(KST).isoformat(),
+        "verdict": verdict,
+    }
+    path = paths.REPORTS / run_record.PROMOTED_POINTER
+    atomic_write(path, (json.dumps(promoted, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+    return path
 
 
 # 기존 모듈 종료 코드가 실패면 과거 성공 산출물이 있어도 게이트를 통과시키지 않는다.
@@ -309,5 +313,10 @@ def execute_stage(
     else:
         files.extend(output_files(stage))
     gate = gates.labels_gate() if stage == "labels" else gates.optional_gate(stage, files, previous)
+    # 후보는 게이트가 악화를 보지 않았을 때만 사용 모델이 된다(거부된 후보는 latest.json에만 남는다).
+    if stage == "backtest" and gate["passed"] is not False:
+        verdict = "통과" if gate["passed"] else "미검증"
+        files.append(promote(verdict))
+        gate["message"] += f"; 사용 모델로 승격({verdict})"
     gate["message"] += "; 종료 코드 0"
     return gate

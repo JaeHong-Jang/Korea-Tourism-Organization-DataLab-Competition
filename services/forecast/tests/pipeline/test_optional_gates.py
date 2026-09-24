@@ -107,9 +107,9 @@ def test_train_gate_requires_card_and_quantile_models(pipeline_root: Path, broke
     assert gate["passed"] is (broken is None)
 
 
-# 일괄 예보의 dry 입력에는 완료 포인터와 그 포인터가 가리키는 모델 카드가 들어간다.
+# 일괄 예보의 dry 입력에는 사용 모델 포인터와 그 포인터가 가리키는 모델 카드가 들어간다.
 def test_batch_inputs_require_pointer(pipeline_root: Path) -> None:
-    pointer = paths.REPORTS / "backtest/latest.json"
+    pointer = paths.REPORTS / "backtest/promoted.json"
     assert pointer in stages.input_files("batch")
     pointer.parent.mkdir(parents=True, exist_ok=True)
     pointer.write_text(json.dumps({"modelVersion": "v1-test"}))

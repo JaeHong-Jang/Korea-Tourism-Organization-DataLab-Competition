@@ -14,9 +14,14 @@ from crowdcast.data.call_ledger import KST, atomic_write
 FETCH_STATE_MARKER = "; 수집 상태 JSON: "
 
 
-# 유일한 완료 포인터(reports/backtest/latest.json)가 가리키는 모델 버전 폴더를 찾는다.
-def model_directory() -> Path | None:
-    pointer = paths.REPORTS / "backtest/latest.json"
+# 후보 = 마지막 완료 실행(latest.json), 사용 모델 = 백테스트 게이트를 악화 없이 지난 실행(promoted.json).
+CANDIDATE_POINTER = "backtest/latest.json"
+PROMOTED_POINTER = "backtest/promoted.json"
+
+
+# 포인터가 가리키는 모델 버전 폴더를 찾는다(기본은 이번 실행의 후보).
+def model_directory(pointer_name: str = CANDIDATE_POINTER) -> Path | None:
+    pointer = paths.REPORTS / pointer_name
     if not pointer.is_file():
         return None
     version = json.loads(pointer.read_bytes())["modelVersion"]

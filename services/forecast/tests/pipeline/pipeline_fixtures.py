@@ -164,7 +164,7 @@ def backtest(mdape: float = 12.5, coverage: float = 0.8) -> dict:
     }
 
 
-# 일괄 예보가 쓰는 모델: 계약 예시 카드를 그 버전 폴더에 두고 완료 포인터가 가리키게 한다.
+# 일괄 예보가 쓰는 모델: 계약 예시 카드를 그 버전 폴더에 두고 후보·사용 모델 포인터가 모두 가리키게 한다.
 def write_model() -> Path:
     fixture = paths.REPO_ROOT / "packages/contracts/fixtures/model-card/valid-v0-1-0.json"
     card = json.loads(fixture.read_bytes())
@@ -174,4 +174,12 @@ def write_model() -> Path:
     summary = backtest()
     summary["modelVersion"] = card["modelVersion"]
     write_backtest(summary)
+    write_promoted(summary)
     return directory / "model_card.json"
+
+
+# 백테스트 게이트를 지난 것처럼 사용 모델 포인터를 쓴다.
+def write_promoted(current: dict) -> Path:
+    path = paths.REPORTS / "backtest/promoted.json"
+    path.write_text(json.dumps({"runId": current["runId"], "modelVersion": current["modelVersion"]}))
+    return path

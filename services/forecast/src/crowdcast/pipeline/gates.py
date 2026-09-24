@@ -14,7 +14,7 @@ from crowdcast.api.contract import validate
 from crowdcast.data.call_ledger import DAILY_LIMIT
 from crowdcast.data.crosswalk import CODE_CHANGE_DATE, INCHEON_BREAK_CODES, PARENT_CITY_CODES
 from crowdcast.data.visitors import TOU_DIV
-from crowdcast.pipeline.run_record import model_directory, sha256
+from crowdcast.pipeline.run_record import PROMOTED_POINTER, model_directory, sha256
 
 # T-203 학습 산출물 — 분위수(p10·p50·p90) LightGBM 모델 파일.
 REQUIRED_MODEL_FILES = ("p10.txt", "p50.txt", "p90.txt")
@@ -167,10 +167,10 @@ def labels_gate() -> dict[str, Any]:
     }
 
 
-# 기존 결과를 실행 전에 읽어 백테스트·일괄 예보의 비교 기준을 보존한다(백테스트는 완료 포인터가 가리킨 결과).
+# 기존 결과를 실행 전에 읽어 백테스트·일괄 예보의 비교 기준을 보존한다(백테스트는 사용 모델의 결과).
 def previous_result(stage: str) -> Any:
     if stage == "backtest":
-        pointer = paths.REPORTS / "backtest/latest.json"
+        pointer = paths.REPORTS / PROMOTED_POINTER
         if pointer.is_file():
             summary = pointer.parent / json.loads(pointer.read_bytes())["runId"] / "backtest.json"
             return json.loads(summary.read_bytes()) if summary.is_file() else None
@@ -228,7 +228,7 @@ def optional_gate(stage: str, files: list[Path], previous: Any) -> dict[str, Any
     )
     validate("backtest-summary", current)
     if not current["golden"]:
-        return {"passed": None, "message": "골든 결과 0건: 미검증; 모델 승격 보류"}
+        return {"passed": None, "message": "골든 결과 0건: 골든 재현 미검증(성적 악화 비교 없음)"}
     # 골든 ID만 남아 있어도 단위가 맞는 실제 재현 판정이 실패하면 승격을 막는다.
     golden = all(
         row["verdict"] == ("포함" if row["unitsComparable"] else "정성 비교") for row in current["golden"]

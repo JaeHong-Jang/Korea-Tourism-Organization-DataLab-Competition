@@ -10,7 +10,14 @@ import pytest
 from crowdcast import paths
 from crowdcast.pipeline import __main__ as cli
 from crowdcast.pipeline import run_record, stages
-from pipeline_fixtures import backtest, latest_record, write_backtest, write_features, write_model
+from pipeline_fixtures import (
+    backtest,
+    latest_record,
+    write_backtest,
+    write_features,
+    write_model,
+    write_promoted,
+)
 
 
 # 각 모듈이 실제로 저장할 계약·표 모양의 소형 산출물을 준비한다.
@@ -125,14 +132,18 @@ def test_stage_without_output_spec_is_skipped(pipeline_root: Path, monkeypatch: 
     assert stage["status"] == "skipped" and "필수 산출물 표 없음" in stage["gate"]["message"]
 
 
-# 연속 실행에서 train이 먼저 새 결과를 발행해도 backtest는 실행 시작 때의 결과와 비교해 악화를 잡는다.
+# train이 후보를 먼저 발행해도 backtest는 사용 모델 결과와 비교하고, 악화한 후보는 승격하지 않는다.
 def test_backtest_compares_with_result_before_train(
     pipeline_root: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     files = prepare_outputs("train")
     version = json.loads(files[0].read_bytes())["modelVersion"]
+    good = backtest()
+    good["modelVersion"] = version
+    promoted = write_promoted(good)
+    before = promoted.read_bytes()
 
-    # 가짜 학습·백테스트가 같은 새 버전(포함률 0.8 → 0.5)을 발행하고 완료 포인터를 새로 쓴다.
+    # 가짜 학습·백테스트가 같은 새 버전(포함률 0.8 → 0.5)을 후보로 발행한다.
     def command(*args: object) -> tuple[int, str]:
         worse = backtest(coverage=0.5)
         worse["runId"], worse["modelVersion"] = "backtest-worse", version
@@ -141,26 +152,43 @@ def test_backtest_compares_with_result_before_train(
 
     monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
     monkeypatch.setattr(stages, "command", command)
-    pointer = paths.REPORTS / "backtest/latest.json"
-    before = pointer.read_bytes()
     assert cli.main(["--from", "train", "--to", "backtest"]) == 1
     row = latest_record(pipeline_root)["stages"][4]
-    assert row["gate"]["passed"] is False
-    assert "직전 80.0%" in row["gate"]["message"] and "되돌림" in row["gate"]["message"]
-    assert pointer.read_bytes() == before
+    assert row["gate"]["passed"] is False and "직전 80.0%" in row["gate"]["message"]
+    assert promoted.read_bytes() == before
+    assert json.loads((paths.REPORTS / "backtest/latest.json").read_bytes())["runId"] == "backtest-worse"
 
 
-# 실제 batch 실행도 완료 포인터·카드가 없으면 모듈을 부르지 않고 멈춘다.
+# 악화 없이 끝난 백테스트는 후보를 사용 모델로 승격하고, 미검증(골든 0건)도 판정을 남긴 채 승격한다.
+@pytest.mark.parametrize("golden", [True, False])
+def test_backtest_promotes_candidate(
+    pipeline_root: Path, monkeypatch: pytest.MonkeyPatch, golden: bool
+) -> None:
+    def command(*args: object) -> tuple[int, str]:
+        current = backtest()
+        if not golden:
+            current["golden"] = []
+        write_backtest(current)
+        return 0, ""
+
+    monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
+    monkeypatch.setattr(stages, "command", command)
+    assert cli.main(["--from", "backtest", "--to", "backtest"]) == (0 if golden else 2)
+    promoted = json.loads((paths.REPORTS / "backtest/promoted.json").read_bytes())
+    assert promoted["runId"] == "backtest-2025" and promoted["verdict"] == ("통과" if golden else "미검증")
+
+
+# 실제 batch 실행도 사용 모델 포인터·카드가 없으면 모듈을 부르지 않고 멈춘다.
 def test_batch_run_requires_model(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
     monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
     monkeypatch.setattr(stages, "command", lambda *args: (calls.append(args) or 0, ""))
     assert cli.main(["--from", "batch", "--to", "batch"]) == 1
     assert calls == []
-    assert "latest.json" in latest_record(pipeline_root)["stages"][5]["gate"]["message"]
+    assert "promoted.json" in latest_record(pipeline_root)["stages"][5]["gate"]["message"]
 
 
-# 백테스트 보고서나 점수 파일이 빠지면 backtest.json만으로 통과시키지 않고 포인터를 되돌린다.
+# 백테스트 보고서나 점수 파일이 빠지면 backtest.json만으로 통과시키지 않고 승격하지도 않는다.
 def test_backtest_requires_all_files(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     def command(*args: object) -> tuple[int, str]:
         (write_backtest().parent / "points.parquet").unlink()
@@ -169,6 +197,5 @@ def test_backtest_requires_all_files(pipeline_root: Path, monkeypatch: pytest.Mo
     monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
     monkeypatch.setattr(stages, "command", command)
     assert cli.main(["--from", "backtest", "--to", "backtest"]) == 1
-    message = latest_record(pipeline_root)["stages"][4]["gate"]["message"]
-    assert "points.parquet" in message and "되돌림" in message
-    assert not (paths.REPORTS / "backtest/latest.json").exists()
+    assert "points.parquet" in latest_record(pipeline_root)["stages"][4]["gate"]["message"]
+    assert not (paths.REPORTS / "backtest/promoted.json").exists()
