@@ -218,8 +218,9 @@
    "evidence": "test 18·151·stan 0, 실서버 무결성 픽스처 13/13 계약과 같은 판정, 교차 리뷰 astra PASS(Med 2 직접 반영)"
   },
   "T-504": {
-   "status": "running",
-   "updated": "2026-09-24T16:48:16.212Z"
+   "status": "done",
+   "updated": "2026-09-24T17:42:16.657Z",
+   "evidence": "develop 병합 111eabf, records 38·stan·✓, docx 예시 직접 대조, astra PASS"
   },
   "T-503": {
    "status": "done",
@@ -856,6 +857,12 @@
    "at": "2026-09-24T17:40:32.762Z",
    "id": "T-405",
    "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:42:16.657Z",
+   "id": "T-504",
+   "status": "done",
+   "evidence": "develop 병합 111eabf, records 38·stan·✓, docx 예시 직접 대조, astra PASS"
   }
  ]
 }
