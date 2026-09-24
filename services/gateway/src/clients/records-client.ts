@@ -32,6 +32,7 @@ export function createRecordsClient(options: ServiceClientOptions) {
       return requestJson(options, "/v1/events", eventSchema, {
         method: "POST",
         body: event,
+        bodySchema: eventSchema,
       });
     },
     // 행사에 남긴 발행 예보서 스냅샷 목록을 읽는다
@@ -49,7 +50,7 @@ export function createRecordsClient(options: ServiceClientOptions) {
         options,
         `/v1/events/${encodeURIComponent(eventId)}/snapshots`,
         snapshotSchema,
-        { method: "POST", body: report },
+        { method: "POST", body: report, bodySchema: snapshotSchema },
       );
     },
   };
