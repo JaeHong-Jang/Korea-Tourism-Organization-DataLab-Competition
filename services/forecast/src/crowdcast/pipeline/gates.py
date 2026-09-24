@@ -227,27 +227,30 @@ def optional_gate(stage: str, files: list[Path], previous: Any) -> dict[str, Any
         ).read_bytes()
     )
     validate("backtest-summary", current)
+
+    # 골든이 없어도 사용 모델의 직전 성적과는 반드시 비교해 악화한 후보를 막는다.
+    metrics = "직전 비교 없음"
+    if previous is not None:
+        validate("backtest-summary", previous)
+        old, new = previous["metrics"], current["metrics"]
+        metrics = (
+            f"MdAPE={new['mdape']}% (직전 {old['mdape']}% +3%p); "
+            f"포함률={new['coverage80'] * 100:.1f}% (직전 {old['coverage80'] * 100:.1f}% -5%p)"
+        )
+        if not (new["mdape"] <= old["mdape"] + 3 and new["coverage80"] >= old["coverage80"] - 0.05):
+            return {"passed": False, "message": f"성적 악화: {metrics}"}
     if not current["golden"]:
-        return {"passed": None, "message": "골든 결과 0건: 골든 재현 미검증(성적 악화 비교 없음)"}
+        return {"passed": None, "message": f"{metrics}; 골든 결과 0건: 골든 재현 미검증"}
+
     # 골든 ID만 남아 있어도 단위가 맞는 실제 재현 판정이 실패하면 승격을 막는다.
     golden = all(
         row["verdict"] == ("포함" if row["unitsComparable"] else "정성 비교") for row in current["golden"]
     )
-    if previous is None:
-        return {
-            "passed": golden,
-            "message": f"첫 백테스트 계약 통과; 직전 비교 없음; "
-            f"골든 결과 {len(current['golden'])}건; 재현 판정={golden}",
+    if previous is not None:
+        golden = golden and {row["eventId"] for row in previous["golden"]} <= {
+            row["eventId"] for row in current["golden"]
         }
-    validate("backtest-summary", previous)
-    old, new = previous["metrics"], current["metrics"]
-    golden = golden and {row["eventId"] for row in previous["golden"]} <= {
-        row["eventId"] for row in current["golden"]
-    }
-    passed = new["mdape"] <= old["mdape"] + 3 and new["coverage80"] >= old["coverage80"] - 0.05
     return {
-        "passed": passed and golden,
-        "message": f"MdAPE={new['mdape']}% (직전 {old['mdape']}% +3%p); "
-        f"포함률={new['coverage80'] * 100:.1f}% (직전 {old['coverage80'] * 100:.1f}% -5%p); "
-        f"골든 재현={golden}",
+        "passed": golden,
+        "message": f"백테스트 계약 통과; {metrics}; 골든 결과 {len(current['golden'])}건; 골든 재현={golden}",
     }

@@ -114,3 +114,16 @@ def test_batch_inputs_require_pointer(pipeline_root: Path) -> None:
     pointer.parent.mkdir(parents=True, exist_ok=True)
     pointer.write_text(json.dumps({"modelVersion": "v1-test"}))
     assert paths.MODELS / "v1-test/model_card.json" in stages.input_files("batch")
+
+
+# 골든이 0건이어도 사용 모델보다 성적이 나빠진 후보는 미검증이 아니라 실패다.
+@pytest.mark.parametrize(("coverage", "passed"), [(0.8, None), (0.5, False)])
+def test_unverified_backtest_still_checks_regression(
+    pipeline_root: Path, coverage: float, passed: bool | None
+) -> None:
+    path = paths.REPORTS / "backtest/2025/backtest.json"
+    path.parent.mkdir(parents=True)
+    current = backtest(coverage=coverage)
+    current["golden"] = []
+    path.write_text(json.dumps(current))
+    assert gates.optional_gate("backtest", [path], backtest())["passed"] is passed
