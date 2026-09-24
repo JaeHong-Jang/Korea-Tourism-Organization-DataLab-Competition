@@ -1,0 +1,788 @@
+{
+  "forecastId": "f-yeongjong-2025",
+  "sessionId": "s-demo-0001",
+  "publishedAt": "2026-09-24T20:00:15+09:00",
+  "revision": 8,
+  "masterVersion": 1,
+  "event": {
+    "id": "e-yeongjong-fireworks-2025",
+    "name": "영종 씨사이드파크 불꽃축제",
+    "type": "불꽃",
+    "startsAt": "2025-10-18T19:00:00+09:00",
+    "endsAt": "2025-10-18T21:00:00+09:00",
+    "timeOfDay": "야간",
+    "venue": {
+      "name": "영종 씨사이드파크",
+      "lat": 37.49,
+      "lng": 126.58
+    },
+    "sido": "인천광역시",
+    "sigunguCode": "28110",
+    "sigunguName": "인천 중구",
+    "fee": "무료",
+    "hostType": "지자체",
+    "budgetKrw": null,
+    "edition": null,
+    "promo": [
+      "인스타그램",
+      "유튜브"
+    ],
+    "hazards": [
+      "폭죽"
+    ],
+    "expectedByHost": {
+      "id": "q-e-yeongjong-host",
+      "name": "주최측 예상",
+      "value": 2000,
+      "p10": null,
+      "p50": null,
+      "p90": null,
+      "unit": "명",
+      "timeUnit": "기간누적",
+      "spatialScope": "행사장",
+      "valueKind": "사전예상",
+      "estimated": false,
+      "assumptionIds": [],
+      "announcedAt": "2025-10-10"
+    },
+    "source": "사용자입력"
+  },
+  "card": {
+    "id": "f-yeongjong-2025",
+    "eventId": "e-yeongjong-fireworks-2025",
+    "asOf": "2025-10-04",
+    "modelVersion": "v0.1.0",
+    "dailyMean": {
+      "id": "q-f-yeongjong-2025-mean",
+      "name": "일평균 방문객",
+      "p10": 7400,
+      "p50": 13000,
+      "p90": 22000,
+      "unit": "명/일",
+      "timeUnit": "일",
+      "estimated": false,
+      "assumptionIds": [],
+      "value": null,
+      "spatialScope": "행사장",
+      "valueKind": "예측",
+      "announcedAt": null
+    },
+    "peakConcurrent": {
+      "id": "q-f-yeongjong-2025-peak",
+      "name": "순간 최대",
+      "p10": 12000,
+      "p50": 21000,
+      "p90": 35000,
+      "unit": "명",
+      "timeUnit": "순간",
+      "estimated": true,
+      "assumptionIds": [
+        "as-peak-day-factor",
+        "as-concurrency-fireworks"
+      ],
+      "value": null,
+      "spatialScope": "행사장",
+      "valueKind": "예측",
+      "announcedAt": null
+    },
+    "probabilities": [
+      {
+        "threshold": 1000,
+        "probability": 0.99,
+        "display": "99%"
+      },
+      {
+        "threshold": 5000,
+        "probability": 0.9,
+        "display": "90%"
+      }
+    ],
+    "peakHours": {
+      "from": "19:00",
+      "to": "21:00"
+    },
+    "ood": false,
+    "oodReasons": [],
+    "judgment": {
+      "level": 4,
+      "label": "대규모",
+      "reasons": [
+        {
+          "ruleId": "rule-legal-hazard",
+          "kind": "법정",
+          "text": "폭죽 사용 — 법정 기준(인원 무관)"
+        },
+        {
+          "ruleId": "rule-internal-5000",
+          "kind": "자체",
+          "text": "5,000명 초과 90% — 자체 기준"
+        }
+      ]
+    }
+  },
+  "forecast": {
+    "id": "f-yeongjong-2025",
+    "eventId": "e-yeongjong-fireworks-2025",
+    "asOf": "2025-10-04",
+    "createdAt": "2026-09-24T20:00:00+09:00",
+    "modelVersion": "v0.1.0",
+    "dailyMean": {
+      "id": "q-f-yeongjong-2025-mean",
+      "name": "일평균 방문객",
+      "p10": 7400,
+      "p50": 13000,
+      "p90": 22000,
+      "unit": "명/일",
+      "timeUnit": "일",
+      "estimated": false,
+      "assumptionIds": [],
+      "value": null,
+      "spatialScope": "행사장",
+      "valueKind": "예측",
+      "announcedAt": null
+    },
+    "peakConcurrent": {
+      "id": "q-f-yeongjong-2025-peak",
+      "name": "순간 최대",
+      "p10": 12000,
+      "p50": 21000,
+      "p90": 35000,
+      "unit": "명",
+      "timeUnit": "순간",
+      "estimated": true,
+      "assumptionIds": [
+        "as-peak-day-factor",
+        "as-concurrency-fireworks"
+      ],
+      "value": null,
+      "spatialScope": "행사장",
+      "valueKind": "예측",
+      "announcedAt": null
+    },
+    "probabilities": [
+      {
+        "threshold": 1000,
+        "probability": 0.99,
+        "display": "99%"
+      },
+      {
+        "threshold": 5000,
+        "probability": 0.9,
+        "display": "90%"
+      }
+    ],
+    "peakHours": {
+      "from": "19:00",
+      "to": "21:00"
+    },
+    "hourlyProfile": [
+      {
+        "hour": 17,
+        "share": 0.1
+      },
+      {
+        "hour": 18,
+        "share": 0.2
+      },
+      {
+        "hour": 19,
+        "share": 0.35
+      },
+      {
+        "hour": 20,
+        "share": 0.25
+      },
+      {
+        "hour": 21,
+        "share": 0.1
+      }
+    ],
+    "composition": null,
+    "judgment": {
+      "level": 4,
+      "label": "대규모",
+      "ruleIds": [
+        "rule-legal-hazard",
+        "rule-internal-5000"
+      ],
+      "reasons": [
+        {
+          "ruleId": "rule-legal-hazard",
+          "kind": "법정",
+          "text": "폭죽 사용 — 법정 기준(인원 무관)",
+          "clauseId": "law-disaster-act-enf-73-9",
+          "evidenceId": "ev-rule-legal-hazard"
+        },
+        {
+          "ruleId": "rule-internal-5000",
+          "kind": "자체",
+          "text": "5,000명 초과 90% — 자체 기준",
+          "clauseId": null,
+          "evidenceId": "ev-rule-internal-5000"
+        }
+      ],
+      "checklist": [
+        {
+          "id": "ck-traffic",
+          "text": "교통·주차 통제 계획과 경찰·소방 사전 협의",
+          "ruleId": "rule-internal-5000",
+          "evidenceIds": [
+            "ev-rule-internal-5000"
+          ]
+        }
+      ]
+    },
+    "factors": [
+      {
+        "id": "fa-night-weekend",
+        "feature": "토요일·야간",
+        "direction": "up",
+        "contribution": 0.42,
+        "label": "토요일 저녁 개최라 늘어요",
+        "evidenceIds": [
+          "ev-model-f-yeongjong-2025"
+        ]
+      }
+    ],
+    "ood": false,
+    "oodReasons": [],
+    "predictionRun": {
+      "id": "pr-f-yeongjong-2025",
+      "modelRunId": "mr-v0-1-0",
+      "modelVersion": "v0.1.0",
+      "asOf": "2025-10-04",
+      "observationIds": [
+        "obs-28110-sat-nonlocal"
+      ],
+      "trainRange": {
+        "from": "2018-01-01",
+        "to": "2024-12-31"
+      }
+    },
+    "observations": [
+      {
+        "id": "obs-28110-sat-nonlocal",
+        "featureName": "평시 토요일 외지인",
+        "value": 61000,
+        "unit": "명/일",
+        "datasetId": "ds-kto-visitors-15101972",
+        "observedAt": "2025-09-27",
+        "availableAt": "2025-10-01",
+        "sigunguCode": "28110"
+      }
+    ],
+    "assumptions": [
+      {
+        "id": "as-peak-day-factor",
+        "name": "피크일 계수",
+        "value": 1.0,
+        "low": 0.8,
+        "high": 1.2,
+        "unit": "배",
+        "basis": "가정",
+        "note": "1일 행사"
+      },
+      {
+        "id": "as-concurrency-fireworks",
+        "name": "동시체류율(불꽃)",
+        "value": 1.0,
+        "low": 0.8,
+        "high": 1.0,
+        "unit": "비율",
+        "basis": "가정",
+        "note": "공연 시각에 대부분 머문다"
+      }
+    ],
+    "evidence": [
+      {
+        "quantityIds": [],
+        "period": {
+          "from": "2025-09-06",
+          "to": "2025-09-27"
+        },
+        "source": {
+          "datasetId": "ds-kto-visitors-15101972",
+          "title": "한국관광공사_빅데이터_지역별 방문자수_GW",
+          "publisher": "한국관광공사",
+          "datalabMenu": "빅데이터 > 지역별 방문자수(이동통신)",
+          "accessUrl": "https://www.data.go.kr/data/15101972/openapi.do"
+        },
+        "availableAt": "2025-10-01",
+        "ruleId": null,
+        "clauseId": null,
+        "caseEventId": null,
+        "assumptionId": null,
+        "forecastId": null,
+        "modelVersion": null,
+        "checkResult": null,
+        "id": "ev-baseline-28110",
+        "kind": "data",
+        "title": "인천 중구 평시 토요일 방문",
+        "summary": "행사 전 4주 같은 요일 평균"
+      },
+      {
+        "quantityIds": [
+          "q-f-yeongjong-2025-mean"
+        ],
+        "period": null,
+        "source": null,
+        "availableAt": null,
+        "ruleId": null,
+        "clauseId": null,
+        "caseEventId": null,
+        "assumptionId": null,
+        "forecastId": "f-yeongjong-2025",
+        "modelVersion": "v0.1.0",
+        "checkResult": null,
+        "id": "ev-model-f-yeongjong-2025",
+        "kind": "model",
+        "title": "예측 모델",
+        "summary": "LightGBM 분위수 + CQR"
+      },
+      {
+        "quantityIds": [],
+        "period": null,
+        "source": null,
+        "availableAt": null,
+        "ruleId": "rule-legal-hazard",
+        "clauseId": "law-disaster-act-enf-73-9",
+        "caseEventId": null,
+        "assumptionId": null,
+        "forecastId": null,
+        "modelVersion": null,
+        "checkResult": null,
+        "id": "ev-rule-legal-hazard",
+        "kind": "rule",
+        "title": "인원 무관 대상(폭죽)",
+        "summary": "불·폭죽 사용 행사는 인원과 관계없이 안전관리계획 수립 대상"
+      },
+      {
+        "quantityIds": [],
+        "period": null,
+        "source": null,
+        "availableAt": null,
+        "ruleId": "rule-internal-5000",
+        "clauseId": null,
+        "caseEventId": null,
+        "assumptionId": null,
+        "forecastId": null,
+        "modelVersion": null,
+        "checkResult": null,
+        "id": "ev-rule-internal-5000",
+        "kind": "rule",
+        "title": "대규모 기준(자체)",
+        "summary": "순간 최대 5,000명 초과 확률 50% 이상이면 대규모"
+      },
+      {
+        "quantityIds": [
+          "q-f-yeongjong-2025-peak"
+        ],
+        "period": null,
+        "source": null,
+        "availableAt": null,
+        "ruleId": null,
+        "clauseId": null,
+        "caseEventId": null,
+        "assumptionId": "as-peak-day-factor",
+        "forecastId": null,
+        "modelVersion": null,
+        "checkResult": null,
+        "id": "ev-as-peak-day-factor",
+        "kind": "assumption",
+        "title": "피크일 계수",
+        "summary": "1일 행사 1.0(범위 0.8~1.2, 가정)"
+      },
+      {
+        "quantityIds": [
+          "q-f-yeongjong-2025-peak"
+        ],
+        "period": null,
+        "source": null,
+        "availableAt": null,
+        "ruleId": null,
+        "clauseId": null,
+        "caseEventId": null,
+        "assumptionId": "as-concurrency-fireworks",
+        "forecastId": null,
+        "modelVersion": null,
+        "checkResult": null,
+        "id": "ev-as-concurrency-fireworks",
+        "kind": "assumption",
+        "title": "동시체류율(불꽃)",
+        "summary": "불꽃 행사 동시체류율 1.0(범위 0.8~1.0, 가정)"
+      }
+    ]
+  },
+  "claims": [
+    {
+      "id": "c-yeongjong-3",
+      "sessionId": "s-demo-0001",
+      "forecastId": "f-yeongjong-2025",
+      "text": "폭죽을 쓰는 행사라 인원과 관계없이 안전관리계획 수립 대상이에요",
+      "rendered": "폭죽을 쓰는 행사라 인원과 관계없이 안전관리계획 수립 대상이에요",
+      "claimType": "판정",
+      "status": "published",
+      "evidenceIds": [
+        "ev-rule-legal-hazard"
+      ],
+      "placeholders": [],
+      "generatedBy": {
+        "agentId": "explainer",
+        "stepId": "st-explainer-01"
+      },
+      "checks": [
+        {
+          "checkKind": "evidence",
+          "passed": true,
+          "revision": 7
+        },
+        {
+          "checkKind": "rule",
+          "passed": true,
+          "revision": 7
+        }
+      ]
+    },
+    {
+      "id": "c-yeongjong-4",
+      "sessionId": "s-demo-0001",
+      "forecastId": "f-yeongjong-2025",
+      "text": "순간 최대는 {{peak_p50}}명 안팎으로 예상돼요",
+      "rendered": "순간 최대는 21000명 안팎으로 예상돼요",
+      "claimType": "수치",
+      "status": "published",
+      "evidenceIds": [
+        "ev-model-f-yeongjong-2025",
+        "ev-as-concurrency-fireworks"
+      ],
+      "placeholders": [
+        {
+          "name": "peak_p50",
+          "quantityId": "q-f-yeongjong-2025-peak",
+          "field": "p50"
+        }
+      ],
+      "generatedBy": {
+        "agentId": "explainer",
+        "stepId": "st-explainer-01"
+      },
+      "checks": [
+        {
+          "checkKind": "evidence",
+          "passed": true,
+          "revision": 7
+        },
+        {
+          "checkKind": "number",
+          "passed": true,
+          "revision": 7
+        }
+      ]
+    },
+    {
+      "id": "c-yeongjong-5",
+      "sessionId": "s-demo-0001",
+      "forecastId": "f-yeongjong-2025",
+      "text": "작년 같은 축제는 하루 평균 {{prev_mean}}명이 찾았어요",
+      "rendered": "작년 같은 축제는 하루 평균 15,200명이 찾았어요",
+      "claimType": "설명",
+      "status": "published",
+      "evidenceIds": [
+        "ev-case-e-yeongjong-2024"
+      ],
+      "placeholders": [
+        {
+          "name": "prev_mean",
+          "quantityId": "q-e-yeongjong-2024-measured",
+          "field": "value"
+        }
+      ],
+      "generatedBy": {
+        "agentId": "explainer",
+        "stepId": "st-explainer-01"
+      },
+      "checks": [
+        {
+          "checkKind": "evidence",
+          "passed": true,
+          "revision": 7
+        },
+        {
+          "checkKind": "number",
+          "passed": true,
+          "revision": 7
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "quantityIds": [],
+      "period": {
+        "from": "2025-09-06",
+        "to": "2025-09-27"
+      },
+      "source": {
+        "datasetId": "ds-kto-visitors-15101972",
+        "title": "한국관광공사_빅데이터_지역별 방문자수_GW",
+        "publisher": "한국관광공사",
+        "datalabMenu": "빅데이터 > 지역별 방문자수(이동통신)",
+        "accessUrl": "https://www.data.go.kr/data/15101972/openapi.do"
+      },
+      "availableAt": "2025-10-01",
+      "ruleId": null,
+      "clauseId": null,
+      "caseEventId": null,
+      "assumptionId": null,
+      "forecastId": null,
+      "modelVersion": null,
+      "checkResult": null,
+      "id": "ev-baseline-28110",
+      "kind": "data",
+      "title": "인천 중구 평시 토요일 방문",
+      "summary": "행사 전 4주 같은 요일 평균"
+    },
+    {
+      "quantityIds": [
+        "q-f-yeongjong-2025-mean"
+      ],
+      "period": null,
+      "source": null,
+      "availableAt": null,
+      "ruleId": null,
+      "clauseId": null,
+      "caseEventId": null,
+      "assumptionId": null,
+      "forecastId": "f-yeongjong-2025",
+      "modelVersion": "v0.1.0",
+      "checkResult": null,
+      "id": "ev-model-f-yeongjong-2025",
+      "kind": "model",
+      "title": "예측 모델",
+      "summary": "LightGBM 분위수 + CQR"
+    },
+    {
+      "quantityIds": [],
+      "period": null,
+      "source": null,
+      "availableAt": null,
+      "ruleId": "rule-legal-hazard",
+      "clauseId": "law-disaster-act-enf-73-9",
+      "caseEventId": null,
+      "assumptionId": null,
+      "forecastId": null,
+      "modelVersion": null,
+      "checkResult": null,
+      "id": "ev-rule-legal-hazard",
+      "kind": "rule",
+      "title": "인원 무관 대상(폭죽)",
+      "summary": "불·폭죽 사용 행사는 인원과 관계없이 안전관리계획 수립 대상"
+    },
+    {
+      "quantityIds": [],
+      "period": null,
+      "source": null,
+      "availableAt": null,
+      "ruleId": "rule-internal-5000",
+      "clauseId": null,
+      "caseEventId": null,
+      "assumptionId": null,
+      "forecastId": null,
+      "modelVersion": null,
+      "checkResult": null,
+      "id": "ev-rule-internal-5000",
+      "kind": "rule",
+      "title": "대규모 기준(자체)",
+      "summary": "순간 최대 5,000명 초과 확률 50% 이상이면 대규모"
+    },
+    {
+      "quantityIds": [
+        "q-f-yeongjong-2025-peak"
+      ],
+      "period": null,
+      "source": null,
+      "availableAt": null,
+      "ruleId": null,
+      "clauseId": null,
+      "caseEventId": null,
+      "assumptionId": "as-peak-day-factor",
+      "forecastId": null,
+      "modelVersion": null,
+      "checkResult": null,
+      "id": "ev-as-peak-day-factor",
+      "kind": "assumption",
+      "title": "피크일 계수",
+      "summary": "1일 행사 1.0(범위 0.8~1.2, 가정)"
+    },
+    {
+      "quantityIds": [
+        "q-f-yeongjong-2025-peak"
+      ],
+      "period": null,
+      "source": null,
+      "availableAt": null,
+      "ruleId": null,
+      "clauseId": null,
+      "caseEventId": null,
+      "assumptionId": "as-concurrency-fireworks",
+      "forecastId": null,
+      "modelVersion": null,
+      "checkResult": null,
+      "id": "ev-as-concurrency-fireworks",
+      "kind": "assumption",
+      "title": "동시체류율(불꽃)",
+      "summary": "불꽃 행사 동시체류율 1.0(범위 0.8~1.0, 가정)"
+    },
+    {
+      "quantityIds": [
+        "q-e-yeongjong-2024-measured",
+        "q-e-yeongjong-2024-announced"
+      ],
+      "period": {
+        "from": "2024-10-19",
+        "to": "2024-10-19"
+      },
+      "source": {
+        "datasetId": "ds-datalab-festival-status",
+        "title": "데이터랩 문화관광축제 현황",
+        "publisher": "한국관광공사",
+        "datalabMenu": "축제 > 문화관광축제 현황",
+        "accessUrl": "https://datalab.visitkorea.or.kr"
+      },
+      "availableAt": "2025-01-15",
+      "ruleId": null,
+      "clauseId": null,
+      "caseEventId": "e-yeongjong-fireworks-2024",
+      "assumptionId": null,
+      "forecastId": null,
+      "modelVersion": null,
+      "checkResult": null,
+      "id": "ev-case-e-yeongjong-2024",
+      "kind": "case",
+      "title": "2024 영종 불꽃축제",
+      "summary": "같은 행사 전년 실측(데이터랩 기준 일평균)"
+    }
+  ],
+  "similar": [
+    {
+      "eventId": "e-yeongjong-fireworks-2024",
+      "name": "영종 씨사이드파크 불꽃축제",
+      "year": 2024,
+      "sigunguName": "인천 중구",
+      "type": "불꽃",
+      "measured": {
+        "id": "q-e-yeongjong-2024-measured",
+        "name": "2024 일평균 방문객(실측)",
+        "value": 15200,
+        "p10": null,
+        "p50": null,
+        "p90": null,
+        "unit": "명/일",
+        "timeUnit": "일",
+        "spatialScope": "시군구",
+        "valueKind": "사후집계",
+        "estimated": false,
+        "assumptionIds": [],
+        "announcedAt": "2025-01-15"
+      },
+      "announced": {
+        "id": "q-e-yeongjong-2024-announced",
+        "name": "2024 주최측 발표",
+        "value": 50000,
+        "p10": null,
+        "p50": null,
+        "p90": null,
+        "unit": "명",
+        "timeUnit": "기간누적",
+        "spatialScope": "행사장",
+        "valueKind": "사후집계",
+        "estimated": false,
+        "assumptionIds": [],
+        "announcedAt": "2024-10-21"
+      },
+      "unitsComparable": false,
+      "similarity": 0.92,
+      "evidenceId": "ev-case-e-yeongjong-2024",
+      "evidence": [
+        {
+          "quantityIds": [
+            "q-e-yeongjong-2024-measured",
+            "q-e-yeongjong-2024-announced"
+          ],
+          "period": {
+            "from": "2024-10-19",
+            "to": "2024-10-19"
+          },
+          "source": {
+            "datasetId": "ds-datalab-festival-status",
+            "title": "데이터랩 문화관광축제 현황",
+            "publisher": "한국관광공사",
+            "datalabMenu": "축제 > 문화관광축제 현황",
+            "accessUrl": "https://datalab.visitkorea.or.kr"
+          },
+          "availableAt": "2025-01-15",
+          "ruleId": null,
+          "clauseId": null,
+          "caseEventId": "e-yeongjong-fireworks-2024",
+          "assumptionId": null,
+          "forecastId": null,
+          "modelVersion": null,
+          "checkResult": null,
+          "id": "ev-case-e-yeongjong-2024",
+          "kind": "case",
+          "title": "2024 영종 불꽃축제",
+          "summary": "같은 행사 전년 실측(데이터랩 기준 일평균)"
+        }
+      ]
+    }
+  ],
+  "baseline": null,
+  "layout": [
+    {
+      "slot": "judgment",
+      "claimIds": [
+        "c-yeongjong-3"
+      ],
+      "evidenceIds": [
+        "ev-rule-legal-hazard",
+        "ev-rule-internal-5000"
+      ]
+    },
+    {
+      "slot": "numbers",
+      "claimIds": [
+        "c-yeongjong-4"
+      ],
+      "evidenceIds": [
+        "ev-model-f-yeongjong-2025",
+        "ev-as-peak-day-factor",
+        "ev-as-concurrency-fireworks"
+      ]
+    },
+    {
+      "slot": "similar",
+      "claimIds": [
+        "c-yeongjong-5"
+      ],
+      "evidenceIds": [
+        "ev-case-e-yeongjong-2024"
+      ]
+    }
+  ],
+  "brief": {
+    "claimIds": [
+      "c-yeongjong-3",
+      "c-yeongjong-4"
+    ],
+    "actions": [
+      {
+        "id": "plan",
+        "label": "계획 초안 받기"
+      },
+      {
+        "id": "save",
+        "label": "내 행사에 저장"
+      }
+    ]
+  }
+}

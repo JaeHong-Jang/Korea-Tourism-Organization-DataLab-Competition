@@ -17,8 +17,10 @@
       "enum": [
         "A",
         "B",
-        "publish"
-      ]
+        "publish",
+        "integrity"
+      ],
+      "description": "A 분석 결과 · B 문장 · publish 발행 · integrity 적재 시 참조 무결성(knowledge /facts 422). SSE에는 A·B·publish만 보낸다"
     },
     "passed": {
       "type": "boolean"

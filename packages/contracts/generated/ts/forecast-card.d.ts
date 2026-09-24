@@ -1,7 +1,7 @@
 /* 자동 생성 — packages/contracts/schemas에서 npm run contracts:gen 으로 만든다. 직접 고치지 않는다 */
 
 /**
- * 게이트 A 통과 직후 화면에 보내는 것 — 숫자·판정 배너만. 근거·요인 문장은 담지 않는다
+ * 게이트 A 통과 직후 화면에 보내는 것 — 숫자·판정 배너만. 근거·요인 문장은 담지 않는다 forecast의 결정적 투영이다(rules/card-projection.mjs의 projectCard). 따로 계산하지 않는다
  */
 export interface ForecastCard {
   id: string;

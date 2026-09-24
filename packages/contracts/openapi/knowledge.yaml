@@ -1,8 +1,8 @@
-# 인파예보 knowledge 서비스 OpenAPI v1.1 — 스키마는 ../schemas를 참조한다(계약 정본)
+# 인파예보 knowledge 서비스 OpenAPI v1.2 — 스키마는 ../schemas를 참조한다(계약 정본)
 openapi: 3.1.0
 info:
   title: 인파예보 근거 그래프 서비스
-  version: 1.1.0
+  version: 1.2.0
 servers:
   - url: http://127.0.0.1:8020
 paths:
@@ -26,7 +26,7 @@ paths:
                     type: string
   /v1/sessions/{id}/facts:
     post:
-      summary: 계약 JSON 적재(types.json 규칙으로 RDF 변환, 참조 무결성 검사) → 새 revision
+      summary: 계약 JSON 적재(jsonld/types.json + context.jsonld로 RDF 변환, rules/integrity.mjs와 같은 참조 무결성 검사) → 새 revision. forecast-report는 적재하지 않는다
       parameters:
         - name: id
           in: path
@@ -46,6 +46,7 @@ paths:
               properties:
                 schema:
                   enum:
+                    - event
                     - forecast
                     - claim
                     - evidence
@@ -67,7 +68,7 @@ paths:
                   revision:
                     type: integer
         "422":
-          description: 끊긴 참조 — 적재 거부(gate-report의 integrity 위반)
+          description: 끊긴 참조 — 아무것도 쓰지 않고 거부(gate = integrity)
           content:
             application/json:
               schema:
@@ -244,3 +245,13 @@ paths:
             text/turtle:
               schema:
                 type: string
+  /v1/stats/graph:
+    get:
+      summary: 근거 그래프 크기(M8-F3)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ops-status.schema.json#/$defs/graphStats

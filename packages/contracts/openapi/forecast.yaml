@@ -1,8 +1,8 @@
-# 인파예보 forecast 서비스 OpenAPI v1.1 — 스키마는 ../schemas를 참조한다(계약 정본)
+# 인파예보 forecast 서비스 OpenAPI v1.2 — 스키마는 ../schemas를 참조한다(계약 정본)
 openapi: 3.1.0
 info:
   title: 인파예보 예측 서비스
-  version: 1.1.0
+  version: 1.2.0
 servers:
   - url: http://127.0.0.1:8010
 paths:
@@ -308,3 +308,25 @@ paths:
                 type: array
                 items:
                   $ref: ../schemas/pipeline-run.schema.json
+  /v1/datalab/spec:
+    get:
+      summary: 데이터랩 활용 명세(M7-F2, 실제로 읽은 데이터만)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/datalab-spec.schema.json
+  /v1/ops/freshness:
+    get:
+      summary: 데이터 최신성(M8-F3)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/ops-status.schema.json#/$defs/freshness

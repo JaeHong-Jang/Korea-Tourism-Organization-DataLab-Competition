@@ -77,9 +77,14 @@ def main() -> int:
         exp = json.loads(exp_path.read_text(encoding="utf-8"))
         data = json.loads((ROOT / exp["fixture"]).read_text(encoding="utf-8"))
         g = to_graph(typed(data, exp["schema"], rules), context)
-        missing = [t for t in exp["triples"] if not any(True for _ in g.triples(tuple(term(x) for x in t)))]
-        failed += len(missing)
-        report.append({"expected": exp_path.name, "triples": len(g), "checked": len(exp["triples"]), "missing": missing})
+        has = lambda t: any(True for _ in g.triples(tuple(term(x) for x in t)))
+        missing = [t for t in exp["triples"] if not has(t)]
+        # 있으면 안 되는 트리플(잘못된 속성으로 옮겨진 경우를 잡는다)
+        unexpected = [t for t in exp.get("absent", []) if has(t)]
+        # 어휘 형식이 틀린 리터럴(예: "8.0E-1"^^xsd:decimal)은 저장소·SHACL에서 깨지므로 0개여야 한다
+        ill = [[str(s), str(p), o.n3()] for s, p, o in g if isinstance(o, Literal) and o.ill_typed]
+        failed += len(missing) + len(unexpected) + len(ill)
+        report.append({"expected": exp_path.name, "triples": len(g), "checked": len(exp["triples"]), "missing": missing, "unexpected": unexpected, "illTyped": ill})
     json.dump(report, sys.stdout, ensure_ascii=False)
     return 1 if failed else 0
 

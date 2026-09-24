@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/ops-status.schema.json",
+  "title": "운영 상태",
+  "description": "M8-F2 평가 결과, M8-F3 데이터 최신성·모델 버전·근거 그래프 크기. 게이트웨이가 세 서비스와 reports/evals에서 모은다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "generatedAt",
+    "freshness",
+    "model",
+    "graph",
+    "evals"
+  ],
+  "properties": {
+    "generatedAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "freshness": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/freshness"
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "modelRunId",
+        "modelVersion",
+        "trainRange",
+        "createdAt"
+      ],
+      "properties": {
+        "modelRunId": {
+          "$ref": "common.schema.json#/$defs/modelRunId"
+        },
+        "modelVersion": {
+          "type": "string"
+        },
+        "trainRange": {
+          "$ref": "common.schema.json#/$defs/period"
+        },
+        "createdAt": {
+          "$ref": "common.schema.json#/$defs/datetime"
+        }
+      }
+    },
+    "graph": {
+      "$ref": "#/$defs/graphStats"
+    },
+    "evals": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/evalSummary"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "datasetId",
+        "title",
+        "lastCollectedAt",
+        "lastObservedDate",
+        "rows"
+      ],
+      "properties": {
+        "datasetId": {
+          "$ref": "common.schema.json#/$defs/datasetId"
+        },
+        "title": {
+          "type": "string"
+        },
+        "lastCollectedAt": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastObservedDate": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rows": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "graphStats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "masterVersion",
+        "masterTriples",
+        "sessions",
+        "sessionTriples"
+      ],
+      "properties": {
+        "masterVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "masterTriples": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sessions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sessionTriples": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "evalSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suite",
+        "runAt",
+        "cases",
+        "unsupportedPublished",
+        "numberMismatch",
+        "passed"
+      ],
+      "properties": {
+        "suite": {
+          "type": "string"
+        },
+        "runAt": {
+          "$ref": "common.schema.json#/$defs/datetime"
+        },
+        "cases": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsupportedPublished": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "근거 없이 발행된 문장 수(0이어야 통과)"
+        },
+        "numberMismatch": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "화면 숫자와 수치 노드가 다른 건수(0이어야 통과)"
+        },
+        "passed": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

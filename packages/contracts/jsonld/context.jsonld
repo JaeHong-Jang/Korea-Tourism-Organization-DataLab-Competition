@@ -7,16 +7,17 @@
     "cito": "http://purl.org/spar/cito/",
     "dcterms": "http://purl.org/dc/terms/",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
-
     "id": "@id",
-    "kind": { "@id": "@type", "@type": "@vocab" },
+    "kind": {
+      "@id": "@type",
+      "@type": "@vocab"
+    },
     "data": "cc:DataEvidence",
     "model": "cc:ModelEvidence",
     "rule": "cc:RuleEvidence",
     "case": "cc:CaseEvidence",
     "assumption": "cc:AssumptionEvidence",
     "check": "cc:CheckEvidence",
-
     "name": "cc:name",
     "title": "dcterms:title",
     "summary": "cc:summary",
@@ -26,51 +27,140 @@
     "status": "cc:status",
     "modelVersion": "cc:modelVersion",
     "featureName": "cc:featureName",
-    "ood": { "@id": "cc:ood", "@type": "xsd:boolean" },
-
-    "asOf": { "@id": "cc:asOf", "@type": "xsd:date" },
-    "createdAt": { "@id": "cc:createdAt", "@type": "xsd:dateTime" },
-    "availableAt": { "@id": "cc:availableAt", "@type": "xsd:date" },
-    "observedAt": { "@id": "cc:observedAt", "@type": "xsd:date" },
-    "announcedAt": { "@id": "cc:announcedAt", "@type": "xsd:date" },
-
-    "value": { "@id": "cc:value", "@type": "xsd:decimal" },
-    "p10": { "@id": "cc:p10", "@type": "xsd:decimal" },
-    "p50": { "@id": "cc:p50", "@type": "xsd:decimal" },
-    "p90": { "@id": "cc:p90", "@type": "xsd:decimal" },
-    "low": { "@id": "cc:rangeLow", "@type": "xsd:decimal" },
-    "high": { "@id": "cc:rangeHigh", "@type": "xsd:decimal" },
+    "ood": {
+      "@id": "cc:ood",
+      "@type": "xsd:boolean"
+    },
+    "asOf": {
+      "@id": "cc:asOf",
+      "@type": "xsd:date"
+    },
+    "createdAt": {
+      "@id": "cc:createdAt",
+      "@type": "xsd:dateTime"
+    },
+    "availableAt": {
+      "@id": "cc:availableAt",
+      "@type": "xsd:date"
+    },
+    "observedAt": {
+      "@id": "cc:observedAt",
+      "@type": "xsd:date"
+    },
+    "announcedAt": {
+      "@id": "cc:announcedAt",
+      "@type": "xsd:date"
+    },
+    "value": {
+      "@id": "cc:value",
+      "@type": "xsd:double"
+    },
+    "p10": {
+      "@id": "cc:p10",
+      "@type": "xsd:double"
+    },
+    "p50": {
+      "@id": "cc:p50",
+      "@type": "xsd:double"
+    },
+    "p90": {
+      "@id": "cc:p90",
+      "@type": "xsd:double"
+    },
+    "low": {
+      "@id": "cc:rangeLow",
+      "@type": "xsd:double"
+    },
+    "high": {
+      "@id": "cc:rangeHigh",
+      "@type": "xsd:double"
+    },
     "unit": "cc:unit",
     "timeUnit": "cc:timeUnit",
     "spatialScope": "cc:spatialScope",
     "valueKind": "cc:valueKind",
-    "estimated": { "@id": "cc:estimated", "@type": "xsd:boolean" },
+    "estimated": {
+      "@id": "cc:estimated",
+      "@type": "xsd:boolean"
+    },
     "basis": "cc:basis",
     "note": "cc:note",
-
-    "eventId": { "@id": "cc:predictedFor", "@type": "@id" },
-    "forecastId": { "@id": "cc:aboutForecast", "@type": "@id" },
-    "sessionId": { "@id": "cc:inSession", "@type": "@id" },
-    "datasetId": { "@id": "cc:derivedFromDataset", "@type": "@id" },
-    "ruleId": { "@id": "cc:aboutRule", "@type": "@id" },
-    "clauseId": { "@id": "cc:mentionsClause", "@type": "@id" },
-    "caseEventId": { "@id": "cc:aboutCase", "@type": "@id" },
-    "assumptionId": { "@id": "cc:aboutAssumption", "@type": "@id" },
-    "quantityIds": { "@id": "cc:statesQuantity", "@type": "@id", "@container": "@set" },
-    "assumptionIds": { "@id": "cc:dependsOnAssumption", "@type": "@id", "@container": "@set" },
-    "evidenceIds": { "@id": "cito:citesAsEvidence", "@type": "@id", "@container": "@set" },
-
-    "dailyMean": { "@id": "cc:dailyMean" },
-    "peakConcurrent": { "@id": "cc:peakConcurrent" },
-    "evidence": { "@id": "cc:hasEvidence", "@container": "@set" },
-    "claims": { "@id": "cc:hasClaim", "@container": "@set" },
-    "assumptions": { "@id": "cc:usesAssumption", "@container": "@set" },
-
+    "eventId": {
+      "@id": "cc:predictedFor",
+      "@type": "@id"
+    },
+    "forecastId": {
+      "@id": "cc:aboutForecast",
+      "@type": "@id"
+    },
+    "sessionId": {
+      "@id": "cc:inSession",
+      "@type": "@id"
+    },
+    "datasetId": {
+      "@id": "cc:derivedFromDataset",
+      "@type": "@id"
+    },
+    "ruleId": {
+      "@id": "cc:aboutRule",
+      "@type": "@id"
+    },
+    "clauseId": {
+      "@id": "cc:mentionsClause",
+      "@type": "@id"
+    },
+    "caseEventId": {
+      "@id": "cc:aboutCase",
+      "@type": "@id"
+    },
+    "assumptionId": {
+      "@id": "cc:aboutAssumption",
+      "@type": "@id"
+    },
+    "quantityIds": {
+      "@id": "cc:statesQuantity",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "assumptionIds": {
+      "@id": "cc:dependsOnAssumption",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "evidenceIds": {
+      "@id": "cito:citesAsEvidence",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "dailyMean": {
+      "@id": "cc:dailyMean"
+    },
+    "peakConcurrent": {
+      "@id": "cc:peakConcurrent"
+    },
+    "evidence": {
+      "@id": "cc:hasEvidence",
+      "@container": "@set"
+    },
+    "claims": {
+      "@id": "cc:hasClaim",
+      "@container": "@set"
+    },
+    "assumptions": {
+      "@id": "cc:usesAssumption",
+      "@container": "@set"
+    },
     "period": {
       "@id": "cc:period",
       "@context": {
-        "from": { "@id": "cc:periodFrom", "@type": "xsd:date" },
-        "to": { "@id": "cc:periodTo", "@type": "xsd:date" }
+        "from": {
+          "@id": "cc:periodFrom",
+          "@type": "xsd:date"
+        },
+        "to": {
+          "@id": "cc:periodTo",
+          "@type": "xsd:date"
+        }
       }
     },
     "source": {
@@ -79,24 +169,45 @@
         "datasetId": "@id",
         "publisher": "dcterms:publisher",
         "datalabMenu": "cc:datalabMenu",
-        "accessUrl": { "@id": "cc:accessUrl", "@type": "xsd:anyURI" }
+        "accessUrl": {
+          "@id": "cc:accessUrl",
+          "@type": "xsd:anyURI"
+        }
       }
     },
     "observations": {
       "@id": "cc:hasObservation",
       "@container": "@set",
-      "@context": { "sigunguCode": { "@id": "cc:aboutRegion", "@type": "@id" } }
+      "@context": {
+        "sigunguCode": {
+          "@id": "cc:aboutRegion",
+          "@type": "@id"
+        }
+      }
     },
     "predictionRun": {
       "@id": "prov:wasGeneratedBy",
       "@context": {
-        "modelRunId": { "@id": "prov:used", "@type": "@id" },
-        "observationIds": { "@id": "prov:used", "@type": "@id", "@container": "@set" },
+        "modelRunId": {
+          "@id": "prov:used",
+          "@type": "@id"
+        },
+        "observationIds": {
+          "@id": "prov:used",
+          "@type": "@id",
+          "@container": "@set"
+        },
         "trainRange": {
           "@id": "cc:trainRange",
           "@context": {
-            "from": { "@id": "cc:periodFrom", "@type": "xsd:date" },
-            "to": { "@id": "cc:periodTo", "@type": "xsd:date" }
+            "from": {
+              "@id": "cc:periodFrom",
+              "@type": "xsd:date"
+            },
+            "to": {
+              "@id": "cc:periodTo",
+              "@type": "xsd:date"
+            }
           }
         }
       }
@@ -105,33 +216,62 @@
       "@id": "cc:probabilityOver",
       "@container": "@set",
       "@context": {
-        "threshold": { "@id": "cc:threshold", "@type": "xsd:integer" },
-        "probability": { "@id": "cc:probability", "@type": "xsd:decimal" },
+        "threshold": {
+          "@id": "cc:threshold",
+          "@type": "xsd:integer"
+        },
+        "probability": {
+          "@id": "cc:probability",
+          "@type": "xsd:double"
+        },
         "display": "cc:display"
       }
     },
     "judgment": {
       "@id": "cc:hasJudgment",
       "@context": {
-        "level": { "@id": "cc:level", "@type": "xsd:integer" },
+        "level": {
+          "@id": "cc:level",
+          "@type": "xsd:integer"
+        },
         "label": "cc:levelLabel",
-        "ruleIds": { "@id": "cc:judgedBy", "@type": "@id", "@container": "@set" },
+        "ruleIds": {
+          "@id": "cc:judgedBy",
+          "@type": "@id",
+          "@container": "@set"
+        },
         "reasons": {
           "@id": "cc:hasReason",
           "@container": "@set",
           "@context": {
             "kind": "cc:ruleKind",
-            "ruleId": { "@id": "cc:reasonRule", "@type": "@id" },
-            "clauseId": { "@id": "cc:reasonClause", "@type": "@id" },
-            "evidenceId": { "@id": "cc:reasonEvidence", "@type": "@id" }
+            "ruleId": {
+              "@id": "cc:reasonRule",
+              "@type": "@id"
+            },
+            "clauseId": {
+              "@id": "cc:reasonClause",
+              "@type": "@id"
+            },
+            "evidenceId": {
+              "@id": "cc:reasonEvidence",
+              "@type": "@id"
+            }
           }
         },
         "checklist": {
           "@id": "cc:hasChecklistItem",
           "@container": "@set",
           "@context": {
-            "ruleId": { "@id": "cc:checklistRule", "@type": "@id" },
-            "evidenceIds": { "@id": "cc:supportedBy", "@type": "@id", "@container": "@set" }
+            "ruleId": {
+              "@id": "cc:checklistRule",
+              "@type": "@id"
+            },
+            "evidenceIds": {
+              "@id": "cc:supportedBy",
+              "@type": "@id",
+              "@container": "@set"
+            }
           }
         }
       }
@@ -142,16 +282,26 @@
       "@context": {
         "feature": "cc:factorFeature",
         "direction": "cc:direction",
-        "contribution": { "@id": "cc:contribution", "@type": "xsd:decimal" },
+        "contribution": {
+          "@id": "cc:contribution",
+          "@type": "xsd:double"
+        },
         "label": "cc:label",
-        "evidenceIds": { "@id": "cc:supportedBy", "@type": "@id", "@container": "@set" }
+        "evidenceIds": {
+          "@id": "cc:supportedBy",
+          "@type": "@id",
+          "@container": "@set"
+        }
       }
     },
     "placeholders": {
       "@id": "cc:hasPlaceholder",
       "@container": "@set",
       "@context": {
-        "quantityId": { "@id": "cc:quantity", "@type": "@id" },
+        "quantityId": {
+          "@id": "cc:quantity",
+          "@type": "@id"
+        },
         "field": "cc:field"
       }
     },
@@ -160,7 +310,10 @@
       "@context": {
         "@vocab": "http://crowdcast.local/id/agent-",
         "stepId": "@id",
-        "agentId": { "@id": "prov:wasAssociatedWith", "@type": "@vocab" }
+        "agentId": {
+          "@id": "prov:wasAssociatedWith",
+          "@type": "@vocab"
+        }
       }
     },
     "checks": {
@@ -168,28 +321,171 @@
       "@container": "@set",
       "@context": {
         "checkKind": "cc:checkKind",
-        "passed": { "@id": "cc:passed", "@type": "xsd:boolean" },
-        "revision": { "@id": "cc:checksRevision", "@type": "xsd:integer" }
+        "passed": {
+          "@id": "cc:passed",
+          "@type": "xsd:boolean"
+        },
+        "revision": {
+          "@id": "cc:checksRevision",
+          "@type": "xsd:integer"
+        }
       }
     },
     "checkResult": {
       "@id": "cc:checkResult",
       "@context": {
         "checkKind": "cc:checkKind",
-        "passed": { "@id": "cc:passed", "@type": "xsd:boolean" },
-        "revision": { "@id": "cc:checksRevision", "@type": "xsd:integer" }
+        "passed": {
+          "@id": "cc:passed",
+          "@type": "xsd:boolean"
+        },
+        "revision": {
+          "@id": "cc:checksRevision",
+          "@type": "xsd:integer"
+        }
       }
     },
     "event": {
-      "@id": "cc:aboutEvent",
+      "@id": "cc:aboutEvent"
+    },
+    "forecast": {
+      "@id": "cc:reportOf"
+    },
+    "Event": {
+      "@id": "cc:Event",
       "@context": {
         "type": "cc:eventTypeLabel",
-        "sigunguCode": { "@id": "cc:inRegion", "@type": "@id" },
-        "hazards": { "@id": "cc:hazardLabel", "@container": "@set" },
-        "startsAt": { "@id": "cc:startsAt", "@type": "xsd:dateTime" },
-        "endsAt": { "@id": "cc:endsAt", "@type": "xsd:dateTime" }
+        "timeOfDay": "cc:timeOfDay",
+        "sido": "cc:sidoName",
+        "sigunguCode": {
+          "@id": "cc:inRegion",
+          "@type": "@id"
+        },
+        "sigunguName": "cc:sigunguName",
+        "fee": "cc:fee",
+        "hostType": "cc:hostType",
+        "budgetKrw": {
+          "@id": "cc:budgetKrw",
+          "@type": "xsd:integer"
+        },
+        "edition": {
+          "@id": "cc:edition",
+          "@type": "xsd:integer"
+        },
+        "promo": {
+          "@id": "cc:promoChannel",
+          "@container": "@set"
+        },
+        "hazards": {
+          "@id": "cc:hazardLabel",
+          "@container": "@set"
+        },
+        "startsAt": {
+          "@id": "cc:startsAt",
+          "@type": "xsd:dateTime"
+        },
+        "endsAt": {
+          "@id": "cc:endsAt",
+          "@type": "xsd:dateTime"
+        },
+        "venue": {
+          "@id": "cc:heldAt",
+          "@context": {
+            "lat": {
+              "@id": "cc:lat",
+              "@type": "xsd:double"
+            },
+            "lng": {
+              "@id": "cc:lng",
+              "@type": "xsd:double"
+            }
+          }
+        },
+        "expectedByHost": {
+          "@id": "cc:expectedByHost"
+        },
+        "source": "cc:eventSource"
       }
     },
-    "forecast": { "@id": "cc:reportOf" }
+    "SimilarCase": {
+      "@id": "cc:SimilarCase",
+      "@context": {
+        "eventId": {
+          "@id": "cc:aboutCase",
+          "@type": "@id"
+        },
+        "year": {
+          "@id": "cc:year",
+          "@type": "xsd:integer"
+        },
+        "sigunguName": "cc:sigunguName",
+        "type": "cc:eventTypeLabel",
+        "measured": {
+          "@id": "cc:measured"
+        },
+        "announced": {
+          "@id": "cc:announced"
+        },
+        "unitsComparable": {
+          "@id": "cc:unitsComparable",
+          "@type": "xsd:boolean"
+        },
+        "similarity": {
+          "@id": "cc:similarity",
+          "@type": "xsd:double"
+        },
+        "evidenceId": {
+          "@id": "cc:supportedBy",
+          "@type": "@id"
+        }
+      }
+    },
+    "RegionBaseline": {
+      "@id": "cc:RegionBaseline",
+      "@context": {
+        "sigunguCode": {
+          "@id": "cc:aboutRegion",
+          "@type": "@id"
+        },
+        "sigunguName": "cc:sigunguName",
+        "weekdayMean": {
+          "@id": "cc:weekdayMean",
+          "@container": "@set",
+          "@context": {
+            "weekday": {
+              "@id": "cc:weekday",
+              "@type": "xsd:integer"
+            },
+            "local": {
+              "@id": "cc:local",
+              "@type": "xsd:double"
+            },
+            "nonlocal": {
+              "@id": "cc:nonlocal",
+              "@type": "xsd:double"
+            },
+            "foreign": {
+              "@id": "cc:foreign",
+              "@type": "xsd:double"
+            }
+          }
+        },
+        "nonlocalShare": {
+          "@id": "cc:nonlocalShare",
+          "@type": "xsd:double"
+        },
+        "evidenceId": {
+          "@id": "cc:supportedBy",
+          "@type": "@id"
+        }
+      }
+    },
+    "similar": {
+      "@id": "cc:hasSimilarCase",
+      "@container": "@set"
+    },
+    "baseline": {
+      "@id": "cc:hasBaseline"
+    }
   }
 }

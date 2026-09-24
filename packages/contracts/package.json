@@ -8,7 +8,8 @@
     "./schemas/*": "./schemas/*",
     "./types": "./generated/ts/index.d.ts",
     "./design-tokens.css": "./design-tokens.css",
-    "./jsonld/context.jsonld": "./jsonld/context.jsonld"
+    "./jsonld/*": "./jsonld/*",
+    "./rules/*": "./rules/*"
   },
   "scripts": {
     "gen": "node scripts/gen.mjs",

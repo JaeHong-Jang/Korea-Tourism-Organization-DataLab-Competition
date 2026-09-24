@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-09-27T12:00:00+09:00",
+  "rows": [
+    {
+      "datasetId": "ds-kto-visitors-15101972",
+      "title": "한국관광공사_빅데이터_지역별 방문자수_GW",
+      "datalabMenu": "빅데이터 > 지역별 방문자수(이동통신)",
+      "metric": "외지인·현지인·외국인 방문자 수",
+      "period": {
+        "from": "2018-01-01",
+        "to": "2025-12-31"
+      },
+      "unit": "명/일",
+      "purpose": "개최지 평시 기준선·예측 피처",
+      "usedIn": [
+        "M1-F3",
+        "M3-F4",
+        "M6-F1"
+      ],
+      "rowsRead": 2210000,
+      "confirmedAt": "2026-09-27",
+      "evidenceCount": 41
+    }
+  ]
+}

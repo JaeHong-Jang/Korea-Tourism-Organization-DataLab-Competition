@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/forecast-report.schema.json",
   "title": "발행된 예보서",
-  "description": "발행 뒤 예보서 전체(S3 새로고침·공유 링크·스냅샷). claims는 모두 published",
+  "description": "발행 뒤 예보서 전체(S3 새로고침·공유 링크·스냅샷). claims는 모두 published 일관성(rules/integrity.mjs가 검사): card = projectCard(forecast)(rules/card-projection.mjs), evidence = forecast.evidence ∪ similar[].evidence ∪ baseline.evidence(id 기준), claims[]의 sessionId·forecastId = 머리 값, layout[]·brief의 claimIds·evidenceIds는 이 문서 안에 있어야 한다",
   "type": "object",
   "additionalProperties": false,
   "required": [

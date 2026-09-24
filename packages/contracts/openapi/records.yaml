@@ -1,8 +1,8 @@
-# 인파예보 records 서비스 OpenAPI v1.1 — 스키마는 ../schemas를 참조한다(계약 정본)
+# 인파예보 records 서비스 OpenAPI v1.2 — 스키마는 ../schemas를 참조한다(계약 정본)
 openapi: 3.1.0
 info:
   title: 인파예보 기록·문서 서비스
-  version: 1.1.0
+  version: 1.2.0
 servers:
   - url: http://127.0.0.1:8030
 paths:

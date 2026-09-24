@@ -65,12 +65,12 @@
   },
   "T-001": {
    "status": "done",
-   "updated": "2026-09-24T11:49:02.152Z",
-   "evidence": "contracts v1.1: check 스키마27·픽스처41·오류0(TS·PY·PHP 판정 일치, 무결성 7, JSON-LD 기대 트리플 41/41), R-01 지적 10건 반영"
+   "updated": "2026-09-24T12:12:16.877Z",
+   "evidence": "contracts v1.2: check 스키마29·픽스처79·오류0(세 언어 판정 일치, 무결성 22, 카드 투영 3, SSE 순서 6, JSON-LD 5종 기대·금지·형식 오류 0), R-01 r2 지적 반영"
   },
   "R-01": {
    "status": "stale",
-   "updated": "2026-09-24T11:34:36.369Z",
+   "updated": "2026-09-24T11:59:40.254Z",
    "note": "상위 T-001 되돌림"
   },
   "T-100": {
@@ -376,6 +376,35 @@
    "id": "T-001",
    "status": "done",
    "evidence": "contracts v1.1: check 스키마27·픽스처41·오류0(TS·PY·PHP 판정 일치, 무결성 7, JSON-LD 기대 트리플 41/41), R-01 지적 10건 반영"
+  },
+  {
+   "at": "2026-09-24T11:51:55.187Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T11:59:40.254Z",
+   "id": "R-01",
+   "status": "failed",
+   "note": "→ T-001: r2 FAIL(astra): Event 적재 경로·similar/baseline 변환 규칙 없음, gate-report에 integrity 없음(High), 무결성 검사 범위(modelRunId·assumptionId·세션·유사 행사 수치·report 카드/배치), SSE 순서 검사, 활용 명세·운영 계약"
+  },
+  {
+   "at": "2026-09-24T11:59:40.254Z",
+   "id": "T-001",
+   "status": "todo",
+   "note": "되돌림: R-01 실패 — r2 FAIL(astra): Event 적재 경로·similar/baseline 변환 규칙 없음, gate-report에 integrity 없음(High), 무결성 검사 범위(modelRunId·assumptionId·세션·유사 행사 수치·report 카드/배치), SSE 순서 검사, 활용 명세·운영 계약"
+  },
+  {
+   "at": "2026-09-24T11:59:40.254Z",
+   "id": "R-01",
+   "status": "stale",
+   "note": "상위 T-001 되돌림"
+  },
+  {
+   "at": "2026-09-24T12:12:16.877Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "contracts v1.2: check 스키마29·픽스처79·오류0(세 언어 판정 일치, 무결성 22, 카드 투영 3, SSE 순서 6, JSON-LD 5종 기대·금지·형식 오류 0), R-01 r2 지적 반영"
   }
  ]
 }

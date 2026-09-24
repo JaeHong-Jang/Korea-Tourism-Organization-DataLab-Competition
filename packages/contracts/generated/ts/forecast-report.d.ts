@@ -220,7 +220,7 @@ export type NoName6 = {
 };
 
 /**
- * 발행 뒤 예보서 전체(S3 새로고침·공유 링크·스냅샷). claims는 모두 published
+ * 발행 뒤 예보서 전체(S3 새로고침·공유 링크·스냅샷). claims는 모두 published 일관성(rules/integrity.mjs가 검사): card = projectCard(forecast)(rules/card-projection.mjs), evidence = forecast.evidence ∪ similar[].evidence ∪ baseline.evidence(id 기준), claims[]의 sessionId·forecastId = 머리 값, layout[]·brief의 claimIds·evidenceIds는 이 문서 안에 있어야 한다
  */
 export interface ForecastReport {
   forecastId: string;
@@ -340,7 +340,7 @@ export interface Quantity {
   announcedAt: string | null;
 }
 /**
- * 게이트 A 통과 직후 화면에 보내는 것 — 숫자·판정 배너만. 근거·요인 문장은 담지 않는다
+ * 게이트 A 통과 직후 화면에 보내는 것 — 숫자·판정 배너만. 근거·요인 문장은 담지 않는다 forecast의 결정적 투영이다(rules/card-projection.mjs의 projectCard). 따로 계산하지 않는다
  */
 export interface NoName1 {
   id: string;

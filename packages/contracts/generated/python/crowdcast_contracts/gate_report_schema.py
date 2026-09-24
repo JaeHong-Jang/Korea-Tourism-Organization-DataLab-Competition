@@ -13,6 +13,7 @@ class Gate(Enum):
     A = 'A'
     B = 'B'
     publish = 'publish'
+    integrity = 'integrity'
 
 
 class Check(Enum):
@@ -37,7 +38,12 @@ class GateReport(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    gate: Gate
+    gate: Annotated[
+        Gate,
+        Field(
+            description='A 분석 결과 · B 문장 · publish 발행 · integrity 적재 시 참조 무결성(knowledge /facts 422). SSE에는 A·B·publish만 보낸다'
+        ),
+    ]
     passed: bool
     revision: Annotated[int, Field(ge=0)]
     masterVersion: Annotated[int, Field(ge=1)]

@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-09-27T12:00:00+09:00",
+  "freshness": [
+    {
+      "datasetId": "ds-kto-visitors-15101972",
+      "title": "한국관광공사_빅데이터_지역별 방문자수_GW",
+      "lastCollectedAt": "2026-09-27T03:10:00+09:00",
+      "lastObservedDate": "2026-09-20",
+      "rows": 2210000
+    }
+  ],
+  "model": {
+    "modelRunId": "mr-v0-1-0",
+    "modelVersion": "v0.1.0",
+    "trainRange": {
+      "from": "2018-01-01",
+      "to": "2024-12-31"
+    },
+    "createdAt": "2026-09-27T12:00:00+09:00"
+  },
+  "graph": {
+    "masterVersion": 1,
+    "masterTriples": 412,
+    "sessions": 3,
+    "sessionTriples": 1260
+  },
+  "evals": {
+    "suite": "golden-v1",
+    "runAt": "2026-09-27T11:40:00+09:00",
+    "cases": 24,
+    "unsupportedPublished": 0,
+    "numberMismatch": 0,
+    "passed": true
+  }
+}

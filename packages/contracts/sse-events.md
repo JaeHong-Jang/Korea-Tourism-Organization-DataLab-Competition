@@ -1,4 +1,4 @@
-# SSE 이벤트 계약 — 게이트웨이 → 웹 (v1.1)
+# SSE 이벤트 계약 — 게이트웨이 → 웹 (v1.2)
 
 - 스트림: `POST /api/team/sessions/{id}/messages` 응답(`text/event-stream`), 데모 재생은 `GET /api/team/replay/{traceId}`.
 - 한 이벤트 = `event: <이름>` + `data: <JSON>`. `data` 모양은 `schemas/sse-event.schema.json`이 이름별로 정한다. `seq`는 0부터 1씩 증가한다.
@@ -34,3 +34,12 @@ agent_status(lead) → agent_status/agent_step(dictation) → event_card → [as
 - 게이트 A 실패: `gate(A, passed=false)` → `error(ANALYSIS_GATE_FAILED)` → `done`(숫자를 보내지 않는다).
 - `error.code`: `ANALYSIS_GATE_FAILED` · `SERVICE_UNAVAILABLE` · `DEADLINE_EXCEEDED` · `OUT_OF_SCOPE`.
 - LLM이 꺼져 있어도 순서는 같다. 문장은 템플릿으로 만들어져 같은 게이트를 지난다.
+
+**순서 규칙** — `rules/sse-sequence.mjs`의 `sequenceProblems(events)`가 판정한다. 계약 검사는 `fixtures-sse/`(정상 2 · 위반 4)로, 게이트웨이 스트림 테스트(T-303)는 실제 스트림을 같은 함수에 넣어 확인한다.
+- R1 `seq`는 0부터 1씩 늘고, R2 `done` 뒤에는 이벤트가 없다.
+- R3 게이트 A가 실패하면 그 뒤에는 `agent_status`·`agent_step`·`error`·`done`만 보낸다.
+- R4 게이트 순서는 A → B → publish. `gate`로 `integrity`를 보내지 않는다(적재 거부는 서비스 응답).
+- R5 `forecast`(숫자 카드)는 게이트 A 통과 뒤 한 번만. 카드 = `rules/card-projection.mjs`의 `projectCard(forecast)`.
+- R6 `claim`·`evidence`·`suggest`는 발행 검사 통과 뒤에만, 문장의 `forecastId`는 카드 id와 같다.
+- R7 `done.forecastId`는 발행했으면 카드 id, 아니면 `null`.
+- R8 스트림은 `done`으로 끝나고, 게이트 A 실패면 `ANALYSIS_GATE_FAILED` 오류가 있으며, 문장이 가리킨 근거는 모두 `evidence`로 보낸다.
