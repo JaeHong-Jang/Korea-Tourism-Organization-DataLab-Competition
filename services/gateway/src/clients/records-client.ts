@@ -12,6 +12,15 @@ const snapshotsSchema = responseListSchema("forecast-report");
 // 행사와 스냅샷의 저장 경로를 서비스 내부에 한정한다
 export function createRecordsClient(options: ServiceClientOptions) {
   return {
+    // 예보 식별자로 불변 스냅샷 한 건을 조회한다
+    getSnapshot(forecastId: string) {
+      return requestJson(
+        options,
+        `/v1/snapshots/${encodeURIComponent(forecastId)}`,
+        snapshotSchema,
+        { method: "GET" },
+      );
+    },
     // 저장한 행사 목록을 항목별로 검증한다
     listEvents() {
       return requestJson(options, "/v1/events", eventsSchema, {
