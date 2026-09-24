@@ -126,4 +126,18 @@ def test_unverified_backtest_still_checks_regression(
     current = backtest(coverage=coverage)
     current["golden"] = []
     path.write_text(json.dumps(current))
-    assert gates.optional_gate("backtest", [path], backtest())["passed"] is passed
+    previous = {**backtest(), "golden": []}
+    assert gates.optional_gate("backtest", [path], previous)["passed"] is passed
+
+
+# 사용 모델에 있던 골든 사례가 후보에서 사라지면 미검증이 아니라 승격 금지다.
+def test_lost_golden_blocks_promotion(pipeline_root: Path) -> None:
+    path = paths.REPORTS / "backtest/2025/backtest.json"
+    path.parent.mkdir(parents=True)
+    current = backtest()
+    current["golden"] = []
+    path.write_text(json.dumps(current))
+    gate = gates.optional_gate("backtest", [path], backtest())
+    assert gate["passed"] is False and "골든 사례 소실" in gate["message"]
+    first = gates.optional_gate("backtest", [path], None)
+    assert first["passed"] is None and "최초 모델: 직전 비교 불가" in first["message"]

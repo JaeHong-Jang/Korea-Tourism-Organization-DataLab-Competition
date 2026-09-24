@@ -234,8 +234,8 @@ def optional_gate(stage: str, files: list[Path], previous: Any) -> dict[str, Any
     )
     validate("backtest-summary", current)
 
-    # 골든이 없어도 사용 모델의 직전 성적과는 반드시 비교해 악화한 후보를 막는다.
-    metrics = "직전 비교 없음"
+    # 골든이 없어도 사용 모델의 성적과는 반드시 비교해 허용 악화폭을 넘은 후보를 막는다.
+    metrics = "최초 모델: 직전 비교 불가"
     if previous is not None:
         validate("backtest-summary", previous)
         old, new = previous["metrics"], current["metrics"]
@@ -244,9 +244,15 @@ def optional_gate(stage: str, files: list[Path], previous: Any) -> dict[str, Any
             f"포함률={new['coverage80'] * 100:.1f}% (직전 {old['coverage80'] * 100:.1f}% -5%p)"
         )
         if not (new["mdape"] <= old["mdape"] + 3 and new["coverage80"] >= old["coverage80"] - 0.05):
-            return {"passed": False, "message": f"성적 악화: {metrics}"}
+            return {"passed": False, "message": f"허용 악화폭 초과: {metrics}"}
+    # 미검증 임시 사용은 사용 모델에도 골든 사례가 없을 때(H8 미확보)만 — 있던 사례가 사라지면 승격 금지.
     if not current["golden"]:
-        return {"passed": None, "message": f"{metrics}; 골든 결과 0건: 골든 재현 미검증"}
+        if previous is not None and previous["golden"]:
+            return {
+                "passed": False,
+                "message": f"{metrics}; 골든 사례 소실: 사용 모델 {len(previous['golden'])}건 → 0건",
+            }
+        return {"passed": None, "message": f"{metrics}; 골든 사례 0건(H8 미확보): 골든 재현 미검증"}
 
     # 골든 ID만 남아 있어도 단위가 맞는 실제 재현 판정이 실패하면 승격을 막는다.
     golden = all(

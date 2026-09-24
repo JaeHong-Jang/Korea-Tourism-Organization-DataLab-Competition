@@ -24,7 +24,7 @@ def publish_gate(record: dict[str, Any], dry: bool) -> dict[str, Any]:
             "passed": None,
             "message": "publish 미실행: " + ("dry 검사" if dry else ", ".join(absent) + " 미통과"),
         }
-    return {"passed": True, "message": "선행 게이트 전부 통과; 실행 기록 발행 (모델 승격은 후속 통합)"}
+    return {"passed": True, "message": "선행 게이트 전부 통과; 실행 기록 발행 (승격은 backtest 단계)"}
 
 
 # 기존 수집기가 감싼 예외도 원인 체인에서 확인하며 데이터 오류는 재시도하지 않는다.

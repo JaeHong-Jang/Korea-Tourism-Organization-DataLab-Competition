@@ -96,8 +96,8 @@ def test_completion_pointer_validation(pipeline_root: Path, invalid: str | None)
         assert run_record.current_backtest(started_ns) == summary.parent
 
 
-# 골든 사례가 없으면 첫 실행·직전 비교 모두 미검증이며 publish도 통과할 수 없다.
-@pytest.mark.parametrize("previous", [None, backtest()])
+# 골든 사례가 없으면(H8 미확보 — 사용 모델도 0건) 첫 실행·직전 비교 모두 미검증, publish도 미통과.
+@pytest.mark.parametrize("previous", [None, {**backtest(), "golden": []}])
 def test_empty_golden_unverified(pipeline_root: Path, previous: dict | None) -> None:
     current = backtest()
     current["golden"] = []

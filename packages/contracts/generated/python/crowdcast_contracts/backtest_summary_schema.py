@@ -15,8 +15,8 @@ class Metrics(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    mdape: float
-    coverage80: float
+    mdape: Annotated[float, Field(description='일평균 방문객 MdAPE — 백분율(%)', ge=0.0)]
+    coverage80: Annotated[float, Field(description='80% 구간 포함률 — 비율(0~1), 화면 표시만 ×100', ge=0.0, le=1.0)]
     coverageN: int
     judgmentRecall: float | None
     judgmentPrecision: float | None

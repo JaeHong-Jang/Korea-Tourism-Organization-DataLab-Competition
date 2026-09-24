@@ -13,7 +13,13 @@ export interface BacktestSummary {
    */
   evalYears: [number, ...number[]];
   metrics: {
+    /**
+     * 일평균 방문객 MdAPE — 백분율(%)
+     */
     mdape: number;
+    /**
+     * 80% 구간 포함률 — 비율(0~1), 화면 표시만 ×100
+     */
     coverage80: number;
     coverageN: number;
     judgmentRecall: number | null;
