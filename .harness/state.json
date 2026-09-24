@@ -74,9 +74,9 @@
    "evidence": "R-01 6차 PASS(gpt-6-astra, 0590c11): 체크리스트 ①~④ PASS, High 0. Med 1(masterVersion 재검사)은 후속 커밋에서 반영, check 129·오류 0"
   },
   "T-100": {
-   "status": "running",
-   "updated": "2026-09-24T13:03:12.669Z",
-   "note": "1회차 수정 5건 원본 대조 확인, 날짜 채움률 회귀((예정) 표기 96건 거부) → 피드백 2회차(마지막)"
+   "status": "done",
+   "updated": "2026-09-24T14:33:42.642Z",
+   "evidence": "10,198행·DIY 60, test 181, 1회차 대비 날짜 교정 12건·모호 원문만 제외 42건(행 대조), 교차 리뷰 sol 반복 → 반례 테스트 고정, 3f45a36"
   },
   "T-101": {
    "status": "todo"
@@ -109,7 +109,8 @@
   },
   "T-202": {
    "status": "running",
-   "updated": "2026-09-24T13:59:40.626Z"
+   "updated": "2026-09-24T13:59:40.626Z",
+   "note": "BLOCKED 해소 후 DONE, 게이트 2 test 125, 게이트 3 FAIL(sol: 확률 표시 0%/100% High, 날씨 null 우천 Med) → 피드백 1회차"
   },
   "T-203": {
    "status": "todo"
@@ -169,7 +170,8 @@
    "evidence": "되돌림 1회차: 메서드 명시·계약 오류 응답·.env, test 79·build·lint, 교차 리뷰 sol PASS"
   },
   "T-302": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T14:30:43.186Z"
   },
   "T-303": {
    "status": "todo"
@@ -203,7 +205,7 @@
   "T-502": {
    "status": "running",
    "updated": "2026-09-24T13:59:40.795Z",
-   "note": "PARTIAL(App.php 연결 — 오케스트레이터 처리, 실서버 확인), 게이트 3 FAIL(astra: 스냅샷 id 일치 High, tombstone 조회·INF Med) → 피드백 1회차"
+   "note": "피드백 1회차 해결 확인, 재리뷰 FAIL(astra: 카드 투영·예보서 참조 무결성 High 2, 정렬 Med) → 계약 규칙 PHP 이식 피드백 2회차(마지막)"
   },
   "T-504": {
    "status": "todo"
@@ -631,6 +633,17 @@
    "id": "T-301",
    "status": "done",
    "evidence": "되돌림 1회차: 메서드 명시·계약 오류 응답·.env, test 79·build·lint, 교차 리뷰 sol PASS"
+  },
+  {
+   "at": "2026-09-24T14:30:43.186Z",
+   "id": "T-302",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T14:33:42.642Z",
+   "id": "T-100",
+   "status": "done",
+   "evidence": "10,198행·DIY 60, test 181, 1회차 대비 날짜 교정 12건·모호 원문만 제외 42건(행 대조), 교차 리뷰 sol 반복 → 반례 테스트 고정, 3f45a36"
   }
  ]
 }
