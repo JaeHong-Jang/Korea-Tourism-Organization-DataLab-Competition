@@ -21,7 +21,13 @@ export type PlanSection = {
   claimIds: string[];
   body: string;
   lockedFields: {
-    name: string;
+    /**
+     * 잠근 수치 칸: 구간 수치는 p10·p50·p90, 단일 수치는 value
+     */
+    name: "p10" | "p50" | "p90" | "value";
+    /**
+     * 스냅샷 수치의 원래 숫자(JSON 숫자 표기 그대로) + 공백 + 단위 — 예: "21000 명". records는 스냅샷과 정확히 같지 않으면 거부한다
+     */
     value: string;
     quantityId: string;
   }[];
