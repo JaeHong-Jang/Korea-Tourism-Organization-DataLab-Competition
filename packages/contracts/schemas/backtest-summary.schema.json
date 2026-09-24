@@ -49,10 +49,15 @@
       ],
       "properties": {
         "mdape": {
-          "type": "number"
+          "type": "number",
+          "minimum": 0,
+          "description": "일평균 방문객 MdAPE — 백분율(%)"
         },
         "coverage80": {
-          "type": "number"
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "80% 구간 포함률 — 비율(0~1), 화면 표시만 ×100"
         },
         "coverageN": {
           "type": "integer"

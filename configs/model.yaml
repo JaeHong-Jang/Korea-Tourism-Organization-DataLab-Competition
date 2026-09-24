@@ -1,0 +1,19 @@
+# 평가 성적을 보기 전에 고정하는 모델·표본·롤링 분할 설정이다.
+seed: 2026
+samples: 4000
+eval_years: [2024, 2025]
+exclude_covid: true
+silver_weight: 0.5
+gold_weight: 1.0
+min_train_rows: 20
+min_calibration_rows: 10
+# 실제 공개일·문서 버전은 미입증이며 민감도 평가에만 쓰는 파일명 날짜다.
+event_filename_dates:
+  2018: '2018-06-05'
+  2019: '2019-02-27'
+  2025: '2025-03-21'
+lightgbm:
+  num_leaves: 15
+  min_child_samples: 10 # LightGBM의 min_data_in_leaf와 같은 설정이다.
+  n_estimators: 100
+  learning_rate: 0.05

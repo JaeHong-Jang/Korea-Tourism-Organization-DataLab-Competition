@@ -10,7 +10,7 @@ from typing import Any
 import httpx
 from crowdcast.data.call_ledger import korea_today
 from crowdcast.data.datago_client import DataGoError, TransientDataGoError, safe_error
-from crowdcast.pipeline import run_record, stages
+from crowdcast.pipeline import gates, run_record, stages
 
 
 # 공개 단계는 모든 선행 단계의 실제 통과가 확인될 때만 통과시킨다.
@@ -54,6 +54,7 @@ def run_stage(
     dry: bool,
     client: stages.VisitorClient | None,
     files: list[Path],
+    baseline: tuple[Any, str | None] = (None, None),
 ) -> dict[str, Any]:
     if name == "publish":
         return publish_gate(record, dry)
@@ -70,7 +71,7 @@ def run_stage(
             gate = (
                 stages.inspect_stage(name, korea_today())
                 if dry
-                else stages.execute_stage(name, korea_today(), client, files, history)
+                else stages.execute_stage(name, korea_today(), client, files, history, baseline)
             )
         except Exception as exc:
             gate = {"passed": False, "message": f"{type(exc).__name__}: {safe_error(exc)}"}
@@ -100,6 +101,18 @@ def run_stage(
     return {"passed": gate["passed"], "message": " | ".join(messages)}
 
 
+# 악화 없는 백테스트 후보를 승격하고, 승격이 실패하면 사용 모델을 그대로 둔 채 단계를 실패로 바꾼다.
+def promote_candidate(stage: dict[str, Any], gate: dict[str, Any], files: list[Path]) -> None:
+    verdict = "통과" if gate["passed"] else "미검증"
+    try:
+        stages.promote(next(path for path in files if path.name == "backtest.json"), verdict)
+    except Exception as exc:
+        gate["passed"], stage["status"] = False, "failed"
+        gate["message"] += f"; 사용 모델 승격 실패: {type(exc).__name__}: {safe_error(exc)}"
+        return
+    gate["message"] += f"; 사용 모델로 승격({verdict})"
+
+
 # 인자·범위를 먼저 검증해 잘못된 요청은 기록과 산출물을 만들지 않는다.
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -120,6 +133,8 @@ def main(argv: list[str] | None = None) -> int:
     run_record.write_record(record)
 
     # 각 상태 전이도 저장해 긴 실행 도중 운영 화면에서 진행 상황을 읽을 수 있게 한다.
+    # 백테스트 비교 기준은 실행 시작 때의 사용 모델 결과로 고정한다(train이 후보를 먼저 발행해도 그대로).
+    baseline = gates.promoted_result()
     with ExitStack() as stack:
         client = None
         for stage in record["stages"]:
@@ -134,7 +149,7 @@ def main(argv: list[str] | None = None) -> int:
                 if name == "fetch" and not args.dry:
                     client = stack.enter_context(stages.VisitorClient(max_calls=args.max_calls))
                 files: list[Path] = []
-                gate = run_stage(name, record, args.dry, client, files)
+                gate = run_stage(name, record, args.dry, client, files, baseline)
                 # dry와 미실행 단계에는 기존 파일을 새 산출물처럼 기록하지 않는다.
                 if not args.dry:
                     if name == "fetch":
@@ -148,6 +163,10 @@ def main(argv: list[str] | None = None) -> int:
             )
             stage["ms"] = (perf_counter_ns() - started) // 1_000_000
             run_record.write_record(record)
+            # 산출물 기록을 저장한 뒤에만 악화 없는 후보를 사용 모델로 승격한다(실패하면 단계 실패).
+            if name == "backtest" and stage["status"] != "failed" and stage.get("artifacts") and not args.dry:
+                promote_candidate(stage, gate, files)
+                run_record.write_record(record)
             print(f"{name}: {stage['status']} — {gate['message']}", flush=True)
             if stage["status"] == "failed":
                 break

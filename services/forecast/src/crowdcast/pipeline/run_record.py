@@ -14,12 +14,17 @@ from crowdcast.data.call_ledger import KST, atomic_write
 FETCH_STATE_MARKER = "; 수집 상태 JSON: "
 
 
-# 모델 카드가 지정한 버전의 파일만 모아 다른 학습 실행의 산출물을 섞지 않는다.
-def model_files() -> list[Path]:
-    card = paths.MODELS / "model_card.json"
-    if not card.is_file():
-        return []
-    version = json.loads(card.read_bytes())["modelVersion"]
+# 후보 = 마지막 완료 실행(latest.json), 사용 모델 = 백테스트 게이트를 악화 없이 지난 실행(promoted.json).
+CANDIDATE_POINTER = "backtest/latest.json"
+PROMOTED_POINTER = "backtest/promoted.json"
+
+
+# 포인터가 가리키는 모델 버전 폴더를 찾는다(기본은 이번 실행의 후보).
+def model_directory(pointer_name: str = CANDIDATE_POINTER) -> Path | None:
+    pointer = paths.REPORTS / pointer_name
+    if not pointer.is_file():
+        return None
+    version = json.loads(pointer.read_bytes())["modelVersion"]
     if (
         not isinstance(version, str)
         or not version
@@ -27,7 +32,14 @@ def model_files() -> list[Path]:
         or version.startswith(".")
     ):
         raise ValueError("모델 버전은 models/ 아래 디렉터리 이름이어야 합니다")
-    directory = paths.MODELS / version
+    return paths.MODELS / version
+
+
+# 포인터가 가리키는 버전의 파일만 모아 다른 학습 실행의 산출물을 섞지 않는다.
+def model_files() -> list[Path]:
+    directory = model_directory()
+    if directory is None or not directory.is_dir():
+        return []
     return [
         path
         for path in directory.rglob("*")
@@ -40,19 +52,13 @@ def current_outputs(required: tuple[str, ...], started_ns: int) -> list[Path]:
     roots = {"data": paths.DATA, "models": paths.MODELS, "reports": paths.REPORTS}
     files = []
     for relative in required:
-        if relative == "models/{modelVersion}/**/*":
-            candidates = model_files()
-            if not candidates:
-                raise ValueError("필수 산출물 없음: models/<modelVersion>/ 모델 파일")
-        else:
-            root, _, name = relative.partition("/")
-            candidates = [roots[root] / name]
-        for path in candidates:
-            if not path.is_file():
-                raise ValueError(f"필수 산출물 없음: {relative}")
-            if path.stat().st_mtime_ns < started_ns:
-                raise ValueError(f"이번 단계에서 갱신되지 않은 산출물: {artifact_path(path)}")
-            files.append(path)
+        root, _, name = relative.partition("/")
+        path = roots[root] / name
+        if not path.is_file():
+            raise ValueError(f"필수 산출물 없음: {relative}")
+        if path.stat().st_mtime_ns < started_ns:
+            raise ValueError(f"이번 단계에서 갱신되지 않은 산출물: {artifact_path(path)}")
+        files.append(path)
     return files
 
 
@@ -106,9 +112,11 @@ def artifact_path(path: Path) -> str:
     for prefix, root in (("data", paths.DATA), ("models", paths.MODELS), ("reports", paths.REPORTS)):
         if resolved.is_relative_to(root.resolve()):
             return f"{prefix}/{resolved.relative_to(root.resolve()).as_posix()}"
-    # reports/runs만 링크된 워크트리에서도 본 레포의 절대 경로를 노출하지 않는다.
-    if resolved.is_relative_to((paths.REPORTS / "runs").resolve()):
-        return "reports/runs/" + resolved.relative_to((paths.REPORTS / "runs").resolve()).as_posix()
+    # reports/runs·reports/backtest만 링크된 워크트리에서도 본 레포의 절대 경로를 노출하지 않는다.
+    for linked in ("runs", "backtest"):
+        folder = (paths.REPORTS / linked).resolve()
+        if resolved.is_relative_to(folder):
+            return f"reports/{linked}/" + resolved.relative_to(folder).as_posix()
     raise ValueError("산출물은 data/·models/·reports/ 안에 있어야 합니다")
 
 

@@ -59,7 +59,11 @@ def judge(
     samples: Sequence[float] | NDArray[np.float64],
     event: Mapping[str, Any],
     weather: Mapping[str, Any] | None = None,
+    *,
+    basis: str = "확률",
 ) -> JudgmentResult:
+    if basis not in {"확률", "구간"}:
+        raise ValueError("판정 표시 방식은 확률 또는 구간이어야 합니다.")
     values = _peak_samples(samples)
     settings = rule_settings()
     thresholds = settings["thresholds"]
@@ -93,6 +97,13 @@ def judge(
         level = 4
         applied.append(("rule-internal-5000", "text"))
 
+    # 같은 표본의 구간을 근거 생성 전에 적용해 근거 입력에도 확률 문구가 남지 않게 한다.
+    interval_display = None
+    if basis == "구간":
+        p10, p90 = np.quantile(values, [0.1, 0.9])
+        interval_display = settings["interval_display"].format(p10=float(p10), p90=float(p90))
+        probabilities = [{**item, "display": interval_display} for item in probabilities]
+
     # 고정 템플릿 사유마다 조항과 입력을 가진 근거 조각을 하나씩 붙인다.
     reasons, evidence = [], []
     inputs = {
@@ -105,6 +116,8 @@ def judge(
     for rule_id, text_key in applied:
         rule = settings["rules"][rule_id]
         text = rule[text_key]
+        if interval_display is not None:
+            text = f"{rule.get('interval_' + text_key, text)} {interval_display}"
         fragment = rule_evidence(rule_id, inputs, text=text)
         reasons.append(
             {
@@ -127,10 +140,12 @@ def judge(
             {**traffic, "ruleId": "rule-internal-5000", "evidenceIds": [traffic_evidence]}
         )
     judgment = {
+        "basis": basis,
         "level": level,
         "label": settings["labels"][level],
         "ruleIds": [reason["ruleId"] for reason in reasons],
         "reasons": reasons,
         "checklist": checks.checklist,
     }
+
     return JudgmentResult(judgment, probabilities, evidence)

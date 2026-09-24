@@ -57,6 +57,9 @@ def write_backtest(current: dict | None = None) -> Path:
     directory.mkdir(parents=True, exist_ok=True)
     summary = directory / "backtest.json"
     summary.write_text(json.dumps(current))
+    # 실제 백테스트처럼 보고서·점수 파일도 함께 둔다(파이프라인은 세 파일을 모두 요구한다).
+    (directory / "backtest.md").write_text("# 합성 백테스트\n", encoding="utf-8")
+    pl.DataFrame({"eventId": ["e-yeoncheon-2025"]}).write_parquet(directory / "points.parquet")
     (directory.parent / "latest.json").write_text(
         json.dumps(
             {
@@ -139,8 +142,8 @@ def golden_cases() -> list[dict]:
     ]
 
 
-# 표시 지표는 백분율로 고정해 비율과 %p를 섞지 않는다.
-def backtest(mdape: float = 12.5, coverage: float = 80) -> dict:
+# 계약 단위 그대로 — MdAPE는 %, 포함률은 비율(0~1).
+def backtest(mdape: float = 12.5, coverage: float = 0.8) -> dict:
     return {
         "runId": "backtest-2025",
         "modelRunId": "mr-2025",
@@ -159,3 +162,25 @@ def backtest(mdape: float = 12.5, coverage: float = 80) -> dict:
         "points": [],
         "golden": golden_cases(),
     }
+
+
+# 일괄 예보가 쓰는 모델: 계약 예시 카드를 그 버전 폴더에 두고 후보·사용 모델 포인터가 모두 가리키게 한다.
+def write_model() -> Path:
+    fixture = paths.REPO_ROOT / "packages/contracts/fixtures/model-card/valid-v0-1-0.json"
+    card = json.loads(fixture.read_bytes())
+    directory = paths.MODELS / card["modelVersion"]
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "model_card.json").write_text(json.dumps(card))
+    summary = backtest()
+    summary["modelVersion"] = card["modelVersion"]
+    write_backtest(summary)
+    write_promoted(summary)
+    return directory / "model_card.json"
+
+
+# 백테스트 게이트를 지난 것처럼 사용 모델 포인터를 쓴다.
+def write_promoted(current: dict) -> Path:
+    path = paths.REPORTS / "backtest/promoted.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"runId": current["runId"], "modelVersion": current["modelVersion"]}))
+    return path
