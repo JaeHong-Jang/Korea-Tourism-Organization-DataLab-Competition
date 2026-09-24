@@ -79,7 +79,8 @@
    "evidence": "10,198행·DIY 60, test 181, 1회차 대비 날짜 교정 12건·모호 원문만 제외 42건(행 대조), 교차 리뷰 sol 반복 → 반례 테스트 고정, 3f45a36"
   },
   "T-101": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T15:00:28.274Z"
   },
   "T-102": {
    "status": "todo"
@@ -171,7 +172,8 @@
   },
   "T-302": {
    "status": "running",
-   "updated": "2026-09-24T14:30:43.186Z"
+   "updated": "2026-09-24T14:30:43.186Z",
+   "note": "게이트 2 test 124, 기본 모델 qwen3 4b로 오케스트레이터 결정(05 §4-2), 게이트 3 FAIL(sol: 내년 계산 High, 보고서 추천 충돌 High, 중첩 금액 Med) → 피드백 1회차"
   },
   "T-303": {
    "status": "todo"
@@ -211,7 +213,8 @@
    "status": "todo"
   },
   "T-503": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T15:02:44.563Z"
   },
   "T-505": {
    "status": "todo"
@@ -222,8 +225,9 @@
    "evidence": "R-02 3차 PASS(sol): 1차 High(게이트웨이 메서드)→T-301 되돌림 해결, 2차 High(dev.mjs .env)→직접 수정 해결, 새 결함 0, Med·Low는 backlog"
   },
   "T-430": {
-   "status": "running",
-   "updated": "2026-09-24T14:41:08.577Z"
+   "status": "done",
+   "updated": "2026-09-24T15:02:21.395Z",
+   "evidence": "test 20·build·lint·색 하드코딩 0, 스크린샷 낮·밤 직접 확인, 교차 리뷰 astra PASS"
   },
   "T-401": {
    "status": "done",
@@ -231,7 +235,8 @@
    "evidence": "게이트 1~4 통과: build·test 4·lint·e2e 10·스크린샷 9(직접 확인)·Range 206·색 하드코딩 0, 교차 리뷰 astra PASS(Med 4 → T-402 이월), d5db41a"
   },
   "T-402": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T15:02:48.576Z"
   },
   "R-03": {
    "status": "todo"
@@ -679,6 +684,27 @@
    "id": "R-02",
    "status": "done",
    "evidence": "R-02 3차 PASS(sol): 1차 High(게이트웨이 메서드)→T-301 되돌림 해결, 2차 High(dev.mjs .env)→직접 수정 해결, 새 결함 0, Med·Low는 backlog"
+  },
+  {
+   "at": "2026-09-24T15:00:28.274Z",
+   "id": "T-101",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:02:21.395Z",
+   "id": "T-430",
+   "status": "done",
+   "evidence": "test 20·build·lint·색 하드코딩 0, 스크린샷 낮·밤 직접 확인, 교차 리뷰 astra PASS"
+  },
+  {
+   "at": "2026-09-24T15:02:44.563Z",
+   "id": "T-503",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:02:48.576Z",
+   "id": "T-402",
+   "status": "running"
   }
  ]
 }

@@ -137,3 +137,22 @@
     --dur-daynight: 0ms;
   }
 }
+
+/* 3D 미니 대한민국(장난감 재질, docs/plan/04 §3-6·§9) — 재질 색은 테마와 무관하고 낮·노을·밤은 조명·하늘로 바꾼다.
+   땅 5색은 지역마다 번갈아 칠하는 장식색이다(데이터 의미 없음). 데이터 모드는 순차형 파랑을 쓴다 */
+:root {
+  --scene-land-1: #efe6d2;
+  --scene-land-2: #e2e8c8;
+  --scene-land-3: #f1dfc4;
+  --scene-land-4: #d8e3c7;
+  --scene-land-5: #ebe2cc;
+  --scene-land-edge: #cbbd9c;
+  --scene-sea: #9ecac5;
+  --scene-board-top: #c89c6c;
+  --scene-board-side: #a47a4f;
+  --scene-sky-day: #dde9f1;
+  --scene-sky-dusk: #f0c7a6;
+  --scene-sky-night: #1a2335;
+  --scene-window-glow: #ffd98a;
+  --scene-shadow: rgba(40, 30, 20, 0.28);
+}
