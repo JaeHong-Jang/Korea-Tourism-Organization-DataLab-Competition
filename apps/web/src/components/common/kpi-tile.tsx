@@ -2,6 +2,7 @@
 import type { OpsStatus } from "@crowdcast/contracts/types";
 import { formatQuantity } from "../../lib/format";
 import { ComponentState, type ComponentStatus } from "./component-state";
+import { SourceTip } from "./source-tip";
 
 // 운영 화면은 이미 집계된 계약 필드만 골라 출력한다.
 export function KpiTile({
@@ -37,6 +38,9 @@ export function KpiTile({
     >
       <span className="kit-label">{labels[metric]}</span>
       <strong>{formatQuantity(value, "건")}</strong>
+      {metric !== "masterTriples" && ops.evals && (
+        <SourceTip evaluation={ops.evals} />
+      )}
     </article>
   );
 }

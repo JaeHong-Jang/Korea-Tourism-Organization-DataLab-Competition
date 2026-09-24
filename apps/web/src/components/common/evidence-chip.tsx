@@ -56,16 +56,19 @@ export function EvidenceChip({
     className: "evidence-chip",
     title: evidence.summary,
     "aria-label": `근거 ${resolvedNumber}, ${label}: ${evidence.title}`,
+    "aria-description": evidence.summary,
   };
-  return onOpen ? (
-    <button type="button" {...props} onClick={() => onOpen(evidence.id)}>
-      {content}
-    </button>
-  ) : (
+  return (
     <a
       {...props}
       href={`#evidence-${evidence.id}`}
-      onClick={() => {
+      // 화면이 여는 방식을 주면 그쪽에 맡기고, 없으면 기본 앵커 이동에 접힌 카드만 펼친다
+      onClick={(event) => {
+        if (onOpen) {
+          event.preventDefault();
+          onOpen(evidence.id);
+          return;
+        }
         const card = document.getElementById(`evidence-${evidence.id}`);
         if (card instanceof HTMLDetailsElement) card.open = true;
       }}

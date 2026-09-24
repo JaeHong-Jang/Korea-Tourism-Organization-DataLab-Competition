@@ -82,6 +82,7 @@ export function RangeBar({
       className={`range-bar${mini ? " range-bar--mini" : ""}`}
       aria-label={rangeText}
     >
+      <p className="range-bar__axis-label">로그 눈금</p>
       <div className="range-bar__track">
         <button
           type="button"
@@ -126,6 +127,10 @@ export function RangeBar({
           </span>
         ))}
       </div>
+      <p className="range-bar__legend">
+        구간 p10–p90 · 중앙 p50 · 기준선
+        {hostValue != null ? " · ▲ 주최측 예상" : ""}
+      </p>
       <figcaption>
         {mini ? `${formatPeople(middle)} · 추정 산식 기반` : rangeText}
       </figcaption>

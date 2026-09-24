@@ -10,11 +10,13 @@ export function FactorList({
   factors,
   evidence = [],
   evidenceOrder,
+  onOpen,
   status = "ready",
 }: {
   factors?: Factor[] | null;
   evidence?: Evidence[];
   evidenceOrder?: readonly Evidence[];
+  onOpen?: (id: string) => void;
   status?: ComponentStatus;
 }) {
   if (status !== "ready" || !factors?.length)
@@ -53,6 +55,7 @@ export function FactorList({
                   key={id}
                   evidence={item}
                   evidenceOrder={evidenceOrder ?? evidence}
+                  onOpen={onOpen}
                 />
               ) : null;
             })}

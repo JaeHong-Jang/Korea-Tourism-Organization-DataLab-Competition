@@ -64,6 +64,9 @@ describe("구간 차트", () => {
     );
     expect(range).toContain('<span style="left:60%">기준 1,000명');
     expect(range).toContain("값 표 보기");
+    expect(range).toContain("로그 눈금");
+    expect(range).toContain("구간 p10–p90 · 중앙 p50 · 기준선");
+    expect(range).not.toContain("▲ 주최측 예상");
     expect(range).toContain("aria-label=");
   });
 

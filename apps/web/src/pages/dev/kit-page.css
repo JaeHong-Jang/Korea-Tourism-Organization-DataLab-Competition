@@ -3,7 +3,7 @@
 .kit-layout { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: var(--space-6); align-items: start; }
 .kit-hero { grid-column: 1 / -1; padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .kit-hero__row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
-.kit-column { display: grid; gap: var(--space-4); min-width: 0; }
+.kit-column { display: grid; gap: var(--space-6); min-width: 0; }
 .kit-column > .kit-screen-state { min-height: 210px; }
 .kit-evidence-gallery { margin-top: var(--space-8); }
 .kit-evidence-gallery h2 { font-size: var(--text-section); }
