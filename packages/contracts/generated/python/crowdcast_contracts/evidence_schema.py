@@ -20,7 +20,7 @@ class Kind(Enum):
     check = 'check'
 
 
-class Kind2(Enum):
+class CheckKind(Enum):
     evidence = 'evidence'
     number = 'number'
     rule = 'rule'
@@ -28,11 +28,11 @@ class Kind2(Enum):
     ood = 'ood'
 
 
-class Check(BaseModel):
+class CheckResult(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    kind: Kind2
+    checkKind: CheckKind
     passed: bool
     revision: Annotated[int, Field(ge=0)]
 
@@ -41,16 +41,18 @@ class Evidence(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    id: common_schema.Id
+    id: common_schema.EvidenceId
     kind: Kind
     title: str
     summary: str
-    quantityIds: list[common_schema.Id]
+    quantityIds: list[common_schema.QuantityId]
+    period: common_schema.Period | None
     source: common_schema.Source | None
     availableAt: common_schema.Date | None
-    ruleId: common_schema.Id | None
-    clauseId: common_schema.Id | None
-    caseEventId: common_schema.Id | None
-    assumptionId: common_schema.Id | None
+    ruleId: common_schema.RuleId | None
+    clauseId: common_schema.ClauseId | None
+    caseEventId: common_schema.EventId | None
+    assumptionId: common_schema.AssumptionId | None
+    forecastId: common_schema.ForecastId | None
     modelVersion: str | None
-    check: Check | None
+    checkResult: CheckResult | None

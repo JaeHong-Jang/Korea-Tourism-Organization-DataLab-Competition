@@ -27,21 +27,21 @@ class Reason(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    ruleId: common_schema.Id
+    ruleId: common_schema.RuleId
     kind: Kind
     text: str
-    clauseId: common_schema.Id | None
-    evidenceId: common_schema.Id
+    clauseId: common_schema.ClauseId | None
+    evidenceId: common_schema.EvidenceId
 
 
 class ChecklistItem(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    id: common_schema.Id
+    id: common_schema.ChecklistId
     text: str
-    ruleId: common_schema.Id
-    evidenceIds: Annotated[list[common_schema.Id], Field(min_length=1)]
+    ruleId: common_schema.RuleId
+    evidenceIds: Annotated[list[common_schema.EvidenceId], Field(min_length=1)]
 
 
 class Judgment(BaseModel):
@@ -50,5 +50,6 @@ class Judgment(BaseModel):
     )
     level: common_schema.Level
     label: Label
+    ruleIds: Annotated[list[common_schema.RuleId], Field(min_length=1)]
     reasons: Annotated[list[Reason], Field(min_length=1)]
     checklist: list[ChecklistItem]

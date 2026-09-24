@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/agent-step.schema.json",
+  "title": "에이전트 작업 기록",
+  "description": "펫을 누르면 보이는 작업 기록(M2-F3-c). 근거·문장은 id만 담는다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "stepId",
+    "agentId",
+    "team",
+    "startedAt",
+    "finishedAt",
+    "ms",
+    "status",
+    "inputSummary",
+    "outputEvidenceIds",
+    "outputClaimIds",
+    "usedLlm",
+    "model",
+    "note"
+  ],
+  "properties": {
+    "stepId": {
+      "$ref": "common.schema.json#/$defs/stepId"
+    },
+    "agentId": {
+      "$ref": "common.schema.json#/$defs/agentId"
+    },
+    "team": {
+      "$ref": "common.schema.json#/$defs/team"
+    },
+    "startedAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "finishedAt": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/datetime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ms": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "running",
+        "done",
+        "blocked",
+        "error"
+      ]
+    },
+    "inputSummary": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "outputEvidenceIds": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/evidenceId"
+      }
+    },
+    "outputClaimIds": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/claimId"
+      }
+    },
+    "usedLlm": {
+      "type": "boolean"
+    },
+    "model": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 120
+    }
+  }
+}

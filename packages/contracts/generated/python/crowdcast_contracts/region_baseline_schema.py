@@ -7,7 +7,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import common_schema
+from . import common_schema, evidence_schema
 
 
 class WeekdayMeanItem(BaseModel):
@@ -29,4 +29,5 @@ class RegionBaseline(BaseModel):
     period: common_schema.Period
     weekdayMean: Annotated[list[WeekdayMeanItem], Field(max_length=7, min_length=7)]
     nonlocalShare: Annotated[float, Field(ge=0.0, le=1.0)]
-    evidenceId: common_schema.Id
+    evidenceId: common_schema.EvidenceId
+    evidence: Annotated[list[evidence_schema.Evidence], Field(min_length=1)]

@@ -20,6 +20,7 @@ class Check(Enum):
     number = 'number'
     rule = 'rule'
     uncertainty = 'uncertainty'
+    integrity = 'integrity'
 
 
 class Violation(BaseModel):
@@ -39,4 +40,5 @@ class GateReport(BaseModel):
     gate: Gate
     passed: bool
     revision: Annotated[int, Field(ge=0)]
+    masterVersion: Annotated[int, Field(ge=1)]
     violations: list[Violation]

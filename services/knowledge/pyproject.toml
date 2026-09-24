@@ -14,6 +14,7 @@ dependencies = [
   "pyoxigraph>=0.4",
   "python-dotenv>=1.0",
   "jsonschema>=4.23",
+  "pyld>=2.0.4",
 ]
 
 [dependency-groups]

@@ -1,8 +1,8 @@
-# 인파예보 knowledge 서비스 OpenAPI — 스키마는 ../schemas를 참조한다(계약 정본)
+# 인파예보 knowledge 서비스 OpenAPI v1.1 — 스키마는 ../schemas를 참조한다(계약 정본)
 openapi: 3.1.0
 info:
   title: 인파예보 근거 그래프 서비스
-  version: 0.1.0
+  version: 1.1.0
 servers:
   - url: http://127.0.0.1:8020
 paths:
@@ -11,13 +11,14 @@ paths:
       summary: 상태 확인
       responses:
         "200":
-          description: 정상
+          description: 성공
           content:
             application/json:
               schema:
                 type: object
                 required:
                   - status
+                  - version
                 properties:
                   status:
                     const: ok
@@ -25,13 +26,14 @@ paths:
                     type: string
   /v1/sessions/{id}/facts:
     post:
-      summary: JSON-LD 조각 적재 → 새 revision
+      summary: 계약 JSON 적재(types.json 규칙으로 RDF 변환, 참조 무결성 검사) → 새 revision
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
+            pattern: ^s-
       requestBody:
         required: true
         content:
@@ -39,10 +41,19 @@ paths:
             schema:
               type: object
               required:
-                - "@graph"
+                - schema
+                - items
               properties:
-                "@graph":
+                schema:
+                  enum:
+                    - forecast
+                    - claim
+                    - evidence
+                    - similar-event
+                    - region-baseline
+                items:
                   type: array
+                  minItems: 1
       responses:
         "200":
           description: 성공
@@ -55,22 +66,35 @@ paths:
                 properties:
                   revision:
                     type: integer
+        "422":
+          description: 끊긴 참조 — 적재 거부(gate-report의 integrity 위반)
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/gate-report.schema.json
   /v1/sessions/{id}/validate:
     post:
-      summary: SHACL 검증(세션 revision + 기준 그래프 버전)
+      summary: SHACL 검증 — 범위 = 세션 revision 스냅샷 + 기준 그래프 masterVersion + TBox
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
+            pattern: ^s-
         - name: revision
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: masterVersion
           in: query
           required: true
           schema:
             type: integer
         - name: shapes
           in: query
+          required: false
           schema:
             type: string
       responses:
@@ -80,16 +104,24 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/gate-report.schema.json
+        "409":
+          description: revision 또는 masterVersion이 현재와 다름
   /v1/sessions/{id}/publish:
     post:
-      summary: S12 확인 후 candidate → published(원자적)
+      summary: S12 확인 후 candidate → published(한 트랜잭션). 검증한 revision·masterVersion과 같아야 한다
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
+            pattern: ^s-
         - name: revision
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: masterVersion
           in: query
           required: true
           schema:
@@ -102,7 +134,7 @@ paths:
               schema:
                 $ref: ../schemas/gate-report.schema.json
         "409":
-          description: revision이 바뀌어 거부
+          description: revision·masterVersion이 바뀌어 거부
   /v1/sessions/{id}/graph:
     get:
       summary: 발행된 부분의 세션 그래프(JSON-LD)
@@ -112,6 +144,7 @@ paths:
           required: true
           schema:
             type: string
+            pattern: ^s-
       responses:
         "200":
           description: 성공
@@ -128,6 +161,7 @@ paths:
           required: true
           schema:
             type: string
+            pattern: ^c-
       responses:
         "200":
           description: 성공
@@ -137,25 +171,42 @@ paths:
                 type: array
                 items:
                   $ref: ../schemas/evidence.schema.json
-  /v1/stats/datalab-usage:
+  /v1/evidence/{id}:
     get:
-      summary: 데이터랩 메뉴별 근거 사용·연결 비율
+      summary: 근거 하나
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^ev-
       responses:
         "200":
           description: 성공
           content:
             application/json:
               schema:
-                type: object
+                $ref: ../schemas/evidence.schema.json
+  /v1/stats/datalab-usage:
+    get:
+      summary: 근거 통계(전체 연결률·데이터랩까지 이어지는 비율)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/datalab-usage.schema.json
   /v1/master/model-runs:
     post:
-      summary: 모델 카드 등록
+      summary: 모델 카드를 기준 그래프에 등록(masterVersion 증가)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              $ref: ../schemas/model-card.schema.json
       responses:
         "200":
           description: 성공
@@ -163,6 +214,26 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - masterVersion
+                properties:
+                  masterVersion:
+                    type: integer
+  /v1/master/version:
+    get:
+      summary: 현재 기준 그래프 버전
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - masterVersion
+                properties:
+                  masterVersion:
+                    type: integer
   /v1/ontology:
     get:
       summary: 온톨로지(TTL)

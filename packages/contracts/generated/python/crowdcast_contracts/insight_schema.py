@@ -8,7 +8,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import common_schema
+from . import common_schema, evidence_schema
 
 
 class Key(Enum):
@@ -48,5 +48,6 @@ class Insight(BaseModel):
     comparablePairs: int | None
     period: common_schema.Period
     series: list[Series]
-    evidenceIds: Annotated[list[common_schema.Id], Field(min_length=1)]
+    evidenceIds: Annotated[list[common_schema.EvidenceId], Field(min_length=1)]
+    evidence: Annotated[list[evidence_schema.Evidence], Field(min_length=1)]
     computedAt: common_schema.Datetime

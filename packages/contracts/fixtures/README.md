@@ -1,4 +1,5 @@
 # 계약 픽스처
 
-- `valid-*.json`은 통과해야 하고 `invalid-*.json`은 거부되어야 한다. `npm run contracts:check`가 TS(Ajv 2020)·Python(jsonschema)·PHP(opis)에서 같은 판정인지 확인한다.
-- 값은 계약 검사용 **예시**다(실측·예측 결과가 아니다). 영종 불꽃축제 2025는 골든 사례 형식을 보여 주기 위한 이름이다.
+- `fixtures/`: `valid-*`는 스키마를 통과하고 `invalid-*`는 거부되어야 한다. TS(Ajv)·Python(jsonschema)·PHP(opis)가 같은 판정이어야 한다.
+- `../fixtures-integrity/`: 스키마는 통과하지만 **문서 안 id 참조가 끊긴** 경우. 참조 무결성 검사(`scripts/check.mjs`)와 근거 그래프 적재가 거부해야 한다.
+- 값은 계약 검사용 **예시**다(실측·예측 결과가 아니다).

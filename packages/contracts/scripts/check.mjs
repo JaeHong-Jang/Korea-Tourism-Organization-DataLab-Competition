@@ -55,6 +55,55 @@ for (const key of Object.keys(ts).sort()) {
   rows.push(`${ok ? "✓" : "✗"} ${key.padEnd(46)} 기대 ${expect ? "통과" : "거부"}  TS ${got[0]} · PY ${got[1]} · PHP ${got[2]}`);
 }
 
+// 참조 무결성: 문서 안에서 가리키는 id가 같은 문서에 있어야 한다(스키마로는 못 잡는 끊긴 참조)
+function refProblems(doc, kind) {
+  const f = kind === "forecast-report" ? doc.forecast : doc;
+  const ids = (xs) => new Set((xs ?? []).map((x) => x.id));
+  const ev = ids(kind === "forecast-report" ? doc.evidence : f.evidence);
+  const obs = ids(f.observations);
+  const asm = ids(f.assumptions);
+  const qty = new Set([f.dailyMean?.id, f.peakConcurrent?.id]);
+  const out = [];
+  for (const o of f.predictionRun?.observationIds ?? []) if (!obs.has(o)) out.push(`observationIds → ${o}`);
+  for (const fa of f.factors ?? []) for (const e of fa.evidenceIds) if (!ev.has(e)) out.push(`factor ${fa.id} → ${e}`);
+  for (const r of f.judgment?.reasons ?? []) if (!ev.has(r.evidenceId)) out.push(`reason ${r.ruleId} → ${r.evidenceId}`);
+  for (const ck of f.judgment?.checklist ?? []) for (const e of ck.evidenceIds) if (!ev.has(e)) out.push(`checklist ${ck.id} → ${e}`);
+  for (const q of [f.dailyMean, f.peakConcurrent]) for (const a of q?.assumptionIds ?? []) if (!asm.has(a)) out.push(`${q.id} → ${a}`);
+  for (const e of f.evidence ?? []) for (const q of e.quantityIds) if (!qty.has(q)) out.push(`evidence ${e.id} → ${q}`);
+  if (kind === "forecast-report") {
+    for (const c of doc.claims) {
+      for (const e of c.evidenceIds) if (!ev.has(e)) out.push(`claim ${c.id} → ${e}`);
+      for (const ph of c.placeholders) {
+        const target = [f.dailyMean, f.peakConcurrent].find((q) => q?.id === ph.quantityId);
+        if (!target || target[ph.field] === null || target[ph.field] === undefined) out.push(`claim ${c.id} 자리표시자 ${ph.name} → ${ph.quantityId}.${ph.field}`);
+      }
+    }
+  }
+  return out;
+}
+const integrityDir = join(ROOT, "fixtures-integrity");
+for (const kind of existsSync(integrityDir) ? readdirSync(integrityDir) : []) {
+  const validate = ajv.getSchema(schemas[kind].$id);
+  for (const f of readdirSync(join(integrityDir, kind)).sort()) {
+    const doc = JSON.parse(readFileSync(join(integrityDir, kind, f), "utf8"));
+    const schemaOk = validate(doc);
+    const problems = refProblems(doc, kind);
+    const expect = f.startsWith("valid-");
+    const ok = schemaOk && (problems.length === 0) === expect;
+    if (!ok) errors.push(`무결성 ${kind}/${f}: 스키마 ${schemaOk}, 끊긴 참조 ${problems.length}개(기대 ${expect ? "0" : "1개 이상"}) ${problems.join("; ")}`);
+    rows.push(`${ok ? "✓" : "✗"} 무결성 ${(kind + "/" + f).padEnd(40)} 끊긴 참조 ${problems.length}`);
+  }
+}
+
+// JSON-LD 변환: types.json + 컨텍스트로 바꾼 그래프에 기대 트리플이 모두 있는지(pyld·rdflib)
+const ld = spawnSync("uv", ["run", "--no-project", "--python", "3.12", "--with", "pyld", "--with", "rdflib", "python", "check/jsonld_check.py"], { cwd: ROOT, encoding: "utf8" });
+try {
+  for (const r of JSON.parse(ld.stdout)) {
+    rows.push(`${r.missing.length ? "✗" : "✓"} JSON-LD ${r.expected.padEnd(38)} 트리플 ${r.triples} · 기대 ${r.checked} · 빠짐 ${r.missing.length}`);
+    for (const m of r.missing) errors.push(`JSON-LD ${r.expected}: 빠진 트리플 ${m.join(" ")}`);
+  }
+} catch { errors.push(`JSON-LD 검사 실패: ${(ld.stderr || ld.stdout).slice(-400)}`); }
+
 // OpenAPI의 $ref가 실제 스키마 파일을 가리키는지 본다
 const openapiDir = join(ROOT, "openapi");
 for (const f of existsSync(openapiDir) ? readdirSync(openapiDir).filter((x) => x.endsWith(".yaml")) : []) {

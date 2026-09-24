@@ -1,8 +1,8 @@
-# 인파예보 gateway 서비스 OpenAPI — 스키마는 ../schemas를 참조한다(계약 정본)
+# 인파예보 gateway 서비스 OpenAPI v1.1 — 스키마는 ../schemas를 참조한다(계약 정본)
 openapi: 3.1.0
 info:
   title: 인파예보 게이트웨이
-  version: 0.1.0
+  version: 1.1.0
 servers:
   - url: http://127.0.0.1:8787
 paths:
@@ -22,8 +22,30 @@ paths:
                 properties:
                   services:
                     type: object
+                    additionalProperties:
+                      type: object
+                      required:
+                        - ok
+                        - latencyMs
+                      properties:
+                        ok:
+                          type: boolean
+                        latencyMs:
+                          type:
+                            - integer
+                            - "null"
                   ollama:
                     type: object
+                    required:
+                      - ok
+                      - host
+                    properties:
+                      ok:
+                        type: boolean
+                      host:
+                        type:
+                          - string
+                          - "null"
   /api/team/sessions:
     post:
       summary: 상담 세션 만들기
@@ -39,6 +61,7 @@ paths:
                 properties:
                   sessionId:
                     type: string
+                    pattern: ^s-
   /api/team/sessions/{id}/messages:
     post:
       summary: 메시지 → SSE 스트림(sse-events.md)
@@ -48,6 +71,7 @@ paths:
           required: true
           schema:
             type: string
+            pattern: ^s-
       requestBody:
         required: true
         content:
@@ -70,6 +94,25 @@ paths:
             text/event-stream:
               schema:
                 $ref: ../schemas/sse-event.schema.json
+  /api/team/sessions/{id}/steps:
+    get:
+      summary: 세션의 에이전트 작업 기록(M2-F3-c)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^s-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/agent-step.schema.json
   /api/team/replay/{traceId}:
     get:
       summary: 데모 재생 SSE
@@ -110,23 +153,70 @@ paths:
                 type: object
   /api/forecasts/{id}:
     get:
-      summary: 예보서 데이터
+      summary: 발행된 예보서 전체(새로고침·공유 링크)
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
+            pattern: ^f-
       responses:
         "200":
           description: 성공
           content:
             application/json:
               schema:
-                $ref: ../schemas/forecast.schema.json
+                $ref: ../schemas/forecast-report.schema.json
+        "404":
+          description: 발행 전이거나 없음
+  /api/evidence/{id}:
+    get:
+      summary: 근거 하나(knowledge 프록시)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^ev-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/evidence.schema.json
+  /api/evidence/stats:
+    get:
+      summary: 근거 통계(M6-F5)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/datalab-usage.schema.json
   /api/weather:
     get:
       summary: 날씨(forecast 프록시)
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: at
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
       responses:
         "200":
           description: 성공
@@ -136,7 +226,7 @@ paths:
                 $ref: ../schemas/weather.schema.json
   /api/validation/backtest:
     get:
-      summary: 백테스트 요약
+      summary: 백테스트 요약(M6-F1~F3)
       responses:
         "200":
           description: 성공
@@ -144,9 +234,29 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/backtest-summary.schema.json
+  /api/validation/preregistration:
+    get:
+      summary: 사전 등록 채점판(M6-F4)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/preregistration-scores.schema.json
+  /api/validation/model-card:
+    get:
+      summary: 모델 카드(M6-F6)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/model-card.schema.json
   /api/insights/{key}:
     get:
-      summary: 인사이트
+      summary: 인사이트(M7-F1)
       parameters:
         - name: key
           in: path
@@ -160,3 +270,15 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/insight.schema.json
+  /api/ops/runs:
+    get:
+      summary: 파이프라인 실행 기록(M8-F1)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/pipeline-run.schema.json

@@ -1,0 +1,21 @@
+{
+  "event": "agent_step",
+  "seq": 4,
+  "data": {
+    "stepId": "st-local-guide-01",
+    "agentId": "local-guide",
+    "team": "analysis",
+    "startedAt": "2026-09-24T20:00:01+09:00",
+    "finishedAt": "2026-09-24T20:00:02+09:00",
+    "ms": 640,
+    "status": "done",
+    "inputSummary": "장소 \"영종 씨사이드파크\"",
+    "outputEvidenceIds": [
+      "ev-baseline-28110"
+    ],
+    "outputClaimIds": [],
+    "usedLlm": false,
+    "model": null,
+    "note": "후보 1곳"
+  }
+}

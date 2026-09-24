@@ -1,0 +1,46 @@
+{
+  "note": "계약 JSON → RDF 변환 규칙. 경로(점·[]로 구분)에 있는 객체에 @type을 붙인다. 근거(evidence)는 kind가 곧 클래스(context의 @vocab). 근거 그래프 서비스(T-601)와 계약 검사가 이 파일을 함께 쓴다",
+  "forecast": {
+    "": "cc:Forecast",
+    "dailyMean": "cc:Quantity",
+    "peakConcurrent": "cc:Quantity",
+    "predictionRun": "cc:PredictionRun",
+    "predictionRun.trainRange": "cc:Period",
+    "observations[]": "cc:Observation",
+    "assumptions[]": "cc:Assumption",
+    "probabilities[]": "cc:ProbabilityStatement",
+    "judgment": "cc:Judgment",
+    "judgment.reasons[]": "cc:JudgmentReason",
+    "judgment.checklist[]": "cc:ChecklistItem",
+    "factors[]": "cc:Factor",
+    "evidence[].source": "cc:Dataset",
+    "evidence[].period": "cc:Period",
+    "evidence[].checkResult": "cc:Check"
+  },
+  "claim": {
+    "": "cc:Claim",
+    "checks[]": "cc:Check",
+    "generatedBy": "cc:AgentStep",
+    "placeholders[]": "cc:Placeholder"
+  },
+  "evidence": {
+    "source": "cc:Dataset",
+    "period": "cc:Period",
+    "checkResult": "cc:Check"
+  },
+  "forecast-report": {
+    "": "cc:ForecastReport",
+    "@include": {
+      "forecast": "forecast",
+      "claims[]": "claim",
+      "evidence[]": "evidence"
+    },
+    "event": "cc:Event"
+  },
+  "idRules": {
+    "iri": "http://crowdcast.local/id/<id> — id는 종류 접두사를 가진다(e-·f-·ev-·c-·q-·obs-·pr-·mr-·s-·st-·rule-·law-·as-·ds-·fa-·ck-)",
+    "region": "시군구 코드 5자리 → http://crowdcast.local/id/<코드>(숫자로 시작하므로 접두사 id와 겹치지 않는다)",
+    "agent": "agentId(예 explainer) → http://crowdcast.local/id/agent-<agentId>(generatedBy 스코프의 @vocab). rule-check 같은 에이전트가 규칙 id(rule-)와 겹치지 않게 agent- 접두사를 붙인다. 기준 그래프가 cc:TeamAgent로 정의",
+    "integrity": "적재할 때 문서 안에서 가리키는 id(observationIds·evidenceIds·assumptionIds·quantityId·ruleId·clauseId)는 같은 세션 그래프나 기준 그래프에 있어야 한다. 없으면 적재 거부"
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/forecast-report.schema.json",
+  "title": "발행된 예보서",
+  "description": "발행 뒤 예보서 전체(S3 새로고침·공유 링크·스냅샷). claims는 모두 published",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "forecastId",
+    "sessionId",
+    "publishedAt",
+    "revision",
+    "masterVersion",
+    "event",
+    "card",
+    "forecast",
+    "claims",
+    "evidence",
+    "similar",
+    "baseline",
+    "layout",
+    "brief"
+  ],
+  "properties": {
+    "forecastId": {
+      "$ref": "common.schema.json#/$defs/forecastId"
+    },
+    "sessionId": {
+      "$ref": "common.schema.json#/$defs/sessionId"
+    },
+    "publishedAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "masterVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "event": {
+      "$ref": "event.schema.json"
+    },
+    "card": {
+      "$ref": "forecast-card.schema.json"
+    },
+    "forecast": {
+      "$ref": "forecast.schema.json"
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "$ref": "claim.schema.json"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "published"
+              }
+            }
+          }
+        ]
+      },
+      "minItems": 1
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "evidence.schema.json"
+      },
+      "minItems": 1
+    },
+    "similar": {
+      "type": "array",
+      "items": {
+        "$ref": "similar-event.schema.json"
+      }
+    },
+    "baseline": {
+      "anyOf": [
+        {
+          "$ref": "region-baseline.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "layout": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "slot",
+          "claimIds",
+          "evidenceIds"
+        ],
+        "properties": {
+          "slot": {
+            "enum": [
+              "judgment",
+              "numbers",
+              "explanation",
+              "similar",
+              "baseline",
+              "composition",
+              "hourly",
+              "checklist",
+              "next"
+            ]
+          },
+          "claimIds": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/claimId"
+            }
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/evidenceId"
+            }
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "brief": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claimIds",
+        "actions"
+      ],
+      "properties": {
+        "claimIds": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/claimId"
+          },
+          "maxItems": 3
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/action"
+          }
+        }
+      }
+    }
+  }
+}

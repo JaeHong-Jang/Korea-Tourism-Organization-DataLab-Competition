@@ -1,9 +1,11 @@
 /* 자동 생성 — packages/contracts/schemas에서 npm run contracts:gen 으로 만든다. 직접 고치지 않는다 */
 
 /**
- * 안전관리계획 초안의 한 섹션
+ * body = claimIds의 rendered를 순서대로 이은 것(records가 저장할 때 확인). 잠금 필드는 수치 노드를 가리킨다
  */
-export interface PlanSection {
+export type PlanSection = {
+  [k: string]: unknown;
+} & {
   key:
     | "overview"
     | "organization"
@@ -23,4 +25,4 @@ export interface PlanSection {
     value: string;
     quantityId: string;
   }[];
-}
+};

@@ -1,8 +1,8 @@
-# 인파예보 forecast 서비스 OpenAPI — 스키마는 ../schemas를 참조한다(계약 정본)
+# 인파예보 forecast 서비스 OpenAPI v1.1 — 스키마는 ../schemas를 참조한다(계약 정본)
 openapi: 3.1.0
 info:
   title: 인파예보 예측 서비스
-  version: 0.1.0
+  version: 1.1.0
 servers:
   - url: http://127.0.0.1:8010
 paths:
@@ -11,13 +11,14 @@ paths:
       summary: 상태 확인
       responses:
         "200":
-          description: 정상
+          description: 성공
           content:
             application/json:
               schema:
                 type: object
                 required:
                   - status
+                  - version
                 properties:
                   status:
                     const: ok
@@ -64,6 +65,7 @@ paths:
                       properties:
                         sigunguCode:
                           type: string
+                          pattern: ^[0-9]{5}$
                         sigunguName:
                           type: string
                         lat:
@@ -74,7 +76,7 @@ paths:
                           type: number
   /v1/predict:
     post:
-      summary: 예보(숫자·판정·요인·계보·근거)
+      summary: 예보 전체(내부용 — 게이트웨이·근거 그래프만)
       requestBody:
         required: true
         content:
@@ -88,6 +90,10 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/forecast.schema.json
+        "400":
+          description: 계약 위반 요청
+        "503":
+          description: 하위 서비스 연결 실패
   /v1/whatif:
     post:
       summary: 조건을 바꾼 예보(P1)
@@ -114,7 +120,7 @@ paths:
                 $ref: ../schemas/forecast.schema.json
   /v1/similar:
     post:
-      summary: 유사 행사
+      summary: 유사 행사(근거 조각 포함)
       requestBody:
         required: true
         content:
@@ -132,7 +138,7 @@ paths:
                   $ref: ../schemas/similar-event.schema.json
   /v1/baseline:
     get:
-      summary: 개최지 평시
+      summary: 개최지 평시(근거 조각 포함)
       parameters:
         - name: sigunguCode
           in: query
@@ -185,11 +191,13 @@ paths:
       parameters:
         - name: from
           in: query
+          required: false
           schema:
             type: string
             format: date
         - name: to
           in: query
+          required: false
           schema:
             type: string
             format: date
@@ -204,10 +212,10 @@ paths:
                   $ref: ../schemas/festival-summary.schema.json
   /v1/regions/topojson:
     get:
-      summary: 시군구 경계(TopoJSON) + 평시 지표
+      summary: 시군구 경계(TopoJSON)
       responses:
         "200":
-          description: TopoJSON
+          description: TopoJSON(admdongkor ver20251231, CC BY 4.0)
           content:
             application/json:
               schema:
@@ -228,6 +236,22 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/backtest-summary.schema.json
+  /v1/model-card/{version}:
+    get:
+      summary: 모델 카드(latest 가능)
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/model-card.schema.json
   /v1/insights/{key}:
     get:
       summary: 인사이트 지표
@@ -271,7 +295,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: ../schemas/preregistration-scores.schema.json
   /v1/runs:
     get:
       summary: 파이프라인 실행 기록
@@ -283,4 +307,4 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
+                  $ref: ../schemas/pipeline-run.schema.json

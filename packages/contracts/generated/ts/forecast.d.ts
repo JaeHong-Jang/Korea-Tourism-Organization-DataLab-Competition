@@ -1,7 +1,7 @@
 /* 자동 생성 — packages/contracts/schemas에서 npm run contracts:gen 으로 만든다. 직접 고치지 않는다 */
 
 /**
- * 근거 조각(09 §3). 종류마다 반드시 채울 필드가 다르다
+ * 근거 조각. kind(=그래프 클래스)마다 반드시 채울 필드가 다르다
  */
 export type NoName2 = {
   [k: string]: unknown;
@@ -21,15 +21,17 @@ export type NoName2 = {
   title: string;
   summary: string;
   quantityIds: string[];
+  period: Period | null;
   source: Source | null;
   availableAt: string | null;
   ruleId: string | null;
   clauseId: string | null;
   caseEventId: string | null;
   assumptionId: string | null;
+  forecastId: string | null;
   modelVersion: string | null;
-  check: {
-    kind: "evidence" | "number" | "rule" | "uncertainty" | "ood";
+  checkResult: {
+    checkKind: "evidence" | "number" | "rule" | "uncertainty" | "ood";
     passed: boolean;
     revision: number;
   } | null;
@@ -39,22 +41,24 @@ export type NoName2 = {
   title: string;
   summary: string;
   quantityIds: string[];
+  period: Period | null;
   source: Source | null;
   availableAt: string | null;
   ruleId: string | null;
   clauseId: string | null;
   caseEventId: string | null;
   assumptionId: string | null;
+  forecastId: string | null;
   modelVersion: string | null;
-  check: {
-    kind: "evidence" | "number" | "rule" | "uncertainty" | "ood";
+  checkResult: {
+    checkKind: "evidence" | "number" | "rule" | "uncertainty" | "ood";
     passed: boolean;
     revision: number;
   } | null;
 };
 
 /**
- * 예측 서비스의 결정적 결과(숫자·판정·요인·계보·근거). 화면 숫자는 이 JSON만 쓴다
+ * 예측 서비스의 결정적 결과 전체 — 게이트웨이·근거 그래프 내부용. 화면에는 게이트 A 뒤 forecast-card, 발행 뒤 forecast-report로만 나간다
  */
 export interface Forecast {
   id: string;
@@ -62,8 +66,34 @@ export interface Forecast {
   asOf: string;
   createdAt: string;
   modelVersion: string;
-  dailyMean: Quantity;
-  peakConcurrent: Quantity;
+  /**
+   * 일평균 방문객 예측(데이터랩 정의, 정답과 같은 단위)
+   */
+  dailyMean: Quantity & {
+    unit?: "명/일";
+    timeUnit?: "일";
+    estimated?: false;
+    valueKind?: "예측";
+    p10?: number;
+    p50?: number;
+    p90?: number;
+  };
+  /**
+   * 순간 최대(가정 2개 — 피크일 계수·동시체류율 — 로 환산한 추정)
+   */
+  peakConcurrent: Quantity & {
+    unit?: "명";
+    timeUnit?: "순간";
+    estimated?: true;
+    valueKind?: "예측";
+    /**
+     * @minItems 2
+     */
+    assumptionIds?: [unknown, unknown, ...unknown[]];
+    p10?: number;
+    p50?: number;
+    p90?: number;
+  };
   /**
    * @minItems 1
    */
@@ -71,17 +101,11 @@ export interface Forecast {
     {
       threshold: number;
       probability: number;
-      /**
-       * 정수 % 또는 표본이 적으면 구간("30~50%")
-       */
       display: string;
     },
     ...{
       threshold: number;
       probability: number;
-      /**
-       * 정수 % 또는 표본이 적으면 구간("30~50%")
-       */
       display: string;
     }[]
   ];
@@ -89,9 +113,6 @@ export interface Forecast {
     from: string;
     to: string;
   } | null;
-  /**
-   * 유형별 표준 곡선(가정)
-   */
   hourlyProfile: {
     hour: number;
     share: number;
@@ -112,32 +133,34 @@ export interface Forecast {
    */
   observations: [Observation, ...Observation[]];
   /**
+   * @minItems 2
+   */
+  assumptions: [Assumption, Assumption, ...Assumption[]];
+  /**
    * @minItems 1
    */
   evidence: [NoName2, ...NoName2[]];
 }
 /**
- * 수치 노드(09 §4). 문장의 자리표시자는 이 id와 필드를 가리킨다
+ * 수치 노드. 자리표시자는 id와 필드를 가리킨다
  */
 export interface Quantity {
   id: string;
-  name?: string;
-  value?: number | null;
-  p10?: number | null;
-  p50?: number | null;
-  p90?: number | null;
+  name: string;
+  value: number | null;
+  p10: number | null;
+  p50: number | null;
+  p90: number | null;
   unit: "명" | "명/일" | "%" | "원" | "배" | "비율";
   timeUnit: "순간" | "일" | "기간누적";
   spatialScope: "행사장" | "행정동" | "시군구";
-  kind: "사전예상" | "사후집계" | "예측" | "관측";
-  /**
-   * 가정이 들어간 환산값이면 true
-   */
+  valueKind: "사전예상" | "사후집계" | "예측" | "관측";
   estimated: boolean;
-  assumptionIds?: string[];
+  assumptionIds: string[];
+  announcedAt: string | null;
 }
 /**
- * 판정 엔진(결정적 규칙)의 결과. 판정 문구는 규칙 결과 템플릿에서만 나온다
+ * 판정 엔진 결과. ruleIds = 판정에 쓴 규칙(그래프 cc:judgedBy), 사유 문구는 규칙 결과 템플릿
  */
 export interface NoName {
   /**
@@ -148,20 +171,16 @@ export interface NoName {
   /**
    * @minItems 1
    */
+  ruleIds: [string, ...string[]];
+  /**
+   * @minItems 1
+   */
   reasons: [
     {
-      ruleId: string;
-      kind: "법정" | "자체";
-      text: string;
-      clauseId: string | null;
-      evidenceId: string;
+      [k: string]: unknown;
     },
     ...{
-      ruleId: string;
-      kind: "법정" | "자체";
-      text: string;
-      clauseId: string | null;
-      evidenceId: string;
+      [k: string]: unknown;
     }[]
   ];
   checklist: {
@@ -175,19 +194,13 @@ export interface NoName {
   }[];
 }
 /**
- * SHAP 기여를 요인 문장으로 옮긴 것
+ * SHAP 기여. label은 템플릿 문장(숫자 없음) — 발행 뒤에만 화면에 나간다
  */
 export interface NoName1 {
   id: string;
   feature: string;
   direction: "up" | "down";
-  /**
-   * log 규모 기여도
-   */
   contribution: number;
-  /**
-   * 템플릿 문장(숫자 없음)
-   */
   label: string;
   /**
    * @minItems 1
@@ -196,6 +209,7 @@ export interface NoName1 {
 }
 export interface PredictionRun {
   id: string;
+  modelRunId: string;
   modelVersion: string;
   asOf: string;
   /**
@@ -209,7 +223,7 @@ export interface Period {
   to: string;
 }
 /**
- * 예측에 쓴 피처 관측값 하나(누수 검사 S09의 입력)
+ * 예측에 쓴 피처 관측값(S09 입력)
  */
 export interface Observation {
   id: string;
@@ -220,17 +234,27 @@ export interface Observation {
   observedAt: string;
   availableAt: string;
   /**
-   * 2025년 시군구 코드 체계(방문자 API와 같은 코드)
+   * 2025년 시군구 코드(방문자 API와 같다). IRI = http://crowdcast.local/id/<코드>
    */
   sigunguCode: string;
+}
+/**
+ * 환산 가정(값과 범위)
+ */
+export interface Assumption {
+  id: string;
+  name: string;
+  value: number;
+  low: number;
+  high: number;
+  unit: "명" | "명/일" | "%" | "원" | "배" | "비율";
+  basis: "가정" | "매뉴얼" | "추정";
+  note: string;
 }
 export interface Source {
   datasetId: string;
   title: string;
   publisher: string;
-  /**
-   * 데이터랩 메뉴 경로(예: 빅데이터 > 지역별 방문자수)
-   */
   datalabMenu: string | null;
   accessUrl: string | null;
 }

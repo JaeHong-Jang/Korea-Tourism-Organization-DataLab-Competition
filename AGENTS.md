@@ -151,6 +151,7 @@ timeout 3600 codex exec -m "$MODEL" -s workspace-write -C "$WT" --json \
 echo $? > "$REPO/.harness/logs/$T.exit"
 ```
 - 네트워크(패키지 설치·API)가 필요한 task에만 `-c sandbox_workspace_write.network_access=true`를 붙인다.
+- **프롬프트를 인자로 주는 `codex exec`(검토 등)는 반드시 `< /dev/null`로 stdin을 닫는다.** 안 닫으면 stdin을 기다리다 시간 초과된다(9/24 R-01 1차 실행에서 발생). 실행 중인 로그 파일은 옮기지 않는다.
 - 완료 판정은 네 가지를 **따로** 확인한다: ① 종료 코드 0(124는 시간 초과) ② 리포트 첫 줄 `DONE` ③ 게이트 2 통과 ④ 게이트 3 통과. `-o` 리포트는 워커의 마지막 말일 뿐 통과 증명이 아니다.
 
 ### 7-3. 게이트 (순서대로. 실패하면 피드백을 task 파일 끝에 붙여 재디스패치, 최대 2회. 그래도 실패하면 Claude가 직접 고치거나 범위를 줄인다)

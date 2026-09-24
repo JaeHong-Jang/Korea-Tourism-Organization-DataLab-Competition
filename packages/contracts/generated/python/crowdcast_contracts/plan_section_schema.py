@@ -33,7 +33,7 @@ class LockedField(BaseModel):
     )
     name: str
     value: str
-    quantityId: common_schema.Id
+    quantityId: common_schema.QuantityId
 
 
 class PlanSection(BaseModel):
@@ -43,6 +43,6 @@ class PlanSection(BaseModel):
     key: Key
     title: str
     status: Status
-    claimIds: list[common_schema.Id]
+    claimIds: list[common_schema.ClaimId]
     body: str
     lockedFields: list[LockedField]

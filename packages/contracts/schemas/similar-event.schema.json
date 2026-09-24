@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/similar-event.schema.json",
   "title": "유사 행사",
-  "description": "기록관이 찾은 사례. 단위가 같을 때만 비교한다",
+  "description": "기록관 결과. 단위가 같을 때만 비교한다",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,11 +15,12 @@
     "announced",
     "unitsComparable",
     "similarity",
-    "evidenceId"
+    "evidenceId",
+    "evidence"
   ],
   "properties": {
     "eventId": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/eventId"
     },
     "name": {
       "type": "string"
@@ -62,7 +63,14 @@
       "maximum": 1
     },
     "evidenceId": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/evidenceId"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "evidence.schema.json"
+      },
+      "minItems": 1
     }
   }
 }

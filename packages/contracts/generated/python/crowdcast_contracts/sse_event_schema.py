@@ -11,12 +11,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class Event(Enum):
     agent_status = 'agent_status'
+    agent_step = 'agent_step'
     event_card = 'event_card'
     ask = 'ask'
     forecast = 'forecast'
-    evidence = 'evidence'
-    claim = 'claim'
     gate = 'gate'
+    claim = 'claim'
+    evidence = 'evidence'
     suggest = 'suggest'
     done = 'done'
     error = 'error'

@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/pipeline-run.schema.json",
+  "title": "파이프라인 실행",
+  "description": "운영 화면(M8-F1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "startedAt",
+    "finishedAt",
+    "status",
+    "stages",
+    "summary"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "startedAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "finishedAt": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/datetime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "enum": [
+        "running",
+        "passed",
+        "failed"
+      ]
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "status",
+          "gate",
+          "ms",
+          "artifacts"
+        ],
+        "properties": {
+          "name": {
+            "enum": [
+              "fetch",
+              "labels",
+              "features",
+              "train",
+              "backtest",
+              "batch",
+              "publish"
+            ]
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "passed",
+              "failed",
+              "skipped"
+            ]
+          },
+          "gate": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "passed",
+              "message"
+            ],
+            "properties": {
+              "passed": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          },
+          "ms": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

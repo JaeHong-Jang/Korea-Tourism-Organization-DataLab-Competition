@@ -7,14 +7,14 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import common_schema
+from . import common_schema, evidence_schema
 
 
 class SimilarEvent(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    eventId: common_schema.Id
+    eventId: common_schema.EventId
     name: str
     year: int
     sigunguName: str
@@ -23,4 +23,5 @@ class SimilarEvent(BaseModel):
     announced: common_schema.Quantity | None
     unitsComparable: bool
     similarity: Annotated[float, Field(ge=0.0, le=1.0)]
-    evidenceId: common_schema.Id
+    evidenceId: common_schema.EvidenceId
+    evidence: Annotated[list[evidence_schema.Evidence], Field(min_length=1)]

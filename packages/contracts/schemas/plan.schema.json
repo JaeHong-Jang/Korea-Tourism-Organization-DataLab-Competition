@@ -9,6 +9,7 @@
     "id",
     "forecastId",
     "eventId",
+    "sessionId",
     "title",
     "createdAt",
     "updatedAt",
@@ -17,13 +18,17 @@
   ],
   "properties": {
     "id": {
-      "$ref": "common.schema.json#/$defs/id"
+      "type": "string",
+      "pattern": "^plan-[a-z0-9][a-z0-9_.:-]{1,120}$"
     },
     "forecastId": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/forecastId"
     },
     "eventId": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/eventId"
+    },
+    "sessionId": {
+      "$ref": "common.schema.json#/$defs/sessionId"
     },
     "title": {
       "type": "string"

@@ -28,4 +28,5 @@ class AgentStatus(BaseModel):
     team: common_schema.Team
     state: State
     note: Annotated[str, Field(max_length=60)]
+    stepId: common_schema.StepId | None
     at: common_schema.Datetime

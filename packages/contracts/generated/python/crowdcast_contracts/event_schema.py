@@ -31,21 +31,21 @@ class Event(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    id: common_schema.Id
+    id: common_schema.EventId
     name: Annotated[str, Field(min_length=1)]
     type: common_schema.EventType
     startsAt: common_schema.Datetime
     endsAt: common_schema.Datetime
     timeOfDay: common_schema.TimeOfDay
     venue: Venue
-    sido: str | None = None
+    sido: str
     sigunguCode: common_schema.SigunguCode
     sigunguName: str
     fee: common_schema.Fee
     hostType: common_schema.HostType
-    budgetKrw: int | None = None
-    edition: int | None = None
-    promo: list[str] | None = None
+    budgetKrw: int | None
+    edition: int | None
+    promo: list[str]
     hazards: list[common_schema.Hazard]
-    expectedByHost: Annotated[common_schema.Quantity | None, Field(description='주최측이 밝힌 예상 인원(단위 포함)')] = None
+    expectedByHost: common_schema.Quantity | None
     source: Source

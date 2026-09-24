@@ -30,15 +30,6 @@ class Tier(Enum):
     silver = 'silver'
 
 
-class Model(BaseModel):
-    model_config = ConfigDict(
-        extra='forbid',
-    )
-    p10: float
-    p50: float
-    p90: float
-
-
 class Verdict(Enum):
     포함 = '포함'
     벗어남 = '벗어남'
@@ -49,7 +40,7 @@ class Point(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    eventId: common_schema.Id
+    eventId: common_schema.EventId
     name: str
     year: int
     tier: Tier
@@ -59,11 +50,22 @@ class Point(BaseModel):
     p90: float
 
 
+class Model(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    p10: float
+    p50: float
+    p90: float
+    unit: common_schema.Unit
+    timeUnit: common_schema.TimeUnit
+
+
 class GoldenItem(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    eventId: common_schema.Id
+    eventId: common_schema.EventId
     name: str
     hostExpected: common_schema.Quantity | None
     model: Model
@@ -77,6 +79,7 @@ class BacktestSummary(BaseModel):
         extra='forbid',
     )
     runId: str
+    modelRunId: common_schema.ModelRunId
     modelVersion: str
     target: Literal['일평균 방문객']
     evalYears: Annotated[list[int], Field(min_length=1)]

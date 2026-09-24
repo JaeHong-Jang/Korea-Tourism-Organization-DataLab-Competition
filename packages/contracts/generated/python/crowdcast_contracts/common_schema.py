@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import date
 from enum import Enum
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, RootModel
 
@@ -14,14 +14,84 @@ class Common(RootModel[Any]):
     root: Annotated[
         Any,
         Field(
-            description='공통 정의: 여러 계약이 함께 쓰는 값 형식. 날짜는 KST ISO 8601, 인원·금액은 정수, 값 없음은 null로 명시한다.',
+            description='공통 정의: 여러 계약이 함께 쓰는 형식. 날짜는 KST ISO 8601, 인원·금액은 정수, 값 없음은 null. id는 종류 접두사를 가진다',
             title='Common',
         ),
     ]
 
 
 class Id(RootModel[str]):
-    root: Annotated[str, Field(pattern='^[a-z0-9][a-z0-9_.:-]{2,120}$')]
+    root: Annotated[
+        str,
+        Field(
+            description='종류 접두사-이름. IRI = http://crowdcast.local/id/<id>',
+            pattern='^[a-z][a-z0-9]*-[a-z0-9][a-z0-9_.:-]{1,120}$',
+        ),
+    ]
+
+
+class EventId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^e-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class ForecastId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^f-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class EvidenceId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^ev-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class ClaimId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^c-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class QuantityId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^q-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class ObservationId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^obs-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class PredictionRunId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^pr-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class ModelRunId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^mr-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class SessionId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^s-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class StepId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^st-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class RuleId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^rule-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class ClauseId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^law-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class AssumptionId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^as-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class DatasetId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^ds-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class FactorId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^fa-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+
+
+class ChecklistId(RootModel[str]):
+    root: Annotated[str, Field(pattern='^ck-[a-z0-9][a-z0-9_.:-]{1,120}$')]
 
 
 class Date(RootModel[date]):
@@ -33,7 +103,13 @@ class Datetime(RootModel[AwareDatetime]):
 
 
 class SigunguCode(RootModel[str]):
-    root: Annotated[str, Field(description='2025년 시군구 코드 체계(방문자 API와 같은 코드)', pattern='^[0-9]{5}$')]
+    root: Annotated[
+        str,
+        Field(
+            description='2025년 시군구 코드(방문자 API와 같다). IRI = http://crowdcast.local/id/<코드>',
+            pattern='^[0-9]{5}$',
+        ),
+    ]
 
 
 class EventType(Enum):
@@ -145,28 +221,50 @@ class Quantity(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    id: Id
-    name: str | None = None
-    value: float | None = None
-    p10: float | None = None
-    p50: float | None = None
-    p90: float | None = None
+    id: QuantityId
+    name: str
+    value: float | None
+    p10: float | None
+    p50: float | None
+    p90: float | None
     unit: Unit
     timeUnit: TimeUnit
     spatialScope: SpatialScope
-    kind: ValueKind
-    estimated: Annotated[bool, Field(description='가정이 들어간 환산값이면 true')]
-    assumptionIds: list[Id] | None = None
+    valueKind: ValueKind
+    estimated: bool
+    assumptionIds: list[AssumptionId]
+    announcedAt: Date | None
+
+
+class DailyMeanQuantity(Quantity):
+    unit: Literal['명/일']
+    timeUnit: Literal['일']
+    estimated: Literal[False]
+    valueKind: Literal['예측']
+    p10: float
+    p50: float
+    p90: float
+
+
+class PeakQuantity(Quantity):
+    unit: Literal['명']
+    timeUnit: Literal['순간']
+    estimated: Literal[True]
+    valueKind: Literal['예측']
+    assumptionIds: Annotated[list[AssumptionId], Field(min_length=2)]
+    p10: float
+    p50: float
+    p90: float
 
 
 class Source(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    datasetId: Id
+    datasetId: DatasetId
     title: str
     publisher: str
-    datalabMenu: Annotated[str | None, Field(description='데이터랩 메뉴 경로(예: 빅데이터 > 지역별 방문자수)')]
+    datalabMenu: str | None
     accessUrl: AnyUrl | None
 
 
@@ -174,11 +272,11 @@ class Observation(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    id: Id
+    id: ObservationId
     featureName: str
     value: float
     unit: Unit
-    datasetId: Id
+    datasetId: DatasetId
     observedAt: Date
     availableAt: Date
     sigunguCode: SigunguCode
@@ -188,8 +286,37 @@ class PredictionRun(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    id: Id
+    id: PredictionRunId
+    modelRunId: ModelRunId
     modelVersion: str
     asOf: Date
-    observationIds: Annotated[list[Id], Field(min_length=1)]
+    observationIds: Annotated[list[ObservationId], Field(min_length=1)]
     trainRange: Period
+
+
+class Basis(Enum):
+    가정 = '가정'
+    매뉴얼 = '매뉴얼'
+    추정 = '추정'
+
+
+class Assumption(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    id: AssumptionId
+    name: str
+    value: float
+    low: float
+    high: float
+    unit: Unit
+    basis: Basis
+    note: str
+
+
+class Action(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    id: str
+    label: str

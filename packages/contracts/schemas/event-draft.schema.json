@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/event-draft.schema.json",
   "title": "행사 초안",
-  "description": "받아쓰기가 만든 정규화 전·후 초안. 빠진 값과 모호한 값을 함께 담는다",
+  "description": "받아쓰기 결과. 빠진 값(missing)은 코드가 계산한다",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,8 +13,10 @@
     "timeOfDay",
     "venueText",
     "sigunguCode",
+    "sigunguName",
     "fee",
     "hostType",
+    "budgetKrw",
     "promo",
     "hazards",
     "missing",
@@ -141,8 +143,7 @@
           "budgetKrw"
         ]
       },
-      "uniqueItems": true,
-      "description": "코드가 계산한 빠진 필수·선택 값"
+      "uniqueItems": true
     },
     "ambiguities": {
       "type": "array",

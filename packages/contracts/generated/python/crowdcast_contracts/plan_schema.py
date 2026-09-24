@@ -14,9 +14,10 @@ class Plan(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    id: common_schema.Id
-    forecastId: common_schema.Id
-    eventId: common_schema.Id
+    id: Annotated[str, Field(pattern='^plan-[a-z0-9][a-z0-9_.:-]{1,120}$')]
+    forecastId: common_schema.ForecastId
+    eventId: common_schema.EventId
+    sessionId: common_schema.SessionId
     title: str
     createdAt: common_schema.Datetime
     updatedAt: common_schema.Datetime

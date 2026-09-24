@@ -2,13 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/gate-report.schema.json",
   "title": "게이트 결과",
-  "description": "게이트 A·B·발행 검사 결과",
+  "description": "게이트 A·B·발행 검사. 검증 범위 = 세션 revision + 기준 그래프 버전",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "gate",
     "passed",
     "revision",
+    "masterVersion",
     "violations"
   ],
   "properties": {
@@ -25,6 +26,10 @@
     "revision": {
       "type": "integer",
       "minimum": 0
+    },
+    "masterVersion": {
+      "type": "integer",
+      "minimum": 1
     },
     "violations": {
       "type": "array",
@@ -43,7 +48,8 @@
               "shacl",
               "number",
               "rule",
-              "uncertainty"
+              "uncertainty",
+              "integrity"
             ]
           },
           "shapeId": {

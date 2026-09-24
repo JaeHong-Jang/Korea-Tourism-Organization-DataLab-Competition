@@ -16,7 +16,7 @@ class Probability(BaseModel):
     )
     threshold: int
     probability: Annotated[float, Field(ge=0.0, le=1.0)]
-    display: Annotated[str, Field(description='정수 % 또는 표본이 적으면 구간("30~50%")')]
+    display: str
 
 
 class PeakHours(BaseModel):
@@ -42,23 +42,23 @@ class Composition(BaseModel):
     local: float
     nonlocal_: Annotated[float, Field(alias='nonlocal')]
     foreign: float
-    evidenceId: common_schema.Id
+    evidenceId: common_schema.EvidenceId
 
 
 class Forecast(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    id: common_schema.Id
-    eventId: common_schema.Id
+    id: common_schema.ForecastId
+    eventId: common_schema.EventId
     asOf: common_schema.Date
     createdAt: common_schema.Datetime
     modelVersion: str
-    dailyMean: common_schema.Quantity
-    peakConcurrent: common_schema.Quantity
+    dailyMean: common_schema.DailyMeanQuantity
+    peakConcurrent: common_schema.PeakQuantity
     probabilities: Annotated[list[Probability], Field(min_length=1)]
     peakHours: PeakHours | None
-    hourlyProfile: Annotated[list[HourlyProfileItem], Field(description='유형별 표준 곡선(가정)')]
+    hourlyProfile: list[HourlyProfileItem]
     composition: Composition | None
     judgment: judgment_schema.Judgment
     factors: list[factor_schema.Factor]
@@ -66,4 +66,5 @@ class Forecast(BaseModel):
     oodReasons: list[str]
     predictionRun: common_schema.PredictionRun
     observations: Annotated[list[common_schema.Observation], Field(min_length=1)]
+    assumptions: Annotated[list[common_schema.Assumption], Field(min_length=2)]
     evidence: Annotated[list[evidence_schema.Evidence], Field(min_length=1)]

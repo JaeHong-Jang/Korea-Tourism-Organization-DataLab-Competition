@@ -1,8 +1,8 @@
-# 인파예보 records 서비스 OpenAPI — 스키마는 ../schemas를 참조한다(계약 정본)
+# 인파예보 records 서비스 OpenAPI v1.1 — 스키마는 ../schemas를 참조한다(계약 정본)
 openapi: 3.1.0
 info:
   title: 인파예보 기록·문서 서비스
-  version: 0.1.0
+  version: 1.1.0
 servers:
   - url: http://127.0.0.1:8030
 paths:
@@ -11,13 +11,14 @@ paths:
       summary: 상태 확인
       responses:
         "200":
-          description: 정상
+          description: 성공
           content:
             application/json:
               schema:
                 type: object
                 required:
                   - status
+                  - version
                 properties:
                   status:
                     const: ok
@@ -50,6 +51,10 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/event.schema.json
+        "400":
+          description: 계약 위반 요청
+        "503":
+          description: 하위 서비스 연결 실패
   /v1/events/{id}:
     get:
       summary: 행사
@@ -59,6 +64,7 @@ paths:
           required: true
           schema:
             type: string
+            pattern: ^e-
       responses:
         "200":
           description: 성공
@@ -74,18 +80,20 @@ paths:
           required: true
           schema:
             type: string
+            pattern: ^e-
       responses:
         "204":
           description: 삭제
   /v1/events/{id}/snapshots:
     get:
-      summary: 예보 스냅샷 목록(불변)
+      summary: 발행된 예보서 스냅샷 목록(불변)
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
+            pattern: ^e-
       responses:
         "200":
           description: 성공
@@ -94,31 +102,34 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: ../schemas/forecast.schema.json
+                  $ref: ../schemas/forecast-report.schema.json
     post:
-      summary: 스냅샷 추가
+      summary: 스냅샷 추가(수정·삭제 불가)
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
+            pattern: ^e-
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: ../schemas/forecast.schema.json
+              $ref: ../schemas/forecast-report.schema.json
       responses:
         "200":
           description: 성공
           content:
             application/json:
               schema:
-                $ref: ../schemas/forecast.schema.json
+                $ref: ../schemas/forecast-report.schema.json
+        "409":
+          description: 이미 있는 스냅샷 변경 시도
   /v1/plans:
     post:
-      summary: 초안 저장
+      summary: 초안 저장(섹션 body = 발행 문장 rendered의 연결인지 확인)
       requestBody:
         required: true
         content:
@@ -132,6 +143,10 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/plan.schema.json
+        "400":
+          description: 계약 위반 요청
+        "503":
+          description: 하위 서비스 연결 실패
   /v1/plans/{id}:
     get:
       summary: 초안
@@ -141,6 +156,7 @@ paths:
           required: true
           schema:
             type: string
+            pattern: ^plan-
       responses:
         "200":
           description: 성공
@@ -156,6 +172,7 @@ paths:
           required: true
           schema:
             type: string
+            pattern: ^plan-
       requestBody:
         required: true
         content:
@@ -178,6 +195,7 @@ paths:
           required: true
           schema:
             type: string
+            pattern: ^plan-
       responses:
         "200":
           description: docx
@@ -240,6 +258,7 @@ paths:
                 required:
                   - valid
                   - count
+                  - brokenAt
                 properties:
                   valid:
                     type: boolean
@@ -258,6 +277,14 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - eventId
+                - actual
+              properties:
+                eventId:
+                  type: string
+                actual:
+                  $ref: ../schemas/common.schema.json#/$defs/quantity
       responses:
         "200":
           description: 성공

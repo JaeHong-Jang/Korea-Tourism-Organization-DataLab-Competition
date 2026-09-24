@@ -4,6 +4,7 @@
   "data": {
     "id": "c-yeongjong-3",
     "sessionId": "s-demo-0001",
+    "forecastId": "f-yeongjong-2025",
     "text": "폭죽을 쓰는 행사라 인원과 관계없이 안전관리계획 수립 대상이에요",
     "rendered": "폭죽을 쓰는 행사라 인원과 관계없이 안전관리계획 수립 대상이에요",
     "claimType": "판정",
@@ -18,12 +19,12 @@
     },
     "checks": [
       {
-        "kind": "evidence",
+        "checkKind": "evidence",
         "passed": true,
         "revision": 7
       },
       {
-        "kind": "rule",
+        "checkKind": "rule",
         "passed": true,
         "revision": 7
       }

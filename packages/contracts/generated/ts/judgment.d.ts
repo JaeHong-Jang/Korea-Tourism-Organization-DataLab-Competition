@@ -1,7 +1,7 @@
 /* 자동 생성 — packages/contracts/schemas에서 npm run contracts:gen 으로 만든다. 직접 고치지 않는다 */
 
 /**
- * 판정 엔진(결정적 규칙)의 결과. 판정 문구는 규칙 결과 템플릿에서만 나온다
+ * 판정 엔진 결과. ruleIds = 판정에 쓴 규칙(그래프 cc:judgedBy), 사유 문구는 규칙 결과 템플릿
  */
 export interface Judgment {
   /**
@@ -12,20 +12,16 @@ export interface Judgment {
   /**
    * @minItems 1
    */
+  ruleIds: [string, ...string[]];
+  /**
+   * @minItems 1
+   */
   reasons: [
     {
-      ruleId: string;
-      kind: "법정" | "자체";
-      text: string;
-      clauseId: string | null;
-      evidenceId: string;
+      [k: string]: unknown;
     },
     ...{
-      ruleId: string;
-      kind: "법정" | "자체";
-      text: string;
-      clauseId: string | null;
-      evidenceId: string;
+      [k: string]: unknown;
     }[]
   ];
   checklist: {

@@ -1,0 +1,19 @@
+{
+  "quantityIds": [
+    "q-f-yeongjong-2025-mean"
+  ],
+  "period": null,
+  "source": null,
+  "availableAt": null,
+  "ruleId": null,
+  "clauseId": null,
+  "caseEventId": null,
+  "assumptionId": null,
+  "forecastId": null,
+  "modelVersion": "v0.1.0",
+  "checkResult": null,
+  "id": "ev-model-f-yeongjong-2025",
+  "kind": "model",
+  "title": "예측 모델",
+  "summary": "LightGBM 분위수 + CQR"
+}

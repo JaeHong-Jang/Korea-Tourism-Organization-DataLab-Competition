@@ -25,8 +25,8 @@ class LedgerEntry(BaseModel):
         extra='forbid',
     )
     seq: Annotated[int, Field(ge=1)]
-    forecastId: common_schema.Id
-    eventId: common_schema.Id
+    forecastId: common_schema.ForecastId
+    eventId: common_schema.EventId
     registeredAt: common_schema.Datetime
     leadDays: int
     forecast: Forecast

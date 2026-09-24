@@ -2,12 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/judgment.schema.json",
   "title": "판정",
-  "description": "판정 엔진(결정적 규칙)의 결과. 판정 문구는 규칙 결과 템플릿에서만 나온다",
+  "description": "판정 엔진 결과. ruleIds = 판정에 쓴 규칙(그래프 cc:judgedBy), 사유 문구는 규칙 결과 템플릿",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "level",
     "label",
+    "ruleIds",
     "reasons",
     "checklist"
   ],
@@ -23,6 +24,14 @@
         "대규모"
       ]
     },
+    "ruleIds": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/ruleId"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
     "reasons": {
       "type": "array",
       "items": {
@@ -37,7 +46,7 @@
         ],
         "properties": {
           "ruleId": {
-            "$ref": "common.schema.json#/$defs/id"
+            "$ref": "common.schema.json#/$defs/ruleId"
           },
           "kind": {
             "enum": [
@@ -51,7 +60,7 @@
           "clauseId": {
             "anyOf": [
               {
-                "$ref": "common.schema.json#/$defs/id"
+                "$ref": "common.schema.json#/$defs/clauseId"
               },
               {
                 "type": "null"
@@ -59,9 +68,29 @@
             ]
           },
           "evidenceId": {
-            "$ref": "common.schema.json#/$defs/id"
+            "$ref": "common.schema.json#/$defs/evidenceId"
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "법정"
+                }
+              }
+            },
+            "then": {
+              "type": "object",
+              "properties": {
+                "clauseId": {
+                  "$ref": "common.schema.json#/$defs/clauseId"
+                }
+              }
+            }
+          }
+        ]
       },
       "minItems": 1
     },
@@ -78,18 +107,18 @@
         ],
         "properties": {
           "id": {
-            "$ref": "common.schema.json#/$defs/id"
+            "$ref": "common.schema.json#/$defs/checklistId"
           },
           "text": {
             "type": "string"
           },
           "ruleId": {
-            "$ref": "common.schema.json#/$defs/id"
+            "$ref": "common.schema.json#/$defs/ruleId"
           },
           "evidenceIds": {
             "type": "array",
             "items": {
-              "$ref": "common.schema.json#/$defs/id"
+              "$ref": "common.schema.json#/$defs/evidenceId"
             },
             "minItems": 1
           }

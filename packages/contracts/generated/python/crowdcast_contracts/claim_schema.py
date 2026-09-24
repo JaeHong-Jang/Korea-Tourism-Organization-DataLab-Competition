@@ -33,7 +33,7 @@ class FieldModel(Enum):
     p90 = 'p90'
 
 
-class Kind(Enum):
+class CheckKind(Enum):
     evidence = 'evidence'
     number = 'number'
     rule = 'rule'
@@ -44,7 +44,7 @@ class Check(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    kind: Kind
+    checkKind: CheckKind
     passed: bool
     revision: Annotated[int, Field(ge=0)]
 
@@ -54,7 +54,7 @@ class Placeholder(BaseModel):
         extra='forbid',
     )
     name: Annotated[str, Field(pattern='^[a-z][a-z0-9_]*$')]
-    quantityId: common_schema.Id
+    quantityId: common_schema.QuantityId
     field: FieldModel
 
 
@@ -63,20 +63,21 @@ class GeneratedBy(BaseModel):
         extra='forbid',
     )
     agentId: common_schema.AgentId
-    stepId: common_schema.Id
+    stepId: common_schema.StepId
 
 
 class Claim(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    id: common_schema.Id
-    sessionId: common_schema.Id
-    text: Annotated[str, Field(description='자리표시자({{이름}})가 든 원문')]
+    id: common_schema.ClaimId
+    sessionId: common_schema.SessionId
+    forecastId: common_schema.ForecastId
+    text: str
     rendered: str | None
     claimType: ClaimType
     status: Status
-    evidenceIds: list[common_schema.Id]
+    evidenceIds: list[common_schema.EvidenceId]
     placeholders: list[Placeholder]
     generatedBy: GeneratedBy
     checks: list[Check]

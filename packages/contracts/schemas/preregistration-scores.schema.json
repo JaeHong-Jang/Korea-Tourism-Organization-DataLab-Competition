@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/preregistration-scores.schema.json",
+  "title": "사전 등록 채점",
+  "description": "채점판(M6-F4). 채점 불가·취소 건수를 숨기지 않는다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registeredAt",
+    "tag",
+    "rulesDoc",
+    "entries",
+    "summary"
+  ],
+  "properties": {
+    "registeredAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "tag": {
+      "type": "string"
+    },
+    "rulesDoc": {
+      "type": "string"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "seq",
+          "eventId",
+          "name",
+          "startsAt",
+          "endsAt",
+          "leadDays",
+          "level",
+          "dailyMeanP10",
+          "dailyMeanP50",
+          "dailyMeanP90",
+          "actual",
+          "status",
+          "inInterval",
+          "levelMatch"
+        ],
+        "properties": {
+          "seq": {
+            "type": "integer"
+          },
+          "eventId": {
+            "$ref": "common.schema.json#/$defs/eventId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "startsAt": {
+            "$ref": "common.schema.json#/$defs/datetime"
+          },
+          "endsAt": {
+            "$ref": "common.schema.json#/$defs/datetime"
+          },
+          "leadDays": {
+            "type": "integer"
+          },
+          "level": {
+            "$ref": "common.schema.json#/$defs/level"
+          },
+          "dailyMeanP10": {
+            "type": "integer"
+          },
+          "dailyMeanP50": {
+            "type": "integer"
+          },
+          "dailyMeanP90": {
+            "type": "integer"
+          },
+          "actual": {
+            "anyOf": [
+              {
+                "$ref": "common.schema.json#/$defs/quantity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "채점 완료",
+              "대기",
+              "채점 불가",
+              "취소"
+            ]
+          },
+          "inInterval": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "levelMatch": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registered",
+        "scored",
+        "inInterval",
+        "unscorable",
+        "cancelled"
+      ],
+      "properties": {
+        "registered": {
+          "type": "integer"
+        },
+        "scored": {
+          "type": "integer"
+        },
+        "inInterval": {
+          "type": "integer"
+        },
+        "unscorable": {
+          "type": "integer"
+        },
+        "cancelled": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

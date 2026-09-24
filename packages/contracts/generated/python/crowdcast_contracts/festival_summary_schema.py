@@ -14,8 +14,8 @@ class FestivalSummary(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    eventId: common_schema.Id
-    forecastId: common_schema.Id
+    eventId: common_schema.EventId
+    forecastId: common_schema.ForecastId
     name: str
     type: common_schema.EventType
     startsAt: common_schema.Datetime

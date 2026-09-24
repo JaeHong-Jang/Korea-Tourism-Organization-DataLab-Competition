@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/datalab-usage.schema.json",
+  "title": "근거 통계",
+  "description": "근거 대시보드(M6-F5)·서식4. 전체 연결률과 데이터랩까지 이어지는 비율을 따로",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "generatedAt",
+    "publishedClaims",
+    "claimsWithEvidence",
+    "claimsReachingDatalab",
+    "evidenceByDataset",
+    "shaclPassRate"
+  ],
+  "properties": {
+    "generatedAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "publishedClaims": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "claimsWithEvidence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "claimsReachingDatalab": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "evidenceByDataset": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "datasetId",
+          "title",
+          "datalabMenu",
+          "count"
+        ],
+        "properties": {
+          "datasetId": {
+            "$ref": "common.schema.json#/$defs/datasetId"
+          },
+          "title": {
+            "type": "string"
+          },
+          "datalabMenu": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "shaclPassRate": {
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  }
+}

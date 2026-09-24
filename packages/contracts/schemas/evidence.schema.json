@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/evidence.schema.json",
   "title": "근거",
-  "description": "근거 조각(09 §3). 종류마다 반드시 채울 필드가 다르다",
+  "description": "근거 조각. kind(=그래프 클래스)마다 반드시 채울 필드가 다르다",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,18 +11,20 @@
     "title",
     "summary",
     "quantityIds",
+    "period",
     "source",
     "availableAt",
     "ruleId",
     "clauseId",
     "caseEventId",
     "assumptionId",
+    "forecastId",
     "modelVersion",
-    "check"
+    "checkResult"
   ],
   "properties": {
     "id": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/evidenceId"
     },
     "kind": {
       "enum": [
@@ -43,8 +45,18 @@
     "quantityIds": {
       "type": "array",
       "items": {
-        "$ref": "common.schema.json#/$defs/id"
+        "$ref": "common.schema.json#/$defs/quantityId"
       }
+    },
+    "period": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/period"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "source": {
       "anyOf": [
@@ -69,7 +81,7 @@
     "ruleId": {
       "anyOf": [
         {
-          "$ref": "common.schema.json#/$defs/id"
+          "$ref": "common.schema.json#/$defs/ruleId"
         },
         {
           "type": "null"
@@ -79,7 +91,7 @@
     "clauseId": {
       "anyOf": [
         {
-          "$ref": "common.schema.json#/$defs/id"
+          "$ref": "common.schema.json#/$defs/clauseId"
         },
         {
           "type": "null"
@@ -89,7 +101,7 @@
     "caseEventId": {
       "anyOf": [
         {
-          "$ref": "common.schema.json#/$defs/id"
+          "$ref": "common.schema.json#/$defs/eventId"
         },
         {
           "type": "null"
@@ -99,7 +111,17 @@
     "assumptionId": {
       "anyOf": [
         {
-          "$ref": "common.schema.json#/$defs/id"
+          "$ref": "common.schema.json#/$defs/assumptionId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "forecastId": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/forecastId"
         },
         {
           "type": "null"
@@ -112,18 +134,18 @@
         "null"
       ]
     },
-    "check": {
+    "checkResult": {
       "anyOf": [
         {
           "type": "object",
           "additionalProperties": false,
           "required": [
-            "kind",
+            "checkKind",
             "passed",
             "revision"
           ],
           "properties": {
-            "kind": {
+            "checkKind": {
               "enum": [
                 "evidence",
                 "number",
@@ -150,113 +172,146 @@
   "allOf": [
     {
       "if": {
+        "type": "object",
         "properties": {
           "kind": {
             "const": "data"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "source": {
             "$ref": "common.schema.json#/$defs/source"
           },
           "availableAt": {
             "$ref": "common.schema.json#/$defs/date"
+          },
+          "period": {
+            "$ref": "common.schema.json#/$defs/period"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
         "properties": {
           "kind": {
             "const": "rule"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "ruleId": {
-            "$ref": "common.schema.json#/$defs/id"
+            "$ref": "common.schema.json#/$defs/ruleId"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
         "properties": {
           "kind": {
             "const": "case"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "caseEventId": {
-            "$ref": "common.schema.json#/$defs/id"
+            "$ref": "common.schema.json#/$defs/eventId"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
         "properties": {
           "kind": {
             "const": "assumption"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "assumptionId": {
-            "$ref": "common.schema.json#/$defs/id"
+            "$ref": "common.schema.json#/$defs/assumptionId"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
         "properties": {
           "kind": {
             "const": "model"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "modelVersion": {
             "type": "string"
+          },
+          "forecastId": {
+            "$ref": "common.schema.json#/$defs/forecastId"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
         "properties": {
           "kind": {
             "const": "check"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
-          "check": {
-            "type": "object"
+          "checkResult": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "checkKind",
+              "passed",
+              "revision"
+            ],
+            "properties": {
+              "checkKind": {
+                "enum": [
+                  "evidence",
+                  "number",
+                  "rule",
+                  "uncertainty",
+                  "ood"
+                ]
+              },
+              "passed": {
+                "type": "boolean"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "forecastId": {
+            "$ref": "common.schema.json#/$defs/forecastId"
           }
-        },
-        "type": "object"
+        }
       }
     }
   ]

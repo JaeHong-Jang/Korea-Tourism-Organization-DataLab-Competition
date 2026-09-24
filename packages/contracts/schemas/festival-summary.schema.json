@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/festival-summary.schema.json",
   "title": "행사 요약",
-  "description": "미니 대한민국·행사 목록 카드 한 장",
+  "description": "미니 대한민국·행사 목록 카드",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -25,10 +25,10 @@
   ],
   "properties": {
     "eventId": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/eventId"
     },
     "forecastId": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/forecastId"
     },
     "name": {
       "type": "string"

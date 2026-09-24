@@ -2,11 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/backtest-summary.schema.json",
   "title": "백테스트 요약",
-  "description": "검증 센터(S6) 입력",
+  "description": "검증 센터 입력(정답 = 일평균 방문객)",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "runId",
+    "modelRunId",
     "modelVersion",
     "target",
     "evalYears",
@@ -17,6 +18,9 @@
   "properties": {
     "runId": {
       "type": "string"
+    },
+    "modelRunId": {
+      "$ref": "common.schema.json#/$defs/modelRunId"
     },
     "modelVersion": {
       "type": "string"
@@ -93,7 +97,7 @@
         ],
         "properties": {
           "eventId": {
-            "$ref": "common.schema.json#/$defs/id"
+            "$ref": "common.schema.json#/$defs/eventId"
           },
           "name": {
             "type": "string"
@@ -139,7 +143,7 @@
         ],
         "properties": {
           "eventId": {
-            "$ref": "common.schema.json#/$defs/id"
+            "$ref": "common.schema.json#/$defs/eventId"
           },
           "name": {
             "type": "string"
@@ -160,7 +164,9 @@
             "required": [
               "p10",
               "p50",
-              "p90"
+              "p90",
+              "unit",
+              "timeUnit"
             ],
             "properties": {
               "p10": {
@@ -171,6 +177,12 @@
               },
               "p90": {
                 "type": "number"
+              },
+              "unit": {
+                "$ref": "common.schema.json#/$defs/unit"
+              },
+              "timeUnit": {
+                "$ref": "common.schema.json#/$defs/timeUnit"
               }
             }
           },

@@ -22,10 +22,10 @@
       "minimum": 1
     },
     "forecastId": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/forecastId"
     },
     "eventId": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/eventId"
     },
     "registeredAt": {
       "$ref": "common.schema.json#/$defs/datetime"

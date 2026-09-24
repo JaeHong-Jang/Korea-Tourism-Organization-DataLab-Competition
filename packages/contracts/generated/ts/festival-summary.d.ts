@@ -1,7 +1,7 @@
 /* 자동 생성 — packages/contracts/schemas에서 npm run contracts:gen 으로 만든다. 직접 고치지 않는다 */
 
 /**
- * 미니 대한민국·행사 목록 카드 한 장
+ * 미니 대한민국·행사 목록 카드
  */
 export interface FestivalSummary {
   eventId: string;
@@ -11,7 +11,7 @@ export interface FestivalSummary {
   startsAt: string;
   endsAt: string;
   /**
-   * 2025년 시군구 코드 체계(방문자 API와 같은 코드)
+   * 2025년 시군구 코드(방문자 API와 같다). IRI = http://crowdcast.local/id/<코드>
    */
   sigunguCode: string;
   sigunguName: string;

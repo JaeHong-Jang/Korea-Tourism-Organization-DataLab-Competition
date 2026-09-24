@@ -20,9 +20,9 @@ class Factor(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    id: common_schema.Id
+    id: common_schema.FactorId
     feature: str
     direction: Direction
-    contribution: Annotated[float, Field(description='log 규모 기여도')]
-    label: Annotated[str, Field(description='템플릿 문장(숫자 없음)')]
-    evidenceIds: Annotated[list[common_schema.Id], Field(min_length=1)]
+    contribution: float
+    label: str
+    evidenceIds: Annotated[list[common_schema.EvidenceId], Field(min_length=1)]

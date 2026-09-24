@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/weather.schema.json",
   "title": "날씨",
-  "description": "기상청 실황·예보(없으면 source 없음)",
+  "description": "기상청 실황·예보",
   "type": "object",
   "additionalProperties": false,
   "required": [

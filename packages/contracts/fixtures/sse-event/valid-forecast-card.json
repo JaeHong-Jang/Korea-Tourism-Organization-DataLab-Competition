@@ -1,0 +1,77 @@
+{
+  "event": "forecast",
+  "seq": 8,
+  "data": {
+    "id": "f-yeongjong-2025",
+    "eventId": "e-yeongjong-fireworks-2025",
+    "asOf": "2025-10-04",
+    "modelVersion": "v0.1.0",
+    "dailyMean": {
+      "id": "q-f-yeongjong-2025-mean",
+      "name": "일평균 방문객",
+      "p10": 7400,
+      "p50": 13000,
+      "p90": 22000,
+      "unit": "명/일",
+      "timeUnit": "일",
+      "estimated": false,
+      "assumptionIds": [],
+      "value": null,
+      "spatialScope": "행사장",
+      "valueKind": "예측",
+      "announcedAt": null
+    },
+    "peakConcurrent": {
+      "id": "q-f-yeongjong-2025-peak",
+      "name": "순간 최대",
+      "p10": 12000,
+      "p50": 21000,
+      "p90": 35000,
+      "unit": "명",
+      "timeUnit": "순간",
+      "estimated": true,
+      "assumptionIds": [
+        "as-peak-day-factor",
+        "as-concurrency-fireworks"
+      ],
+      "value": null,
+      "spatialScope": "행사장",
+      "valueKind": "예측",
+      "announcedAt": null
+    },
+    "probabilities": [
+      {
+        "threshold": 1000,
+        "probability": 0.99,
+        "display": "99%"
+      },
+      {
+        "threshold": 5000,
+        "probability": 0.9,
+        "display": "90%"
+      }
+    ],
+    "peakHours": {
+      "from": "19:00",
+      "to": "21:00"
+    },
+    "ood": false,
+    "oodReasons": [],
+    "judgment": {
+      "level": 4,
+      "label": "대규모",
+      "reasons": [
+        {
+          "ruleId": "rule-legal-hazard",
+          "kind": "법정",
+          "text": "폭죽 사용 — 법정 기준(인원 무관)"
+        },
+        {
+          "ruleId": "rule-internal-5000",
+          "kind": "자체",
+          "text": "5,000명 초과 90% — 자체 기준"
+        }
+      ]
+    }
+  }
+}

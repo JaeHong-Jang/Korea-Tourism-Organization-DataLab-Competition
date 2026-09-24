@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/sse-event.schema.json",
   "title": "SSE 이벤트",
-  "description": "게이트웨이 → 웹 스트림. claim·evidence는 발행 뒤에만 나간다",
+  "description": "게이트웨이 → 웹 스트림. forecast는 숫자 카드만, claim·evidence는 발행 뒤에만",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,12 +14,13 @@
     "event": {
       "enum": [
         "agent_status",
+        "agent_step",
         "event_card",
         "ask",
         "forecast",
-        "evidence",
-        "claim",
         "gate",
+        "claim",
+        "evidence",
         "suggest",
         "done",
         "error"
@@ -34,50 +35,69 @@
   "allOf": [
     {
       "if": {
+        "type": "object",
         "properties": {
           "event": {
             "const": "agent_status"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "data": {
             "$ref": "agent-status.schema.json"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "agent_step"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "agent-step.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
         "properties": {
           "event": {
             "const": "event_card"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "data": {
             "$ref": "event-draft.schema.json"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
         "properties": {
           "event": {
             "const": "ask"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "data": {
             "type": "object",
@@ -115,38 +135,86 @@
               }
             }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
         "properties": {
           "event": {
             "const": "forecast"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "data": {
-            "$ref": "forecast.schema.json"
+            "$ref": "forecast-card.schema.json"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "gate"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "gate-report.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "claim"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "allOf": [
+              {
+                "$ref": "claim.schema.json"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "const": "published"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
         "properties": {
           "event": {
             "const": "evidence"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "data": {
             "type": "object",
@@ -164,68 +232,20 @@
               }
             }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
-        "properties": {
-          "event": {
-            "const": "claim"
-          }
-        },
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "data": {
-            "allOf": [
-              {
-                "$ref": "claim.schema.json"
-              },
-              {
-                "properties": {
-                  "status": {
-                    "const": "published"
-                  }
-                },
-                "type": "object"
-              }
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "event": {
-            "const": "gate"
-          }
-        },
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "data": {
-            "$ref": "gate-report.schema.json"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
+        "type": "object",
         "properties": {
           "event": {
             "const": "suggest"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "data": {
             "type": "object",
@@ -237,65 +257,63 @@
               "actions": {
                 "type": "array",
                 "items": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "label"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "label": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "common.schema.json#/$defs/action"
                 }
               }
             }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
         "properties": {
           "event": {
             "const": "done"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "data": {
             "type": "object",
             "additionalProperties": false,
             "required": [
-              "sessionId"
+              "sessionId",
+              "forecastId"
             ],
             "properties": {
               "sessionId": {
-                "$ref": "common.schema.json#/$defs/id"
+                "$ref": "common.schema.json#/$defs/sessionId"
+              },
+              "forecastId": {
+                "anyOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/forecastId"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "type": "object",
         "properties": {
           "event": {
             "const": "error"
           }
-        },
-        "type": "object"
+        }
       },
       "then": {
+        "type": "object",
         "properties": {
           "data": {
             "type": "object",
@@ -306,15 +324,19 @@
             ],
             "properties": {
               "code": {
-                "type": "string"
+                "enum": [
+                  "ANALYSIS_GATE_FAILED",
+                  "SERVICE_UNAVAILABLE",
+                  "DEADLINE_EXCEEDED",
+                  "OUT_OF_SCOPE"
+                ]
               },
               "message": {
                 "type": "string"
               }
             }
           }
-        },
-        "type": "object"
+        }
       }
     }
   ]

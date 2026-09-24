@@ -48,11 +48,11 @@ class EventDraft(BaseModel):
     timeOfDay: common_schema.TimeOfDay | None
     venueText: str | None
     sigunguCode: common_schema.SigunguCode | None
-    sigunguName: str | None = None
+    sigunguName: str | None
     fee: common_schema.Fee | None
     hostType: common_schema.HostType | None
-    budgetKrw: int | None = None
+    budgetKrw: int | None
     promo: list[str]
     hazards: list[common_schema.Hazard]
-    missing: Annotated[list[MissingEnum], Field(description='코드가 계산한 빠진 필수·선택 값')]
+    missing: list[MissingEnum]
     ambiguities: list[Ambiguity]

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/forecast.schema.json",
-  "title": "예보",
-  "description": "예측 서비스의 결정적 결과(숫자·판정·요인·계보·근거). 화면 숫자는 이 JSON만 쓴다",
+  "title": "예보(전체)",
+  "description": "예측 서비스의 결정적 결과 전체 — 게이트웨이·근거 그래프 내부용. 화면에는 게이트 A 뒤 forecast-card, 발행 뒤 forecast-report로만 나간다",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -23,14 +23,15 @@
     "oodReasons",
     "predictionRun",
     "observations",
+    "assumptions",
     "evidence"
   ],
   "properties": {
     "id": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/forecastId"
     },
     "eventId": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/eventId"
     },
     "asOf": {
       "$ref": "common.schema.json#/$defs/date"
@@ -42,10 +43,10 @@
       "type": "string"
     },
     "dailyMean": {
-      "$ref": "common.schema.json#/$defs/quantity"
+      "$ref": "common.schema.json#/$defs/dailyMeanQuantity"
     },
     "peakConcurrent": {
-      "$ref": "common.schema.json#/$defs/quantity"
+      "$ref": "common.schema.json#/$defs/peakQuantity"
     },
     "probabilities": {
       "type": "array",
@@ -67,8 +68,7 @@
             "maximum": 1
           },
           "display": {
-            "type": "string",
-            "description": "정수 % 또는 표본이 적으면 구간(\"30~50%\")"
+            "type": "string"
           }
         }
       },
@@ -120,8 +120,7 @@
             "maximum": 1
           }
         }
-      },
-      "description": "유형별 표준 곡선(가정)"
+      }
     },
     "composition": {
       "anyOf": [
@@ -145,7 +144,7 @@
               "type": "number"
             },
             "evidenceId": {
-              "$ref": "common.schema.json#/$defs/id"
+              "$ref": "common.schema.json#/$defs/evidenceId"
             }
           }
         },
@@ -181,6 +180,13 @@
         "$ref": "common.schema.json#/$defs/observation"
       },
       "minItems": 1
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/assumption"
+      },
+      "minItems": 2
     },
     "evidence": {
       "type": "array",

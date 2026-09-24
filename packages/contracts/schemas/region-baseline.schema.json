@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://crowdcast.local/schemas/region-baseline.schema.json",
   "title": "개최지 평시",
-  "description": "행사 전 기간의 요일별 평시 방문(방문자 API)",
+  "description": "행사 전 기간의 요일별 평시 방문",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,7 +11,8 @@
     "period",
     "weekdayMean",
     "nonlocalShare",
-    "evidenceId"
+    "evidenceId",
+    "evidence"
   ],
   "properties": {
     "sigunguCode": {
@@ -60,7 +61,14 @@
       "maximum": 1
     },
     "evidenceId": {
-      "$ref": "common.schema.json#/$defs/id"
+      "$ref": "common.schema.json#/$defs/evidenceId"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "evidence.schema.json"
+      },
+      "minItems": 1
     }
   }
 }
