@@ -9,7 +9,7 @@ from crowdcast.api.contract import validate
 from crowdcast.data.call_ledger import CallLimitReached
 from crowdcast.pipeline import __main__ as cli
 from crowdcast.pipeline import stages
-from pipeline_fixtures import latest_record
+from pipeline_fixtures import latest_record, write_features
 
 
 # 선택 범위와 없는 모듈을 구분하고 labels부터 실행할 때 fetch를 부르지 않는다.
@@ -53,8 +53,16 @@ def test_command_failure_stops_pending(pipeline_root: Path, monkeypatch: pytest.
 # 모듈이 생기면 상수 표의 진입점을 실행하며 모듈 부재로 계속 건너뛰지 않는다.
 def test_available_optional_module(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
+
+    # 명령 정상 종료에 더해 이번 실행의 피처 산출물을 실제로 작성한다.
+    def command(entry: str, args: list[str] | None = None) -> tuple[int, str]:
+        calls.append(entry)
+        write_features()
+        return 0, ""
+
+    # 모듈 탐색만 대체하고 필수 산출물 검사는 실제 경로로 수행한다.
     monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
-    monkeypatch.setattr(stages, "command", lambda entry, args=None: (calls.append(entry) or 0, ""))
+    monkeypatch.setattr(stages, "command", command)
     assert cli.main(["--from", "features", "--to", "features"]) == 0
     assert calls == ["crowdcast.features.build"]
     assert latest_record(pipeline_root)["stages"][2]["status"] == "passed"

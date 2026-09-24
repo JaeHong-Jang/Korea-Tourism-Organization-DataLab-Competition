@@ -14,6 +14,70 @@ from crowdcast.data.call_ledger import KST, atomic_write
 FETCH_STATE_MARKER = "; 수집 상태 JSON: "
 
 
+# 모델 카드가 지정한 버전의 파일만 모아 다른 학습 실행의 산출물을 섞지 않는다.
+def model_files() -> list[Path]:
+    card = paths.MODELS / "model_card.json"
+    if not card.is_file():
+        return []
+    version = json.loads(card.read_bytes())["modelVersion"]
+    if (
+        not isinstance(version, str)
+        or not version
+        or Path(version).name != version
+        or version.startswith(".")
+    ):
+        raise ValueError("모델 버전은 models/ 아래 디렉터리 이름이어야 합니다")
+    directory = paths.MODELS / version
+    return [
+        path
+        for path in directory.rglob("*")
+        if path.is_file() and not any(part.startswith(".") for part in path.relative_to(directory).parts)
+    ]
+
+
+# 필수 산출물 표의 모든 파일이 이번 단계에서 갱신됐는지 나노초 수정 시각으로 확인한다.
+def current_outputs(required: tuple[str, ...], started_ns: int) -> list[Path]:
+    roots = {"data": paths.DATA, "models": paths.MODELS, "reports": paths.REPORTS}
+    files = []
+    for relative in required:
+        if relative == "models/{modelVersion}/**/*":
+            candidates = model_files()
+            if not candidates:
+                raise ValueError("필수 산출물 없음: models/<modelVersion>/ 모델 파일")
+        else:
+            root, _, name = relative.partition("/")
+            candidates = [roots[root] / name]
+        for path in candidates:
+            if not path.is_file():
+                raise ValueError(f"필수 산출물 없음: {relative}")
+            if path.stat().st_mtime_ns < started_ns:
+                raise ValueError(f"이번 단계에서 갱신되지 않은 산출물: {artifact_path(path)}")
+            files.append(path)
+    return files
+
+
+# 결정적인 runId를 재사용해도 이번 완료 표식이 새로 기록됐으면 해당 결과를 인정한다.
+def current_backtest(started_ns: int) -> Path:
+    pointer = paths.REPORTS / "backtest/latest.json"
+    if not pointer.is_file():
+        raise ValueError("이번 백테스트 완료 표식 없음: reports/backtest/latest.json")
+    latest = json.loads(pointer.read_bytes())
+    finished = datetime.fromisoformat(latest["finishedAt"])
+    if finished.tzinfo is None or finished.timestamp() < started_ns / 1_000_000_000:
+        raise ValueError("backtest/latest.json finishedAt이 이번 단계 시작보다 이전이거나 시간대 없음")
+    run_id = latest["runId"]
+    if not isinstance(run_id, str) or not run_id or Path(run_id).name != run_id or run_id.startswith("."):
+        raise ValueError("백테스트 runId는 reports/backtest/ 아래 디렉터리 이름이어야 합니다")
+    directory = pointer.parent / run_id
+    summary = directory / "backtest.json"
+    if not summary.is_file():
+        raise ValueError("이번 백테스트 backtest.json 없음")
+    result = json.loads(summary.read_bytes())
+    if result["runId"] != run_id or result["modelVersion"] != latest["modelVersion"]:
+        raise ValueError("백테스트 완료 표식과 결과의 runId·modelVersion 불일치")
+    return directory
+
+
 # dry·진행 중 기록을 제외하고 직전 수집 단계의 관측일·성공 시각을 이어받는다.
 def fetch_history() -> dict[str, str | None]:
     runs = paths.REPORTS / "runs"

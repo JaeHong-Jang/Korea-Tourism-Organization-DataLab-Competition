@@ -7,6 +7,7 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from time import time_ns
 from typing import Any
 
 import polars as pl
@@ -14,7 +15,7 @@ from crowdcast import paths
 from crowdcast.data.call_ledger import KST, CallLimitReached
 from crowdcast.data.datago_client import ApiPage, DataGoClient, safe_error
 from crowdcast.data.visitors import VISITORS_LAG_DAYS, IncompleteVisitors, collect_visitors
-from crowdcast.pipeline import gates
+from crowdcast.pipeline import gates, run_record
 
 # 콜론 뒤는 python -m 모듈에 넘길 하위 명령이며 T-203·T-205는 이 표의 진입점을 제공한다.
 ENTRYPOINTS = {
@@ -38,6 +39,13 @@ OUTPUTS = {
     "labels": ("labels.parquet", "labels_g0.json", "labels_qc.md", "diy_labels_template.csv"),
     "features": ("features.parquet", "features_availability.json"),
     "batch": ("upcoming.parquet", "upcoming_forecasts.jsonl", "upcoming_qc.md"),
+}
+# 후속 단계는 이 필수 산출물 전부를 갱신해야 하며 백테스트는 완료 표식으로 식별한다.
+REQUIRED_OUTPUTS = {
+    "features": ("data/processed/features_availability.json", "data/processed/features.parquet"),
+    "train": ("models/model_card.json", "models/{modelVersion}/**/*"),
+    "backtest": ("reports/backtest/latest.json",),
+    "batch": ("data/processed/upcoming.parquet",),
 }
 
 
@@ -66,6 +74,8 @@ def select_stages(first: str, last: str) -> tuple[str, ...]:
 
 # 대상 모듈 부재만 건너뛰고 설치된 모듈의 의존성 오류는 실패로 드러낸다.
 def missing_entrypoint(stage: str) -> str | None:
+    if stage not in {"fetch", "labels", "publish"} and stage not in REQUIRED_OUTPUTS:
+        return f"{stage} 필수 산출물 표 없음"
     for entry in ENTRYPOINTS[stage]:
         module = entry.partition(":")[0]
         try:
@@ -82,7 +92,7 @@ def missing_entrypoint(stage: str) -> str | None:
 # dry 검사에는 실행 모듈을 부르지 않고 이미 있는 필수 입력 경로만 사용한다.
 def input_files(stage: str) -> list[Path]:
     names = {
-        "fetch": ("region_daily.parquet", "admin_dict.parquet", "mcst_festivals.parquet"),
+        "fetch": ("region_daily.parquet", "mcst_festivals.parquet"),
         "labels": ("events.parquet", "region_daily.parquet", "diy_targets.csv"),
         "features": ("events.parquet", "region_daily.parquet", "labels.parquet"),
         "train": ("labels.parquet",),
@@ -103,19 +113,7 @@ def input_files(stage: str) -> list[Path]:
 def output_files(stage: str, backtest_directory: Path | None = None) -> list[Path]:
     files = [paths.PROCESSED / name for name in OUTPUTS.get(stage, ())]
     if stage == "train":
-        card = paths.MODELS / "model_card.json"
-        files = [card]
-        if card.is_file():
-            version = json.loads(card.read_bytes())["modelVersion"]
-            if not version or Path(version).name != version or version.startswith("."):
-                raise ValueError("모델 버전은 models/ 아래 디렉터리 이름이어야 합니다")
-            directory = paths.MODELS / version
-            files += [
-                path
-                for path in directory.rglob("*")
-                if path.is_file()
-                and not any(part.startswith(".") for part in path.relative_to(directory).parts)
-            ]
+        files = [paths.MODELS / "model_card.json", *run_record.model_files()]
     if stage == "backtest":
         files = (
             []
@@ -183,6 +181,7 @@ def latest_observation() -> str | None:
 
 # 예산·미공개 중단은 확보 자료 게이트로 판단하되 실제 수집 오류는 실패로 전파한다.
 def fetch(client: VisitorClient, today: date, history: dict[str, str | None]) -> dict[str, Any]:
+    codes = gates.visitor_codes()
     start, end = fetch_range(today)
     note = f"방문자 계획 {start}~{end}"
     try:
@@ -201,7 +200,7 @@ def fetch(client: VisitorClient, today: date, history: dict[str, str | None]) ->
         and (latest is None or latest < date.fromisoformat(history["latest"]))
     ):
         return {"passed": False, "message": f"최신 관측일 감소: {history['latest']} → {latest}; 재시도 없음"}
-    gate = gates.fetch_gate(today, start)
+    gate = gates.fetch_gate(today, start, codes)
     if not gate["passed"]:
         return gate
     code, detail = golden_command(ENTRYPOINTS["fetch"][1], ["--offline"])
@@ -247,23 +246,35 @@ def execute_stage(
             raise ValueError("fetch 호출 예산이 초기화되지 않았습니다")
         return fetch(client, today, history)
     previous = gates.previous_result(stage)
-    directories = set((paths.REPORTS / "backtest").glob("*/")) if stage == "backtest" else set()
+    # 백테스트 완료 표식의 실행 전 내용 — 실행 뒤 내용이 바뀌어야 이번 결과로 인정한다.
+    pointer = paths.REPORTS / "backtest/latest.json"
+    pointer_before = pointer.read_bytes() if stage == "backtest" and pointer.is_file() else None
+    started_ns = time_ns()
     code, detail = (
         golden_command(ENTRYPOINTS[stage][0], []) if stage == "labels" else command(ENTRYPOINTS[stage][0])
     )
     if code != 0:
         return {"passed": False, "message": f"{stage} 종료 코드 {code}: {detail}"}
-    # 과거 디렉터리 수정은 새 결과가 아니며 여러 새 결과도 임의로 선택하지 않는다.
-    directory = None
+    # 완료 표식은 같은 runId 재실행을 허용하고 나머지 단계는 필수 파일의 갱신을 확인한다.
     if stage == "backtest":
-        created = set((paths.REPORTS / "backtest").glob("*/")) - directories
-        if len(created) != 1:
-            return {"passed": False, "message": f"이번 백테스트 디렉터리 {len(created)}개: 정확히 1개 필요"}
-        directory = created.pop()
-        summary = directory / "backtest.json"
-        if not summary.is_file():
-            return {"passed": False, "message": "이번 단계 시작 이후 backtest.json 없음"}
-    files.extend(output_files(stage, directory))
+        latest = pointer
+        # 완료 표식 내용이 실행 전과 달라야 한다(같은 runId 재실행도 finishedAt이 새로 쓰여 내용이 바뀐다).
+        if not latest.is_file() or latest.read_bytes() == pointer_before:
+            message = "이번 백테스트가 latest.json을 갱신하지 않았습니다; 종료 코드 0"
+            return {"passed": False, "message": message}
+        files.extend(output_files(stage, run_record.current_backtest(started_ns)))
+        files.append(latest)
+    elif stage in REQUIRED_OUTPUTS:
+        required = run_record.current_outputs(REQUIRED_OUTPUTS[stage], started_ns)
+        files.extend(
+            sorted(
+                set(
+                    required + [path for path in output_files(stage) if path.stat().st_mtime_ns >= started_ns]
+                )
+            )
+        )
+    else:
+        files.extend(output_files(stage))
     gate = gates.labels_gate() if stage == "labels" else gates.optional_gate(stage, files, previous)
     gate["message"] += "; 종료 코드 0"
     return gate

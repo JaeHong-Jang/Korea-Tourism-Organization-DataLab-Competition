@@ -8,7 +8,8 @@ import polars as pl
 import pytest
 from crowdcast import paths
 from crowdcast.pipeline import __main__ as cli
-from pipeline_fixtures import TODAY, audit, region_frame
+from crowdcast.pipeline import gates
+from pipeline_fixtures import TODAY, audit, region_frame, write_boundary
 
 
 # 전체 네트워크 전송을 막아 캐시 테스트가 실제 키와 장부를 소비할 수 없게 한다.
@@ -37,6 +38,13 @@ def pipeline_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         directory.mkdir(parents=True, exist_ok=True)
         monkeypatch.setattr(paths, name, directory)
     monkeypatch.setattr(cli, "korea_today", lambda: TODAY)
+    # 소형 격자에서는 부모 시를 비우고 부모 시 전용 테스트가 실제 상수 사용을 검증한다.
+    monkeypatch.setattr(gates, "PARENT_CITY_CODES", frozenset())
+    # 소형 경계 픽스처는 정본 수 검사를 끄고, 완전성 전용 테스트가 켜서 검증한다.
+    monkeypatch.setattr(gates, "EXPECTED_BOUNDARY_CODES", None)
+    monkeypatch.setattr(gates, "EXPECTED_PARENT_CITIES", None)
+    monkeypatch.setattr(gates, "EXPECTED_BOUNDARY_SHA256", None)
+    monkeypatch.setattr(gates, "EXPECTED_PARENT_SHA256", None)
     processed = paths.PROCESSED
     region_frame().write_parquet(processed / "region_daily.parquet")
     pl.DataFrame({"sigungu_code": ["41800", "51150"], "source": [["visitors"], ["visitors"]]}).write_parquet(
@@ -51,7 +59,5 @@ def pipeline_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (processed / "labels_g0.json").write_text(json.dumps(audit((processed / "labels.parquet").read_bytes())))
     (processed / "diy_targets.csv").write_text("festival_name\n연천구석기축제\n")
     (processed / "mcst_festivals.parquet").write_bytes(b"offline test input")
-    boundary = paths.EXTERNAL / "boundaries/sigungu.topo.json"
-    boundary.parent.mkdir()
-    boundary.write_text("{}")
+    write_boundary()
     return tmp_path

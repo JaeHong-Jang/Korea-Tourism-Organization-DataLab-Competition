@@ -1,59 +1,99 @@
-"""이번 단계의 단일 백테스트 결과만 판정·해시하고 골든 미검증 승격을 차단한다."""
+"""이번 완료 표식이 가리키는 백테스트만 판정하고 결정적 runId 재실행을 허용한다."""
 
 import json
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
 from crowdcast import paths
+from crowdcast.data.call_ledger import KST
 from crowdcast.pipeline import __main__ as cli
 from crowdcast.pipeline import gates, run_record, stages
-from pipeline_fixtures import backtest, latest_record
+from pipeline_fixtures import backtest, latest_record, write_backtest
 
 
-# 성공 종료만으로 기존 결과를 재사용하거나 여러 새 실행 중 하나를 고르지 않는다.
-@pytest.mark.parametrize("created", [0, 1, 2])
-def test_only_one_new_directory_is_current(
-    pipeline_root: Path, monkeypatch: pytest.MonkeyPatch, created: int
-) -> None:
-    old = paths.REPORTS / "backtest/2025-연천/backtest.json"
-    old.parent.mkdir(parents=True)
-    old.write_text(json.dumps(backtest()))
-    calls = []
+# 같은 입력의 같은 runId를 다시 써도 이번 완료 표식이 갱신되면 통과해야 한다.
+def test_same_run_id_rerun_passes(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    summary = write_backtest()
+    content = summary.read_bytes()
 
-    # 이전 결과도 덮어써 mtime이 최신이라는 이유로 산출물에 섞이지 않는지 확인한다.
+    # 다른 실행 디렉터리가 함께 있어도 완료 표식이 가리키는 결과만 선택한다.
     def command(*args: object) -> tuple[int, str]:
-        calls.append(args)
-        for index in range(created):
-            path = paths.REPORTS / f"backtest/2026-연천-{index}/backtest.json"
-            path.parent.mkdir()
-            path.write_text(json.dumps(backtest()))
-        old.write_text(json.dumps(backtest()))
+        unrelated = paths.REPORTS / "backtest/unrelated/backtest.json"
+        unrelated.parent.mkdir(exist_ok=True)
+        unrelated.write_text(json.dumps(backtest()))
+        write_backtest()
         return 0, ""
 
-    # 정확히 하나인 이번 실행 파일만 해시하고 모호한 결과에는 산출물을 남기지 않는다.
+    # 두 차례 모두 같은 결과 바이트와 선택 산출물을 보존하는지 확인한다.
     monkeypatch.setattr(stages, "missing_entrypoint", lambda stage: None)
     monkeypatch.setattr(stages, "command", command)
-    assert cli.main(["--from", "backtest", "--to", "backtest"]) == (0 if created == 1 else 1)
-    record = latest_record(pipeline_root)
-    artifacts = record["stages"][4]["artifacts"]
-    assert len(calls) == 1
-    assert artifacts == (
-        run_record.artifacts([paths.REPORTS / "backtest/2026-연천-0/backtest.json"]) if created == 1 else []
-    )
+    for _ in range(2):
+        assert cli.main(["--from", "backtest", "--to", "backtest"]) == 0
+        record = latest_record(pipeline_root)
+        assert record["stages"][4]["artifacts"] == run_record.artifacts(
+            [summary, summary.parent.parent / "latest.json"]
+        )
+        assert summary.read_bytes() == content
     assert stages.output_files("backtest") == []
 
 
-# 새 디렉터리 이름만 있고 이번 JSON 결과가 없으면 통과시키지 않는다.
-def test_new_directory_without_summary_fails(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+# 새 디렉터리 생성이나 결과 덮어쓰기로 오래된 완료 표식을 대체할 수 없다.
+@pytest.mark.parametrize("change", ["none", "summary", "new_directory", "missing_pointer"])
+def test_unchanged_pointer_fails(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
+    summary = write_backtest()
+    pointer = summary.parent.parent / "latest.json"
+    latest = json.loads(pointer.read_bytes())
+    latest["finishedAt"] = (datetime.now(KST) - timedelta(days=1)).isoformat()
+    pointer.write_text(json.dumps(latest))
+
+    # 정상 종료를 반환하면서 완료 표식만 갱신하지 않는 모듈을 재현한다.
     def command(*args: object) -> tuple[int, str]:
-        (paths.REPORTS / "backtest/2026-연천").mkdir(parents=True)
+        if change == "summary":
+            summary.write_text(json.dumps(backtest()))
+        elif change == "new_directory":
+            directory = summary.parent.parent / "new-run"
+            directory.mkdir()
+            (directory / "backtest.json").write_text(json.dumps(backtest()))
+        elif change == "missing_pointer":
+            pointer.unlink()
         return 0, ""
 
-    # 디렉터리가 있어도 과거 결과나 빈 목록으로 게이트를 통과하지 않는다.
+    # 게이트가 실패하면 일괄 예보를 실행하지 않고 산출물도 현재 실행에 붙이지 않는다.
     monkeypatch.setattr(stages, "missing_entrypoint", lambda stage: None)
     monkeypatch.setattr(stages, "command", command)
-    assert cli.main(["--from", "backtest", "--to", "backtest"]) == 1
-    assert latest_record(pipeline_root)["stages"][4]["artifacts"] == []
+    assert cli.main(["--from", "backtest", "--to", "batch"]) == 1
+    record = latest_record(pipeline_root)
+    assert record["stages"][4]["artifacts"] == []
+    assert record["stages"][5]["status"] == "pending"
+
+
+# 완료 시각 경계는 포함하며 과거 시각·시간대 누락·결과 불일치는 거부한다.
+@pytest.mark.parametrize("invalid", [None, "old", "naive", "runId", "modelVersion", "summary", "path"])
+def test_completion_pointer_validation(pipeline_root: Path, invalid: str | None) -> None:
+    summary = write_backtest()
+    pointer = summary.parent.parent / "latest.json"
+    latest = json.loads(pointer.read_bytes())
+    latest["finishedAt"] = "2026-09-25T09:00:00+09:00"
+    started_ns = int(datetime.fromisoformat(latest["finishedAt"]).timestamp()) * 1_000_000_000
+    if invalid in {"old", "naive"}:
+        latest["finishedAt"] = "2026-09-25T08:59:59+09:00" if invalid == "old" else "2026-09-25T09:00:00"
+    elif invalid == "modelVersion":
+        latest["modelVersion"] = "2024"
+    elif invalid == "runId":
+        current = backtest()
+        current["runId"] = "wrong-run"
+        summary.write_text(json.dumps(current))
+    elif invalid == "summary":
+        summary.unlink()
+    elif invalid == "path":
+        latest["runId"] = "../outside"
+    pointer.write_text(json.dumps(latest))
+    if invalid:
+        with pytest.raises(ValueError):
+            run_record.current_backtest(started_ns)
+    else:
+        assert run_record.current_backtest(started_ns) == summary.parent
 
 
 # 골든 사례가 없으면 첫 실행·직전 비교 모두 미검증이며 publish도 통과할 수 없다.
@@ -61,9 +101,7 @@ def test_new_directory_without_summary_fails(pipeline_root: Path, monkeypatch: p
 def test_empty_golden_unverified(pipeline_root: Path, previous: dict | None) -> None:
     current = backtest()
     current["golden"] = []
-    path = paths.REPORTS / "backtest/2026-연천/backtest.json"
-    path.parent.mkdir(parents=True)
-    path.write_text(json.dumps(current))
+    path = write_backtest(current)
     gate = gates.optional_gate("backtest", [path], previous)
     assert gate["passed"] is None and "미검증" in gate["message"]
     record = run_record.new_record(stages.STAGES, stages.STAGES, False)
@@ -78,9 +116,7 @@ def test_unverified_backtest_records_artifact(pipeline_root: Path, monkeypatch: 
     def command(*args: object) -> tuple[int, str]:
         current = backtest()
         current["golden"] = []
-        path = paths.REPORTS / "backtest/2026-연천/backtest.json"
-        path.parent.mkdir(parents=True)
-        path.write_text(json.dumps(current))
+        write_backtest(current)
         return 0, ""
 
     # 산출물이 생긴 미검증 단계와 모듈이 없는 단계를 기록에서 구별한다.
@@ -89,5 +125,41 @@ def test_unverified_backtest_records_artifact(pipeline_root: Path, monkeypatch: 
     assert cli.main(["--from", "backtest", "--to", "backtest"]) == 2
     record = latest_record(pipeline_root)
     assert record["stages"][4]["status"] == "skipped"
-    assert len(record["stages"][4]["artifacts"]) == 1
+    assert len(record["stages"][4]["artifacts"]) == 2
     assert "미검증 단계: backtest" in record["summary"]
+
+
+
+# 옛 latest.json에 미래 finishedAt이 남아 있어도 이번 단계가 파일을 새로 쓰지 않았으면 실패한다.
+def test_stale_pointer_with_future_finish_fails(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import os
+
+    summary = write_backtest()
+    pointer = summary.parent.parent / "latest.json"
+    latest = json.loads(pointer.read_bytes())
+    latest["finishedAt"] = (datetime.now(KST) + timedelta(days=1)).isoformat()
+    pointer.write_text(json.dumps(latest))
+    old = pointer.stat().st_mtime_ns - 10**12
+    os.utime(pointer, ns=(old, old))
+
+    # 정상 종료만 돌려주고 아무 파일도 쓰지 않는 모듈을 재현한다.
+    monkeypatch.setattr(stages, "missing_entrypoint", lambda stage: None)
+    monkeypatch.setattr(stages, "command", lambda *args: (0, ""))
+    assert cli.main(["--from", "backtest", "--to", "backtest"]) == 1
+    record = latest_record(pipeline_root)
+    assert record["stages"][4]["status"] == "failed"
+    assert "latest.json" in record["stages"][4]["gate"]["message"]
+
+
+
+# 실행 직전에 쓰인 옛 표식(미래 finishedAt)이라도 이번 단계에서 내용이 바뀌지 않으면 실패한다.
+def test_recent_unchanged_pointer_fails(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    summary = write_backtest()
+    pointer = summary.parent.parent / "latest.json"
+    latest = json.loads(pointer.read_bytes())
+    latest["finishedAt"] = (datetime.now(KST) + timedelta(days=1)).isoformat()
+    pointer.write_text(json.dumps(latest))
+    monkeypatch.setattr(stages, "missing_entrypoint", lambda stage: None)
+    monkeypatch.setattr(stages, "command", lambda *args: (0, ""))
+    assert cli.main(["--from", "backtest", "--to", "backtest"]) == 1
+    assert "latest.json" in latest_record(pipeline_root)["stages"][4]["gate"]["message"]

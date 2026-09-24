@@ -1,7 +1,9 @@
 """수집 격자·신선도·공유 장부와 저장된 라벨·후속 단계 결과를 판정한다."""
 
 import csv
+import hashlib
 import json
+from collections.abc import Iterable
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -10,7 +12,7 @@ import polars as pl
 from crowdcast import paths
 from crowdcast.api.contract import validate
 from crowdcast.data.call_ledger import DAILY_LIMIT
-from crowdcast.data.crosswalk import CODE_CHANGE_DATE, INCHEON_BREAK_CODES
+from crowdcast.data.crosswalk import CODE_CHANGE_DATE, INCHEON_BREAK_CODES, PARENT_CITY_CODES
 from crowdcast.data.visitors import TOU_DIV
 from crowdcast.pipeline.run_record import sha256
 
@@ -33,8 +35,49 @@ def ledger_calls(today: date) -> int:
     return total
 
 
-# 기준 사전의 방문자 대상 지역과 연속 날짜로 전체 누락까지 분모에 남긴다.
-def fetch_gate(today: date, start: date | None = None) -> dict[str, Any]:
+# 코드 집합을 순서와 무관하게 하나의 해시로 만든다.
+def code_set_sha256(codes: Iterable[str]) -> str:
+    return hashlib.sha256(",".join(sorted(set(codes))).encode()).hexdigest()
+
+
+# 2025 경계 정본 시군구 수와 방문자 API 부모 시 수(06 §1·T-102) — 경계가 일부면 분모가 줄어 결측을 숨긴다.
+EXPECTED_BOUNDARY_CODES: int | None = 252
+EXPECTED_PARENT_CITIES: int | None = 12
+# 정본 코드 집합 자체를 대조한다(개수만 맞춘 바뀐 목록을 막는다) — 정렬한 코드를 쉼표로 이은 SHA-256.
+EXPECTED_BOUNDARY_SHA256: str | None = "060a6c45d9e798514faa5976d776a63983e8bb73b131206be5c3c0a1b849c189"
+EXPECTED_PARENT_SHA256: str | None = "d61cff70337a966e77544ff14ed6b33245a285f54214c2a221c34fe52702e63a"
+
+
+# 수집 산출물과 독립된 2025 경계 정본에 기존 방문자 API 부모 시 정의만 더한다.
+def visitor_codes() -> pl.DataFrame:
+    boundary = paths.EXTERNAL / "boundaries/sigungu.topo.json"
+    topology = json.loads(boundary.read_bytes())
+    collection = topology.get("objects", {}).get("HangJeongDong_ver20251231", {})
+    if topology.get("type") != "Topology" or collection.get("type") != "GeometryCollection":
+        raise ValueError("방문자 기준 경계는 2025년 ver20251231 Topology여야 합니다")
+    codes = [row.get("properties", {}).get("sgg") for row in collection.get("geometries", [])]
+    if not codes or any(
+        not isinstance(code, str) or len(code) != 5 or not code.isascii() or not code.isdigit()
+        for code in codes
+    ):
+        raise ValueError("방문자 기준 경계의 시군구 코드 누락·형식 오류")
+    if len(codes) != len(set(codes)):
+        raise ValueError("방문자 기준 경계의 시군구 코드 중복")
+    # 기준 목록이 빠짐없는지 정본 수로 확인한다(일부만 있는 경계는 기준으로 쓰지 않는다).
+    if EXPECTED_BOUNDARY_CODES is not None and len(codes) != EXPECTED_BOUNDARY_CODES:
+        raise ValueError(f"방문자 기준 경계 시군구 {len(codes)}개 — 정본 {EXPECTED_BOUNDARY_CODES}개와 다름")
+    if EXPECTED_PARENT_CITIES is not None and len(PARENT_CITY_CODES) != EXPECTED_PARENT_CITIES:
+        raise ValueError(f"부모 시 {len(PARENT_CITY_CODES)}개 — 정본 {EXPECTED_PARENT_CITIES}개와 다름")
+    if EXPECTED_BOUNDARY_SHA256 is not None and code_set_sha256(codes) != EXPECTED_BOUNDARY_SHA256:
+        raise ValueError("방문자 기준 경계 코드 집합이 정본과 다름(해시 불일치)")
+    if EXPECTED_PARENT_SHA256 is not None and code_set_sha256(PARENT_CITY_CODES) != EXPECTED_PARENT_SHA256:
+        raise ValueError("부모 시 코드 집합이 정본과 다름(해시 불일치)")
+    return pl.DataFrame({"sigungu_code": sorted(set(codes) | PARENT_CITY_CODES)})
+
+
+# 고정 기준 지역과 연속 날짜로 전체 누락까지 분모에 남긴다.
+def fetch_gate(today: date, start: date | None = None, codes: pl.DataFrame | None = None) -> dict[str, Any]:
+    codes = visitor_codes() if codes is None else codes
     output = paths.PROCESSED / "region_daily.parquet"
     frame = pl.read_parquet(output)
     if frame.is_empty():
@@ -50,10 +93,8 @@ def fetch_gate(today: date, start: date | None = None) -> dict[str, Any]:
             return {"passed": False, "message": "region_daily 체크포인트 해시 불일치"}
         first = min([first, *(date.fromisoformat(day) for day in progress["completed_dates"])])
 
-    # 결측률 = (기준 API 지역 × 첫날~최신일 전체 날짜 × 세 구분 − 유효 칸) / 전체 칸.
+    # 결측률 = ((2025 경계 ∪ API 부모 시) × 첫날~최신일 × 세 구분 − 유효 칸) / 전체 칸.
     # 부모 시도 포함하며 2026-07-01 이후 인천 단절 지역만 분자·분모에서 함께 제외한다.
-    admin = pl.read_parquet(paths.PROCESSED / "admin_dict.parquet")
-    codes = admin.filter(pl.col("source").list.contains("visitors")).select("sigungu_code").unique()
     days = pl.DataFrame({"date": pl.date_range(first, latest, eager=True)})
     grid = codes.join(days, how="cross").filter(
         ~((pl.col("date") >= CODE_CHANGE_DATE) & pl.col("sigungu_code").is_in(INCHEON_BREAK_CODES))
