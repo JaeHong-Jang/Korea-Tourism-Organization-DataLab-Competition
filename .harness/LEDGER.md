@@ -14,3 +14,4 @@
 | T-501 | gpt-6-sol | done | 0·0·0(3회) | G1 ✓ · G2 test 7·46·stan 0·우회 7종 거부 ✓ · G3 astra FAIL→FAIL→PASS · G4 ✓ | gpt-6-astra 3차 PASS | a288638 | — |
 | T-201 | gpt-6-astra | done | 0 | G1 ✓ · G2 test 38·ruff·✓ forecast · G3 sol PASS · G4 ✓(PyYAML 의존성 명시는 통합에서) | gpt-6-sol PASS | f2b0916 | — |
 | T-601 | gpt-6-astra | done | 0·0(2회: PARTIAL→후속) | G1 ✓ · G2 test 89·ruff·✓ knowledge · G3 sol PASS(판정 불일치 0/112) · G4 가정값 06 §4 대조 ✓ | gpt-6-sol PASS | a97cacd | — |
+| T-301 | gpt-6-astra | done | 0 | G1 ✓(루트 lock 허용) · G2 test 42·build·lint·health 직접 확인 · G3 sol PASS · G4 ✓(.env 미로드 Med → T-302) | gpt-6-sol PASS | bbdab1f | — |

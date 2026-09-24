@@ -161,8 +161,9 @@
    "status": "todo"
   },
   "T-301": {
-   "status": "running",
-   "updated": "2026-09-24T13:34:26.192Z"
+   "status": "done",
+   "updated": "2026-09-24T13:54:23.119Z",
+   "evidence": "게이트 1~4: test 42·tsc·biome·/api/health 200(분리)·404, 교차 리뷰 sol PASS(Med 1 → T-302), bbdab1f"
   },
   "T-302": {
    "status": "todo"
@@ -568,6 +569,12 @@
    "id": "T-601",
    "status": "done",
    "evidence": "게이트 1~4: test 89·ruff·✓ knowledge·경고 37268→1, 교차 리뷰 sol PASS(Python/JS 판정 불일치 0/112, 422 무쓰기 20/20), a97cacd"
+  },
+  {
+   "at": "2026-09-24T13:54:23.119Z",
+   "id": "T-301",
+   "status": "done",
+   "evidence": "게이트 1~4: test 42·tsc·biome·/api/health 200(분리)·404, 교차 리뷰 sol PASS(Med 1 → T-302), bbdab1f"
   }
  ]
 }
