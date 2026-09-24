@@ -84,10 +84,9 @@ def test_event_inputs_do_not_require_publication(available: date | None) -> None
     assert frame["region_daily_mean"][0] is None
 
 
-# 행사 입력에 포함된 달력은 외부 관측 공개일 검사와 구분한다.
+# 달력 피처는 규칙 달력에서 오며 외부 관측 공개일 검사와 구분한다.
 def test_calendar_and_publication_boundary() -> None:
     event = festival()
-    event["holiday_calendar"] = {"available_at": date(2025, 4, 19), "dates": ["2025-05-05"]}
     frame, _ = build_features([event], [], pl.DataFrame(), {event["event_id"]})
     assert frame["duration"][0] == 3
     assert frame["weekend_days"][0] == 2

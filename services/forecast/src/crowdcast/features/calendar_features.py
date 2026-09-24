@@ -1,12 +1,21 @@
-"""예보 입력의 일정과 제공된 공휴일 달력으로 행사 기간·달력 피처를 계산한다."""
+"""행사 일정과 법정·대체공휴일만으로 기간·달력 피처를 계산한다."""
 
 from datetime import date, timedelta
+from functools import lru_cache
 from typing import Any
 
-from crowdcast.features.availability import Feature, publication_date
+import holidays
+from crowdcast.features.availability import Feature
 
 
-# 공휴일 발행본이 없으면 휴일 수를 영으로 지어내지 않는다.
+# 지정 시각을 복원할 수 없는 임시공휴일은 규칙 달력에서 제외한다.
+@lru_cache(maxsize=32)
+def statutory_holidays(first_year: int, last_year: int) -> frozenset[date]:
+    calendar = holidays.KR(years=range(first_year, last_year + 1), language="ko")
+    return frozenset(day for day, name in calendar.items() if "임시" not in name)
+
+
+# 요청에 달력이 딸려 와도 쓰지 않고 공개 시점 문제가 없는 규칙 달력만 쓴다.
 def calendar_features(event: dict[str, Any], as_of: date) -> dict[str, Feature]:
     start, end = event["start"], event["end"]
     days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
@@ -17,12 +26,9 @@ def calendar_features(event: dict[str, Any], as_of: date) -> dict[str, Feature]:
         "holiday_days": Feature(None, None, is_observation=False),
         "holiday_streak": Feature(None, None, is_observation=False),
     }
-    calendar = event.get("holiday_calendar")
-    if calendar is None:
-        return result
+    holiday_dates = statutory_holidays(start.year, end.year)
 
-    # 요청에 주어진 달력 정보도 행사 정의로 취급하고 외부 방문 관측과 구분한다.
-    holiday_dates = {publication_date(day) for day in calendar["dates"]}
+    # 달력 자체는 사전 규칙이며 행사 일정에서 파생된 값은 행사 입력으로 구분한다.
     longest = streak = 0
     for day in days:
         streak = streak + 1 if day in holiday_dates or day.weekday() >= 5 else 0

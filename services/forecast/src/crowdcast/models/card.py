@@ -13,6 +13,11 @@ from crowdcast.models.baselines import size_band
 from crowdcast.paths import REPO_ROOT
 from jsonschema import Draft202012Validator
 
+# 서식4·S6와 같은 의미로 인용하도록 조건부 성능의 정의를 고정한다.
+CONDITIONAL_DEFINITION = (
+    "행사 속성이 주어졌을 때의 예보 성능 — 당시 공개 여부를 입증하지 않은 행사 속성을 쓴다"
+)
+
 
 # 정본 검사기의 레지스트리를 사용하고 형식 검사까지 직접 실행한다.
 def validate_contract(name: str, value: dict[str, Any]) -> None:
@@ -43,7 +48,10 @@ def model_card(
         "순간 최대 및 실측 환산 판정은 추정 산식 기반이며 실제 순간 인원 정답이 아니다. "
         "실버 holiday_overlap·명절 행사는 학습·채점 제외, 채점 불가 건수를 별도 공개한다. "
         "실버는 시군구 순증 보조 정답으로 골드 행사장 방문자와 정의가 다르며 계절 교란이 남는다. "
-        "행사 자체 속성·일정 파생 피처는 예보 입력이며 공개일 제한 대상이 아니다. "
+        f"기본 = 조건부 백테스트: {CONDITIONAL_DEFINITION}. "
+        "참고 = 파일명 날짜 기준 민감도는 별도 표이며 공개일 미입증(엄격한 D-14 입증이 아님). "
+        "행사 속성까지 D-14 공개가 입증된 백테스트는 공식 공개 기록이 없어 지금은 만들 수 없다. "
+        "임시공휴일은 지정 시각을 복원할 수 없어 두 백테스트의 달력 피처에서 제외했다. "
         "공개 시점 규칙은 지역 관측·전회차 라벨에만 적용한다. 입력 행사 일정·장소는 예보 대상 정의이고 "
         "환산은 같은 행사 정의에 적용한다. 단순 모델의 규모 계층 선택은 전회차 또는 학습 유형 중앙값만 쓴다. "
         "최종 모델은 마지막 성공 롤링 분할 그대로이며 평가 자료를 재학습하지 않았다. "
@@ -168,6 +176,8 @@ def backtest_markdown(
         ("규모대별", "size"),
     ):
         lines += ["", f"## {heading}", "", *metric_table(points, grouping)]
+    if "sensitivity" in result:
+        lines += sensitivity_table(result["sensitivity"]["points"])
     lines += [
         "",
         "## 기준선",
@@ -229,45 +239,52 @@ def backtest_markdown(
 def feature_comparison(
     before_id: str, before: list[dict[str, Any]], after: list[dict[str, Any]]
 ) -> list[str]:
-    lines = [
+    points = [
+        {**point, "revision": f"{point['year']} · {label}"}
+        for label, rows in (("수정 전", before), ("수정 후", after))
+        for point in rows
+    ]
+    return [
         "## 행사 입력 피처 복원 전후",
         "",
-        f"수정 전 실행: `{before_id}`. 평가 후 튜닝 없이 행사 입력의 결측 처리만 명세대로 바로잡았다.",
-        "양쪽 모두 각 실행의 전체 평가 표본이며 기준선 개선은 같은 쌍에서 계산한다.",
+        f"수정 전 실행: `{before_id}`. 두 실행 모두 고정 설정이며 평가 후 튜닝하지 않았다.",
+        "각 실행의 전체 평가 표본을 나란히 표시하며 기준선 개선은 같은 쌍에서 계산한다.",
         "",
-        "| 연도 | 모델 | 지표 | 수정 전 | 수정 후 |",
-        "|---:|---|---|---:|---:|",
+        *metric_table(points, "revision"),
+        "",
+        "수정 전 기준선",
+        "",
+        *baseline_table(before),
+        "",
+        "수정 후 기준선",
+        "",
+        *baseline_table(after),
+        "",
     ]
-    for year in sorted({p["year"] for p in before + after}):
-        for model in ("simple", "lightgbm"):
-            values = []
-            for points in (before, after):
-                rows = [p for p in points if p["year"] == year and p["model"] == model]
-                if not rows:
-                    values.append({"N": "0"})
-                    continue
-                m = metrics(rows)
-                values.append(
-                    {
-                        "N": str(len(rows)),
-                        "MdAPE(%)": number(m["mdape"]),
-                        "포함률(%)": number(m["coverage80"], percent=True),
-                        "포함/N": f"{sum(p['p10'] <= p['actual'] <= p['p90'] for p in rows)}/{len(rows)}",
-                        "폭 중앙값": number(float(np.median([p["p90"] - p["p10"] for p in rows]))),
-                        "재현율(%)": number(m["judgmentRecall"], percent=True),
-                        "정밀도(%)": number(m["judgmentPrecision"], percent=True),
-                        **{
-                            f"{b.upper()} 개선(%p)": number(metrics(rows, b)["baselineDeltaPp"])
-                            for b in ("b0", "b1", "b2")
-                        },
-                        **{
-                            f"{b.upper()} 비교 쌍": str(metrics(rows, b)["comparablePairs"])
-                            for b in ("b0", "b1", "b2")
-                        },
-                    }
-                )
-            for key in dict.fromkeys([*values[0], *values[1]]):
-                lines.append(
-                    f"| {year} | {model} | {key} | {values[0].get(key, '—')} | {values[1].get(key, '—')} |"
-                )
-    return [*lines, ""]
+
+
+# 민감도 성적은 주 지표와 분리하고 속성 결측 처리 수도 평가 행사 기준으로 공개한다.
+def sensitivity_table(points: list[dict[str, Any]]) -> list[str]:
+    lines = [
+        "",
+        "## 참고: 파일명 날짜 기준 민감도",
+        "",
+        "공개일 미입증 — 파일명 날짜가 실제 공개일·그날 문서 버전임은 입증되지 않았다. "
+        "날짜 없는 해·2020·2024는 문체부 속성을 결측 처리한다. TourAPI 보강 일정은 date_available_at을 쓴다. "
+        "외부 관측·행사 연결·as_of·환산 대상 정의와 학습·보정·평가 표본은 조건부와 같고 "
+        "모델·설정도 같으며 가린 피처로 다시 학습한다. 주 지표는 조건부 성적을 유지한다.",
+        "",
+        *metric_table(points, "year"),
+        "",
+        *baseline_table(points),
+        "",
+        "| 평가 연도 | N | 행사 속성 결측 처리 | 일정 파생 결측 처리 |",
+        "|---:|---:|---:|---:|",
+    ]
+    for year in sorted({p["year"] for p in points}):
+        rows = [p for p in points if p["year"] == year and p["model"] == "simple"]
+        lines.append(
+            f"| {year} | {len(rows)} | {sum(p['event_attributes_masked'] for p in rows)} | "
+            f"{sum(p['schedule_attributes_masked'] for p in rows)} |"
+        )
+    return lines

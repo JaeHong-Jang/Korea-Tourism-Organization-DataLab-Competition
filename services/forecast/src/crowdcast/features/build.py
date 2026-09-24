@@ -8,7 +8,12 @@ from typing import Any
 import pandera.polars as pa
 import polars as pl
 from crowdcast import paths
-from crowdcast.features.availability import Feature, availability_counts, check_availability
+from crowdcast.features.availability import (
+    Feature,
+    availability_counts,
+    check_availability,
+    publication_date,
+)
 from crowdcast.features.calendar_features import calendar_features
 from crowdcast.features.event_features import event_features
 from crowdcast.features.history_features import history_features
@@ -98,3 +103,45 @@ def build_features(
 def write_availability(path: Path, audit: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+# 외부 관측·분할 기준은 보존하고 행사 속성만 파일명 날짜 가정으로 가린다.
+def filename_sensitivity(
+    frame: pl.DataFrame,
+    names: list[str],
+    events: dict[str, dict[str, Any]],
+    filename_dates: dict[int, str],
+) -> pl.DataFrame:
+    rows = []
+    schedule = {"duration", "weekend_days", "month", "holiday_days", "holiday_streak"}
+    for row in frame.to_dicts():
+        event = events[row["event_id"]]
+        year = event.get("year", event["start"].year)
+        available = publication_date(
+            filename_dates.get(year) if "문체부" in (event.get("source") or []) else None
+        )
+        date_available = (
+            publication_date(event.get("date_available_at"))
+            if event.get("date_source") == "TourAPI"
+            else available
+        )
+        row["event_attributes_available_at"] = available
+        row["event_attributes_masked"] = available is None or available > row["as_of"]
+        row["schedule_attributes_masked"] = date_available is None or date_available > row["as_of"]
+        for name in names:
+            if row[f"{name}_is_observation"]:
+                continue
+            day = date_available if name in schedule else available
+            row[f"{name}_available_at"] = day
+            if day is None or day > row["as_of"]:
+                row[name] = None
+        rows.append(row)
+    return pl.DataFrame(
+        rows,
+        schema={
+            **frame.schema,
+            "event_attributes_available_at": pl.Date,
+            "event_attributes_masked": pl.Boolean,
+            "schedule_attributes_masked": pl.Boolean,
+        },
+    )

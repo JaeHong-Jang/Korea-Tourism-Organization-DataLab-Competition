@@ -48,6 +48,8 @@ def model_data() -> tuple[pl.DataFrame, dict]:
                     "previous_daily_mean": float(850 + 60 * index) if index % 2 else None,
                     "spatial_scope": "행사장",
                     "time_unit": "일",
+                    "definition": "일평균",
+                    "kind": "사후 집계",
                     "is_golden": False,
                 }
             )
@@ -66,6 +68,7 @@ def config() -> dict:
         "gold_weight": 1.0,
         "min_train_rows": 20,
         "min_calibration_rows": 10,
+        "event_filename_dates": {2018: "2018-06-05", 2019: "2019-02-27", 2025: "2025-03-21"},
         "lightgbm": {"num_leaves": 7, "min_child_samples": 10, "n_estimators": 5, "learning_rate": 0.05},
     }
 
