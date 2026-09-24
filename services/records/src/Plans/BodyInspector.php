@@ -26,16 +26,17 @@ final class BodyInspector
     public function inspect(array $plan, array $report): void
     {
         $expectedKeys = $this->keys();
-        if (!isset($plan['sections']) || !is_array($plan['sections'])
-            || !array_is_list($plan['sections']) || count($plan['sections']) !== count($expectedKeys)) {
+        if (
+            !isset($plan['sections']) || !is_array($plan['sections'])
+            || !array_is_list($plan['sections']) || count($plan['sections']) !== count($expectedKeys)
+        ) {
             throw new InvalidArgumentException('sections: 계약 enum의 9개 섹션이 필요합니다');
         }
         $claims = [];
         foreach ($report['claims'] as $claim) {
             $claims[$claim['id']] = $claim;
         }
-        $quantities = [];
-        $this->collectQuantities($report, $quantities);
+        $quantities = $this->collectQuantities($report);
 
         // 각 위치에서 키가 정확히 일치해야 누락·중복·재배열을 모두 거부한다
         foreach ($plan['sections'] as $position => $section) {
@@ -54,7 +55,7 @@ final class BodyInspector
     /**
      * @param array<string, mixed> $section
      * @param array<string, array<string, mixed>> $claims
-     * @param array<string, true> $quantities
+     * @param array<string, array<string, mixed>> $quantities
      * @param array<string, mixed> $report
      */
     private function inspectSection(string $key, array $section, array $claims, array $quantities, array $report): void
@@ -69,8 +70,10 @@ final class BodyInspector
         $rendered = [];
         foreach ($claimIds as $claimId) {
             $claim = is_string($claimId) ? ($claims[$claimId] ?? null) : null;
-            if ($claim === null || $claim['status'] !== 'published'
-                || $claim['sessionId'] !== $report['sessionId'] || $claim['forecastId'] !== $report['forecastId']) {
+            if (
+                $claim === null || $claim['status'] !== 'published'
+                || $claim['sessionId'] !== $report['sessionId'] || $claim['forecastId'] !== $report['forecastId']
+            ) {
                 throw new InvalidArgumentException("섹션 {$key}: claimIds에 이 스냅샷의 발행 문장만 넣을 수 있습니다");
             }
             $rendered[] = $claim['rendered'];
@@ -82,27 +85,44 @@ final class BodyInspector
             throw new InvalidArgumentException("섹션 {$key}: lockedFields 배열이 필요합니다");
         }
         foreach ($section['lockedFields'] as $field) {
-            if (!is_array($field) || !is_string($field['quantityId'] ?? null)
-                || !isset($quantities[$field['quantityId']])) {
+            if (
+                !is_array($field) || !is_string($field['quantityId'] ?? null)
+                || !isset($quantities[$field['quantityId']])
+            ) {
                 throw new InvalidArgumentException("섹션 {$key}: lockedFields.quantityId가 스냅샷에 없습니다");
+            }
+            $quantity = $quantities[$field['quantityId']];
+            $name = $field['name'] ?? null;
+            $number = is_string($name) ? ($quantity[$name] ?? null) : null;
+            if (
+                !in_array($name, ['p10', 'p50', 'p90', 'value'], true)
+                || (!is_int($number) && !is_float($number))
+            ) {
+                throw new InvalidArgumentException("섹션 {$key}: lockedFields.name은 해당 수치의 실제 칸이어야 합니다");
+            }
+            $expected = json_encode($number, JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION) . ' ' . $quantity['unit'];
+            if (($field['value'] ?? null) !== $expected) {
+                throw new InvalidArgumentException("섹션 {$key}: lockedFields.value는 스냅샷 수치 {$expected}와 같아야 합니다");
             }
         }
     }
 
-    // 수치 객체의 ID만 모아 단순 참조 문자열을 실제 수치로 오인하지 않는다
-    /** @param array<string, true> $found */
-    private function collectQuantities(mixed $value, array &$found): void
+    // 수치 객체 전체를 모아 잠금 칸의 값과 단위까지 확인한다
+    /** @return array<string, array<string, mixed>> */
+    private function collectQuantities(mixed $value): array
     {
         if (!is_array($value)) {
-            return;
+            return [];
         }
+        $found = [];
         if (isset($value['id'], $value['unit']) && is_string($value['id']) && str_starts_with($value['id'], 'q-')) {
-            $found[$value['id']] = true;
+            $found[$value['id']] = $value;
         }
         foreach ($value as $child) {
             if (is_array($child)) {
-                $this->collectQuantities($child, $found);
+                $found += $this->collectQuantities($child);
             }
         }
+        return $found;
     }
 }

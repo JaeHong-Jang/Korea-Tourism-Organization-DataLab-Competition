@@ -8,6 +8,7 @@ use CrowdCast\Records\App;
 use CrowdCast\Records\Plans\Exporter;
 use CrowdCast\Records\Support\Db;
 use PDO;
+use PDOException;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Slim\App as SlimApp;
@@ -60,6 +61,9 @@ final class PlansApiTest extends TestCase
         $cases['미발행 ID'] = static function (array &$plan): void { $plan['sections'][0]['claimIds'] = ['c-unpublished-1']; };
         $cases['다른 세션 ID'] = static function (array &$plan): void { $plan['sections'][0]['claimIds'] = ['c-other-session']; };
         $cases['없는 수치'] = static function (array &$plan): void { $plan['sections'][0]['lockedFields'] = [['name' => '순간 최대', 'value' => '1명', 'quantityId' => 'q-missing']]; };
+        $cases['수치 위조'] = static function (array &$plan): void { $plan['sections'][0]['lockedFields'][0]['value'] = '1 명'; };
+        $cases['없는 칸'] = static function (array &$plan): void { $plan['sections'][0]['lockedFields'][0] = ['name' => 'p50', 'value' => '2000 명', 'quantityId' => 'q-e-yeongjong-host']; };
+        $cases['단위 위조'] = static function (array &$plan): void { $plan['sections'][0]['lockedFields'][0]['value'] = '21000 명/일'; };
         foreach ($cases as $name => $change) {
             $plan = $base;
             $change($plan);
@@ -68,6 +72,21 @@ final class PlansApiTest extends TestCase
             self::assertNotEmpty($this->body($response)['message'], $name);
         }
         self::assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM plans')->fetchColumn());
+    }
+
+    // JSON 객체를 배열처럼 보낸 섹션·claimIds는 변환 전에 계약으로 거부한다
+    public function testJsonObjectCannotMasqueradeAsArray(): void
+    {
+        foreach (['sections', 'claimIds'] as $field) {
+            $invalid = json_decode($this->json($this->plan()), false, 512, JSON_THROW_ON_ERROR);
+            if ($field === 'sections') {
+                $invalid->sections = (object) $invalid->sections;
+            } else {
+                $invalid->sections[0]->claimIds = new \stdClass();
+            }
+            $json = json_encode($invalid, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+            self::assertSame(422, $this->request('POST', '/v1/plans', $json)->getStatusCode(), $field);
+        }
     }
 
     // 없는 스냅샷과 다른 행사·세션 참조는 저장 전에 거부한다
@@ -116,12 +135,44 @@ final class PlansApiTest extends TestCase
         $changedAgain['sections'][1]['title'] = '조직 및 역할';
         self::assertSame(200, $this->request('PUT', '/v1/plans/' . $initial['id'], $this->json($changedAgain))->getStatusCode());
 
+        // 첫 편집 화면에서 보낸 오래된 수정은 최신 문서와 이력을 바꾸지 못한다
+        $stale = $initial;
+        $stale['title'] = '오래된 편집본';
+        self::assertSame(409, $this->request('PUT', '/v1/plans/' . $initial['id'], $this->json($stale))->getStatusCode());
+
         // 각 수정 직전의 계획 전체를 읽을 수 있어 이전 본문을 복구할 수 있다
         $revisions = $this->db->query('SELECT previous_plan_json FROM plan_revisions ORDER BY revision')->fetchAll(PDO::FETCH_COLUMN);
         self::assertCount(2, $revisions);
         self::assertSame($initial, json_decode($revisions[0], true, 512, JSON_THROW_ON_ERROR));
         self::assertSame($afterFirst, json_decode($revisions[1], true, 512, JSON_THROW_ON_ERROR));
         self::assertSame(422, $this->request('PUT', '/v1/plans/plan-other', $this->json($changedAgain))->getStatusCode());
+    }
+
+    // 수정 이력은 UPDATE·DELETE·REPLACE와 rowid 교체에서도 원문을 유지한다
+    public function testRevisionCannotBeChangedBySql(): void
+    {
+        $initial = $this->body($this->request('POST', '/v1/plans', $this->json($this->plan())));
+        $changed = $initial;
+        $changed['title'] = '수정본';
+        self::assertSame(200, $this->request('PUT', '/v1/plans/' . $initial['id'], $this->json($changed))->getStatusCode());
+        $original = $this->db->query('SELECT rowid, * FROM plan_revisions')->fetch(PDO::FETCH_ASSOC);
+        self::assertIsArray($original);
+        $rowid = (int) $original['rowid'];
+        $statements = [
+            "UPDATE plan_revisions SET previous_plan_json = '{}' WHERE revision = 1",
+            "DELETE FROM plan_revisions WHERE revision = 1",
+            "REPLACE INTO plan_revisions VALUES ('{$initial['id']}', 1, '{}', '2026-09-25')",
+            "INSERT OR REPLACE INTO plan_revisions (rowid, plan_id, revision, previous_plan_json, revised_at) VALUES ({$rowid}, '{$initial['id']}', 2, '{}', '2026-09-25')",
+        ];
+        foreach ($statements as $sql) {
+            try {
+                $this->db->exec($sql);
+                self::fail('수정 이력 변경이 허용됨: ' . $sql);
+            } catch (PDOException $error) {
+                self::assertStringContainsString('plan revision is immutable', $error->getMessage());
+            }
+            self::assertSame($original, $this->db->query('SELECT rowid, * FROM plan_revisions')->fetch(PDO::FETCH_ASSOC));
+        }
     }
 
     // docx의 표·본문·각주·서체·머리말과 반복 내보내기 결과를 읽는다
@@ -141,17 +192,24 @@ final class PlansApiTest extends TestCase
         foreach ($plan['sections'] as $section) {
             self::assertStringContainsString($section['title'], $document);
         }
-        foreach (['참고용 초안 — 담당자 검토 필수', '영종 씨사이드파크 불꽃축제', '12,000 ~ 35,000 명', '13,000 명/일', '대규모', 'w:footnoteReference'] as $text) {
+        foreach (['참고용 초안 — 담당자 검토 필수', '영종 씨사이드파크 불꽃축제', '12,000 ~ 35,000 명', '13,000 명/일', '대규모', 'w:footnoteReference', '2025년 10월 18일(토) 19:00~21:00'] as $text) {
             self::assertStringContainsString($text, $document);
         }
         self::assertStringContainsString('함초롬바탕', $styles);
         self::assertStringContainsString('맑은 고딕', $styles);
+        self::assertStringContainsString('w:eastAsia="함초롬바탕"', $styles);
+        self::assertStringContainsString('w:rStyle w:val="PlanBody"', $document);
+        self::assertStringContainsString('w:rStyle w:val="PlanHeading"', $document);
+        self::assertStringContainsString('w:rStyle w:val="PlanTable"', $document);
         self::assertStringContainsString('w:line="384"', $styles);
         self::assertStringContainsString('w:w="11906" w:h="16838"', $document);
         self::assertStringContainsString('인원 무관 대상(폭죽)', $footnotes);
         self::assertStringContainsString('참고용 초안 — 담당자 검토 필수', $header);
         self::assertStringContainsString('f-yeongjong-2025', $footer);
-        self::assertStringContainsString('2026-09-24T20:00:15+09:00', $footer);
+        self::assertStringContainsString('2026년 9월 24일(목) 20:00', $footer);
+        self::assertStringContainsString('법정 · 조항 law-disaster-act-enf-73-9', $footnotes);
+        self::assertStringContainsString('모델 v0.1.0 · 학습 범위 2018-01-01 ~ 2024-12-31', $footnotes);
+        self::assertStringContainsString('동시체류율(불꽃) · 불꽃 행사 동시체류율 1.0(범위 0.8~1.0, 가정)', $footnotes);
         $saved = $this->body($this->request('GET', '/v1/plans/' . $plan['id']));
         $timestamp = gmdate('Y-m-d\TH:i:s+00:00', strtotime($saved['updatedAt']));
         self::assertSame(2, substr_count($properties, $timestamp));
@@ -165,37 +223,11 @@ final class PlansApiTest extends TestCase
         }
     }
 
-    // 테스트용 계획은 첫 섹션만 발행 문장 두 개로 채운다
+    // API 테스트도 문서 테스트와 같은 영종 계획을 사용한다
     /** @return array<string, mixed> */
     private function plan(): array
     {
-        $titles = [
-            'overview' => '개요', 'organization' => '안전관리 조직', 'crowd-timeline' => '시간대별 인파',
-            'routes-evacuation' => '동선과 대피', 'staffing' => '인력 배치', 'traffic-parking' => '교통과 주차',
-            'medical-toilets' => '의료와 화장실', 'weather-emergency' => '기상과 비상 대응',
-            'non-crowd-risks' => '인파 외 위험',
-        ];
-        $sections = [];
-        foreach ($titles as $key => $title) {
-            $sections[] = [
-                'key' => $key, 'title' => $title, 'status' => '검토 필요',
-                'claimIds' => [], 'body' => '', 'lockedFields' => [],
-            ];
-        }
-        $report = json_decode($this->fixture('forecast-report/valid-yeongjong.json'), true, 512, JSON_THROW_ON_ERROR);
-        $sections[0]['status'] = '작성됨';
-        $sections[0]['claimIds'] = array_column($report['claims'], 'id');
-        $sections[0]['body'] = implode("\n", array_column($report['claims'], 'rendered'));
-        $sections[0]['lockedFields'] = [[
-            'name' => '순간 최대', 'value' => '21,000명', 'quantityId' => 'q-f-yeongjong-2025-peak',
-        ]];
-        return [
-            'id' => 'plan-yeongjong-example', 'forecastId' => $report['forecastId'],
-            'eventId' => $report['event']['id'], 'sessionId' => $report['sessionId'],
-            'title' => '영종 씨사이드파크 불꽃축제 안전관리계획 초안',
-            'createdAt' => '2000-01-01T00:00:00+09:00', 'updatedAt' => '2000-01-01T00:00:00+09:00',
-            'sections' => $sections, 'watermark' => '참고용 초안 — 담당자 검토 필수',
-        ];
+        return PlanFixture::example();
     }
 
     // 계약 픽스처를 테스트 입력으로 읽는다

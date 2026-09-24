@@ -10,6 +10,7 @@ use Throwable;
 // 계획의 섹션 순서와 이전 본문을 원자적으로 보존한다
 final class Repository
 {
+    // 계획과 수정 이력이 같은 연결에서 트랜잭션을 사용하게 한다
     public function __construct(private PDO $db)
     {
     }
@@ -68,7 +69,7 @@ final class Repository
 
     // 수정 전 계획 전체를 먼저 기록한 뒤 최신 섹션을 교체한다
     /** @param array<string, mixed> $plan */
-    public function update(array $plan): bool
+    public function update(array $plan, string $expectedUpdatedAt): bool
     {
         $this->db->beginTransaction();
         try {
@@ -76,6 +77,9 @@ final class Repository
             if ($previous === null) {
                 $this->db->rollBack();
                 return false;
+            }
+            if ($previous['updatedAt'] !== $expectedUpdatedAt) {
+                throw new PlanConflict('updatedAt: 다른 담당자가 먼저 수정했습니다');
             }
             $revision = $this->db->prepare(
                 'INSERT INTO plan_revisions (plan_id, revision, previous_plan_json, revised_at) '

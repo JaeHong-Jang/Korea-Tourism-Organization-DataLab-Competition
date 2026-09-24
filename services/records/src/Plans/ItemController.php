@@ -12,6 +12,7 @@ use Psr\Http\Message\ServerRequestInterface;
 // 계획 ID를 확인하고 저장·조회 결과를 같은 계약 객체로 반환한다
 final class ItemController
 {
+    // 조회와 수정에 같은 계획 서비스를 사용한다
     public function __construct(private Service $service)
     {
     }
@@ -43,6 +44,8 @@ final class ItemController
                 : JsonResponse::value($response, 200, $plan);
         } catch (InvalidArgumentException $error) {
             return JsonResponse::value($response, 422, ['error' => 'invalid_plan', 'message' => $error->getMessage()]);
+        } catch (PlanConflict $error) {
+            return JsonResponse::value($response, 409, ['error' => 'plan_conflict', 'message' => $error->getMessage()]);
         }
     }
 

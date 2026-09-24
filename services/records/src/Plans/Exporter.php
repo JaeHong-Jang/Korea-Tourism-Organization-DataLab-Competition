@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PhpOffice\PhpWord\Element\Section;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\Settings;
 use RuntimeException;
 
 // 문장별 근거 각주와 모든 쪽의 참고용 문구를 PHPWord로 기록한다
@@ -20,8 +21,11 @@ final class Exporter
      */
     public function render(array $plan, array $report, bool $example = false): string
     {
+        // PHPWord는 기본값으로 동적 텍스트의 XML 이스케이프를 끄므로 먼저 켠다
+        Settings::setOutputEscapingEnabled(true);
         $word = new PhpWord();
         $word->setDefaultFontName('함초롬바탕');
+        $word->setDefaultAsianFontName('함초롬바탕');
         $word->setDefaultFontSize(11);
         $word->addFontStyle('PlanBody', ['name' => '함초롬바탕', 'size' => 11]);
         $word->addFontStyle('PlanHeading', ['name' => '맑은 고딕', 'size' => 15, 'bold' => true]);
@@ -42,7 +46,8 @@ final class Exporter
         $section->addHeader()->addText($plan['watermark'], ['name' => '맑은 고딕', 'size' => 10, 'color' => '888888']);
         $footer = $section->addFooter();
         $footer->addPreserveText(
-            '쪽 {PAGE} · 예보 ' . $report['forecastId'] . ' · 발행 ' . $report['publishedAt'],
+            '쪽 {PAGE} · 예보 ' . $report['forecastId'] . ' · 발행 '
+                . (new KoreanDate())->published($report['publishedAt']),
             ['name' => '맑은 고딕', 'size' => 9]
         );
 
@@ -73,7 +78,7 @@ final class Exporter
                         throw new RuntimeException("스냅샷 근거가 없습니다: {$evidenceId}");
                     }
                     $note = $run->addFootnote();
-                    $note->addText($this->evidenceLabel($evidence[$evidenceId]), 'PlanTable');
+                    $note->addText((new EvidenceLabel())->format($evidence[$evidenceId], $report), 'PlanTable');
                 }
             }
         }
@@ -105,7 +110,11 @@ final class Exporter
         $mean = $card['dailyMean'];
         $rows = [
             ['행사명', $event['name']],
-            ['일시', $event['startsAt'] . ' ~ ' . $event['endsAt']],
+            ['일시', (new KoreanDate())->event(
+                $event['startsAt'],
+                $event['endsAt'],
+                $event['timeOfDay'] === '미상'
+            )],
             ['장소', $event['venue']['name'] . ' · ' . $event['sigunguName']],
             ['판정 등급', $card['judgment']['label'] . ' (' . $card['judgment']['level'] . '등급)'],
             ['순간 최대 p10~p90', $this->range($peak)],
@@ -119,24 +128,12 @@ final class Exporter
         }
     }
 
-    // 구간의 양끝과 단위·추정 표시를 원래 수치 필드로만 조합한다
+    // 사람 수는 정수로 0.5 올림해 보이고 원래 구간·단위·추정 표시를 유지한다
     /** @param array<string, mixed> $quantity */
     private function range(array $quantity): string
     {
-        $label = number_format($quantity['p10']) . ' ~ ' . number_format($quantity['p90']) . ' ' . $quantity['unit'];
+        $label = number_format($quantity['p10'], 0, '.', ',') . ' ~ '
+            . number_format($quantity['p90'], 0, '.', ',') . ' ' . $quantity['unit'];
         return $quantity['estimated'] ? $label . ' (추정)' : $label;
-    }
-
-    // 비어 있는 출처·기간도 스냅샷에 없다는 사실을 각주에 명시한다
-    /** @param array<string, mixed> $evidence */
-    private function evidenceLabel(array $evidence): string
-    {
-        $source = $evidence['source'] === null
-            ? '출처 미기재'
-            : $evidence['source']['publisher'] . ' · ' . $evidence['source']['title'];
-        $period = $evidence['period'] === null
-            ? '자료 기간 미기재'
-            : $evidence['period']['from'] . ' ~ ' . $evidence['period']['to'];
-        return $evidence['title'] . ' — ' . $source . ' — ' . $period;
     }
 }

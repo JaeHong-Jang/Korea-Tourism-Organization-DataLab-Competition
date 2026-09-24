@@ -15,6 +15,7 @@ final class Service
 {
     private BodyInspector $inspector;
 
+    // 저장소와 계약 검증기를 공유하고 본문 검사기를 준비한다
     public function __construct(private Repository $repository, private ContractValidator $validator)
     {
         $this->inspector = new BodyInspector();
@@ -47,10 +48,11 @@ final class Service
         if ($previous === null) {
             return null;
         }
+        $expectedUpdatedAt = $plan['updatedAt'];
         $plan['createdAt'] = $previous['createdAt'];
         $plan['updatedAt'] = $this->now();
         $this->assertContract($plan);
-        $this->repository->update($plan);
+        $this->repository->update($plan, $expectedUpdatedAt);
         return $this->checkedResponse($id);
     }
 
@@ -84,11 +86,23 @@ final class Service
     /** @return array<string, mixed> */
     private function parse(string $json): array
     {
-        $plan = json_decode($json, true);
-        if (!is_array($plan) || json_last_error() !== JSON_ERROR_NONE) {
+        $object = json_decode($json);
+        if (!$object instanceof \stdClass || json_last_error() !== JSON_ERROR_NONE) {
             throw new InvalidArgumentException('plan: JSON 객체가 필요합니다');
         }
-        return $plan;
+        if (isset($object->sections) && is_array($object->sections)) {
+            foreach ($object->sections as $position => $section) {
+                if (!$this->validator->isValid('plan-section', $section)) {
+                    $key = $section instanceof \stdClass && is_string($section->key ?? null)
+                        ? $section->key : "위치 {$position}";
+                    throw new InvalidArgumentException("섹션 {$key}: 계약 스키마 위반");
+                }
+            }
+        }
+        if (!$this->validator->isValid('plan', $object)) {
+            throw new InvalidArgumentException('plan: 계약 스키마 위반');
+        }
+        return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
     }
 
     // 스냅샷 소속과 섹션 규칙을 먼저 검사하고 스키마로 나머지 필드를 확인한다

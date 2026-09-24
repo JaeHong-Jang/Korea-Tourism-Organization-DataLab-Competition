@@ -13,6 +13,7 @@ use Psr\Http\Message\ServerRequestInterface;
 // 초안 생성의 422 메시지에 실패 규칙을 포함한다
 final class CollectionController
 {
+    // 생성 요청에 계약 검증과 중복 ID 처리를 함께 적용한다
     public function __construct(private Service $service)
     {
     }
