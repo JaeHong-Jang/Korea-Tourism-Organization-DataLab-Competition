@@ -46,3 +46,6 @@
 ## 사람 확인(H) — 오케스트레이터가 요청할 것
 - `reports/figures/screens/T-504-plan-example.docx`를 **한글(HWP)·워드**에서 열어 서체(함초롬바탕·맑은 고딕)·워터마크·각주·표가 제대로 보이는지(테스트 DB 예시 — 실데이터 아님)
 - 각주의 조항이 id(`law-disaster-act-enf-73-9`)로 나온다 → evidence에 사람이 읽을 조항명이 없어서다(위 "T-406 전 계약 결정" — `clauseTitle`)와 같이 해결
+
+## T-505 (실측 입력 + 공유 링크)
+- [T-310 선행] records `GET /v1/snapshots/{forecastId}`(records.yaml에 추가됨) — forecastId로 스냅샷 하나(인덱스·404). 게이트웨이 `/api/forecasts/{id}`와 공유 링크가 쓴다.
