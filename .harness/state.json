@@ -239,7 +239,8 @@
   },
   "T-402": {
    "status": "running",
-   "updated": "2026-09-24T15:02:48.576Z"
+   "updated": "2026-09-24T15:02:48.576Z",
+   "note": "게이트 2 test 63·build·lint·스크린샷 확인(기준선 라벨 위치 지적), 게이트 3 FAIL(astra: 주최측 예상 단위 불일치 표시 High + Med 5) → 피드백 1회차"
   },
   "R-03": {
    "status": "todo"
@@ -261,7 +262,8 @@
   },
   "T-431": {
    "status": "running",
-   "updated": "2026-09-24T15:06:19.294Z"
+   "updated": "2026-09-24T15:06:19.294Z",
+   "note": "PARTIAL(경계 링크 누락 — worktree.sh 보완), 게이트 4 스크린샷: 줄무늬 결함·대비·노을 강제·렌더러 미기록 → 피드백 1회차"
   },
   "T-432": {
    "status": "todo"

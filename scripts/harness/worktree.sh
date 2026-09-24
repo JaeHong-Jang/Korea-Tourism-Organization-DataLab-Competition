@@ -24,4 +24,7 @@ for rel in traces reports/runs reports/evals reports/figures/screens reports/fig
   mkdir -p "$(dirname "$target")"
   if [ ! -e "$target" ] || [ -L "$target" ]; then ln -sfn "$REPO/$rel" "$target"; fi
 done
+# 웹이 읽는 시군구 경계(git 제외 자산)를 워크트리의 public/geo로 링크한다
+mkdir -p "$WT/apps/web/public/geo"
+ln -sfn "$REPO/data/external/boundaries/sigungu.topo.json" "$WT/apps/web/public/geo/sigungu.topo.json"
 echo "✓ 공유 산출물 링크 완료 (data·models는 CROWDCAST_DATA_ROOT=$REPO)"
