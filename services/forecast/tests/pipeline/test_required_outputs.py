@@ -199,3 +199,30 @@ def test_backtest_requires_all_files(pipeline_root: Path, monkeypatch: pytest.Mo
     assert cli.main(["--from", "backtest", "--to", "backtest"]) == 1
     assert "points.parquet" in latest_record(pipeline_root)["stages"][4]["gate"]["message"]
     assert not (paths.REPORTS / "backtest/promoted.json").exists()
+
+
+# 사용 모델 포인터가 가리키는 결과가 없으면 비교 없이 승격하지 않고 백테스트를 실패시킨다.
+def test_missing_promoted_result_fails(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    ghost = backtest()
+    ghost["runId"] = "backtest-없음"
+    promoted = write_promoted(ghost)
+    before = promoted.read_bytes()
+    monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
+    monkeypatch.setattr(stages, "command", lambda *args: (write_backtest() and 0, ""))
+    assert cli.main(["--from", "backtest", "--to", "backtest"]) == 1
+    assert "사용 모델 결과 없음" in latest_record(pipeline_root)["stages"][4]["gate"]["message"]
+    assert promoted.read_bytes() == before
+
+
+# 산출물 기록이 실패하면 단계는 실패이고 후보는 사용 모델로 승격되지 않는다.
+def test_record_failure_blocks_promotion(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
+    monkeypatch.setattr(stages, "command", lambda *args: (write_backtest() and 0, ""))
+
+    # 해시 기록 지점의 디스크 오류를 흉내 낸다.
+    def broken(files: list[Path]) -> list[dict]:
+        raise OSError("해시 기록 실패")
+
+    monkeypatch.setattr(run_record, "artifacts", broken)
+    assert cli.main(["--from", "backtest", "--to", "backtest"]) == 1
+    assert not (paths.REPORTS / "backtest/promoted.json").exists()

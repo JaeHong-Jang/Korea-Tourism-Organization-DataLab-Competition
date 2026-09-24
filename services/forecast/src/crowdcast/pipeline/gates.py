@@ -167,13 +167,19 @@ def labels_gate() -> dict[str, Any]:
     }
 
 
-# 기존 결과를 실행 전에 읽어 백테스트·일괄 예보의 비교 기준을 보존한다(백테스트는 사용 모델의 결과).
+# 사용 모델 포인터가 가리키는 백테스트 결과 — 포인터가 없으면 첫 실행, 있는데 결과가 없으면 문제로 돌려준다.
+def promoted_result() -> tuple[Any, str | None]:
+    pointer = paths.REPORTS / PROMOTED_POINTER
+    if not pointer.is_file():
+        return None, None
+    summary = pointer.parent / json.loads(pointer.read_bytes())["runId"] / "backtest.json"
+    if not summary.is_file():
+        return None, f"사용 모델 결과 없음: reports/backtest/{summary.parent.name}/backtest.json"
+    return json.loads(summary.read_bytes()), None
+
+
+# 기존 결과를 실행 전에 읽어 일괄 예보의 비교 기준을 보존한다(백테스트 기준은 promoted_result).
 def previous_result(stage: str) -> Any:
-    if stage == "backtest":
-        pointer = paths.REPORTS / PROMOTED_POINTER
-        if pointer.is_file():
-            summary = pointer.parent / json.loads(pointer.read_bytes())["runId"] / "backtest.json"
-            return json.loads(summary.read_bytes()) if summary.is_file() else None
     if stage == "batch" and (paths.PROCESSED / "upcoming.parquet").exists():
         return pl.scan_parquet(paths.PROCESSED / "upcoming.parquet").select(pl.len()).collect().item()
     return None

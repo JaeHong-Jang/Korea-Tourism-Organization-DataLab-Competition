@@ -181,5 +181,6 @@ def write_model() -> Path:
 # 백테스트 게이트를 지난 것처럼 사용 모델 포인터를 쓴다.
 def write_promoted(current: dict) -> Path:
     path = paths.REPORTS / "backtest/promoted.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({"runId": current["runId"], "modelVersion": current["modelVersion"]}))
     return path

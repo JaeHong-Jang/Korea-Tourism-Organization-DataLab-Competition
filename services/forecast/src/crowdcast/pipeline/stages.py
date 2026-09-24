@@ -268,7 +268,7 @@ def execute_stage(
     client: VisitorClient | None,
     files: list[Path],
     history: dict[str, str | None],
-    baseline: Any = None,
+    baseline: tuple[Any, str | None] = (None, None),
 ) -> dict[str, Any]:
     if stage == "fetch":
         if client is None:
@@ -278,7 +278,9 @@ def execute_stage(
     if stage == "batch" and (problem := batch_model_problem()):
         return {"passed": False, "message": problem}
     # train이 먼저 새 결과를 발행하므로 백테스트 비교 기준은 파이프라인 시작 때 읽은 결과를 쓴다.
-    previous = baseline if stage == "backtest" else gates.previous_result(stage)
+    if stage == "backtest" and baseline[1]:
+        return {"passed": False, "message": baseline[1]}
+    previous = baseline[0] if stage == "backtest" else gates.previous_result(stage)
     # 백테스트 완료 표식의 실행 전 내용 — 실행 뒤 내용이 바뀌어야 이번 결과로 인정한다.
     pointer = paths.REPORTS / "backtest/latest.json"
     pointer_before = pointer.read_bytes() if stage in POINTER_STAGES and pointer.is_file() else None
@@ -299,8 +301,8 @@ def execute_stage(
         missing = [name for name in BACKTEST_FILES if not (backtest_directory / name).is_file()]
         if missing:
             return {"passed": False, "message": f"이번 백테스트 산출물 없음: {', '.join(missing)}"}
+        # 바뀌는 포인터 파일은 불변 산출물 해시에 넣지 않고 실행 폴더의 파일만 기록한다.
         files.extend(output_files(stage, backtest_directory))
-        files.append(latest)
     elif stage in REQUIRED_OUTPUTS:
         required = run_record.current_outputs(REQUIRED_OUTPUTS[stage], started_ns)
         files.extend(
@@ -313,10 +315,5 @@ def execute_stage(
     else:
         files.extend(output_files(stage))
     gate = gates.labels_gate() if stage == "labels" else gates.optional_gate(stage, files, previous)
-    # 후보는 게이트가 악화를 보지 않았을 때만 사용 모델이 된다(거부된 후보는 latest.json에만 남는다).
-    if stage == "backtest" and gate["passed"] is not False:
-        verdict = "통과" if gate["passed"] else "미검증"
-        files.append(promote(verdict))
-        gate["message"] += f"; 사용 모델로 승격({verdict})"
     gate["message"] += "; 종료 코드 0"
     return gate

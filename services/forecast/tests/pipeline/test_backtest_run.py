@@ -32,11 +32,7 @@ def test_same_run_id_rerun_passes(pipeline_root: Path, monkeypatch: pytest.Monke
         assert cli.main(["--from", "backtest", "--to", "backtest"]) == 0
         record = latest_record(pipeline_root)
         assert record["stages"][4]["artifacts"] == run_record.artifacts(
-            [
-                *(summary.parent / name for name in stages.BACKTEST_FILES),
-                summary.parent.parent / "latest.json",
-                summary.parent.parent / "promoted.json",
-            ]
+            [summary.parent / name for name in stages.BACKTEST_FILES]
         )
         assert summary.read_bytes() == content
     assert stages.output_files("backtest") == []
@@ -129,8 +125,8 @@ def test_unverified_backtest_records_artifact(pipeline_root: Path, monkeypatch: 
     assert cli.main(["--from", "backtest", "--to", "backtest"]) == 2
     record = latest_record(pipeline_root)
     assert record["stages"][4]["status"] == "skipped"
-    # 세 산출물 + 후보 포인터 + 미검증으로 승격한 사용 모델 포인터.
-    assert len(record["stages"][4]["artifacts"]) == len(stages.BACKTEST_FILES) + 2
+    # 바뀌는 포인터 파일은 빼고 실행 폴더의 세 산출물만 기록한다.
+    assert len(record["stages"][4]["artifacts"]) == len(stages.BACKTEST_FILES)
     assert "미검증 단계: backtest" in record["summary"]
 
 
