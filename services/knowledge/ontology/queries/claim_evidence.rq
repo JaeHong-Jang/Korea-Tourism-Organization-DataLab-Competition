@@ -1,0 +1,28 @@
+# 발행 문장이 직접 인용한 근거와 기준 그래프의 출처를 조회한다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?claim ?evidence ?kind ?title ?summary ?dataset ?datasetTitle
+                ?publisher ?menu ?accessUrl ?availableAt ?periodFrom ?periodTo
+                ?rule ?clause ?assumption ?forecast ?modelVersion
+WHERE {
+  ?claim a cc:Claim ; cc:status "published" ; cito:citesAsEvidence ?evidence .
+  ?evidence a ?kind ; dcterms:title ?title ; cc:summary ?summary .
+  OPTIONAL {
+    ?evidence cc:derivedFromDataset ?dataset .
+    GRAPH <http://crowdcast.local/id/master> {
+      ?dataset dcterms:title ?datasetTitle ; dcterms:publisher ?publisher .
+      OPTIONAL { ?dataset cc:datalabMenu ?menu }
+      OPTIONAL { ?dataset cc:accessUrl ?accessUrl }
+    }
+  }
+  OPTIONAL { ?evidence cc:availableAt ?availableAt }
+  OPTIONAL { ?evidence cc:period [ cc:periodFrom ?periodFrom ; cc:periodTo ?periodTo ] }
+  OPTIONAL { ?evidence cc:aboutRule ?rule }
+  OPTIONAL { ?evidence cc:mentionsClause ?clause }
+  OPTIONAL { ?evidence cc:aboutAssumption ?assumption }
+  OPTIONAL { ?evidence cc:aboutForecast ?forecast }
+  OPTIONAL { ?evidence cc:modelVersion ?modelVersion }
+}
+ORDER BY ?claim ?evidence ?kind

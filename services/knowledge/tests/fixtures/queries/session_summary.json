@@ -1,0 +1,38 @@
+[
+  {
+    "session": "s-demo-0001",
+    "claim": "c-yeongjong-3",
+    "step": "st-explainer-01",
+    "agent": "agent-explainer",
+    "checkKind": "evidence",
+    "passed": true,
+    "revision": 6
+  },
+  {
+    "session": "s-demo-0001",
+    "claim": "c-yeongjong-3",
+    "step": "st-explainer-01",
+    "agent": "agent-explainer",
+    "checkKind": "rule",
+    "passed": true,
+    "revision": 6
+  },
+  {
+    "session": "s-demo-0001",
+    "claim": "c-yeongjong-4",
+    "step": "st-explainer-01",
+    "agent": "agent-explainer",
+    "checkKind": "evidence",
+    "passed": true,
+    "revision": 6
+  },
+  {
+    "session": "s-demo-0001",
+    "claim": "c-yeongjong-4",
+    "step": "st-explainer-01",
+    "agent": "agent-explainer",
+    "checkKind": "number",
+    "passed": true,
+    "revision": 6
+  }
+]

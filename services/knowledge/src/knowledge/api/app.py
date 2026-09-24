@@ -8,12 +8,17 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from knowledge import paths
+from knowledge.api.claim_evidence import router as claim_evidence_router
 from knowledge.api.contract_response import contract_response, internal_error_report
+from knowledge.api.evidence import router as evidence_router
 from knowledge.api.facts import router as facts_router
 from knowledge.api.health import router as health_router
 from knowledge.api.master_version import router as master_router
+from knowledge.api.ontology import router as ontology_router
 from knowledge.api.publish import router as publish_router
+from knowledge.api.session_graph import router as session_graph_router
 from knowledge.api.validate import router as validate_router
+from knowledge.query.evidence import UnpublishedResource
 from knowledge.store.facts import IntegrityError, KnowledgeStore, violations_for
 from knowledge.validate.snapshot import ScopeConflict
 from starlette.exceptions import HTTPException
@@ -39,6 +44,15 @@ def create_app(store: KnowledgeStore | None = None) -> FastAPI:
     application.include_router(master_router)
     application.include_router(validate_router)
     application.include_router(publish_router)
+    application.include_router(session_graph_router)
+    application.include_router(claim_evidence_router)
+    application.include_router(evidence_router)
+    application.include_router(ontology_router)
+
+    # 미발행·미존재·소유 세션 충돌은 내용이 드러나지 않는 같은 404로 처리한다.
+    @application.exception_handler(UnpublishedResource)
+    async def unpublished_resource(request: Request, error: UnpublishedResource) -> JSONResponse:
+        return await http_error(request, HTTPException(status_code=404))
 
     # 검증 범위가 바뀌면 현재 범위를 담은 계약 보고서와 409를 반환한다.
     @application.exception_handler(ScopeConflict)

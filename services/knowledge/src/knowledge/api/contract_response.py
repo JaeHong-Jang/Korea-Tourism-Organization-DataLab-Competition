@@ -1,16 +1,16 @@
-"""성공·오류 JSON을 반환 직전에 계약으로 검사하고 잘못된 응답은 차단한다."""
+"""JSON·Turtle을 반환 직전에 계약으로 검사하고 잘못된 응답은 차단한다."""
 
 import logging
 from functools import cache
 from typing import Any
 
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from jsonschema import Draft202012Validator, FormatChecker
 from knowledge.convert.documents import schema_registry
 
 logger = logging.getLogger(__name__)
 
-# 별도 JSON Schema가 없는 세 응답은 knowledge.yaml의 인라인 응답 계약을 따른다.
+# 별도 JSON Schema가 없는 응답은 knowledge.yaml의 인라인 응답 계약을 따른다.
 INLINE_SCHEMAS = {
     "health": {
         "type": "object",
@@ -26,6 +26,12 @@ INLINE_SCHEMAS = {
         "type": "object",
         "required": ["masterVersion"],
         "properties": {"masterVersion": {"type": "integer"}},
+    },
+    "session-graph": {"type": "object"},
+    "ontology": {"type": "string"},
+    "claim-evidence": {
+        "type": "array",
+        "items": {"$ref": "https://crowdcast.local/schemas/evidence.schema.json"},
     },
 }
 
@@ -67,3 +73,11 @@ def contract_response(content: Any, schema: str = "gate-report", *, status_code:
         response_validator("gate-report").validate(content)
         status_code = 500
     return JSONResponse(status_code=status_code, content=content)
+
+
+# Turtle도 같은 계약 검사를 거친 뒤 JSON 문자열 감싸기 없이 원문으로 반환한다.
+def turtle_response(content: Any) -> Response:
+    response = contract_response(content, "ontology")
+    if response.status_code != 200:
+        return response
+    return Response(content=content, media_type="text/turtle")
