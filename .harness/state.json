@@ -122,14 +122,18 @@
   },
   "T-203": {
    "status": "done",
-   "updated": "2026-09-24T22:09:10.420Z",
-   "evidence": "develop be35341+8354ef4+c98b8dc, forecast 1005, 계약 29·픽스처 129 오류 0, gateway 744, sol PASS·astra 계획 PASS, 실데이터 파이프라인 features→publish(백테스트 미검증 승격 v1-af1d52)"
+   "updated": "2026-09-24T22:44:11.807Z",
+   "evidence": "R-04 되돌림 반영: 전회차 골드만·분모 공개(disclosure)·단순 모델 등급 가중치, 사용 모델 v1-01c9b4 단순 49.3%·57.0%(49/86), forecast 1010"
   },
   "R-04": {
-   "status": "todo"
+   "status": "done",
+   "updated": "2026-09-24T22:44:11.891Z",
+   "evidence": "sol r3 PASS — 라벨·가중치/공개 시점 646칸 위반 0/연도 분리/분모 공개 모두 PASS, Med(골드B 영역) → backlog T-203b"
   },
   "T-204": {
-   "status": "todo"
+   "status": "running",
+   "note": "R-04 되돌림(T-203 피처 정의)과 병행 디스패치 — 허용 경로 겹치지 않음, 통합은 R-04 PASS 뒤",
+   "updated": "2026-09-24T22:17:04.038Z"
   },
   "T-205": {
    "status": "todo"
@@ -171,7 +175,9 @@
    "evidence": "test 246·ruff·✓ knowledge, 교차 리뷰 sol PASS(Med → T-604)"
   },
   "T-604": {
-   "status": "todo"
+   "status": "stale",
+   "updated": "2026-09-24T22:16:22.252Z",
+   "note": "상위 T-203 되돌림"
   },
   "T-605": {
    "status": "todo"
@@ -964,6 +970,57 @@
    "id": "T-203",
    "status": "done",
    "evidence": "develop be35341+8354ef4+c98b8dc, forecast 1005, 계약 29·픽스처 129 오류 0, gateway 744, sol PASS·astra 계획 PASS, 실데이터 파이프라인 features→publish(백테스트 미검증 승격 v1-af1d52)"
+  },
+  {
+   "at": "2026-09-24T22:09:52.826Z",
+   "id": "T-604",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T22:09:56.097Z",
+   "id": "R-04",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T22:16:22.251Z",
+   "id": "R-04",
+   "status": "failed",
+   "note": "→ T-203: 전회차 피처·B1이 실버 순증까지 사용(계획 06 §3은 골드 실측), 분모·한계가 backtest.json·모델 카드에 없음"
+  },
+  {
+   "at": "2026-09-24T22:16:22.252Z",
+   "id": "T-203",
+   "status": "todo",
+   "note": "되돌림: R-04 실패 — 전회차 피처·B1이 실버 순증까지 사용(계획 06 §3은 골드 실측), 분모·한계가 backtest.json·모델 카드에 없음"
+  },
+  {
+   "at": "2026-09-24T22:16:22.252Z",
+   "id": "T-604",
+   "status": "stale",
+   "note": "상위 T-203 되돌림"
+  },
+  {
+   "at": "2026-09-24T22:16:22.252Z",
+   "id": "R-04",
+   "status": "stale",
+   "note": "상위 T-203 되돌림"
+  },
+  {
+   "at": "2026-09-24T22:17:04.038Z",
+   "id": "T-204",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T22:44:11.807Z",
+   "id": "T-203",
+   "status": "done",
+   "evidence": "R-04 되돌림 반영: 전회차 골드만·분모 공개(disclosure)·단순 모델 등급 가중치, 사용 모델 v1-01c9b4 단순 49.3%·57.0%(49/86), forecast 1010"
+  },
+  {
+   "at": "2026-09-24T22:44:11.891Z",
+   "id": "R-04",
+   "status": "done",
+   "evidence": "sol r3 PASS — 라벨·가중치/공개 시점 646칸 위반 0/연도 분리/분모 공개 모두 PASS, Med(골드B 영역) → backlog T-203b"
   }
  ]
 }
