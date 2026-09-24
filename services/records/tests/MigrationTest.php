@@ -18,7 +18,7 @@ final class MigrationTest extends TestCase
         $db = Db::connect('sqlite::memory:');
         Migrator::run($db);
         Migrator::run($db);
-        self::assertSame(2, (int) $db->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn());
+        self::assertSame(3, (int) $db->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn());
 
         // 계약 픽스처를 원문 JSON으로 저장해 스냅샷 열의 용도를 확인한다
         $event = (string) file_get_contents(dirname(__DIR__, 3) . '/packages/contracts/fixtures/event/valid-yeongjong.json');
@@ -40,7 +40,7 @@ final class MigrationTest extends TestCase
     {
         $db = Db::connect('sqlite::memory:');
         Migrator::run($db);
-        $db->exec("INSERT INTO events VALUES ('e-yeongjong-fireworks-2025', '{}', '2025-10-04', '2025-10-04')");
+        $db->exec("INSERT INTO events (id, event_json, created_at, updated_at) VALUES ('e-yeongjong-fireworks-2025', '{}', '2025-10-04', '2025-10-04')");
         $db->exec("INSERT INTO forecast_snapshots VALUES ('f-yeongjong-2025', 'e-yeongjong-fireworks-2025', '2026-09-24', '{}')");
 
         // 삭제 시도도 스냅샷 원문에 영향을 줄 수 없어야 한다
@@ -55,7 +55,7 @@ final class MigrationTest extends TestCase
         $db = Db::connect('sqlite::memory:');
         self::assertSame(1, (int) $db->query('PRAGMA recursive_triggers')->fetchColumn());
         Migrator::run($db);
-        $db->exec("INSERT INTO events VALUES ('e-yeongjong-fireworks-2025', '{}', '2025-10-04', '2025-10-04')");
+        $db->exec("INSERT INTO events (id, event_json, created_at, updated_at) VALUES ('e-yeongjong-fireworks-2025', '{}', '2025-10-04', '2025-10-04')");
         $db->exec("INSERT INTO forecast_snapshots VALUES ('f-yeongjong-2025', 'e-yeongjong-fireworks-2025', '2026-09-24', '{\"original\":true}')");
 
         // rowid 충돌까지 포함해 변경 전 행 전체를 비교 기준으로 남긴다
