@@ -19,3 +19,4 @@
 | T-602 | gpt-6-astra | done | 0·0 | G1 ✓ · G2 test 222 · G3 sol FAIL→PASS(발행 전체 재검증) · G4 ✓ | gpt-6-sol PASS | 8277b4c | — |
 | T-202 | gpt-6-astra | done | 0·0·0·0 | G1 ✓ · G2 test 185·영종 4등급·작은 행사 1등급 확인 · G3 sol FAIL→FAIL→PASS · G4 경계 표시 표 ✓ | gpt-6-sol PASS | 0edaa98 | — |
 | T-502 | gpt-6-sol + 오케스트레이터 | done | 0·0·0 | G1 ✓(App.php 명세 확대) · G2 test 18·실서버 13/13 · G3 astra FAIL→FAIL→PASS · G4 모델 실행 판정 교정 | gpt-6-astra PASS | a16f946 | — |
+| R-02 | 검토(gpt-6-sol) | done | — | 1차 FAIL→T-301 되돌림 · 2차 FAIL(dev.mjs) → 직접 수정 · 3차 PASS | gpt-6-sol PASS | — | — |

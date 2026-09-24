@@ -217,9 +217,9 @@
    "status": "todo"
   },
   "R-02": {
-   "status": "running",
-   "updated": "2026-09-24T14:45:58.422Z",
-   "note": "r2 FAIL(sol): High = scripts/dev.mjs .env 파서(따옴표·주석) — 오케스트레이터 스크립트 한 곳이라 T-001 되돌림(하류 전체 stale) 대신 직접 수정·확인, Med(게이트웨이 발신 검증)·Low(records health) → backlog T-303·T-503"
+   "status": "done",
+   "updated": "2026-09-24T14:57:48.381Z",
+   "evidence": "R-02 3차 PASS(sol): 1차 High(게이트웨이 메서드)→T-301 되돌림 해결, 2차 High(dev.mjs .env)→직접 수정 해결, 새 결함 0, Med·Low는 backlog"
   },
   "T-430": {
    "status": "running",
@@ -673,6 +673,12 @@
    "id": "T-502",
    "status": "done",
    "evidence": "test 18·151·stan 0, 실서버 무결성 픽스처 13/13 계약과 같은 판정, 교차 리뷰 astra PASS(Med 2 직접 반영)"
+  },
+  {
+   "at": "2026-09-24T14:57:48.381Z",
+   "id": "R-02",
+   "status": "done",
+   "evidence": "R-02 3차 PASS(sol): 1차 High(게이트웨이 메서드)→T-301 되돌림 해결, 2차 High(dev.mjs .env)→직접 수정 해결, 새 결함 0, Med·Low는 backlog"
   }
  ]
 }
