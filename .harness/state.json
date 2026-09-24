@@ -108,7 +108,8 @@
    "evidence": "게이트 1~4: test 38·ruff·✓ forecast, 교차 리뷰 sol PASS(형식 검사 반례 확인), f2b0916"
   },
   "T-202": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T13:59:40.626Z"
   },
   "T-203": {
    "status": "todo"
@@ -149,7 +150,8 @@
    "evidence": "게이트 1~4: test 89·ruff·✓ knowledge·경고 37268→1, 교차 리뷰 sol PASS(Python/JS 판정 불일치 0/112, 422 무쓰기 20/20), a97cacd"
   },
   "T-602": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T13:59:40.710Z"
   },
   "T-603": {
    "status": "todo"
@@ -161,9 +163,10 @@
    "status": "todo"
   },
   "T-301": {
-   "status": "done",
-   "updated": "2026-09-24T13:54:23.119Z",
-   "evidence": "게이트 1~4: test 42·tsc·biome·/api/health 200(분리)·404, 교차 리뷰 sol PASS(Med 1 → T-302), bbdab1f"
+   "status": "todo",
+   "updated": "2026-09-24T14:04:19.104Z",
+   "evidence": "게이트 1~4: test 42·tsc·biome·/api/health 200(분리)·404, 교차 리뷰 sol PASS(Med 1 → T-302), bbdab1f",
+   "note": "되돌림: R-02 실패 — R-02 FAIL(sol): 게이트웨이 요청 함수가 본문 유무로 메서드를 정해 /validate에 {} 전송(High), 오류 본문 폐기로 422 gate-report 전달 불가, knowledge 422 런타임 검증 없음, dev.mjs 포트 고정(Med 3)"
   },
   "T-302": {
    "status": "todo"
@@ -198,7 +201,8 @@
    "evidence": "게이트 1~4 통과(게이트 3 두 번 되돌림: REPLACE 우회 → rowid 충돌 우회), composer test 7·46, stan 0, 우회 7종 직접 재현 거부, 교차 리뷰 astra 3차 PASS, a288638"
   },
   "T-502": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T13:59:40.795Z"
   },
   "T-504": {
    "status": "todo"
@@ -210,7 +214,9 @@
    "status": "todo"
   },
   "R-02": {
-   "status": "todo"
+   "status": "stale",
+   "updated": "2026-09-24T14:04:19.104Z",
+   "note": "상위 T-301 되돌림"
   },
   "T-430": {
    "status": "todo"
@@ -575,6 +581,44 @@
    "id": "T-301",
    "status": "done",
    "evidence": "게이트 1~4: test 42·tsc·biome·/api/health 200(분리)·404, 교차 리뷰 sol PASS(Med 1 → T-302), bbdab1f"
+  },
+  {
+   "at": "2026-09-24T13:59:25.683Z",
+   "id": "R-02",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:59:40.626Z",
+   "id": "T-202",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:59:40.710Z",
+   "id": "T-602",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:59:40.795Z",
+   "id": "T-502",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T14:04:19.104Z",
+   "id": "R-02",
+   "status": "failed",
+   "note": "→ T-301: R-02 FAIL(sol): 게이트웨이 요청 함수가 본문 유무로 메서드를 정해 /validate에 {} 전송(High), 오류 본문 폐기로 422 gate-report 전달 불가, knowledge 422 런타임 검증 없음, dev.mjs 포트 고정(Med 3)"
+  },
+  {
+   "at": "2026-09-24T14:04:19.104Z",
+   "id": "T-301",
+   "status": "todo",
+   "note": "되돌림: R-02 실패 — R-02 FAIL(sol): 게이트웨이 요청 함수가 본문 유무로 메서드를 정해 /validate에 {} 전송(High), 오류 본문 폐기로 422 gate-report 전달 불가, knowledge 422 런타임 검증 없음, dev.mjs 포트 고정(Med 3)"
+  },
+  {
+   "at": "2026-09-24T14:04:19.104Z",
+   "id": "R-02",
+   "status": "stale",
+   "note": "상위 T-301 되돌림"
   }
  ]
 }

@@ -7,24 +7,39 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const HEALTH_TIMEOUT_MS = 60_000;
 
+// 포트는 한곳에서 정한다: .env의 *_PORT(없으면 기본값) → 실행 명령·health 주소·게이트웨이의 하위 서비스 주소
+const PORT_DEFAULTS = { FORECAST_PORT: 8010, KNOWLEDGE_PORT: 8020, RECORDS_PORT: 8030, GATEWAY_PORT: 8787, WEB_PORT: 5173 };
+
 // 서비스 목록: 각 레인의 골격 task가 이 시작 명령과 health 주소를 만족해야 한다
-const SERVICES = [
-  { name: "forecast", color: 34, marker: "services/forecast/src/crowdcast/api/app.py",
-    cmd: "uv", args: ["run", "--package", "crowdcast-forecast", "uvicorn", "crowdcast.api.app:app", "--port", "8010"],
-    health: "http://127.0.0.1:8010/health" },
-  { name: "knowledge", color: 36, marker: "services/knowledge/src/knowledge/api/app.py",
-    cmd: "uv", args: ["run", "--package", "crowdcast-knowledge", "uvicorn", "knowledge.api.app:app", "--port", "8020"],
-    health: "http://127.0.0.1:8020/health" },
-  { name: "records", color: 35, marker: "services/records/public/index.php",
-    cmd: "php", args: ["-S", "127.0.0.1:8030", "-t", "services/records/public"],
-    health: "http://127.0.0.1:8030/health" },
-  { name: "gateway", color: 33, marker: "services/gateway/package.json",
-    cmd: "npm", args: ["-w", "services/gateway", "run", "dev"],
-    health: "http://127.0.0.1:8787/api/health" },
-  { name: "web", color: 32, marker: "apps/web/package.json",
-    cmd: "npm", args: ["-w", "apps/web", "run", "dev", "--", "--port", "5173", "--strictPort"],
-    health: "http://127.0.0.1:5173/" },
-];
+function servicesFor(env) {
+  const port = (k) => String(env[k] || PORT_DEFAULTS[k]);
+  const url = (k) => `http://127.0.0.1:${port(k)}`;
+  return [
+    { name: "forecast", color: 34, marker: "services/forecast/src/crowdcast/api/app.py",
+      cmd: "uv", args: ["run", "--package", "crowdcast-forecast", "uvicorn", "crowdcast.api.app:app", "--port", port("FORECAST_PORT")],
+      health: `${url("FORECAST_PORT")}/health` },
+    { name: "knowledge", color: 36, marker: "services/knowledge/src/knowledge/api/app.py",
+      cmd: "uv", args: ["run", "--package", "crowdcast-knowledge", "uvicorn", "knowledge.api.app:app", "--port", port("KNOWLEDGE_PORT")],
+      health: `${url("KNOWLEDGE_PORT")}/health` },
+    { name: "records", color: 35, marker: "services/records/public/index.php",
+      cmd: "php", args: ["-S", `127.0.0.1:${port("RECORDS_PORT")}`, "-t", "services/records/public"],
+      health: `${url("RECORDS_PORT")}/health` },
+    { name: "gateway", color: 33, marker: "services/gateway/package.json",
+      cmd: "npm", args: ["-w", "services/gateway", "run", "dev"],
+      health: `${url("GATEWAY_PORT")}/api/health` },
+    { name: "web", color: 32, marker: "apps/web/package.json",
+      cmd: "npm", args: ["-w", "apps/web", "run", "dev", "--", "--port", port("WEB_PORT"), "--strictPort"],
+      health: `${url("WEB_PORT")}/` },
+  ];
+}
+
+// 게이트웨이가 하위 서비스를 같은 포트로 찾도록 주소를 넘긴다(이미 있으면 그대로)
+function linkServiceUrls(env) {
+  for (const [name, key] of [["FORECAST_URL", "FORECAST_PORT"], ["KNOWLEDGE_URL", "KNOWLEDGE_PORT"], ["RECORDS_URL", "RECORDS_PORT"]]) {
+    env[name] ??= `http://127.0.0.1:${env[key] || PORT_DEFAULTS[key]}`;
+  }
+  env.GATEWAY_PORT ??= String(PORT_DEFAULTS.GATEWAY_PORT);
+}
 
 // .env를 읽어 환경변수로 넘긴다(이미 있는 값은 덮어쓰지 않는다)
 function loadEnv() {
@@ -85,6 +100,8 @@ function start(svc, env) {
 
 // 실행: 있는 서비스만 띄우고, 없는 서비스는 "아직 없음"으로 알린다
 const env = loadEnv();
+linkServiceUrls(env);
+const SERVICES = servicesFor(env);
 const hosts = ollamaCandidates(env);
 let ollama = null;
 for (const h of hosts) if (await probe(`${h}/api/version`)) { ollama = h; break; }
