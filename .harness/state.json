@@ -84,7 +84,8 @@
    "evidence": "test 250·키 누출 0, 2026 코드 대응·35일 공개일 산출물 확인, 교차 리뷰 sol PASS, region_daily 861505행"
   },
   "T-102": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T15:58:20.593Z"
   },
   "T-103": {
    "status": "todo"
@@ -240,9 +241,9 @@
    "evidence": "게이트 1~4 통과: build·test 4·lint·e2e 10·스크린샷 9(직접 확인)·Range 206·색 하드코딩 0, 교차 리뷰 astra PASS(Med 4 → T-402 이월), d5db41a"
   },
   "T-402": {
-   "status": "running",
-   "updated": "2026-09-24T15:02:48.576Z",
-   "note": "재리뷰 PASS(Med 3·Low 1 — 기준선 10px 어긋남·▲ 대표값·칩 번호) → 차트 정확성 피드백 2회차(마지막)"
+   "status": "done",
+   "updated": "2026-09-24T16:02:19.518Z",
+   "evidence": "test 69·build·lint·색 0, 스크린샷 낮·밤·모바일 확인(기준선 정렬·단위 분리), 교차 리뷰 astra PASS"
   },
   "R-03": {
    "status": "todo"
@@ -752,6 +753,17 @@
    "id": "T-101",
    "status": "done",
    "evidence": "test 250·키 누출 0, 2026 코드 대응·35일 공개일 산출물 확인, 교차 리뷰 sol PASS, region_daily 861505행"
+  },
+  {
+   "at": "2026-09-24T15:58:20.593Z",
+   "id": "T-102",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:02:19.518Z",
+   "id": "T-402",
+   "status": "done",
+   "evidence": "test 69·build·lint·색 0, 스크린샷 낮·밤·모바일 확인(기준선 정렬·단위 분리), 교차 리뷰 astra PASS"
   }
  ]
 }
