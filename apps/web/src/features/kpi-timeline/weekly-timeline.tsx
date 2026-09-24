@@ -36,7 +36,8 @@ export function WeeklyTimeline({
   const max = Math.max(1, ...weeks.map((week) => week.total));
   const labels = ["소규모", "수립 권고", "수립 대상", "대규모"];
   return (
-    <div className="weekly-timeline">
+    <details className="weekly-timeline">
+      <summary>주간 타임라인 펼치기</summary>
       <div className="weekly-timeline__legend">
         {labels.map((label, index) => (
           <span
@@ -109,6 +110,6 @@ export function WeeklyTimeline({
           </tbody>
         </table>
       </details>
-    </div>
+    </details>
   );
 }

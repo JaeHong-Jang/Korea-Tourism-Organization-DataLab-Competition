@@ -6,13 +6,13 @@ import { RangeBar } from "../../components/charts/range-bar";
 import { EmptyState } from "../../components/common/empty-state";
 import { ErrorState } from "../../components/common/error-state";
 import { LevelBadge } from "../../components/common/level-badge";
-import { formatDate } from "../../lib/format";
+import { formatDate, formatPeople } from "../../lib/format";
 import { useSelectionStore } from "../../lib/selection-store";
 import { type FestivalSort, sortFestivals } from "./sort-festivals";
 
 const labels = ["소규모", "수립 권고", "수립 대상", "대규모"] as const;
 
-// 선택이 지도에서 들어와도 카드가 보이는 위치까지 스크롤한다.
+// 지도 선택을 카드로 옮기고 필터가 선택 카드를 숨기면 목록 처음을 보여 준다.
 export function FestivalList({
   festivals,
   status,
@@ -29,6 +29,7 @@ export function FestivalList({
   const selectFestival = useSelectionStore((state) => state.selectFestival);
   const selectSigungu = useSelectionStore((state) => state.selectSigungu);
   const itemRefs = useRef(new Map<string, HTMLLIElement>());
+  const listRef = useRef<HTMLOListElement>(null);
   useEffect(() => {
     if (
       selectedId &&
@@ -37,6 +38,9 @@ export function FestivalList({
       itemRefs.current
         .get(selectedId)
         ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    } else if (listRef.current) {
+      // 필터로 선택 카드가 사라지면 이전 스크롤 위치 대신 첫 카드를 보여 준다.
+      listRef.current.scrollTop = 0;
     }
   }, [selectedId, ordered]);
 
@@ -97,7 +101,11 @@ export function FestivalList({
           }
         />
       ) : (
-        <ol className="festival-list__items" aria-label="행사 목록">
+        <ol
+          ref={listRef}
+          className="festival-list__items"
+          aria-label="행사 목록"
+        >
           {ordered.map((festival, index) => (
             <li
               key={festival.eventId}
@@ -137,6 +145,10 @@ export function FestivalList({
                 />
               </button>
               <RangeBar range={festival} mini />
+              <p className="festival-list__range">
+                p10–p90 {formatPeople(festival.peakP10)}~
+                {formatPeople(festival.peakP90)} · 추정
+              </p>
             </li>
           ))}
         </ol>

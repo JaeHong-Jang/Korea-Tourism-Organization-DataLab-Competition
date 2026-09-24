@@ -14,7 +14,8 @@ export function sortFestivals(
       if (difference) return difference;
     }
     return (
-      a.startsAt.localeCompare(b.startsAt) || a.eventId.localeCompare(b.eventId)
+      Date.parse(a.startsAt) - Date.parse(b.startsAt) ||
+      a.eventId.localeCompare(b.eventId)
     );
   });
 }

@@ -1,6 +1,6 @@
 // S1 행사 조건을 선택 스토어에 저장하고 적용된 조건 수를 보여 준다.
 import type { FestivalSummary } from "@crowdcast/contracts/types";
-import { festivalSido } from "../../lib/festivals/filter-festivals";
+import { festivalSido, sidoNames } from "../../lib/festivals/filter-festivals";
 import { useSelectionStore } from "../../lib/selection-store";
 
 const types = ["불꽃", "공연", "대학", "먹거리", "꽃", "전통", "기타"];
@@ -20,7 +20,7 @@ export function FestivalFiltersPanel({ all }: { all: FestivalSummary[] }) {
   const applied = Object.values(filters).filter(
     (value) => value !== null,
   ).length;
-  const sidos = [...new Set(all.map(festivalSido))].sort((a, b) =>
+  const sidos = Object.values(sidoNames).sort((a, b) =>
     a.localeCompare(b, "ko"),
   );
 
@@ -71,18 +71,24 @@ export function FestivalFiltersPanel({ all }: { all: FestivalSummary[] }) {
           </label>
         </div>
       )}
-      <label>
+      {/* 시도 이름이 길어(예: 세종특별자치시) 선택 상자를 한 줄 전체로 둔다 */}
+      <label className="festival-filters__wide">
         시도
         <select
           value={filters.sido ?? ""}
           onChange={(event) => setFilters({ sido: event.target.value || null })}
         >
           <option value="">전국</option>
-          {sidos.map((sido) => (
-            <option key={sido} value={sido}>
-              {sido}
-            </option>
-          ))}
+          {sidos.map((sido) => {
+            const count = all.filter(
+              (festival) => festivalSido(festival) === sido,
+            ).length;
+            return (
+              <option key={sido} value={sido}>
+                {sido} ({count}건)
+              </option>
+            );
+          })}
         </select>
       </label>
       <label>

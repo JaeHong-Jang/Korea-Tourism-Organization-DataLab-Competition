@@ -2,7 +2,7 @@
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import type { FestivalFilters } from "../selection-store";
 
-const sidoNames: Record<string, string> = {
+export const sidoNames: Record<string, string> = {
   "11": "서울특별시",
   "26": "부산광역시",
   "27": "대구광역시",

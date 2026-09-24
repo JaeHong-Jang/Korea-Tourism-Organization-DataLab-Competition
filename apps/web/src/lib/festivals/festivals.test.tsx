@@ -91,13 +91,39 @@ describe("S1 행사 패널", () => {
     expect(sortFestivals(all, "date")[0].name).toBe("견본 행사 1");
   });
 
+  // 오프셋이 다른 시각도 실제 시작 순간으로 비교해 날짜 순 동률을 푼다.
+  it("다른 시간대의 시작일을 타임스탬프로 정렬한다", () => {
+    const later = {
+      ...all[0],
+      eventId: "later",
+      startsAt: "2026-10-18T16:00:00Z",
+    };
+    const earlier = {
+      ...all[0],
+      eventId: "earlier",
+      startsAt: "2026-10-19T00:30:00+09:00",
+    };
+    expect(
+      sortFestivals([later, earlier], "date").map((item) => item.eventId),
+    ).toEqual(["earlier", "later"]);
+    expect(
+      sortFestivals([later, earlier], "risk").map((item) => item.eventId),
+    ).toEqual(["earlier", "later"]);
+  });
+
   // 조건 변경은 적용 개수를 늘리고 한 번에 초기화할 수 있어야 한다.
   it("필터의 적용 개수와 초기화를 동기화한다", async () => {
     const node = await render(<FestivalFiltersPanel all={all} />);
+    const sido = node.querySelectorAll("select")[1];
+    expect(sido.querySelectorAll("option")).toHaveLength(18);
+    expect(sido.textContent).toContain("대구광역시 (0건)");
     await act(async () => {
-      useSelectionStore.getState().setFilters({ period: "week", level: 4 });
+      useSelectionStore
+        .getState()
+        .setFilters({ period: "week", level: 4, sido: "대구광역시" });
     });
-    expect(node.textContent).toContain("적용 2개");
+    expect(node.textContent).toContain("적용 3개");
+    expect((sido as HTMLSelectElement).value).toBe("대구광역시");
     await act(async () => {
       (node.querySelector("button") as HTMLButtonElement).click();
     });
@@ -118,6 +144,10 @@ describe("S1 행사 패널", () => {
     expect(useSelectionStore.getState().selectedSigunguCode).toBe("11110");
     expect(node.querySelector(".festival-list__items li")?.className).toBe(
       "is-selected",
+    );
+    expect(node.textContent).toContain("p10–p90");
+    expect(node.querySelector(".range-bar__table summary")?.textContent).toBe(
+      "값 표 보기",
     );
   });
 
