@@ -1,0 +1,11 @@
+# 공개일을 존재하지 않는 날짜로 바꿔 날짜 타입을 요구하는 S03·S09를 함께 위반한다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX id: <http://crowdcast.local/id/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE { id:obs-28110-sat-nonlocal cc:availableAt ?date }
+INSERT { id:obs-28110-sat-nonlocal cc:availableAt '2025-02-30'^^xsd:date }
+WHERE { id:obs-28110-sat-nonlocal cc:availableAt ?date }

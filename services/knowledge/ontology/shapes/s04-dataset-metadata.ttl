@@ -1,0 +1,13 @@
+# 데이터셋의 제목·발행 기관과 메뉴 또는 접근 주소를 검사한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+cc:S04 a sh:NodeShape ; sh:targetClass cc:Dataset ;
+    sh:property [ sh:path dcterms:title ; sh:minCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path dcterms:publisher ; sh:minCount 1 ; sh:datatype xsd:string ] ;
+    sh:or (
+        [ sh:property [ sh:path cc:datalabMenu ; sh:minCount 1 ; sh:datatype xsd:string ] ]
+        [ sh:property [ sh:path cc:accessUrl ; sh:minCount 1 ; sh:datatype xsd:anyURI ] ]
+    ) .

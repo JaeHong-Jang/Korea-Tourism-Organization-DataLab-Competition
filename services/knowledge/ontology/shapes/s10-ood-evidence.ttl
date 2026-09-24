@@ -1,0 +1,24 @@
+# OOD 예보의 판정·권고가 같은 예보의 참고용 검사 근거를 인용하는지 검사한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+# 참고용 근거는 문구 추론 대신 구조화된 ood·uncertainty 검사 종류로 식별한다.
+cc:S10 a sh:NodeShape ; sh:targetClass cc:Claim ;
+    sh:sparql [
+        sh:message "OOD 예보의 판정·권고에는 같은 예보의 참고용 검사 근거가 필요하다" ;
+        sh:select """
+            PREFIX cc: <http://crowdcast.local/ont#>
+            PREFIX cito: <http://purl.org/spar/cito/>
+            SELECT DISTINCT $this WHERE {
+                $this cc:claimType ?type ; cc:aboutForecast ?forecast .
+                ?forecast cc:ood true .
+                FILTER (?type IN ("판정", "권고"))
+                FILTER NOT EXISTS {
+                    $this cito:citesAsEvidence ?evidence .
+                    ?evidence a cc:CheckEvidence ; cc:aboutForecast ?forecast ; cc:checkResult ?check .
+                    ?check cc:checkKind ?kind ; cc:passed true .
+                    FILTER (?kind IN ("ood", "uncertainty"))
+                }
+            }
+        """
+    ] .

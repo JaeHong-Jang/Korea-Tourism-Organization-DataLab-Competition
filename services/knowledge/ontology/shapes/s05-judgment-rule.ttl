@@ -1,0 +1,18 @@
+# 판정의 규칙 연결과 인원 무관 위험 요소에 대한 법정 규칙 연결을 검사한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+cc:S05 a sh:NodeShape ; sh:targetClass cc:Judgment ;
+    sh:property [ sh:path cc:judgedBy ; sh:minCount 1 ; sh:class cc:Rule ] ;
+    sh:sparql [
+        sh:message "인원 무관 위험 요소가 있는 행사의 판정에는 법정 규칙이 필요하다" ;
+        sh:select """
+            PREFIX cc: <http://crowdcast.local/ont#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT DISTINCT $this WHERE {
+                ?forecast cc:hasJudgment $this ; cc:predictedFor/cc:hazardLabel ?hazard .
+                FILTER (?hazard IN ("폭죽", "불", "가연성가스", "석유류", "산", "수면"))
+                FILTER NOT EXISTS { $this cc:judgedBy ?rule . ?rule a/rdfs:subClassOf* cc:LegalRule . }
+            }
+        """
+    ] .

@@ -7,7 +7,6 @@ from contract_cases import INTEGRITY, RDFLIB_NQUADS_WARNING, memory_store, read_
 from fastapi.testclient import TestClient
 from knowledge.api.app import create_app
 from knowledge.convert.documents import schema_problems
-from knowledge.store.facts import IntegrityError
 from knowledge.store.repository import CC, ID
 from rdflib import Literal
 from rdflib.compare import isomorphic
@@ -15,7 +14,7 @@ from rdflib.compare import isomorphic
 SEQUENCES = sorted((INTEGRITY / "sequences").glob("*.json"))
 
 
-# 공개 facts API와 내부 발행 전이로 계약에 적힌 모든 단계를 재현한다.
+# 공개 facts·publish API로 계약에 적힌 모든 단계와 발행 결과를 재현한다.
 @pytest.mark.filterwarnings(RDFLIB_NQUADS_WARNING)
 @pytest.mark.parametrize("path", SEQUENCES, ids=lambda path: path.stem)
 def test_sequence(path: Path) -> None:
@@ -35,12 +34,18 @@ def test_sequence(path: Path) -> None:
                 revision = response.json()["revision"]
                 assert response.status_code in {200, 422}, response.text
             else:
-                try:
-                    revision = store.publish(session_id, step["publish"])
-                    report = None
-                except IntegrityError as error:
-                    report = error.report
-                    revision = report["revision"]
+                response = client.post(
+                    f"/v1/sessions/{session_id}/publish",
+                    params={"revision": before_revision, "masterVersion": store.master.snapshot()[0]},
+                )
+                assert response.status_code == 200, response.text
+                result = response.json()
+                assert schema_problems(result, "gate-report") == []
+                revision = result["revision"]
+                report = None if result["passed"] else result
+                if result["passed"]:
+                    claims = store.scope(session_id)["claims"]
+                    assert all(claims[claim_id]["status"] == "published" for claim_id in step["publish"])
             if "revisionAfter" in step:
                 assert revision == step["revisionAfter"]
             if report is not None:

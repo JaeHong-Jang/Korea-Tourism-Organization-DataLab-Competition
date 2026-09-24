@@ -1,0 +1,20 @@
+# 모든 문장 유형의 자리표시자가 단위 있는 수치의 특정 필드에 연결되는지 검사한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+cc:S02 a sh:NodeShape ; sh:targetObjectsOf cc:hasPlaceholder ;
+    sh:property [ sh:path cc:quantity ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:class cc:Quantity ; sh:node cc:S02Quantity ] ;
+    sh:property [ sh:path cc:field ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ("value" "p10" "p50" "p90") ] ;
+    sh:property [ sh:path cc:name ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] .
+
+# JSON-LD와 같은 double 타입을 사용하며 렌더링 값의 일치는 코드 검사에 맡긴다.
+cc:S02Quantity a sh:NodeShape ;
+    sh:property [ sh:path cc:unit ; sh:minCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cc:timeUnit ; sh:minCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cc:value ; sh:datatype xsd:double ] ;
+    sh:property [ sh:path cc:p10 ; sh:datatype xsd:double ] ;
+    sh:property [ sh:path cc:p50 ; sh:datatype xsd:double ] ;
+    sh:property [ sh:path cc:p90 ; sh:datatype xsd:double ] .

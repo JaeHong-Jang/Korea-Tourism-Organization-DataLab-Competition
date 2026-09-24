@@ -1,0 +1,14 @@
+# 발행 후보와 발행 문장이 실제 근거를 하나 이상 인용하는지 검사한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix cito: <http://purl.org/spar/cito/> .
+
+cc:S01 a sh:NodeShape ; sh:targetClass cc:Claim ;
+    sh:message "발행 후보·발행 문장은 근거를 하나 이상 인용해야 한다" ;
+    sh:or (
+        [ sh:not [ sh:or (
+            [ sh:property [ sh:path cc:status ; sh:hasValue "candidate" ] ]
+            [ sh:property [ sh:path cc:status ; sh:hasValue "published" ] ]
+        ) ] ]
+        [ sh:property [ sh:path cito:citesAsEvidence ; sh:minCount 1 ; sh:class cc:Evidence ] ]
+    ) .

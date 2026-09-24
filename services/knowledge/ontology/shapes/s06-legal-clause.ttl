@@ -1,0 +1,10 @@
+# 법정 규칙의 조항과 규정 근거의 규칙 참조가 정확히 하나인지 검사한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+cc:S06 a sh:NodeShape ; sh:targetClass cc:LegalRule ;
+    sh:property [ sh:path cc:basedOnClause ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cc:LegalClause ] .
+
+# 자체 규칙도 규정 근거가 가리킬 수 있으므로 상위 Rule 클래스를 검사한다.
+cc:S06Evidence a sh:NodeShape ; sh:targetClass cc:RuleEvidence ;
+    sh:property [ sh:path cc:aboutRule ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cc:Rule ] .

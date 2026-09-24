@@ -1,0 +1,40 @@
+# 관측값 누락·잘못된 날짜·미래 공개일·다른 지역의 관측값 연결을 거부한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+# 누락과 날짜 형식은 코어 제약으로 막아 SPARQL의 미결합·비교 오류가 통과하지 않게 한다.
+cc:S09 a sh:NodeShape ; sh:targetClass cc:Forecast ;
+    sh:property [ sh:path cc:asOf ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:date ] ;
+    sh:property [ sh:path cc:predictedFor ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cc:Event ;
+        sh:node [ sh:property [ sh:path cc:inRegion ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ] ] ;
+    sh:property [ sh:path prov:wasGeneratedBy ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:class cc:PredictionRun ; sh:node cc:S09Run ] ;
+    sh:sparql [
+        sh:message "관측값 공개일이 예보 기준일보다 늦거나 예보 대상 행사 지역과 다르다" ;
+        sh:select """
+            PREFIX cc: <http://crowdcast.local/ont#>
+            PREFIX prov: <http://www.w3.org/ns/prov#>
+            SELECT DISTINCT $this ?value WHERE {
+                $this cc:asOf ?asOf ; cc:predictedFor/cc:inRegion ?region ; prov:wasGeneratedBy ?run .
+                ?run prov:used ?value .
+                ?value a cc:Observation ; cc:availableAt ?available ; cc:aboutRegion ?observedRegion .
+                FILTER (?available > ?asOf || ?observedRegion != ?region)
+            }
+        """
+    ] .
+
+# 존재하지 않는 관측값 참조도 타입과 필수 속성 제약으로 거부한다.
+cc:S09Run a sh:NodeShape ;
+    sh:property [ sh:path prov:used ; sh:qualifiedValueShape [ sh:class cc:Observation ] ;
+        sh:qualifiedMinCount 1 ] ;
+    sh:property [ sh:path prov:used ; sh:or (
+        [ sh:class cc:ModelRun ]
+        [ sh:class cc:Observation ; sh:node cc:S09Observation ]
+    ) ] .
+
+# 관측값마다 공개 날짜와 지역이 하나씩 있어야 비교 대상을 빠뜨리지 않는다.
+cc:S09Observation a sh:NodeShape ;
+    sh:property [ sh:path cc:availableAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:date ] ;
+    sh:property [ sh:path cc:aboutRegion ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] .
