@@ -1,6 +1,7 @@
 """고정된 G0를 읽고 동일 연도 분할에서 두 모델과 세 기준선을 채점한다."""
 
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -273,4 +274,25 @@ def summary(result: dict[str, Any], run_id: str, version: str) -> dict[str, Any]
         "metrics": metrics(points),
         "points": [{key: p[key] for key in fields} for p in points],
         "golden": result["golden"],
+        "disclosure": disclosure(result),
+    }
+
+
+# 보고서의 핵심 분모와 한계를 계약 JSON·모델 카드에도 같은 숫자로 싣는다(주 모델 평가 표본 기준).
+def disclosure(result: dict[str, Any]) -> dict[str, Any]:
+    points = [p for p in result["points"] if p["model"] == result["g0"]["primary_model"]]
+    reasons = Counter(reason for row in result["excluded"] for reason in row["reasons"])
+    return {
+        "evaluated": len(points),
+        "covered": sum(p["p10"] <= p["actual"] <= p["p90"] for p in points),
+        "byTier": {
+            "gold": sum(p["tier"] != "silver" for p in points),
+            "silver": sum(p["tier"] == "silver" for p in points),
+        },
+        "skippedYears": [
+            {"year": fold["year"], "reason": fold["skipped"]} for fold in result["folds"] if fold["skipped"]
+        ],
+        "unscorable": reasons["명절 실버 채점 불가"],
+        "belowThresholdActual": sum(p["actual_level"] < 3 for p in points),
+        "baselinePairs": {name: sum(p[name] is not None for p in points) for name in ("b0", "b1", "b2")},
     }

@@ -7,6 +7,9 @@ from typing import Any
 
 from crowdcast.features.availability import Feature, publication_date
 
+# 행사장 방문객을 직접 센 정답 등급(데이터랩 축제 현황·DIY).
+GOLD_TIERS = frozenset({"goldA", "goldB"})
+
 
 # 회차·연도 표기를 제거한 이름과 지역이 같은 행사만 연결하고 유사 이름은 추측하지 않는다.
 def festival_key(event: dict[str, Any]) -> tuple[str, str | None]:
@@ -42,14 +45,15 @@ def history_features(
     label = labels.get(prior["event_id"])
     if prior.get("is_golden") or label is None:
         return result
+    # 전회차 실측은 골드만 쓴다(06 §3) — 실버 시군구 순증은 정의가 달라 전회차 실측·B1로 쓰지 않는다.
     available = publication_date(label.get("available_at"))
     if (
-        not label["is_primary"]
+        label["label_tier"] not in GOLD_TIERS
+        or not label["is_primary"]
         or not label["usable_for_training"]
         or label["is_golden"]
         or available is None
         or available > as_of
-        or (label["label_tier"] == "silver" and "holiday_overlap" in label.get("quality_flag", ""))
     ):
         return result
     result["previous_daily_mean"] = Feature(float(label["daily_mean"]), available)

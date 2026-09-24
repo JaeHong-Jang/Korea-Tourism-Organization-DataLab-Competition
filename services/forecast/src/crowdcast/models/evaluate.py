@@ -101,6 +101,7 @@ def run_models(
             encoding="utf-8",
         )
         raise ValueError(f"모든 평가 연도를 건너뛰었습니다 — {failure.name}의 표본 수·사유 확인 필요")
+    result["excluded"] = excluded
     backtest = summary(result, report_directory.name, version)
     missing = {name: features[name].null_count() for name in names}
     card = model_card(result, version, report_directory.name, names, config, hashes["labels"], missing)

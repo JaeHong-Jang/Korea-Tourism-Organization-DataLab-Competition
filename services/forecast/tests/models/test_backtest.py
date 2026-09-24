@@ -63,10 +63,15 @@ def test_backtest_determinism_and_g0(
         run_backtest(frame, NAMES, events, config, tmp_path / "g0.json", input_hashes, tmp_path)
     path = freeze_g0(tmp_path, label_qc, input_hashes, config["eval_years"], "v1-test")
     before, timestamp = path.read_bytes(), path.stat().st_mtime_ns
-    first = run_backtest(frame, NAMES, events, config, path, input_hashes, tmp_path)
+    first = {**run_backtest(frame, NAMES, events, config, path, input_hashes, tmp_path), "excluded": []}
     first_summary = summary(first, "bt-test", "v1-test")
-    second = run_backtest(frame, NAMES, events, config, path, input_hashes, tmp_path)
+    second = {**run_backtest(frame, NAMES, events, config, path, input_hashes, tmp_path), "excluded": []}
     assert first_summary == summary(second, "bt-test", "v1-test")
+    # 요약 JSON은 보고서와 같은 분모(평가·포함·등급별·비교 쌍)를 싣는다.
+    shown = first_summary["disclosure"]
+    assert shown["evaluated"] == first_summary["metrics"]["coverageN"]
+    assert shown["covered"] == round(first_summary["metrics"]["coverage80"] * shown["evaluated"])
+    assert shown["byTier"]["gold"] + shown["byTier"]["silver"] == shown["evaluated"]
     assert first["points"] == second["points"]
     assert path.read_bytes() == before and path.stat().st_mtime_ns == timestamp
     assert first["g0"]["primary_model"] == "simple"
@@ -116,9 +121,10 @@ def test_insufficient_training_skips_year(
     frame, events = model_data
     frame = frame.filter(pl.col("year") != 2022)
     path = freeze_g0(tmp_path, label_qc, input_hashes, config["eval_years"], "v1-test")
-    result = run_backtest(frame, NAMES, events, config, path, input_hashes, tmp_path)
+    result = {**run_backtest(frame, NAMES, events, config, path, input_hashes, tmp_path), "excluded": []}
     assert "학습 0" in result["folds"][0]["skipped"]
     assert summary(result, "bt-test", "v1-test")["evalYears"] == [2025]
+    assert summary(result, "bt-test", "v1-test")["disclosure"]["skippedYears"][0]["year"] == 2024
     assert json.loads((tmp_path / "training.json").read_text())["train_years"] == [2023]
 
 
@@ -131,7 +137,10 @@ def test_golden_replay(
     golden = frame.filter(pl.col("year") == 2025).head(1).with_columns(pl.lit(True).alias("is_golden"))
     ordinary = frame.filter(~pl.col("event_id").is_in(golden["event_id"].to_list()))
     path = freeze_g0(tmp_path, label_qc, input_hashes, [2025], "v1-golden")
-    result = run_backtest(ordinary, NAMES, events, config, path, input_hashes, tmp_path, golden)
+    result = {
+        **run_backtest(ordinary, NAMES, events, config, path, input_hashes, tmp_path, golden),
+        "excluded": [],
+    }
     assert len(result["golden"]) == 1
     assert result["golden"][0]["eventId"] not in result["folds"][0]["train_ids"]
     validate_contract("backtest-summary", summary(result, "bt-golden", "v1-golden"))

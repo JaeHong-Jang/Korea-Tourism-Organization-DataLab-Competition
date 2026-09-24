@@ -8,7 +8,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import numpy as np
-from crowdcast.models.backtest import metrics
+from crowdcast.models.backtest import disclosure, metrics
 from crowdcast.models.baselines import size_band
 from crowdcast.paths import REPO_ROOT
 from jsonschema import Draft202012Validator
@@ -39,8 +39,18 @@ def model_card(
     missing: dict[str, int],
 ) -> dict[str, Any]:
     g0 = result["g0"]
+    shown = disclosure(result)
+    skipped = ", ".join(f"{row['year']}({row['reason']})" for row in shown["skippedYears"]) or "없음"
+    pairs = shown["baselinePairs"]
+    counts = (
+        f"공개 분모(주 모델): 평가 {shown['evaluated']}건(골드 {shown['byTier']['gold']}·실버 "
+        f"{shown['byTier']['silver']}), 80% 구간 포함 {shown['covered']}/{shown['evaluated']}, "
+        f"비교 쌍 B0 {pairs['b0']}·B1 {pairs['b1']}(전회차 골드 실측)·B2 {pairs['b2']}, "
+        f"건너뛴 연도 {skipped}, "
+        f"명절 실버 채점 불가 {shown['unscorable']}건, 실측 대상 미만 {shown['belowThresholdActual']}건. "
+    )
     notes = (
-        f"labels SHA-256={labels_sha256}; 실버 가중치={config['silver_weight']}; "
+        counts + f"labels SHA-256={labels_sha256}; 실버 가중치={config['silver_weight']}; "
         f"골드 가중치={config['gold_weight']}; 코로나(2020·2021) 제외={config['exclude_covid']}; "
         f"G0={g0['branch']}, 주 모델={g0['primary_model']}, judgment.basis={g0['basis']}; "
         f"정의 일치 골드 고유 행사={g0['gold_summary']['gold_event_count']}; 목표 포함률 80%(보장 아님). "

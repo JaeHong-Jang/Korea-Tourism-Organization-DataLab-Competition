@@ -36,6 +36,46 @@ class Verdict(Enum):
     정성_비교 = '정성 비교'
 
 
+class ByTier(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    gold: Annotated[int, Field(ge=0)]
+    silver: Annotated[int, Field(ge=0)]
+
+
+class SkippedYear(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    year: int
+    reason: str
+
+
+class BaselinePairs(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    b0: Annotated[int, Field(ge=0)]
+    b1: Annotated[int, Field(description='전회차 골드 실측 쌍', ge=0)]
+    b2: Annotated[int, Field(ge=0)]
+
+
+class Disclosure(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    evaluated: Annotated[int, Field(ge=0)]
+    covered: Annotated[int, Field(ge=0)]
+    byTier: ByTier
+    skippedYears: list[SkippedYear]
+    unscorable: Annotated[int, Field(description='명절 실버 등 채점 불가 건수', ge=0)]
+    belowThresholdActual: Annotated[
+        int, Field(description='실측 판정이 수립 대상 미만인 평가 표본 수 — 0이면 경계 성능을 말할 수 없다', ge=0)
+    ]
+    baselinePairs: BaselinePairs
+
+
 class Point(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -86,3 +126,6 @@ class BacktestSummary(BaseModel):
     metrics: Metrics
     points: list[Point]
     golden: list[GoldenItem]
+    disclosure: Annotated[
+        Disclosure | None, Field(description='보고서의 핵심 분모·한계(주 모델 평가 표본 기준) — 서식4·S6가 그대로 인용한다')
+    ] = None

@@ -52,6 +52,37 @@ export interface BacktestSummary {
     unitsComparable: boolean;
     verdict: "포함" | "벗어남" | "정성 비교";
   }[];
+  /**
+   * 보고서의 핵심 분모·한계(주 모델 평가 표본 기준) — 서식4·S6가 그대로 인용한다
+   */
+  disclosure?: {
+    evaluated: number;
+    covered: number;
+    byTier: {
+      gold: number;
+      silver: number;
+    };
+    skippedYears: {
+      year: number;
+      reason: string;
+    }[];
+    /**
+     * 명절 실버 등 채점 불가 건수
+     */
+    unscorable: number;
+    /**
+     * 실측 판정이 수립 대상 미만인 평가 표본 수 — 0이면 경계 성능을 말할 수 없다
+     */
+    belowThresholdActual: number;
+    baselinePairs: {
+      b0: number;
+      /**
+       * 전회차 골드 실측 쌍
+       */
+      b1: number;
+      b2: number;
+    };
+  };
 }
 /**
  * 수치 노드. 자리표시자는 id와 필드를 가리킨다
