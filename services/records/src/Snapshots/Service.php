@@ -109,4 +109,19 @@ final class Service
         }
         return $result;
     }
+
+    // 삭제 표시된 행사의 발행본도 예보 ID로 찾아 원문 계약을 다시 검사한다
+    public function getByForecastId(string $forecastId): ?string
+    {
+        $row = $this->repository->findByForecastId($forecastId);
+        if ($row === null) {
+            return null;
+        }
+        $this->validateResponse($row['event_id'], $row['report_json']);
+        $report = json_decode($row['report_json'], false, 512, JSON_THROW_ON_ERROR);
+        if ($report->forecastId !== $forecastId) {
+            throw new RuntimeException('저장된 예보 ID가 계약을 위반합니다');
+        }
+        return $row['report_json'];
+    }
 }

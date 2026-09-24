@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace CrowdCast\Records\Routes;
 
+use CrowdCast\Records\Actuals\CollectionController as ActualCollection;
+use CrowdCast\Records\Actuals\QuantityValidator;
+use CrowdCast\Records\Actuals\Repository as ActualRepository;
+use CrowdCast\Records\Actuals\Service as ActualService;
 use CrowdCast\Records\Events\CollectionController as EventCollection;
 use CrowdCast\Records\Events\ItemController as EventItem;
 use CrowdCast\Records\Events\Repository as EventRepository;
@@ -18,7 +22,12 @@ use CrowdCast\Records\Plans\Exporter as PlanExporter;
 use CrowdCast\Records\Plans\ItemController as PlanItem;
 use CrowdCast\Records\Plans\Repository as PlanRepository;
 use CrowdCast\Records\Plans\Service as PlanService;
+use CrowdCast\Records\Shares\CollectionController as ShareCollection;
+use CrowdCast\Records\Shares\ItemController as ShareItem;
+use CrowdCast\Records\Shares\Repository as ShareRepository;
+use CrowdCast\Records\Shares\Service as ShareService;
 use CrowdCast\Records\Snapshots\CollectionController as SnapshotCollection;
+use CrowdCast\Records\Snapshots\ItemController as SnapshotItem;
 use CrowdCast\Records\Snapshots\MutationController as SnapshotMutation;
 use CrowdCast\Records\Snapshots\Repository as SnapshotRepository;
 use CrowdCast\Records\Snapshots\Service as SnapshotService;
@@ -63,6 +72,10 @@ final class RecordsRoutes
             new ContractValidator()
         );
         $plans = static fn(): PlanService => new PlanService(new PlanRepository($database()), new ContractValidator());
+        $actuals = static fn(): ActualService => new ActualService(
+            new ActualRepository($database()), new EventRepository($database()), new QuantityValidator()
+        );
+        $shares = static fn(): ShareService => new ShareService(new ShareRepository($database()), $snapshots());
 
         // 행사 컬렉션은 조회와 생성만 허용한다
         $app->get('/v1/events', function (ServerRequestInterface $request, ResponseInterface $response) use ($events): ResponseInterface {
@@ -86,6 +99,9 @@ final class RecordsRoutes
         });
         $app->post('/v1/events/{id}/snapshots', function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($snapshots): ResponseInterface {
             return (new SnapshotCollection($snapshots()))->create($request, $response, $args);
+        });
+        $app->get('/v1/snapshots/{forecastId}', function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($snapshots): ResponseInterface {
+            return (new SnapshotItem($snapshots()))->get($request, $response, $args);
         });
 
         // 컬렉션과 개별 스냅샷의 수정·삭제는 409로 명시한다
@@ -118,6 +134,17 @@ final class RecordsRoutes
         });
         $app->get('/v1/ledger/verify', function (ServerRequestInterface $request, ResponseInterface $response) use ($ledger): ResponseInterface {
             return (new LedgerVerify($ledger()))->get($request, $response);
+        });
+
+        // 행사 실측을 추가하고 발행 예보의 공유 토큰을 만들거나 연다
+        $app->post('/v1/actuals', function (ServerRequestInterface $request, ResponseInterface $response) use ($actuals): ResponseInterface {
+            return (new ActualCollection($actuals()))->create($request, $response);
+        });
+        $app->post('/v1/shares', function (ServerRequestInterface $request, ResponseInterface $response) use ($shares): ResponseInterface {
+            return (new ShareCollection($shares()))->create($request, $response);
+        });
+        $app->get('/v1/shares/{token}', function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($shares): ResponseInterface {
+            return (new ShareItem($shares()))->get($request, $response, $args);
         });
     }
 }
