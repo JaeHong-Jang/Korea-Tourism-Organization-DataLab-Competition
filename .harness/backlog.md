@@ -44,6 +44,7 @@
 - `apps/web/playwright.config.ts`의 `reuseExistingServer: true` 때문에 5173에 다른 워크트리(또는 본 레포)의 vite가 떠 있으면 **그 서버를 찍는다** → 워크트리마다 다른 포트(환경 변수 `WEB_PORT`)를 쓰고 `reuseExistingServer: false`(또는 서버 cwd 확인).
 
 ## T-207 (사전 등록 선정) · T-203 (백테스트)
+- [T-104 연계 — T-203 게이트 때 확인] 피처 빌더가 `paths.PROCESSED/features_availability.json` `{checked, violations, asOfRule}`를 쓰고, 백테스트는 실행마다 새 `reports/backtest/<runId>/` 디렉터리를 만든다(파이프라인이 이번 결과만 판정). 없으면 T-203 피드백에 넣는다.
 - [T-102 리뷰 High 판단] TourAPI 일정은 수집 시점(`date_available_at`)이 D-14 뒤일 수 있다 → 06 §9 D-14 규칙은 **피처**에 건다(T-203 피처 빌더). 행사 일정은 예보 대상의 정의이므로 T-207은 `date_available_at ≤ 등록일`만 확인하고, 등록 대상은 연속성 끊김(인천 개편) 지역을 뺀다(06 §1).
 
 ## 사람 확인(H) — 오케스트레이터가 요청할 것

@@ -18,7 +18,7 @@ else
 fi
 
 # git이 추적하지 않는 공유 산출물만 링크한다(추적 파일이 있는 data/·models/는 링크하지 않고 CROWDCAST_DATA_ROOT로 본 레포를 가리킨다)
-for rel in traces reports/runs reports/evals reports/figures/screens reports/figures/perf .env; do
+for rel in traces reports/runs reports/evals reports/backtest reports/figures/screens reports/figures/perf .env; do
   [ "$rel" = ".env" ] || mkdir -p "$REPO/$rel"
   target="$WT/$rel"
   mkdir -p "$(dirname "$target")"
