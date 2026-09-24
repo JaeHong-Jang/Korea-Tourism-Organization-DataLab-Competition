@@ -1,0 +1,69 @@
+/* 홈 장면은 화면 전체를 쓰고 세 보조 패널을 가장자리에 띄운다. */
+.scene-page { position: relative; min-height: calc(100vh - 116px); overflow: hidden; background: var(--surface-sunken); }
+.scene-stage { position: absolute; inset: 0; isolation: isolate; overflow: hidden; background: var(--surface-sunken); }
+.scene-stage__center { position: absolute; top: 44%; left: 49%; z-index: 1; width: min(470px, 36vw); text-align: center; transform: translate(-50%, -50%); }
+.scene-stage__icon { display: grid; place-items: center; width: 70px; height: 70px; margin: 0 auto var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-panel); color: var(--brand); background: var(--surface); transform: rotate(-7deg); box-shadow: var(--shadow-float); }
+.scene-stage__icon svg { transform: rotate(7deg); }
+.scene-stage h1 { margin: var(--space-1) 0 var(--space-3); font-size: clamp(var(--text-title), 3.2vw, var(--text-hero)); line-height: 1.1; letter-spacing: -.06em; }
+.scene-stage p { max-width: 350px; margin: 0 auto var(--space-6); color: var(--ink-2); font-size: var(--text-ui); }
+.scene-stage__contour { position: absolute; width: 580px; height: 360px; border: 1px solid var(--axis); border-radius: 45% 55% 47% 53%; opacity: .35; transform: rotate(-26deg); }
+.scene-stage__contour--one { left: 26%; top: 13%; }
+.scene-stage__contour--two { left: 31%; top: 20%; width: 440px; height: 270px; }
+.scene-stage__note { position: absolute; left: var(--space-8); bottom: var(--space-4); color: var(--ink-2); font-size: var(--text-caption); }
+.scene-page > .feature-panel { position: absolute; z-index: var(--z-panel); border-radius: var(--radius-panel); box-shadow: var(--shadow-float); }
+.scene-filter { top: var(--space-8); left: var(--space-8); width: 244px; min-height: 220px; }
+.scene-list { top: var(--space-8); right: var(--space-8); width: 360px; min-height: 440px; }
+.scene-timeline { left: calc(244px + 2 * var(--space-8) + var(--space-6)); right: calc(360px + 2 * var(--space-8) + var(--space-6)); bottom: var(--space-8); min-height: 116px; }
+.scene-id { position: absolute; top: var(--space-8); left: 48%; color: var(--ink-2); font-size: var(--text-caption); }
+
+/* 상담 화면은 왼쪽 대화 40%, 오른쪽 작업판과 미리보기 60%다. */
+.consult-page { padding-block: var(--space-8) var(--space-14); }
+.consult-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--space-8); min-height: 580px; }
+.consult-chat { min-height: 580px; }
+.consult-chat__space { flex: 1; }
+.chat-input-placeholder { min-height: 74px; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); color: var(--ink-2); font-size: var(--text-ui); }
+.consult-right { display: grid; grid-template-rows: 120px minmax(280px, 1fr) auto; gap: var(--space-6); }
+.team-board { overflow: hidden; padding-block: var(--space-4); }
+.team-board .feature-panel__empty { display: none; }
+.report-preview { min-height: 280px; }
+.report-preview__skeleton { display: grid; align-content: start; gap: var(--space-4); margin-top: var(--space-8); }
+.report-preview__skeleton span { height: 16px; width: 75%; background: var(--surface-sunken); border-radius: var(--radius-input); }
+.report-preview__skeleton span:first-child { width: 47%; height: 34px; }
+.report-preview__skeleton span:last-child { width: 59%; }
+.event-summary { min-height: 116px; }
+.event-summary .feature-panel__empty { display: none; }
+
+/* 예보서는 문서 폭 880px과 근거 서랍 폭 360px을 유지한다. */
+.forecast-page { padding-block: var(--space-8) var(--space-14); }
+.document-layout { display: grid; grid-template-columns: minmax(0, 880px) minmax(300px, 360px); gap: var(--space-8); align-items: start; }
+.document-main { min-width: 0; }
+.document-sheet { min-height: 540px; padding: var(--space-8); border-radius: var(--radius-input); }
+.document-sheet__lines { display: grid; gap: var(--space-5); margin-top: var(--space-10); }
+.document-sheet__lines span { height: 1px; background: var(--line); }
+.document-sheet__lines span:nth-child(2) { width: 78%; }
+.document-sheet__lines span:nth-child(3) { width: 92%; }
+.document-sheet__lines span:nth-child(4) { width: 55%; }
+.document-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-top: var(--space-6); }
+.evidence-drawer { min-height: 540px; }
+
+/* 검증과 인사이트는 각 기능의 중요도에 맞게 크기를 다르게 둔다. */
+.validation-layout, .insights-layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-8); }
+.validation-layout > *, .insights-layout > * { grid-column: span 4; min-height: 170px; }
+.validation-kpis { grid-column: span 12; min-height: 128px; }
+.validation-chart { grid-column: span 7; min-height: 280px; }
+.validation-evidence { grid-column: span 5; min-height: 280px; }
+.validation-cases { grid-column: span 7; }
+.validation-score { grid-column: span 5; }
+.validation-model { grid-column: span 12; min-height: 145px; }
+.insights-main { grid-column: span 8; min-height: 350px; }
+.insights-spec { grid-column: span 4; min-height: 350px; }
+.insights-copy { grid-column: span 12; min-height: 140px; }
+
+/* 행사와 운영 화면은 표 영역을 넓게 두고 세부 상태를 옆에 둔다. */
+.table-layout, .ops-layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-8); }
+.table-layout > *, .ops-layout > * { grid-column: span 4; min-height: 175px; }
+.table-main, .ops-main { grid-column: span 8; min-height: 340px; }
+.table-side { grid-column: span 4; min-height: 340px; }
+.ops-layout > :nth-child(2), .ops-layout > :nth-child(3) { grid-column: span 4; }
+.plan-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: var(--space-8); min-height: 540px; }
+.plan-layout > * { min-height: 540px; }

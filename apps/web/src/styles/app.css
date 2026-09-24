@@ -1,0 +1,7 @@
+/* 인파예보의 토큰, 기본 서식, 화면 레이아웃을 불러온다. */
+@import "tailwindcss";
+@import "@crowdcast/contracts/design-tokens.css";
+@import "./base.css";
+@import "./components.css";
+@import "./pages.css";
+@import "./responsive.css";

@@ -1,0 +1,47 @@
+/* 헤더는 낮과 밤에 같은 구조를 쓰고 노을 때만 따뜻한 경계를 드러낸다. */
+.site-header { position: relative; z-index: var(--z-header); background: var(--surface); border-bottom: 1px solid var(--line); }
+[data-sky="dusk"] .site-header { border-bottom-color: var(--team-report); }
+.site-header__row { min-height: 72px; max-width: 1600px; margin-inline: auto; padding: 0 var(--space-8); display: flex; align-items: center; gap: var(--space-8); }
+.brand { display: inline-flex; align-items: center; flex: none; gap: var(--space-2); font-size: var(--text-subtitle); font-weight: 800; letter-spacing: -.045em; white-space: nowrap; }
+.brand__mark { display: flex; align-items: flex-end; gap: 2px; height: 21px; width: 23px; transform: rotate(-12deg); }
+.brand__mark span { width: 6px; border-radius: var(--radius-input) var(--radius-input) 1px 1px; background: var(--brand); }
+.brand__mark span:first-child { height: 12px; }
+.brand__mark span:nth-child(2) { height: 20px; }
+.brand__mark span:last-child { height: 15px; }
+.main-nav { align-self: stretch; display: flex; align-items: stretch; gap: var(--space-2); min-width: 0; }
+.main-nav__link { display: flex; align-items: center; position: relative; padding: var(--space-1) var(--space-3) 0; color: var(--ink-2); font-size: var(--text-ui); white-space: nowrap; transition: color var(--dur-hover) var(--ease); }
+.main-nav__link:hover, .main-nav__link.is-active { color: var(--ink); }
+.main-nav__link.is-active { font-weight: 700; }
+.main-nav__link.is-active::after { content: ""; height: 3px; position: absolute; bottom: 0; left: var(--space-3); right: var(--space-3); border-radius: var(--radius-input) var(--radius-input) 0 0; background: var(--brand); }
+.site-header__tools { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; flex: none; }
+.weather-chip { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); background: var(--surface-sunken); border: 1px solid var(--line); border-radius: var(--radius-button); font-size: var(--text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.weather-chip svg { color: var(--brand); }
+.theme-choice select { height: 36px; min-width: 72px; padding: 0 var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font-size: var(--text-sm); cursor: pointer; }
+.mobile-menu-label { display: none; }
+
+/* CLI로 추가한 shadcn 버튼의 형태를 계약 토큰에 맞게 다시 정의한다. */
+.cc-button { display: inline-flex; justify-content: center; align-items: center; gap: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-button); padding-inline: var(--space-4); font-size: var(--text-ui); font-weight: 700; line-height: 1; white-space: nowrap; cursor: pointer; box-shadow: var(--shadow-1); transition: background var(--dur-hover) var(--ease), transform var(--dur-hover) var(--ease); }
+.cc-button:hover:not(:disabled) { transform: translateY(-1px); }
+.cc-button:disabled { opacity: .55; cursor: not-allowed; }
+.cc-button--default { height: 40px; }
+.cc-button--small { height: 34px; padding-inline: var(--space-3); font-size: var(--text-sm); }
+.cc-button--icon { width: 40px; height: 40px; padding: 0; }
+.cc-button--primary { background: var(--brand); color: var(--on-brand); }
+.cc-button--primary:hover:not(:disabled) { background: var(--brand-hover); }
+.cc-button--outline { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.cc-button--outline:hover:not(:disabled) { background: var(--surface-sunken); }
+.cc-button--ghost { background: transparent; color: var(--link); box-shadow: none; }
+.cc-button--ghost:hover:not(:disabled) { background: var(--surface-sunken); }
+
+/* 공통 패널은 빈 상태에서도 제목·설명·콘텐츠 영역을 구분한다. */
+.feature-panel { display: flex; flex-direction: column; min-width: 0; padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-1); }
+.feature-panel__heading { display: flex; align-items: baseline; gap: var(--space-3); }
+.feature-panel__id { flex: none; color: var(--brand); font-size: var(--text-caption); font-weight: 700; letter-spacing: .03em; }
+.feature-panel h2 { margin: 0; font-size: var(--text-subtitle); font-weight: 750; letter-spacing: -.025em; line-height: 1.4; }
+.feature-panel p { margin: var(--space-2) 0 0; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
+.feature-panel__empty { flex: 1; min-height: 40px; margin-top: var(--space-5); border-top: 1px solid var(--line); }
+.page-heading { margin-bottom: var(--space-8); }
+.page-heading h1 { margin: var(--space-1) 0 var(--space-2); font-size: var(--text-title); font-weight: 800; letter-spacing: -.045em; line-height: 1.25; }
+.page-heading p { margin: 0; color: var(--ink-2); font-size: var(--text-ui); }
+.page-title-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); }
+.dev-buttons { display: flex; flex-wrap: wrap; gap: var(--space-4); }
