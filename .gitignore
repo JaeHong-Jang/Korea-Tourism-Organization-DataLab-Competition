@@ -116,6 +116,7 @@ apps/web/public/map/
 !apps/web/components.json
 !packages/contracts/**
 !services/*/tests/fixtures/**
+!services/*/tests/**/fixtures/**
 !services/gateway/evals/**
 !apps/web/src/**/*.json
 !reports/backtest/*.json

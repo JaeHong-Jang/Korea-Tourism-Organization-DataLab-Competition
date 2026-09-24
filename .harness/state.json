@@ -80,7 +80,8 @@
   },
   "T-101": {
    "status": "running",
-   "updated": "2026-09-24T15:00:28.274Z"
+   "updated": "2026-09-24T15:00:28.274Z",
+   "note": "게이트 2 test 224·키 누출 0, 게이트 3 FAIL(sol: 픽스처 gitignore·2026 화성 부모 시 High), 벌크에서 2026 코드 체계 전환 발견 → 대응표 포함 피드백 1회차"
   },
   "T-102": {
    "status": "todo"
@@ -157,7 +158,8 @@
    "evidence": "test 222·ruff, 교차 리뷰 sol 재리뷰 PASS(S09 발행 거부·응답 계약·위반 집합 확인), 300트리플 76ms"
   },
   "T-603": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T15:06:19.368Z"
   },
   "T-604": {
    "status": "todo"
@@ -214,7 +216,8 @@
   },
   "T-503": {
    "status": "running",
-   "updated": "2026-09-24T15:02:44.563Z"
+   "updated": "2026-09-24T15:02:44.563Z",
+   "note": "게이트 2 test 23·stan·해시 Python 독립 재계산 일치·README 벡터 일치, 예시 CSV 제거, 게이트 3 FAIL(astra: verify 전 정수 변환이 변조를 숨김 High) → 피드백 1회차"
   },
   "T-505": {
    "status": "todo"
@@ -257,7 +260,8 @@
    "status": "todo"
   },
   "T-431": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T15:06:19.294Z"
   },
   "T-432": {
    "status": "todo"
@@ -704,6 +708,16 @@
   {
    "at": "2026-09-24T15:02:48.576Z",
    "id": "T-402",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:06:19.294Z",
+   "id": "T-431",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:06:19.368Z",
+   "id": "T-603",
    "status": "running"
   }
  ]
