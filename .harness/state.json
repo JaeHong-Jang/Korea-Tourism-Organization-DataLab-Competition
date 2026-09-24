@@ -84,12 +84,13 @@
    "evidence": "test 250·키 누출 0, 2026 코드 대응·35일 공개일 산출물 확인, 교차 리뷰 sol PASS, region_daily 861505행"
   },
   "T-102": {
-   "status": "running",
-   "updated": "2026-09-24T15:58:20.593Z",
-   "note": "1회차: 3건 해결·회차 분리 미해결 → 2회차(마지막): Med 5 + 수면 오탐·유형 매핑·timeOfDay 미상(계약 v1.6)"
+   "status": "done",
+   "updated": "2026-09-24T17:31:34.481Z",
+   "evidence": "develop 병합 971f446, forecast 668 통과, events 10,179행·채움률 95.16%·가을 213건 계약 변환. TourAPI 보강 실행은 9/26 오케스트레이터(backlog)"
   },
   "T-103": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T17:31:36.077Z"
   },
   "T-107": {
    "status": "todo"
@@ -830,6 +831,17 @@
   {
    "at": "2026-09-24T17:03:52.124Z",
    "id": "T-432",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:31:34.481Z",
+   "id": "T-102",
+   "status": "done",
+   "evidence": "develop 병합 971f446, forecast 668 통과, events 10,179행·채움률 95.16%·가을 213건 계약 변환. TourAPI 보강 실행은 9/26 오케스트레이터(backlog)"
+  },
+  {
+   "at": "2026-09-24T17:31:36.077Z",
+   "id": "T-103",
    "status": "running"
   }
  ]
