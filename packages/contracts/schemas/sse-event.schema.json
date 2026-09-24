@@ -1,0 +1,321 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/sse-event.schema.json",
+  "title": "SSE 이벤트",
+  "description": "게이트웨이 → 웹 스트림. claim·evidence는 발행 뒤에만 나간다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event",
+    "seq",
+    "data"
+  ],
+  "properties": {
+    "event": {
+      "enum": [
+        "agent_status",
+        "event_card",
+        "ask",
+        "forecast",
+        "evidence",
+        "claim",
+        "gate",
+        "suggest",
+        "done",
+        "error"
+      ]
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "data": {}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "agent_status"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "agent-status.schema.json"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "event_card"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "event-draft.schema.json"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "ask"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "field",
+              "question",
+              "options"
+            ],
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "question": {
+                "type": "string"
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "label",
+                    "value"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "forecast"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "forecast.schema.json"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "evidence"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "evidence.schema.json"
+                },
+                "minItems": 1
+              }
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "claim"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "allOf": [
+              {
+                "$ref": "claim.schema.json"
+              },
+              {
+                "properties": {
+                  "status": {
+                    "const": "published"
+                  }
+                },
+                "type": "object"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "gate"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "$ref": "gate-report.schema.json"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "suggest"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "actions"
+            ],
+            "properties": {
+              "actions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "label"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "done"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sessionId"
+            ],
+            "properties": {
+              "sessionId": {
+                "$ref": "common.schema.json#/$defs/id"
+              }
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "error"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "type": "object"
+      }
+    }
+  ]
+}

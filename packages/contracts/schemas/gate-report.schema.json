@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/gate-report.schema.json",
+  "title": "게이트 결과",
+  "description": "게이트 A·B·발행 검사 결과",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gate",
+    "passed",
+    "revision",
+    "violations"
+  ],
+  "properties": {
+    "gate": {
+      "enum": [
+        "A",
+        "B",
+        "publish"
+      ]
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check",
+          "shapeId",
+          "nodeId",
+          "message"
+        ],
+        "properties": {
+          "check": {
+            "enum": [
+              "shacl",
+              "number",
+              "rule",
+              "uncertainty"
+            ]
+          },
+          "shapeId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nodeId": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

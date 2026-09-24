@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/judgment.schema.json",
+  "title": "판정",
+  "description": "판정 엔진(결정적 규칙)의 결과. 판정 문구는 규칙 결과 템플릿에서만 나온다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "level",
+    "label",
+    "reasons",
+    "checklist"
+  ],
+  "properties": {
+    "level": {
+      "$ref": "common.schema.json#/$defs/level"
+    },
+    "label": {
+      "enum": [
+        "소규모",
+        "수립 권고",
+        "수립 대상",
+        "대규모"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ruleId",
+          "kind",
+          "text",
+          "clauseId",
+          "evidenceId"
+        ],
+        "properties": {
+          "ruleId": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "kind": {
+            "enum": [
+              "법정",
+              "자체"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "clauseId": {
+            "anyOf": [
+              {
+                "$ref": "common.schema.json#/$defs/id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidenceId": {
+            "$ref": "common.schema.json#/$defs/id"
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "text",
+          "ruleId",
+          "evidenceIds"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "text": {
+            "type": "string"
+          },
+          "ruleId": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/id"
+            },
+            "minItems": 1
+          }
+        }
+      }
+    }
+  }
+}

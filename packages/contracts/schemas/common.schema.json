@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/common.schema.json",
+  "title": "공통 정의",
+  "description": "여러 계약이 함께 쓰는 값 형식. 날짜는 KST ISO 8601, 인원·금액은 정수, 값 없음은 null로 명시한다.",
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.:-]{2,120}$" },
+    "date": { "type": "string", "format": "date" },
+    "datetime": { "type": "string", "format": "date-time" },
+    "sigunguCode": { "type": "string", "pattern": "^[0-9]{5}$", "description": "2025년 시군구 코드 체계(방문자 API와 같은 코드)" },
+    "eventType": { "enum": ["불꽃", "공연", "대학", "먹거리", "꽃", "전통", "기타"] },
+    "timeOfDay": { "enum": ["주간", "야간", "종일"] },
+    "fee": { "enum": ["무료", "유료", "미상"] },
+    "hostType": { "enum": ["지자체", "민간", "대학", "기타"] },
+    "hazard": { "enum": ["폭죽", "불", "가연성가스", "석유류", "산", "수면", "차량진입", "단일출입구", "무대밀집", "야간조명부족"] },
+    "level": { "type": "integer", "minimum": 1, "maximum": 4, "description": "1 소규모 · 2 수립 권고 · 3 수립 대상 · 4 대규모" },
+    "timeUnit": { "enum": ["순간", "일", "기간누적"] },
+    "spatialScope": { "enum": ["행사장", "행정동", "시군구"] },
+    "valueKind": { "enum": ["사전예상", "사후집계", "예측", "관측"] },
+    "unit": { "enum": ["명", "명/일", "%", "원", "배", "비율"] },
+    "agentId": {
+      "enum": ["lead", "dictation", "local-guide", "archivist", "forecaster", "source-check", "number-check", "rule-check", "skeptic", "explainer", "card-maker", "plan-writer", "briefer"],
+      "description": "예보팀 13명(docs/plan/10). 파일 이름과 같다"
+    },
+    "team": { "enum": ["lead", "analysis", "verification", "report"] },
+    "period": {
+      "type": "object", "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": { "from": { "$ref": "#/$defs/date" }, "to": { "$ref": "#/$defs/date" } }
+    },
+    "quantity": {
+      "type": "object", "additionalProperties": false,
+      "description": "수치 노드(09 §4). 문장의 자리표시자는 이 id와 필드를 가리킨다",
+      "required": ["id", "unit", "timeUnit", "spatialScope", "kind", "estimated"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "value": { "type": ["number", "null"] },
+        "p10": { "type": ["number", "null"] },
+        "p50": { "type": ["number", "null"] },
+        "p90": { "type": ["number", "null"] },
+        "unit": { "$ref": "#/$defs/unit" },
+        "timeUnit": { "$ref": "#/$defs/timeUnit" },
+        "spatialScope": { "$ref": "#/$defs/spatialScope" },
+        "kind": { "$ref": "#/$defs/valueKind" },
+        "estimated": { "type": "boolean", "description": "가정이 들어간 환산값이면 true" },
+        "assumptionIds": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["datasetId", "title", "publisher", "datalabMenu", "accessUrl"],
+      "properties": {
+        "datasetId": { "$ref": "#/$defs/id" },
+        "title": { "type": "string" },
+        "publisher": { "type": "string" },
+        "datalabMenu": { "type": ["string", "null"], "description": "데이터랩 메뉴 경로(예: 빅데이터 > 지역별 방문자수)" },
+        "accessUrl": { "type": ["string", "null"], "format": "uri" }
+      }
+    },
+    "observation": {
+      "type": "object", "additionalProperties": false,
+      "description": "예측에 쓴 피처 관측값 하나(누수 검사 S09의 입력)",
+      "required": ["id", "featureName", "value", "unit", "datasetId", "observedAt", "availableAt", "sigunguCode"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "featureName": { "type": "string" },
+        "value": { "type": "number" },
+        "unit": { "$ref": "#/$defs/unit" },
+        "datasetId": { "$ref": "#/$defs/id" },
+        "observedAt": { "$ref": "#/$defs/date" },
+        "availableAt": { "$ref": "#/$defs/date" },
+        "sigunguCode": { "$ref": "#/$defs/sigunguCode" }
+      }
+    },
+    "predictionRun": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "modelVersion", "asOf", "observationIds", "trainRange"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "modelVersion": { "type": "string" },
+        "asOf": { "$ref": "#/$defs/date" },
+        "observationIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+        "trainRange": { "$ref": "#/$defs/period" }
+      }
+    }
+  }
+}

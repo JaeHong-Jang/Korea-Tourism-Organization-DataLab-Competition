@@ -1,0 +1,162 @@
+# 인파예보 gateway 서비스 OpenAPI — 스키마는 ../schemas를 참조한다(계약 정본)
+openapi: 3.1.0
+info:
+  title: 인파예보 게이트웨이
+  version: 0.1.0
+servers:
+  - url: http://127.0.0.1:8787
+paths:
+  /api/health:
+    get:
+      summary: 앱 서비스·Ollama 상태(따로 표시)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - services
+                  - ollama
+                properties:
+                  services:
+                    type: object
+                  ollama:
+                    type: object
+  /api/team/sessions:
+    post:
+      summary: 상담 세션 만들기
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - sessionId
+                properties:
+                  sessionId:
+                    type: string
+  /api/team/sessions/{id}/messages:
+    post:
+      summary: 메시지 → SSE 스트림(sse-events.md)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                answer:
+                  type:
+                    - object
+                    - "null"
+      responses:
+        "200":
+          description: SSE
+          content:
+            text/event-stream:
+              schema:
+                $ref: ../schemas/sse-event.schema.json
+  /api/team/replay/{traceId}:
+    get:
+      summary: 데모 재생 SSE
+      parameters:
+        - name: traceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SSE
+          content:
+            text/event-stream:
+              schema:
+                $ref: ../schemas/sse-event.schema.json
+  /api/festivals:
+    get:
+      summary: 다가오는 행사(필터)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/festival-summary.schema.json
+  /api/regions.topojson:
+    get:
+      summary: 시군구 경계
+      responses:
+        "200":
+          description: TopoJSON
+          content:
+            application/json:
+              schema:
+                type: object
+  /api/forecasts/{id}:
+    get:
+      summary: 예보서 데이터
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/forecast.schema.json
+  /api/weather:
+    get:
+      summary: 날씨(forecast 프록시)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/weather.schema.json
+  /api/validation/backtest:
+    get:
+      summary: 백테스트 요약
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/backtest-summary.schema.json
+  /api/insights/{key}:
+    get:
+      summary: 인사이트
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/insight.schema.json

@@ -1,0 +1,293 @@
+# 인파예보 records 서비스 OpenAPI — 스키마는 ../schemas를 참조한다(계약 정본)
+openapi: 3.1.0
+info:
+  title: 인파예보 기록·문서 서비스
+  version: 0.1.0
+servers:
+  - url: http://127.0.0.1:8030
+paths:
+  /health:
+    get:
+      summary: 상태 확인
+      responses:
+        "200":
+          description: 정상
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    const: ok
+                  version:
+                    type: string
+  /v1/events:
+    get:
+      summary: 저장한 행사 목록
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/event.schema.json
+    post:
+      summary: 행사 저장
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/event.schema.json
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/event.schema.json
+  /v1/events/{id}:
+    get:
+      summary: 행사
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/event.schema.json
+    delete:
+      summary: 행사 삭제
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 삭제
+  /v1/events/{id}/snapshots:
+    get:
+      summary: 예보 스냅샷 목록(불변)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/forecast.schema.json
+    post:
+      summary: 스냅샷 추가
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/forecast.schema.json
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/forecast.schema.json
+  /v1/plans:
+    post:
+      summary: 초안 저장
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/plan.schema.json
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/plan.schema.json
+  /v1/plans/{id}:
+    get:
+      summary: 초안
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/plan.schema.json
+    put:
+      summary: 초안 수정(P1)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/plan.schema.json
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/plan.schema.json
+  /v1/plans/{id}/export.docx:
+    get:
+      summary: docx 내보내기
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: docx
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+  /v1/ledger:
+    get:
+      summary: 사전 등록 원장
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/ledger-entry.schema.json
+    post:
+      summary: 원장에 추가(해시 체인)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - forecastId
+                - eventId
+                - leadDays
+                - forecast
+              properties:
+                forecastId:
+                  type: string
+                eventId:
+                  type: string
+                leadDays:
+                  type: integer
+                forecast:
+                  type: object
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ledger-entry.schema.json
+  /v1/ledger/verify:
+    get:
+      summary: 해시 체인 검증
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - valid
+                  - count
+                properties:
+                  valid:
+                    type: boolean
+                  count:
+                    type: integer
+                  brokenAt:
+                    type:
+                      - integer
+                      - "null"
+  /v1/actuals:
+    post:
+      summary: 행사 후 실측 입력(P1)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/shares:
+    post:
+      summary: 공유 링크(P1)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - forecastId
+              properties:
+                forecastId:
+                  type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - token
+                properties:
+                  token:
+                    type: string

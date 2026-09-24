@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/evidence.schema.json",
+  "title": "근거",
+  "description": "근거 조각(09 §3). 종류마다 반드시 채울 필드가 다르다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "kind",
+    "title",
+    "summary",
+    "quantityIds",
+    "source",
+    "availableAt",
+    "ruleId",
+    "clauseId",
+    "caseEventId",
+    "assumptionId",
+    "modelVersion",
+    "check"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "kind": {
+      "enum": [
+        "data",
+        "model",
+        "rule",
+        "case",
+        "assumption",
+        "check"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "quantityIds": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/id"
+      }
+    },
+    "source": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/source"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "availableAt": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ruleId": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "clauseId": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "caseEventId": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "assumptionId": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "modelVersion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "check": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "passed",
+            "revision"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "evidence",
+                "number",
+                "rule",
+                "uncertainty",
+                "ood"
+              ]
+            },
+            "passed": {
+              "type": "boolean"
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "data"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "$ref": "common.schema.json#/$defs/source"
+          },
+          "availableAt": {
+            "$ref": "common.schema.json#/$defs/date"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "rule"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "ruleId": {
+            "$ref": "common.schema.json#/$defs/id"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "case"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "caseEventId": {
+            "$ref": "common.schema.json#/$defs/id"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "assumption"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "assumptionId": {
+            "$ref": "common.schema.json#/$defs/id"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "model"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "modelVersion": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "check"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "check": {
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    }
+  ]
+}

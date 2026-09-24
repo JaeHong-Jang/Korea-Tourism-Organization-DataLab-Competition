@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/event-draft.schema.json",
+  "title": "행사 초안",
+  "description": "받아쓰기가 만든 정규화 전·후 초안. 빠진 값과 모호한 값을 함께 담는다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "type",
+    "startsAt",
+    "endsAt",
+    "timeOfDay",
+    "venueText",
+    "sigunguCode",
+    "fee",
+    "hostType",
+    "promo",
+    "hazards",
+    "missing",
+    "ambiguities"
+  ],
+  "properties": {
+    "name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "type": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/eventType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "startsAt": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/datetime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "endsAt": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/datetime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "timeOfDay": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/timeOfDay"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "venueText": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sigunguCode": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/sigunguCode"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sigunguName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fee": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/fee"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "hostType": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/hostType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "budgetKrw": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "promo": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hazards": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/hazard"
+      },
+      "uniqueItems": true
+    },
+    "missing": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "name",
+          "type",
+          "startsAt",
+          "endsAt",
+          "venue",
+          "fee",
+          "budgetKrw"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "코드가 계산한 빠진 필수·선택 값"
+    },
+    "ambiguities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "candidates"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "label",
+                "value"
+              ],
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              }
+            },
+            "minItems": 2
+          }
+        }
+      }
+    }
+  }
+}

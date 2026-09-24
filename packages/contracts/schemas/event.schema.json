@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/event.schema.json",
+  "title": "행사",
+  "description": "예보 대상 행사(정규화 완료). 받아쓰기·동네지기가 채우고 사용자가 확인한다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "type",
+    "startsAt",
+    "endsAt",
+    "timeOfDay",
+    "venue",
+    "sigunguCode",
+    "sigunguName",
+    "fee",
+    "hostType",
+    "hazards",
+    "source"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "$ref": "common.schema.json#/$defs/eventType"
+    },
+    "startsAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "endsAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "timeOfDay": {
+      "$ref": "common.schema.json#/$defs/timeOfDay"
+    },
+    "venue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "lat",
+        "lng"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "lat": {
+          "type": "number",
+          "minimum": 33,
+          "maximum": 39
+        },
+        "lng": {
+          "type": "number",
+          "minimum": 124,
+          "maximum": 132
+        }
+      }
+    },
+    "sido": {
+      "type": "string"
+    },
+    "sigunguCode": {
+      "$ref": "common.schema.json#/$defs/sigunguCode"
+    },
+    "sigunguName": {
+      "type": "string"
+    },
+    "fee": {
+      "$ref": "common.schema.json#/$defs/fee"
+    },
+    "hostType": {
+      "$ref": "common.schema.json#/$defs/hostType"
+    },
+    "budgetKrw": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "edition": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "promo": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hazards": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/hazard"
+      },
+      "uniqueItems": true
+    },
+    "expectedByHost": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/quantity"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "주최측이 밝힌 예상 인원(단위 포함)"
+    },
+    "source": {
+      "enum": [
+        "사용자입력",
+        "문체부",
+        "TourAPI",
+        "데이터랩"
+      ]
+    }
+  }
+}

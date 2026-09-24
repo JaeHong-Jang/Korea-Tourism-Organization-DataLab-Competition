@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/plan-section.schema.json",
+  "title": "초안 섹션",
+  "description": "안전관리계획 초안의 한 섹션",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "key",
+    "title",
+    "status",
+    "claimIds",
+    "body",
+    "lockedFields"
+  ],
+  "properties": {
+    "key": {
+      "enum": [
+        "overview",
+        "organization",
+        "crowd-timeline",
+        "routes-evacuation",
+        "staffing",
+        "traffic-parking",
+        "medical-toilets",
+        "weather-emergency",
+        "non-crowd-risks"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "작성됨",
+        "검토 필요"
+      ]
+    },
+    "claimIds": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/id"
+      }
+    },
+    "body": {
+      "type": "string"
+    },
+    "lockedFields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "value",
+          "quantityId"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "quantityId": {
+            "$ref": "common.schema.json#/$defs/id"
+          }
+        }
+      }
+    }
+  }
+}

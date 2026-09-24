@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/festival-summary.schema.json",
+  "title": "행사 요약",
+  "description": "미니 대한민국·행사 목록 카드 한 장",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "forecastId",
+    "name",
+    "type",
+    "startsAt",
+    "endsAt",
+    "sigunguCode",
+    "sigunguName",
+    "lat",
+    "lng",
+    "level",
+    "peakP10",
+    "peakP50",
+    "peakP90",
+    "pOver1000",
+    "ood"
+  ],
+  "properties": {
+    "eventId": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "forecastId": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "$ref": "common.schema.json#/$defs/eventType"
+    },
+    "startsAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "endsAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "sigunguCode": {
+      "$ref": "common.schema.json#/$defs/sigunguCode"
+    },
+    "sigunguName": {
+      "type": "string"
+    },
+    "lat": {
+      "type": "number"
+    },
+    "lng": {
+      "type": "number"
+    },
+    "level": {
+      "$ref": "common.schema.json#/$defs/level"
+    },
+    "peakP10": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "peakP50": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "peakP90": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pOver1000": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "ood": {
+      "type": "boolean"
+    }
+  }
+}

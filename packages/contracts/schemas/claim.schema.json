@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/claim.schema.json",
+  "title": "문장",
+  "description": "설명·판정·권고 문장(09 §7). 발행 후보·발행 상태면 근거가 1개 이상이어야 한다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "sessionId",
+    "text",
+    "rendered",
+    "claimType",
+    "status",
+    "evidenceIds",
+    "placeholders",
+    "generatedBy",
+    "checks"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "sessionId": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "text": {
+      "type": "string",
+      "description": "자리표시자({{이름}})가 든 원문"
+    },
+    "rendered": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "claimType": {
+      "enum": [
+        "판정",
+        "수치",
+        "요인",
+        "권고",
+        "설명"
+      ]
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "candidate",
+        "published",
+        "rejected"
+      ]
+    },
+    "evidenceIds": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/id"
+      }
+    },
+    "placeholders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "quantityId",
+          "field"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "quantityId": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "field": {
+            "enum": [
+              "value",
+              "p10",
+              "p50",
+              "p90"
+            ]
+          }
+        }
+      }
+    },
+    "generatedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "stepId"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "common.schema.json#/$defs/agentId"
+        },
+        "stepId": {
+          "$ref": "common.schema.json#/$defs/id"
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "passed",
+          "revision"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "evidence",
+              "number",
+              "rule",
+              "uncertainty"
+            ]
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "candidate",
+              "published"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "evidenceIds": {
+            "minItems": 1,
+            "type": "array"
+          },
+          "rendered": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    }
+  ]
+}

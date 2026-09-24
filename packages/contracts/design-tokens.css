@@ -1,0 +1,139 @@
+/* 인파예보 디자인 토큰 — 정본은 docs/plan/04 §3. 색 대비·색각 검사는 validate_palette.js로 계산했다 */
+
+/* 낮(기본) 테마: 따뜻한 중성 배경, 색은 데이터와 등급에만 */
+:root,
+[data-theme="day"] {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #ffffff;
+  --surface-sunken: #f3f2ee;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --line: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+  --brand: #256abf;
+  --brand-hover: #1c5cab;
+  --link: #256abf;
+  --focus: #256abf;
+  --on-brand: #ffffff;
+  --team-analysis: #2a78d6;
+  --team-report: #eb6834;
+  --team-verification: #1baf7a;
+  --team-lead: #1c2f55;
+  --diverging-mid: #f0efec;
+}
+
+/* 밤 테마: 해 고도 −6° 이하이거나 사용자가 밤을 고르면 */
+[data-theme="night"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-sunken: #232321;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --line: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+  --brand: #256abf;
+  --brand-hover: #1c5cab;
+  --link: #86b6ef;
+  --focus: #86b6ef;
+  --on-brand: #ffffff;
+  --team-analysis: #3987e5;
+  --team-report: #d95926;
+  --team-verification: #199e70;
+  --team-lead: #9aa9c9;
+  --diverging-mid: #383835;
+}
+
+/* 낮·밤 공통: 등급(상태 팔레트, 의미 고정), 차트, 타이포, 간격, 모서리, 그림자, 층, 모션 */
+:root {
+  /* 등급은 항상 아이콘 + 글자와 함께 쓴다(2·3등급은 흰 바탕 3:1 미만) */
+  --level-1: #0ca30c;
+  --level-2: #fab219;
+  --level-3: #ec835a;
+  --level-4: #d03b3b;
+
+  /* 범주형(행사 유형 7) 고정 순서 */
+  --cat-1: #2a78d6;
+  --cat-2: #eb6834;
+  --cat-3: #1baf7a;
+  --cat-4: #eda100;
+  --cat-5: #e87ba4;
+  --cat-6: #008300;
+  --cat-7: #4a3aa7;
+
+  /* 순차형(크기) 파랑 5단계 — 지도·타일 */
+  --seq-1: #cde2fb;
+  --seq-2: #86b6ef;
+  --seq-3: #3987e5;
+  --seq-4: #1c5cab;
+  --seq-5: #0d366b;
+
+  /* 발산형(괴리) 양 끝 */
+  --div-low: #2a78d6;
+  --div-high: #e34948;
+
+  /* 타이포 */
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --text-caption: 12px;
+  --text-sm: 13px;
+  --text-ui: 14px;
+  --text-body: 16px;
+  --text-subtitle: 18px;
+  --text-section: 22px;
+  --text-title: 28px;
+  --text-hero: 56px;
+
+  /* 간격(4px 단위) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-14: 56px;
+
+  /* 모서리 */
+  --radius-input: 6px;
+  --radius-button: 10px;
+  --radius-card: 14px;
+  --radius-panel: 20px;
+
+  /* 그림자 */
+  --shadow-1: 0 1px 2px rgba(11, 11, 11, 0.06);
+  --shadow-float: 0 12px 32px rgba(11, 11, 11, 0.14);
+
+  /* 층 */
+  --z-scene: 0;
+  --z-panel: 10;
+  --z-header: 20;
+  --z-sheet: 30;
+  --z-popover: 40;
+  --z-toast: 50;
+  --z-modal: 60;
+
+  /* 모션 */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-hover: 150ms;
+  --dur-panel: 250ms;
+  --dur-count: 400ms;
+  --dur-camera: 900ms;
+  --dur-daynight: 2000ms;
+}
+
+/* 움직임 줄이기 설정이면 전환을 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-hover: 0ms;
+    --dur-panel: 0ms;
+    --dur-count: 0ms;
+    --dur-camera: 0ms;
+    --dur-daynight: 0ms;
+  }
+}

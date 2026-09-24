@@ -119,3 +119,8 @@ apps/web/public/map/
 !apps/web/src/**/*.json
 !reports/backtest/*.json
 !reports/preregistered/*.csv
+# PHP 의존성
+vendor/
+# 도구 상태 폴더는 위 예외와 관계없이 항상 제외한다(마지막 규칙이 이긴다)
+**/.omc/
+**/vendor/

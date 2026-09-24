@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/forecast.schema.json",
+  "title": "예보",
+  "description": "예측 서비스의 결정적 결과(숫자·판정·요인·계보·근거). 화면 숫자는 이 JSON만 쓴다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "eventId",
+    "asOf",
+    "createdAt",
+    "modelVersion",
+    "dailyMean",
+    "peakConcurrent",
+    "probabilities",
+    "peakHours",
+    "hourlyProfile",
+    "composition",
+    "judgment",
+    "factors",
+    "ood",
+    "oodReasons",
+    "predictionRun",
+    "observations",
+    "evidence"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "eventId": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "asOf": {
+      "$ref": "common.schema.json#/$defs/date"
+    },
+    "createdAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "modelVersion": {
+      "type": "string"
+    },
+    "dailyMean": {
+      "$ref": "common.schema.json#/$defs/quantity"
+    },
+    "peakConcurrent": {
+      "$ref": "common.schema.json#/$defs/quantity"
+    },
+    "probabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "threshold",
+          "probability",
+          "display"
+        ],
+        "properties": {
+          "threshold": {
+            "type": "integer"
+          },
+          "probability": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "display": {
+            "type": "string",
+            "description": "정수 % 또는 표본이 적으면 구간(\"30~50%\")"
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "peakHours": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "to"
+          ],
+          "properties": {
+            "from": {
+              "type": "string",
+              "pattern": "^[0-2][0-9]:[0-5][0-9]$"
+            },
+            "to": {
+              "type": "string",
+              "pattern": "^[0-2][0-9]:[0-5][0-9]$"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "hourlyProfile": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "hour",
+          "share"
+        ],
+        "properties": {
+          "hour": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23
+          },
+          "share": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      },
+      "description": "유형별 표준 곡선(가정)"
+    },
+    "composition": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "local",
+            "nonlocal",
+            "foreign",
+            "evidenceId"
+          ],
+          "properties": {
+            "local": {
+              "type": "number"
+            },
+            "nonlocal": {
+              "type": "number"
+            },
+            "foreign": {
+              "type": "number"
+            },
+            "evidenceId": {
+              "$ref": "common.schema.json#/$defs/id"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "judgment": {
+      "$ref": "judgment.schema.json"
+    },
+    "factors": {
+      "type": "array",
+      "items": {
+        "$ref": "factor.schema.json"
+      }
+    },
+    "ood": {
+      "type": "boolean"
+    },
+    "oodReasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "predictionRun": {
+      "$ref": "common.schema.json#/$defs/predictionRun"
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/observation"
+      },
+      "minItems": 1
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "evidence.schema.json"
+      },
+      "minItems": 1
+    }
+  }
+}

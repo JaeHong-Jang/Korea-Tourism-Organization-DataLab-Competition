@@ -1,0 +1,32 @@
+{
+  "event": "claim",
+  "seq": 12,
+  "data": {
+    "id": "c-yeongjong-3",
+    "sessionId": "s-demo-0001",
+    "text": "폭죽을 쓰는 행사라 인원과 관계없이 안전관리계획 수립 대상이에요",
+    "rendered": "폭죽을 쓰는 행사라 인원과 관계없이 안전관리계획 수립 대상이에요",
+    "claimType": "판정",
+    "status": "draft",
+    "evidenceIds": [
+      "ev-rule-legal-hazard"
+    ],
+    "placeholders": [],
+    "generatedBy": {
+      "agentId": "explainer",
+      "stepId": "st-explainer-01"
+    },
+    "checks": [
+      {
+        "kind": "evidence",
+        "passed": true,
+        "revision": 7
+      },
+      {
+        "kind": "rule",
+        "passed": true,
+        "revision": 7
+      }
+    ]
+  }
+}

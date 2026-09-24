@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/insight.schema.json",
+  "title": "인사이트 지표",
+  "description": "문제 진단 지표(06 §7). 표본 수·기간을 숨기지 않는다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "key",
+    "title",
+    "headline",
+    "sampleSize",
+    "comparablePairs",
+    "period",
+    "series",
+    "evidenceIds",
+    "computedAt"
+  ],
+  "properties": {
+    "key": {
+      "enum": [
+        "I1",
+        "I2",
+        "I3",
+        "I4",
+        "I5",
+        "I6"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "headline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit",
+        "text"
+      ],
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "$ref": "common.schema.json#/$defs/unit"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "sampleSize": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "comparablePairs": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "period": {
+      "$ref": "common.schema.json#/$defs/period"
+    },
+    "series": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "label",
+          "value"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "evidenceIds": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/id"
+      },
+      "minItems": 1
+    },
+    "computedAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    }
+  }
+}

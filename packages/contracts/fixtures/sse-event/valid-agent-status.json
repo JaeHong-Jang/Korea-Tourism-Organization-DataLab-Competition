@@ -1,0 +1,11 @@
+{
+  "event": "agent_status",
+  "seq": 3,
+  "data": {
+    "agentId": "local-guide",
+    "team": "analysis",
+    "state": "done",
+    "note": "인천 중구로 찾았어요",
+    "at": "2026-09-24T20:00:02+09:00"
+  }
+}

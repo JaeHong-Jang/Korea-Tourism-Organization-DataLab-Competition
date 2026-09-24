@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/backtest-summary.schema.json",
+  "title": "백테스트 요약",
+  "description": "검증 센터(S6) 입력",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "modelVersion",
+    "target",
+    "evalYears",
+    "metrics",
+    "points",
+    "golden"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "modelVersion": {
+      "type": "string"
+    },
+    "target": {
+      "const": "일평균 방문객"
+    },
+    "evalYears": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "minItems": 1
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mdape",
+        "coverage80",
+        "coverageN",
+        "judgmentRecall",
+        "judgmentPrecision",
+        "baselineDeltaPp",
+        "comparablePairs"
+      ],
+      "properties": {
+        "mdape": {
+          "type": "number"
+        },
+        "coverage80": {
+          "type": "number"
+        },
+        "coverageN": {
+          "type": "integer"
+        },
+        "judgmentRecall": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "judgmentPrecision": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "baselineDeltaPp": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "comparablePairs": {
+          "type": "integer"
+        }
+      }
+    },
+    "points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventId",
+          "name",
+          "year",
+          "tier",
+          "actual",
+          "p10",
+          "p50",
+          "p90"
+        ],
+        "properties": {
+          "eventId": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer"
+          },
+          "tier": {
+            "enum": [
+              "goldA",
+              "goldB",
+              "silver"
+            ]
+          },
+          "actual": {
+            "type": "number"
+          },
+          "p10": {
+            "type": "number"
+          },
+          "p50": {
+            "type": "number"
+          },
+          "p90": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "golden": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventId",
+          "name",
+          "hostExpected",
+          "model",
+          "actual",
+          "unitsComparable",
+          "verdict"
+        ],
+        "properties": {
+          "eventId": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "hostExpected": {
+            "anyOf": [
+              {
+                "$ref": "common.schema.json#/$defs/quantity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "p10",
+              "p50",
+              "p90"
+            ],
+            "properties": {
+              "p10": {
+                "type": "number"
+              },
+              "p50": {
+                "type": "number"
+              },
+              "p90": {
+                "type": "number"
+              }
+            }
+          },
+          "actual": {
+            "$ref": "common.schema.json#/$defs/quantity"
+          },
+          "unitsComparable": {
+            "type": "boolean"
+          },
+          "verdict": {
+            "enum": [
+              "포함",
+              "벗어남",
+              "정성 비교"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

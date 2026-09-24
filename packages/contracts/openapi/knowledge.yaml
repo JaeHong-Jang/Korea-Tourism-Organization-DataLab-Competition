@@ -1,0 +1,175 @@
+# 인파예보 knowledge 서비스 OpenAPI — 스키마는 ../schemas를 참조한다(계약 정본)
+openapi: 3.1.0
+info:
+  title: 인파예보 근거 그래프 서비스
+  version: 0.1.0
+servers:
+  - url: http://127.0.0.1:8020
+paths:
+  /health:
+    get:
+      summary: 상태 확인
+      responses:
+        "200":
+          description: 정상
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    const: ok
+                  version:
+                    type: string
+  /v1/sessions/{id}/facts:
+    post:
+      summary: JSON-LD 조각 적재 → 새 revision
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - "@graph"
+              properties:
+                "@graph":
+                  type: array
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - revision
+                properties:
+                  revision:
+                    type: integer
+  /v1/sessions/{id}/validate:
+    post:
+      summary: SHACL 검증(세션 revision + 기준 그래프 버전)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revision
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: shapes
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/gate-report.schema.json
+  /v1/sessions/{id}/publish:
+    post:
+      summary: S12 확인 후 candidate → published(원자적)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revision
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/gate-report.schema.json
+        "409":
+          description: revision이 바뀌어 거부
+  /v1/sessions/{id}/graph:
+    get:
+      summary: 발행된 부분의 세션 그래프(JSON-LD)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/claims/{id}/evidence:
+    get:
+      summary: 문장의 근거 카드
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/evidence.schema.json
+  /v1/stats/datalab-usage:
+    get:
+      summary: 데이터랩 메뉴별 근거 사용·연결 비율
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/master/model-runs:
+    post:
+      summary: 모델 카드 등록
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/ontology:
+    get:
+      summary: 온톨로지(TTL)
+      responses:
+        "200":
+          description: Turtle
+          content:
+            text/turtle:
+              schema:
+                type: string
