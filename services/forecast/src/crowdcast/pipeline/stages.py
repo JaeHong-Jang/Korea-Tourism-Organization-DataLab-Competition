@@ -248,11 +248,12 @@ def batch_model_problem() -> str | None:
 
 
 # 악화 없이 끝난 백테스트(통과 또는 골든 0건 미검증)만 사용 모델로 원자 승격하고 판정을 함께 남긴다.
-def promote(verdict: str) -> Path:
-    latest = json.loads((paths.REPORTS / run_record.CANDIDATE_POINTER).read_bytes())
+def promote(summary: Path, verdict: str) -> Path:
+    # 가변 후보 포인터를 다시 읽지 않고 게이트가 검증한 실행 폴더의 결과로 승격한다.
+    result = json.loads(summary.read_bytes())
     promoted = {
-        "runId": latest["runId"],
-        "modelVersion": latest["modelVersion"],
+        "runId": result["runId"],
+        "modelVersion": result["modelVersion"],
         "promotedAt": datetime.now(KST).isoformat(),
         "verdict": verdict,
     }

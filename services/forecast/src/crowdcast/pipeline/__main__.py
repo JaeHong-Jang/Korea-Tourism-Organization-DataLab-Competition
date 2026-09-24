@@ -102,10 +102,10 @@ def run_stage(
 
 
 # 악화 없는 백테스트 후보를 승격하고, 승격이 실패하면 사용 모델을 그대로 둔 채 단계를 실패로 바꾼다.
-def promote_candidate(stage: dict[str, Any], gate: dict[str, Any]) -> None:
+def promote_candidate(stage: dict[str, Any], gate: dict[str, Any], files: list[Path]) -> None:
     verdict = "통과" if gate["passed"] else "미검증"
     try:
-        stages.promote(verdict)
+        stages.promote(next(path for path in files if path.name == "backtest.json"), verdict)
     except Exception as exc:
         gate["passed"], stage["status"] = False, "failed"
         gate["message"] += f"; 사용 모델 승격 실패: {type(exc).__name__}: {safe_error(exc)}"
@@ -165,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
             run_record.write_record(record)
             # 산출물 기록을 저장한 뒤에만 악화 없는 후보를 사용 모델로 승격한다(실패하면 단계 실패).
             if name == "backtest" and stage["status"] != "failed" and stage.get("artifacts") and not args.dry:
-                promote_candidate(stage, gate)
+                promote_candidate(stage, gate, files)
                 run_record.write_record(record)
             print(f"{name}: {stage['status']} — {gate['message']}", flush=True)
             if stage["status"] == "failed":
