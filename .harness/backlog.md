@@ -64,3 +64,11 @@
 - 실측 조회 `GET /v1/actuals?eventId=`(최신 + 이력) — T-208 채점·T-409 내 행사가 쓸 때 계약에 추가.
 - 게이트웨이 `/api/records/shares/{token}` — records.yaml·gateway.yaml 설명에는 허용 목록에 넣었으나 T-310 구현 허용 목록에 없을 수 있다 → T-409 전에 T-310 후속으로 확인·추가.
 - PHP 개발 서버가 토큰이 든 GET URL을 접근 로그에 남긴다 → 로컬 제품이지만 `dev.mjs`에서 records 접근 로그를 끄거나 토큰 경로를 가린다(오케스트레이터 스크립트).
+
+## T-204 (예측 API) — T-203 통합 때 넘어온 결정
+- [T-203 달력] 달력 피처는 `holidays.KR`의 법정·대체공휴일 규칙 집합만 쓴다(임시공휴일 제외, 요청의 `holiday_calendar`는 무시 — 백테스트와 라이브가 같은 함수). 라이브 예보에서 **D-14 전에 이미 지정된 임시공휴일**을 넣고 싶으면 T-204에서 `available_at ≤ as_of`가 입증된 목록만 받는 별도 경로로(지금은 넣지 않는 쪽이 정직 — 예보서 가정 칸에 "임시공휴일 미반영" 한 줄).
+- [T-203 발행] 백테스트 발행 폴더(`models/<ver>/`·`reports/backtest/<runId>/`)는 완료 뒤 불변, 포인터 둘: **후보 `reports/backtest/latest.json`**(마지막 완료 실행 — 파이프라인 판정용)·**사용 모델 `reports/backtest/promoted.json`**(백테스트 게이트를 악화 없이 지난 실행 — `verdict` 통과/미검증, 모델 카드는 `models/<modelVersion>/model_card.json`, 공유 카드 없음), 실행 폴더는 완성 뒤 한 번에 드러난다, G0 사전 고정본은 `models/g0/<ver>/g0.json`, 실행은 `models/.backtest.lock`으로 하나씩. 예측 API·batch·knowledge는 **사용 모델 포인터만** 읽는다. 같은 버전 모델 카드의 `createdAt`은 처음 발행 시각으로 고정 — knowledge 등록(같은 id·같은 내용)과 맞는다.
+- [T-203 G0] 입력이 바뀌면(9/26 행사 보강·벌크 수집 뒤 T-103 재실행) 새 버전이 G0를 다시 판정하고 `run.json.supersedes`에 직전 버전·바뀐 입력을 남긴다. QC(labels_g0)를 다시 만들지 않고 원본만 바뀌면 "입력이 바뀌었다 — T-103부터 다시"로 멈춘다 → 파이프라인 순서(events → labels → backtest)를 지키면 걸리지 않는다.
+
+## T-307 이후 (웹 재생 진입 — L4a)
+- 상담 화면에 데모 재생 진입(`?replay=demo-yeongjong` → `GET /api/team/replay/{traceId}`를 새 예보 스트림과 같은 처리기로). 발표용 trace 3종 큐레이션은 T-003.

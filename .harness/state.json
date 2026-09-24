@@ -203,7 +203,9 @@
    "status": "todo"
   },
   "T-307": {
-   "status": "todo"
+   "status": "done",
+   "updated": "2026-09-24T21:51:25.491Z",
+   "evidence": "develop 병합 0a5502e, gateway 744·build·lint·✓, sol PASS 3회(재디스패치 2회)"
   },
   "T-308": {
    "status": "todo"
@@ -944,6 +946,17 @@
    "id": "T-104",
    "status": "done",
    "evidence": "develop 병합, forecast 899, 실제 실행 3종(데이터 미수집 → 종료 1 정상), sol PASS"
+  },
+  {
+   "at": "2026-09-24T20:56:01.527Z",
+   "id": "T-307",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T21:51:25.491Z",
+   "id": "T-307",
+   "status": "done",
+   "evidence": "develop 병합 0a5502e, gateway 744·build·lint·✓, sol PASS 3회(재디스패치 2회)"
   }
  ]
 }

@@ -28,6 +28,12 @@ models/*.h5
 models/*.pkl
 models/*.joblib
 models/*.onnx
+# 백테스트가 만드는 모델 버전 폴더와 발행 중 임시 폴더(Git 미포함 — 해시는 LEDGER에 기록)
+models/v*/
+models/g0/
+models/.staging-*/
+models/.backtest.lock
+reports/backtest/.staging-*/
 *.model
 *.weights
 
