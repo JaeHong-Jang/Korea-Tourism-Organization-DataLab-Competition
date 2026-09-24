@@ -39,11 +39,12 @@ def model_card(
         f"골드 가중치={config['gold_weight']}; 코로나(2020·2021) 제외={config['exclude_covid']}; "
         f"G0={g0['branch']}, 주 모델={g0['primary_model']}, judgment.basis={g0['basis']}; "
         f"정의 일치 골드 고유 행사={g0['gold_summary']['gold_event_count']}; 목표 포함률 80%(보장 아님). "
-        "표본 한계로 구간 기준 표시 시에도 등급·사유는 같은 표본의 확률 판정으로 정한다. "
+        "표본 한계로 구간 기준 표시 시에도 등급·적용 규칙은 같은 표본의 확률 판정으로 정한다. "
         "순간 최대 및 실측 환산 판정은 추정 산식 기반이며 실제 순간 인원 정답이 아니다. "
         "실버 holiday_overlap·명절 행사는 학습·채점 제외, 채점 불가 건수를 별도 공개한다. "
         "실버는 시군구 순증 보조 정답으로 골드 행사장 방문자와 정의가 다르며 계절 교란이 남는다. "
-        "공개일 없는 행사 속성·일정 파생 피처는 결측이다. 입력 행사 일정·장소는 예보 대상 정의이고 "
+        "행사 자체 속성·일정 파생 피처는 예보 입력이며 공개일 제한 대상이 아니다. "
+        "공개 시점 규칙은 지역 관측·전회차 라벨에만 적용한다. 입력 행사 일정·장소는 예보 대상 정의이고 "
         "환산은 같은 행사 정의에 적용한다. 단순 모델의 규모 계층 선택은 전회차 또는 학습 유형 중앙값만 쓴다. "
         "최종 모델은 마지막 성공 롤링 분할 그대로이며 평가 자료를 재학습하지 않았다. "
         "MdAPE는 %, coverage80·재현율·정밀도는 비율, coverageN은 평가 분모; "
@@ -132,6 +133,7 @@ def backtest_markdown(
     card: dict[str, Any],
     excluded: list[dict[str, Any]],
     input_hashes: dict[str, str],
+    comparison: tuple[str, list[dict[str, Any]]] | None = None,
 ) -> str:
     points = [{**p, "size": size_band(p["actual"])} for p in result["points"]]
     lines = [
@@ -217,4 +219,55 @@ def backtest_markdown(
         "```",
         "",
     ]
+    if comparison is not None:
+        before_id, before_points = comparison
+        lines += feature_comparison(before_id, before_points, points)
     return "\n".join(lines)
+
+
+# 명세 수정 전후의 고정 실행을 같은 지표로 나란히 기록하며 모델 선택에는 쓰지 않는다.
+def feature_comparison(
+    before_id: str, before: list[dict[str, Any]], after: list[dict[str, Any]]
+) -> list[str]:
+    lines = [
+        "## 행사 입력 피처 복원 전후",
+        "",
+        f"수정 전 실행: `{before_id}`. 평가 후 튜닝 없이 행사 입력의 결측 처리만 명세대로 바로잡았다.",
+        "양쪽 모두 각 실행의 전체 평가 표본이며 기준선 개선은 같은 쌍에서 계산한다.",
+        "",
+        "| 연도 | 모델 | 지표 | 수정 전 | 수정 후 |",
+        "|---:|---|---|---:|---:|",
+    ]
+    for year in sorted({p["year"] for p in before + after}):
+        for model in ("simple", "lightgbm"):
+            values = []
+            for points in (before, after):
+                rows = [p for p in points if p["year"] == year and p["model"] == model]
+                if not rows:
+                    values.append({"N": "0"})
+                    continue
+                m = metrics(rows)
+                values.append(
+                    {
+                        "N": str(len(rows)),
+                        "MdAPE(%)": number(m["mdape"]),
+                        "포함률(%)": number(m["coverage80"], percent=True),
+                        "포함/N": f"{sum(p['p10'] <= p['actual'] <= p['p90'] for p in rows)}/{len(rows)}",
+                        "폭 중앙값": number(float(np.median([p["p90"] - p["p10"] for p in rows]))),
+                        "재현율(%)": number(m["judgmentRecall"], percent=True),
+                        "정밀도(%)": number(m["judgmentPrecision"], percent=True),
+                        **{
+                            f"{b.upper()} 개선(%p)": number(metrics(rows, b)["baselineDeltaPp"])
+                            for b in ("b0", "b1", "b2")
+                        },
+                        **{
+                            f"{b.upper()} 비교 쌍": str(metrics(rows, b)["comparablePairs"])
+                            for b in ("b0", "b1", "b2")
+                        },
+                    }
+                )
+            for key in dict.fromkeys([*values[0], *values[1]]):
+                lines.append(
+                    f"| {year} | {model} | {key} | {values[0].get(key, '—')} | {values[1].get(key, '—')} |"
+                )
+    return [*lines, ""]

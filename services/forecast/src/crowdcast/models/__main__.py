@@ -8,6 +8,7 @@ import json
 import tempfile
 import time
 from collections import Counter
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -18,18 +19,20 @@ from crowdcast.features.build import build_features
 from crowdcast.models.backtest import run_backtest, summary
 from crowdcast.models.card import backtest_markdown, model_card, validate_contract
 from crowdcast.models.compat import check_compatibility
-from crowdcast.models.g0 import freeze_g0
+from crowdcast.models.g0 import check_previous_inputs, freeze_g0
 from crowdcast.models.train import select_labels
 
 
 # 입력은 한 번만 읽어 해시와 표가 같은 스냅샷을 가리키게 한다.
-def read_inputs(processed: Path) -> tuple[dict[str, pl.DataFrame], dict[str, str]]:
+def read_inputs(processed: Path) -> tuple[dict[str, pl.DataFrame], dict[str, Any], dict[str, str]]:
     frames, hashes = {}, {}
     for name in ("labels", "events", "region_daily"):
         raw = (processed / f"{name}.parquet").read_bytes()
         hashes[name] = hashlib.sha256(raw).hexdigest()
         frames[name] = pl.read_parquet(io.BytesIO(raw))
-    return frames, hashes
+    raw_qc = (processed / "labels_g0.json").read_bytes()
+    hashes["labels_g0"] = hashlib.sha256(raw_qc).hexdigest()
+    return frames, json.loads(raw_qc), hashes
 
 
 # 데이터·설정·결정 코드·라이브러리 버전이 바뀌면 새 모델 버전을 사용한다.
@@ -62,16 +65,16 @@ def read_config(path: Path) -> dict[str, Any]:
 
 
 # 파일을 쓰기 전에 계약을 검사해 미정의 지표와 잘못된 식별자 발행을 막는다.
-def execute(config_path: Path) -> dict[str, Any]:
+def execute(config_path: Path, compare_run: str | None = None) -> dict[str, Any]:
     started = time.monotonic()
     with tempfile.TemporaryDirectory(prefix="crowdcast-compat-") as temporary:
         check_compatibility(Path(temporary))
     config = read_config(config_path)
-    frames, hashes = read_inputs(paths.PROCESSED)
-    qc = json.loads((paths.PROCESSED / "labels_g0.json").read_text(encoding="utf-8"))
+    frames, qc, hashes = read_inputs(paths.PROCESSED)
+    check_previous_inputs(paths.MODELS, hashes)
     version = model_version(hashes, config)
     directory = paths.MODELS / version
-    g0_path = freeze_g0(directory, qc, hashes["labels"], config["eval_years"], version)
+    g0_path = freeze_g0(directory, qc, hashes, config["eval_years"], version)
     g0_before = g0_path.read_bytes()
     events = frames["events"].to_dicts()
     labels, excluded = select_labels(frames["labels"], events, config)
@@ -101,7 +104,7 @@ def execute(config_path: Path) -> dict[str, Any]:
     frame = labels.join(features, on="event_id", how="inner")
     golden_frame = golden_labels.join(features, on="event_id", how="inner")
     features.write_parquet(directory / "feature_availability.parquet")
-    result = run_backtest(frame, names, index, config, g0_path, hashes["labels"], directory, golden_frame)
+    result = run_backtest(frame, names, index, config, g0_path, hashes, directory, golden_frame)
     selected_counts = Counter(
         (row["year"], index[row["event_id"]].get("type") or "미상") for row in labels.to_dicts()
     )
@@ -127,6 +130,17 @@ def execute(config_path: Path) -> dict[str, Any]:
     card = model_card(result, version, run_id, names, config, hashes["labels"], missing)
     validate_contract("backtest-summary", backtest)
     validate_contract("model-card", card)
+
+    # 같은 버전의 명령 재실행에서도 한 번 지정한 수정 전 비교표를 보존한다.
+    manifest_path = directory / "run.json"
+    if compare_run is None and manifest_path.exists():
+        compare_run = json.loads(manifest_path.read_text(encoding="utf-8")).get("comparison_run_id")
+    comparison = None
+    if compare_run is not None:
+        if Path(compare_run).name != compare_run or not compare_run.startswith("bt-"):
+            raise ValueError("비교 실행은 reports/backtest 아래 runId여야 합니다")
+        previous = paths.REPORTS / "backtest" / compare_run / "points.parquet"
+        comparison = (compare_run, pl.read_parquet(previous).to_dicts())
     for path, value in (
         (report_directory / "backtest.json", backtest),
         (directory / "model_card.json", card),
@@ -137,7 +151,7 @@ def execute(config_path: Path) -> dict[str, Any]:
             encoding="utf-8",
         )
     (report_directory / "backtest.md").write_text(
-        backtest_markdown(result, card, excluded, hashes), encoding="utf-8"
+        backtest_markdown(result, card, excluded, hashes, comparison), encoding="utf-8"
     )
     pl.DataFrame(result["points"], infer_schema_length=None).write_parquet(
         report_directory / "points.parquet"
@@ -152,10 +166,12 @@ def execute(config_path: Path) -> dict[str, Any]:
         "excluded": excluded,
         "elapsed_seconds": elapsed,
         "golden_skipped": result["golden_skipped"],
+        "comparison_run_id": compare_run,
     }
-    (directory / "run.json").write_text(
+    manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8"
     )
+    write_latest(report_directory.parent, run_id, version)
     write_artifact_hashes(directory, report_directory)
     return {
         "modelVersion": version,
@@ -165,6 +181,14 @@ def execute(config_path: Path) -> dict[str, Any]:
         "reports": str(report_directory),
         "models": str(directory),
     }
+
+
+# 완료 표시는 성공한 실행의 마지막에 기록하고 같은 실행 ID여도 완료 시각은 갱신한다.
+def write_latest(reports: Path, run_id: str, version: str) -> None:
+    latest = {"runId": run_id, "modelVersion": version, "finishedAt": datetime.now(UTC).isoformat()}
+    temporary = reports / "latest.json.tmp"
+    temporary.write_text(json.dumps(latest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(reports / "latest.json")
 
 
 # 재실행할 때마다 공유 모델과 레인 보고서의 전체 파일 해시를 함께 남긴다.
@@ -180,6 +204,11 @@ def write_artifact_hashes(directory: Path, reports: Path) -> None:
     hashes["models/model_card.json"] = hashlib.sha256(
         (directory.parent / "model_card.json").read_bytes()
     ).hexdigest()
+    for path, name in (
+        (paths.PROCESSED / "features_availability.json", "data/processed/features_availability.json"),
+        (reports.parent / "latest.json", "reports/backtest/latest.json"),
+    ):
+        hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
     (directory / "artifact_hashes.json").write_text(
         json.dumps(hashes, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8"
     )
@@ -190,8 +219,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="공개 시점 피처·G0 고정·롤링 백테스트")
     parser.add_argument("command", choices=["backtest"])
     parser.add_argument("--config", type=Path, default=paths.REPO_ROOT / "configs/model.yaml")
+    parser.add_argument("--compare-run", help="보고서에만 나란히 표시할 수정 전 실행 ID")
     arguments = parser.parse_args()
-    print(json.dumps(execute(arguments.config), ensure_ascii=False, indent=2))
+    print(json.dumps(execute(arguments.config, arguments.compare_run), ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

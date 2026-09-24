@@ -1,5 +1,7 @@
 """모델 테스트에 네트워크 없는 연도별 축제 합성 표본을 제공한다."""
 
+import hashlib
+import json
 import socket
 from datetime import date
 
@@ -82,4 +84,14 @@ def label_qc() -> dict:
             },
             "gold_by_year": [{"year": year, "gold_event_count": 1} for year in (2024, 2025)],
         },
+    }
+
+
+# 라벨·행사·QC는 테스트에서도 서로 다른 파일 해시로 식별한다.
+@pytest.fixture
+def input_hashes(label_qc: dict) -> dict[str, str]:
+    return {
+        "labels": "a" * 64,
+        "events": "b" * 64,
+        "labels_g0": hashlib.sha256(json.dumps(label_qc).encode()).hexdigest(),
     }

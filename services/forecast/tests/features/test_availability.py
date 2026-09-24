@@ -1,6 +1,9 @@
 """공개 시점 경계·행사 결측·이력 선택·지역 집계의 누수 방지를 검증한다."""
 
+import json
+import math
 from datetime import date, timedelta
+from pathlib import Path
 
 import polars as pl
 import pytest
@@ -39,25 +42,49 @@ def test_availability_boundary() -> None:
             check_availability({"budget": Feature(100, day)}, cutoff)
 
 
-# 빌더에 사후 공개 값을 주입해도 결측으로 숨기지 않고 게이트가 멈춘다.
-def test_builder_rejects_future_value() -> None:
+# 선택된 외부 관측의 사후 공개 값을 주입하면 게이트와 실패 연계 파일에 잡힌다.
+def test_builder_rejects_future_value(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     event = festival()
-    event["budget_krw"] = 100000000
-    event["feature_available_at"] = {"budget_krw": date(2025, 4, 20)}
-    with pytest.raises(ValueError, match="log_budget"):
-        build_features([event], [], pl.DataFrame(), {event["event_id"]})
+    monkeypatch.setattr(
+        "crowdcast.features.build.history_features",
+        lambda *args: {"previous_daily_mean": Feature(45000, date(2025, 4, 20))},
+    )
+    audit = tmp_path / "audit.json"
+    with pytest.raises(ValueError, match="previous_daily_mean"):
+        build_features([event], [], pl.DataFrame(), {event["event_id"]}, audit_path=audit)
+    assert json.loads(audit.read_text())["violations"] == 1
+    assert json.loads(audit.read_text())["checked"] == 1
 
 
-# 공개일이 없는 실제 자료는 날짜를 만들어내지 않고 결측 수를 보존한다.
-def test_missing_publication_is_missing_feature() -> None:
+# 행사 입력은 공개일이 없거나 D-14 뒤여도 수치와 범주를 그대로 보존한다.
+@pytest.mark.parametrize("available", [None, date(2025, 5, 3)])
+def test_event_inputs_do_not_require_publication(available: date | None) -> None:
     event = festival()
-    event.pop("available_at")
-    frame, names = build_features([event], [], pl.DataFrame(), {event["event_id"]})
+    event.update(available_at=available, date_available_at=available, budget_krw=100000000)
+    event["feature_available_at"] = {"budget_krw": available}
+    frame, _ = build_features([event], [], pl.DataFrame(), {event["event_id"]})
     assert frame["as_of"][0] == date(2025, 4, 19)
-    assert all(frame[name][0] is None for name in names)
+    expected = {
+        "type": 5,
+        "time_of_day": 0,
+        "fee": 1,
+        "host_type": 0,
+        "edition": 32,
+        "log_budget": math.log1p(100000000),
+        "hazard_fireworks": 0,
+        "duration": 3,
+        "weekend_days": 2,
+        "month": 5,
+    }
+    for name, value in expected.items():
+        assert frame[name][0] == value
+        assert frame[f"{name}_available_at"][0] is None
+        assert frame[f"{name}_is_observation"][0] is False
+    assert frame["previous_daily_mean"][0] is None
+    assert frame["region_daily_mean"][0] is None
 
 
-# 일정 공개일과 공휴일 달력 발행일 중 늦은 쪽을 휴일 피처에 남긴다.
+# 행사 입력에 포함된 달력은 외부 관측 공개일 검사와 구분한다.
 def test_calendar_and_publication_boundary() -> None:
     event = festival()
     event["holiday_calendar"] = {"available_at": date(2025, 4, 19), "dates": ["2025-05-05"]}
@@ -66,7 +93,24 @@ def test_calendar_and_publication_boundary() -> None:
     assert frame["weekend_days"][0] == 2
     assert frame["holiday_days"][0] == 1
     assert frame["holiday_streak"][0] == 3
-    assert frame["holiday_days_available_at"][0] == date(2025, 4, 19)
+    assert frame["holiday_days_available_at"][0] is None
+    assert frame["holiday_days_is_observation"][0] is False
+
+
+# 성공 연계 파일은 직전 위반 건수를 지우고 이번에 검사한 관측 수를 남긴다.
+def test_availability_audit_overwrites_previous(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    event = festival()
+    cutoff = date(2025, 4, 19)
+    audit = tmp_path / "audit.json"
+    audit.write_text('{"checked": 99, "violations": 1}')
+    monkeypatch.setattr(
+        "crowdcast.features.build.history_features",
+        lambda *args: {"previous_daily_mean": Feature(45000, cutoff)},
+    )
+    build_features([event], [], pl.DataFrame(), {event["event_id"]}, audit_path=audit)
+    result = json.loads(audit.read_text())
+    assert result["checked"] == 1 and result["violations"] == 0
+    assert "외부 관측" in result["asOfRule"] and "14" in result["asOfRule"]
 
 
 # 직전 회차의 사후 라벨은 D-14까지 공개된 경우에만 피처가 된다.

@@ -14,7 +14,7 @@ def size_band(value: float) -> str:
     return "<1000" if value < 1000 else "1000~5000" if value <= 5000 else ">5000"
 
 
-# 공개일 미상 유형은 평가 자료로 채우지 않고 별도 결측 계층으로 묶는다.
+# 예보 입력의 유형을 고정 인코딩으로 읽고 실제 결측만 별도 계층으로 묶는다.
 def event_type(row: dict[str, Any]) -> str:
     return "미상" if row.get("type") is None else str(int(row["type"]))
 
@@ -64,19 +64,21 @@ class SimpleModel:
     # 이력 없는 신규 행사의 규모는 학습 유형 중앙값에서만 결정한다.
     def group(self, row: dict[str, Any]) -> str:
         prior = row.get("previous_daily_mean")
-        proxy = prior if prior is not None else self.b0(row)
+        proxy = prior if prior is not None else self.type_medians.get(event_type(row), self.global_median)
         return event_type(row) + ":" + size_band(proxy)
 
-    # B0는 예측 대상이나 보정·평가 라벨을 집계하지 않는다.
-    def b0(self, row: dict[str, Any]) -> float:
-        return self.type_medians.get(event_type(row), self.global_median)
+    # B0는 학습 유형 중앙값만 쓰며 학습에 없는 유형은 비교 불가로 남긴다.
+    def b0(self, row: dict[str, Any]) -> float | None:
+        return self.type_medians.get(event_type(row))
 
     # 공개된 직전 실측이 있으면 계층 중앙값보다 우선한다.
     def center(self, row: dict[str, Any]) -> float:
         if row.get("previous_daily_mean") is not None:
             return float(row["previous_daily_mean"])
         group = self.groups.get(self.group(row))
-        return float(np.median(group)) if group else self.b0(row)
+        return (
+            float(np.median(group)) if group else self.type_medians.get(event_type(row), self.global_median)
+        )
 
     # 중앙값을 포함하는 구간에 같은 계층의 학습 로그 잔차 분위수를 적용한다.
     def predict(self, frame: pl.DataFrame) -> np.ndarray:

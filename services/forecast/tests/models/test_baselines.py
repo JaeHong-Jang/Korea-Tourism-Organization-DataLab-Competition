@@ -73,3 +73,13 @@ def test_training_exclusions(model_data: tuple, config: dict) -> None:
     assert selected["event_id"].to_list() == [rows[5]["event_id"]]
     assert len(excluded) == 5
     assert any("명절 실버 채점 불가" in row["reasons"] for row in excluded)
+
+
+# 유형마다 다른 학습 중앙값을 쓰며 없는 유형에 전체 중앙값을 B0로 보고하지 않는다.
+def test_b0_uses_training_type_medians() -> None:
+    training = pl.DataFrame({"type": [0.0, 0.0, 5.0, 5.0], "daily_mean": [800, 1200, 4000, 6000]})
+    model = SimpleModel().fit(training)
+    assert model.b0({"type": 0.0}) == 1000
+    assert model.b0({"type": 5.0}) == 5000
+    assert model.b0({"type": 1.0}) is None
+    assert model.center({"type": 1.0}) == 2600

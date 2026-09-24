@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 class Feature:
     value: float | None
     available_at: date | None
+    is_observation: bool = True
 
 
 # 시간대가 있는 원본 발표 시점은 한국 날짜로 정규화한다.
@@ -32,10 +33,23 @@ def published(value: float | None, available_at: str | date | None) -> Feature:
     return Feature(value if day is not None else None, day)
 
 
-# 선택된 값은 한 건이라도 공개일이 없거나 기준일 뒤이면 전체 피처 생성을 실패시킨다.
+# 외부 관측만 검사하고 행사 입력은 관측 공개일을 요구하지 않는다.
+def availability_counts(features: Mapping[str, Feature], as_of: date) -> dict[str, int]:
+    observations = [f for f in features.values() if f.is_observation and f.value is not None]
+    return {
+        "checked": len(observations),
+        "violations": sum(f.available_at is None or f.available_at > as_of for f in observations),
+    }
+
+
+# 선택된 관측은 한 건이라도 공개일이 없거나 기준일 뒤이면 전체 피처 생성을 실패시킨다.
 def check_availability(features: Mapping[str, Feature], as_of: date) -> None:
     for name, feature in features.items():
-        if feature.value is not None and (feature.available_at is None or feature.available_at > as_of):
+        if (
+            feature.is_observation
+            and feature.value is not None
+            and (feature.available_at is None or feature.available_at > as_of)
+        ):
             raise ValueError(
                 f"피처 공개 시점 위반: {name}, available_at={feature.available_at}, as_of={as_of}"
             )

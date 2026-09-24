@@ -107,11 +107,11 @@ def run_backtest(
     events: dict[str, dict[str, Any]],
     config: dict[str, Any],
     g0_path: Path,
-    labels_sha256: str,
+    input_hashes: dict[str, str],
     directory: Path,
     golden_frame: pl.DataFrame | None = None,
 ) -> dict[str, Any]:
-    frozen = read_g0(g0_path, labels_sha256)
+    frozen = read_g0(g0_path, input_hashes)
     if config["eval_years"] != frozen["eval_years"]:
         raise ValueError("평가 연도가 사전 G0와 다릅니다")
     result: dict[str, Any] = {"g0": frozen, "points": [], "folds": [], "golden": [], "golden_skipped": []}
