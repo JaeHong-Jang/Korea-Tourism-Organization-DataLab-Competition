@@ -127,7 +127,7 @@ test("견본 쿼리가 없는 장면은 군중이 비어 있다", async ({ page 
   await expect(page.locator(".scene-festival-list li")).toHaveCount(0);
 });
 
-// WebGL2를 제공하지 않는 브라우저는 캔버스 대신 목록 안내를 보여 준다.
+// WebGL2를 제공하지 않는 브라우저는 캔버스 대신 SVG 전국 지도와 같은 행사 목록을 보여 준다(M1-F1-f — T-404).
 test("WebGL2 대체 안내", async ({ page }) => {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
@@ -136,11 +136,11 @@ test("WebGL2 대체 안내", async ({ page }) => {
     } as typeof original;
   });
   await page.goto("http://127.0.0.1:5184/?sceneFixture=1");
+  await expect(page.locator(".svg-korea-map")).toBeVisible();
+  await expect(page.locator("canvas")).toHaveCount(0);
   await expect(
-    page.getByText("3D를 쓸 수 없는 환경이에요 — 목록으로 보기"),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "목록으로 보기" }).click();
-  await expect(page.locator(".scene-festival-list li")).toHaveCount(30);
+    page.locator(".festival-list__items").getByRole("listitem"),
+  ).not.toHaveCount(0);
 });
 
 // 진단 모드에서 품질 단계마다 실제 캔버스 픽셀 비율이 달라지는지 확인한다.

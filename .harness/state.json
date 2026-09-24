@@ -89,8 +89,9 @@
    "evidence": "develop 병합 971f446, forecast 668 통과, events 10,179행·채움률 95.16%·가을 213건 계약 변환. TourAPI 보강 실행은 9/26 오케스트레이터(backlog)"
   },
   "T-103": {
-   "status": "running",
-   "updated": "2026-09-24T17:31:36.077Z"
+   "status": "done",
+   "updated": "2026-09-24T19:16:16.222Z",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
   },
   "T-107": {
    "status": "todo"
@@ -266,9 +267,9 @@
    "status": "todo"
   },
   "T-404": {
-   "status": "running",
-   "updated": "2026-09-24T17:44:20.929Z",
-   "note": "G3 FAIL Med 5(배치·모바일·정렬·시도·값 표) → 피드백 1회차, S1 배치 규칙 결정"
+   "status": "done",
+   "updated": "2026-09-24T19:16:16.055Z",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
   },
   "T-407": {
    "status": "todo"
@@ -279,9 +280,9 @@
    "evidence": "워커 sol 피드백 2회 + 오케스트레이터 DPR 직접 수정(astra 교차 리뷰 PASS). develop 병합 후 web 71·e2e 17·build·lint 통과, 낮 스크린샷 확인. 수정 전 코드에서 새 DPR 테스트 실패 확인"
   },
   "T-432": {
-   "status": "running",
-   "updated": "2026-09-24T17:03:52.124Z",
-   "note": "G3 FAIL(성능 3.2배 — draw call 445·그림자 재생성, 이름표·군중 겹침, 접근성 목록) + G4 이름표 층·전국 보기 → 피드백 1회차"
+   "status": "done",
+   "updated": "2026-09-24T19:16:15.972Z",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
   },
   "T-433": {
    "status": "todo"
@@ -350,8 +351,9 @@
    "status": "todo"
   },
   "T-310": {
-   "status": "running",
-   "updated": "2026-09-24T17:48:54.397Z"
+   "status": "done",
+   "updated": "2026-09-24T19:16:16.138Z",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
   }
  },
  "history": [
@@ -879,6 +881,30 @@
    "at": "2026-09-24T17:48:54.397Z",
    "id": "T-310",
    "status": "running"
+  },
+  {
+   "at": "2026-09-24T19:16:15.972Z",
+   "id": "T-432",
+   "status": "done",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  {
+   "at": "2026-09-24T19:16:16.055Z",
+   "id": "T-404",
+   "status": "done",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  {
+   "at": "2026-09-24T19:16:16.138Z",
+   "id": "T-310",
+   "status": "done",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  {
+   "at": "2026-09-24T19:16:16.222Z",
+   "id": "T-103",
+   "status": "done",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
   }
  ]
 }

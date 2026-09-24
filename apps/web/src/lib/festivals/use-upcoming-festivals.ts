@@ -3,17 +3,36 @@ import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { useEffect, useMemo, useState } from "react";
 import { getFestivals } from "../api-client";
 import type { FestivalFilters } from "../selection-store";
+import { getDemoTime } from "../theme/sun-state";
 import { filterFestivals, koreanDay } from "./filter-festivals";
 import { sceneFestivals } from "./scene-fixture";
 
 type Status = "loading" | "ready" | "unavailable" | "error";
 
+// 테마와 같은 데모 시각 해석(더하기 → 공백 복원·잘못된 값 무시)으로 기준 시각을 정한다.
+export function festivalsNow(search: string): Date {
+  return getDemoTime(search) ?? new Date();
+}
+
+// 계약 형식은 맞아도 브라우저가 읽지 못하는 시각(예: 윤초 23:59:60)이면 화면이 멈추지 않게 받지 않는다.
+export function hasReadableDates(festival: FestivalSummary): boolean {
+  return [festival.startsAt, festival.endsAt].every((value) =>
+    Number.isFinite(Date.parse(value)),
+  );
+}
+
+// 기준 시각의 한국 날짜 — 기간 필터의 오늘.
+export function festivalsClock(search: string): string {
+  return koreanDay(festivalsNow(search));
+}
+
 // 계약 오류는 별도 오류로 남기고 네트워크·미구현 API는 빈 목록으로 둔다.
 export function useUpcomingFestivals(filters: FestivalFilters) {
   const diagnostic = new URLSearchParams(window.location.search);
   const fixture = diagnostic.get("sceneFixture") === "1";
-  const clock = diagnostic.get("at") ?? new Date().toISOString();
-  const today = koreanDay(clock);
+  const now = festivalsNow(window.location.search);
+  const clock = now.toISOString();
+  const today = koreanDay(now);
   const [data, setData] = useState<FestivalSummary[]>([]);
   const [status, setStatus] = useState<Status>(fixture ? "ready" : "loading");
   const [receivedAt, setReceivedAt] = useState<string | null>(null);
@@ -24,6 +43,11 @@ export function useUpcomingFestivals(filters: FestivalFilters) {
     const controller = new AbortController();
     getFestivals(controller.signal)
       .then((festivals) => {
+        if (!festivals.every(hasReadableDates)) {
+          setData([]);
+          setStatus("error");
+          return;
+        }
         setData(festivals);
         setReceivedAt(new Date().toISOString());
         setStatus("ready");
