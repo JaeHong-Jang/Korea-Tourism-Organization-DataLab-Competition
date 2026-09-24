@@ -10,7 +10,7 @@ import pytest
 from crowdcast import paths
 from crowdcast.pipeline import __main__ as cli
 from crowdcast.pipeline import run_record, stages
-from pipeline_fixtures import backtest, latest_record, write_backtest, write_features
+from pipeline_fixtures import backtest, latest_record, write_backtest, write_features, write_model
 
 
 # 각 모듈이 실제로 저장할 계약·표 모양의 소형 산출물을 준비한다.
@@ -32,6 +32,7 @@ def prepare_outputs(stage: str) -> list[Path]:
         summary["modelVersion"] = content["modelVersion"]
         write_backtest(summary)
         return [card, *models]
+    write_model()
     upcoming = paths.PROCESSED / "upcoming.parquet"
     pl.DataFrame({"event_id": ["ev-연천구석기축제-2025"]}).write_parquet(upcoming)
     return [upcoming]
@@ -140,7 +141,34 @@ def test_backtest_compares_with_result_before_train(
 
     monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
     monkeypatch.setattr(stages, "command", command)
+    pointer = paths.REPORTS / "backtest/latest.json"
+    before = pointer.read_bytes()
     assert cli.main(["--from", "train", "--to", "backtest"]) == 1
     row = latest_record(pipeline_root)["stages"][4]
     assert row["gate"]["passed"] is False
-    assert "직전 80.0%" in row["gate"]["message"]
+    assert "직전 80.0%" in row["gate"]["message"] and "되돌림" in row["gate"]["message"]
+    assert pointer.read_bytes() == before
+
+
+# 실제 batch 실행도 완료 포인터·카드가 없으면 모듈을 부르지 않고 멈춘다.
+def test_batch_run_requires_model(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = []
+    monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
+    monkeypatch.setattr(stages, "command", lambda *args: (calls.append(args) or 0, ""))
+    assert cli.main(["--from", "batch", "--to", "batch"]) == 1
+    assert calls == []
+    assert "latest.json" in latest_record(pipeline_root)["stages"][5]["gate"]["message"]
+
+
+# 백테스트 보고서나 점수 파일이 빠지면 backtest.json만으로 통과시키지 않고 포인터를 되돌린다.
+def test_backtest_requires_all_files(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def command(*args: object) -> tuple[int, str]:
+        (write_backtest().parent / "points.parquet").unlink()
+        return 0, ""
+
+    monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
+    monkeypatch.setattr(stages, "command", command)
+    assert cli.main(["--from", "backtest", "--to", "backtest"]) == 1
+    message = latest_record(pipeline_root)["stages"][4]["gate"]["message"]
+    assert "points.parquet" in message and "되돌림" in message
+    assert not (paths.REPORTS / "backtest/latest.json").exists()

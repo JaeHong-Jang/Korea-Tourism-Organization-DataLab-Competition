@@ -12,7 +12,7 @@ from typing import Any
 
 import polars as pl
 from crowdcast import paths
-from crowdcast.data.call_ledger import KST, CallLimitReached
+from crowdcast.data.call_ledger import KST, CallLimitReached, atomic_write
 from crowdcast.data.datago_client import ApiPage, DataGoClient, safe_error
 from crowdcast.data.visitors import VISITORS_LAG_DAYS, IncompleteVisitors, collect_visitors
 from crowdcast.pipeline import gates, run_record
@@ -42,6 +42,7 @@ OUTPUTS = {
 }
 # 후속 단계는 이 필수 산출물 전부를 갱신해야 하며 학습·백테스트는 불변 발행이라 완료 포인터로 식별한다.
 POINTER_STAGES = ("train", "backtest")
+BACKTEST_FILES = ("backtest.json", "backtest.md", "points.parquet")
 REQUIRED_OUTPUTS = {
     "features": ("data/processed/features_availability.json", "data/processed/features.parquet"),
     "train": ("reports/backtest/latest.json",),
@@ -119,11 +120,7 @@ def output_files(stage: str, backtest_directory: Path | None = None) -> list[Pat
     if stage == "train":
         files = run_record.model_files()
     if stage == "backtest":
-        files = (
-            []
-            if backtest_directory is None
-            else [backtest_directory / name for name in ("backtest.json", "backtest.md", "points.parquet")]
-        )
+        files = [] if backtest_directory is None else [backtest_directory / name for name in BACKTEST_FILES]
     return [path for path in files if path.is_file()]
 
 
@@ -237,6 +234,29 @@ def inspect_stage(stage: str, today: date) -> dict[str, Any]:
     return gate
 
 
+# 일괄 예보가 쓸 모델: 완료 포인터가 있고, 그 버전 폴더의 카드 버전이 포인터와 같아야 한다.
+def batch_model_problem() -> str | None:
+    directory = run_record.model_directory()
+    if directory is None:
+        return "일괄 예보 입력 없음: reports/backtest/latest.json"
+    card = directory / "model_card.json"
+    if not card.is_file():
+        return f"일괄 예보 입력 없음: models/{directory.name}/model_card.json"
+    if json.loads(card.read_bytes())["modelVersion"] != directory.name:
+        return "모델 카드 버전과 완료 포인터의 modelVersion 불일치"
+    return None
+
+
+# 거부된 학습·백테스트 결과를 가리키는 완료 포인터를 실행 시작 때의 바이트로 되돌린다(처음이면 지운다).
+def restore_pointer(previous: bytes | None) -> str:
+    pointer = paths.REPORTS / "backtest/latest.json"
+    if previous is None:
+        pointer.unlink(missing_ok=True)
+    else:
+        atomic_write(pointer, previous)
+    return "; 완료 포인터를 실행 시작 때 결과로 되돌림"
+
+
 # 기존 모듈 종료 코드가 실패면 과거 성공 산출물이 있어도 게이트를 통과시키지 않는다.
 def execute_stage(
     stage: str,
@@ -250,6 +270,9 @@ def execute_stage(
         if client is None:
             raise ValueError("fetch 호출 예산이 초기화되지 않았습니다")
         return fetch(client, today, history)
+    # 일괄 예보는 dry와 같게 실제 실행 전에도 완료 포인터와 그 버전의 모델 카드를 확인한다.
+    if stage == "batch" and (problem := batch_model_problem()):
+        return {"passed": False, "message": problem}
     # train이 먼저 새 결과를 발행하므로 백테스트 비교 기준은 파이프라인 시작 때 읽은 결과를 쓴다.
     previous = baseline if stage == "backtest" else gates.previous_result(stage)
     # 백테스트 완료 표식의 실행 전 내용 — 실행 뒤 내용이 바뀌어야 이번 결과로 인정한다.
@@ -269,6 +292,9 @@ def execute_stage(
             message = f"이번 {stage} 실행이 latest.json을 갱신하지 않았습니다; 종료 코드 0"
             return {"passed": False, "message": message}
         backtest_directory = run_record.current_backtest(started_ns)
+        missing = [name for name in BACKTEST_FILES if not (backtest_directory / name).is_file()]
+        if missing:
+            return {"passed": False, "message": f"이번 백테스트 산출물 없음: {', '.join(missing)}"}
         files.extend(output_files(stage, backtest_directory))
         files.append(latest)
     elif stage in REQUIRED_OUTPUTS:

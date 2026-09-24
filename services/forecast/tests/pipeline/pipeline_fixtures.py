@@ -57,6 +57,9 @@ def write_backtest(current: dict | None = None) -> Path:
     directory.mkdir(parents=True, exist_ok=True)
     summary = directory / "backtest.json"
     summary.write_text(json.dumps(current))
+    # 실제 백테스트처럼 보고서·점수 파일도 함께 둔다(파이프라인은 세 파일을 모두 요구한다).
+    (directory / "backtest.md").write_text("# 합성 백테스트\n", encoding="utf-8")
+    pl.DataFrame({"eventId": ["e-yeoncheon-2025"]}).write_parquet(directory / "points.parquet")
     (directory.parent / "latest.json").write_text(
         json.dumps(
             {
@@ -159,3 +162,16 @@ def backtest(mdape: float = 12.5, coverage: float = 0.8) -> dict:
         "points": [],
         "golden": golden_cases(),
     }
+
+
+# 일괄 예보가 쓰는 모델: 계약 예시 카드를 그 버전 폴더에 두고 완료 포인터가 가리키게 한다.
+def write_model() -> Path:
+    fixture = paths.REPO_ROOT / "packages/contracts/fixtures/model-card/valid-v0-1-0.json"
+    card = json.loads(fixture.read_bytes())
+    directory = paths.MODELS / card["modelVersion"]
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "model_card.json").write_text(json.dumps(card))
+    summary = backtest()
+    summary["modelVersion"] = card["modelVersion"]
+    write_backtest(summary)
+    return directory / "model_card.json"

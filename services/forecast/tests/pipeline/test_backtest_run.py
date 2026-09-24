@@ -32,7 +32,10 @@ def test_same_run_id_rerun_passes(pipeline_root: Path, monkeypatch: pytest.Monke
         assert cli.main(["--from", "backtest", "--to", "backtest"]) == 0
         record = latest_record(pipeline_root)
         assert record["stages"][4]["artifacts"] == run_record.artifacts(
-            [summary, summary.parent.parent / "latest.json"]
+            [
+                *(summary.parent / name for name in stages.BACKTEST_FILES),
+                summary.parent.parent / "latest.json",
+            ]
         )
         assert summary.read_bytes() == content
     assert stages.output_files("backtest") == []
@@ -125,7 +128,7 @@ def test_unverified_backtest_records_artifact(pipeline_root: Path, monkeypatch: 
     assert cli.main(["--from", "backtest", "--to", "backtest"]) == 2
     record = latest_record(pipeline_root)
     assert record["stages"][4]["status"] == "skipped"
-    assert len(record["stages"][4]["artifacts"]) == 2
+    assert len(record["stages"][4]["artifacts"]) == len(stages.BACKTEST_FILES) + 1
     assert "미검증 단계: backtest" in record["summary"]
 
 
