@@ -28,7 +28,7 @@
 | L4b 웹-대시보드 | `features/{festival-list,kpi-timeline,validation,insights,ops,map-2d}/`, `pages/`의 S6~S8 | — | S | `feat/sol-web-dashboard` |
 | L4c 3D·펫 | `components/{scene,pets}/`, `features/{mini-korea,venue-diorama,sky-weather}/`, `pages/`의 S1 | — | S | `feat/sol-web-3d` |
 | L5 기록·문서 | `services/records/` | `data/app/records.sqlite` | S | `feat/sol-records` |
-| 공용(오케스트레이터) | `packages/contracts/` `scripts/` `docs/` `.harness/` 루트 파일(`package.json` `.gitignore` `.env.example` `AGENTS.md` `CLAUDE.md`), Python 공용 파일(uv 워크스페이스 `pyproject.toml`·`uv.lock`, 서비스별 `pyproject.toml`, `tests/conftest.py`, 패키지 `__init__.py`) | — | Claude | 통합 브랜치 `feat/jaehong-crowdcast-mvp` |
+| 공용(오케스트레이터) | `packages/contracts/` `scripts/` `docs/` `.harness/` 루트 파일(`package.json` `.gitignore` `.env.example` `AGENTS.md` `CLAUDE.md`), Python 공용 파일(uv 워크스페이스 `pyproject.toml`·`uv.lock`, 서비스별 `pyproject.toml`, `tests/conftest.py`, 패키지 `__init__.py`) | — | Claude | 통합 브랜치 = `develop`(백업 push) |
 
 - 한 레인에는 한 번에 워커 하나만 둔다. 레인 안의 task는 직렬로 돈다. 레인끼리는 **계약(`packages/contracts/`)으로만** 소통한다.
 - 다른 레인의 기능이 아직 없으면 계약의 픽스처(`packages/contracts/fixtures/`)로 먼저 만들고, 실제 연결은 통합 단계에서 한다.
@@ -130,9 +130,13 @@
 ## 7. 오케스트레이터 절차 (Claude Code)
 > 9/24 확인: WSL `codex-cli 0.156.1`에서 `gpt-6-astra`·`gpt-6-sol` 모두 `codex exec`로 응답했다. `-s read-only -C <repo> -o <파일>` 실행이 레포 `AGENTS.md`를 읽고 규칙을 인용했으며, 샌드박스 밖 경로에 `-o` 결과가 저장됐다. `workspace-write`·네트워크 옵션·`--json` 로그는 첫 실제 task에서 확인한다.
 
+### 7-0. 구현 그래프
+- 모든 task·검토·게이트는 `.harness/graph.json`의 노드다(`docs/plan/12_구현_그래프.md`). 디스패치 전 `graph.mjs start`, 게이트 통과 후 `graph.mjs done --evidence`, 검토 불합격은 `graph.mjs fail R-xx --to <노드>`로 되돌리고, `stale`이 된 노드는 수용 기준을 다시 돌려 확인한다.
+- 디스패치 순서는 `graph.mjs ready`가 정한다. 레인 잠금과 동시 워커 수(3~4)는 그대로 지킨다.
+
 ### 7-1. 준비 (T-000에서 한 번)
 - 레인 워크트리는 WSL 홈에 둔다(`/mnt/c`에서는 npm·git이 느리다).
-  `git worktree add ~/crowdcast-wt/L1 -b feat/astra-forecast-data feat/jaehong-crowdcast-mvp`
+  `git worktree add ~/crowdcast-wt/L1 -b feat/astra-forecast-data develop`
 - git 밖 산출물은 본 레포 한 곳에 두고 각 워크트리에 심볼릭 링크로 공유한다: `data/` `models/` `traces/` `reports/runs/` `reports/evals/` `reports/figures/screens/` `apps/web/public/map/` `.env`. 공유 산출물을 바꾼 task는 리포트와 LEDGER에 파일 해시(`sha256sum`)를 남긴다.
 - 레인 잠금: 디스패치 전에 `.harness/locks/<레인>`을 만들고 끝나면 지운다. 잠금 파일이 있으면 그 레인에 새 task를 보내지 않는다.
 
@@ -163,7 +167,6 @@ echo $? > "$REPO/.harness/logs/$T.exit"
 4. **Claude 리뷰**: 계약 준수, 숫자·누수 불변식, §5 주석·파일 분리 규칙, 불필요한 복잡도. 화면 task는 스크린샷을 직접 보고 판단한다.
 
 ### 7-4. 통합과 기록
-- 게이트를 통과하면 레인 브랜치에 커밋(`<타입>(<범위>): <설명>` + Co-Authored-By) → 통합 브랜치에 병합 → 깨끗한 상태에서 `npm test` 재실행.
-- **develop 반영**: 하루 1~2회 통합 브랜치 → `develop`(팀원 리뷰). `main`은 제출 직전에 PR로만 반영한다.
+- 게이트를 통과하면 레인 브랜치에 커밋(`<타입>(<범위>): <설명>` + Co-Authored-By) → `develop`에 병합 → 깨끗한 상태에서 `npm test` 재실행 → **검토·게이트 노드를 통과할 때마다 `origin/develop`에 push**(백업, 사용자 결정 2026-09-24). `main`은 제출 직전에 PR로만 반영한다.
 - **기록**: `.harness/LEDGER.md`에 task마다 한 줄: `T-### | 워커 모델 | 상태 | 종료코드 | 게이트 1~4 | 리뷰 모델·결론 | 커밋 해시 | 산출물 해시`.
 - 태그·공개 게시(사전 등록 등)는 오케스트레이터만 한다.

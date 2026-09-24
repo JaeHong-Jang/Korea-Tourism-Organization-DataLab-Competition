@@ -1,0 +1,332 @@
+{
+ "nodes": {
+  "P-03": {
+   "status": "done"
+  },
+  "P-04": {
+   "status": "done"
+  },
+  "P-05": {
+   "status": "done"
+  },
+  "P-06": {
+   "status": "done"
+  },
+  "P-09": {
+   "status": "done"
+  },
+  "P-10": {
+   "status": "done"
+  },
+  "P-11": {
+   "status": "done"
+  },
+  "H1": {
+   "status": "done",
+   "updated": "2026-09-24T10:39:51.048Z",
+   "note": "키 발급·호출 확인(resultCode 0000)"
+  },
+  "H2": {
+   "status": "todo",
+   "note": "연천구석기축제 1건만 받음 — 문화관광축제·명예·예비 65개 축제별 다운로드 필요"
+  },
+  "H3": {
+   "status": "todo"
+  },
+  "H4": {
+   "status": "done",
+   "updated": "2026-09-24T10:39:51.158Z",
+   "note": "문체부 개최계획 2017~2026 xlsx"
+  },
+  "H5": {
+   "status": "todo"
+  },
+  "H6": {
+   "status": "done",
+   "updated": "2026-09-24T10:39:51.274Z",
+   "note": "PHP 8.5.4, 확장 5종, Composer 2.9.5"
+  },
+  "H7": {
+   "status": "todo"
+  },
+  "H8": {
+   "status": "todo"
+  },
+  "H9a": {
+   "status": "todo"
+  },
+  "H10": {
+   "status": "todo"
+  },
+  "T-000": {
+   "status": "done",
+   "updated": "2026-09-24T10:49:28.155Z",
+   "evidence": "uv lock 81패키지(py3.12.14, lightgbm 4.6.0), check-ignore: graph·package·계약·backtest 추적/데이터·.env 제외, dev.mjs --check: Ollama 172.20.32.1 감지, sigungu.topo.json 252개 = API 코드 252(교집합), 부모 시 코드 12개 이중 계산 주의 기록"
+  },
+  "T-001": {
+   "status": "todo"
+  },
+  "R-01": {
+   "status": "todo"
+  },
+  "T-100": {
+   "status": "todo"
+  },
+  "T-101": {
+   "status": "todo"
+  },
+  "T-102": {
+   "status": "todo"
+  },
+  "T-103": {
+   "status": "todo"
+  },
+  "T-107": {
+   "status": "todo"
+  },
+  "T-104": {
+   "status": "todo"
+  },
+  "T-105": {
+   "status": "todo"
+  },
+  "T-106": {
+   "status": "todo"
+  },
+  "T-108": {
+   "status": "todo"
+  },
+  "T-201": {
+   "status": "todo"
+  },
+  "T-202": {
+   "status": "todo"
+  },
+  "T-203": {
+   "status": "todo"
+  },
+  "R-04": {
+   "status": "todo"
+  },
+  "T-204": {
+   "status": "todo"
+  },
+  "T-205": {
+   "status": "todo"
+  },
+  "T-206": {
+   "status": "todo"
+  },
+  "T-207": {
+   "status": "todo"
+  },
+  "T-203b": {
+   "status": "todo"
+  },
+  "T-210": {
+   "status": "todo"
+  },
+  "T-208": {
+   "status": "todo"
+  },
+  "T-209": {
+   "status": "todo"
+  },
+  "T-211": {
+   "status": "todo"
+  },
+  "T-601": {
+   "status": "todo"
+  },
+  "T-602": {
+   "status": "todo"
+  },
+  "T-603": {
+   "status": "todo"
+  },
+  "T-604": {
+   "status": "todo"
+  },
+  "T-605": {
+   "status": "todo"
+  },
+  "T-301": {
+   "status": "todo"
+  },
+  "T-302": {
+   "status": "todo"
+  },
+  "T-303": {
+   "status": "todo"
+  },
+  "T-304": {
+   "status": "todo"
+  },
+  "T-305": {
+   "status": "todo"
+  },
+  "R-05": {
+   "status": "todo"
+  },
+  "T-306": {
+   "status": "todo"
+  },
+  "T-307": {
+   "status": "todo"
+  },
+  "T-308": {
+   "status": "todo"
+  },
+  "T-309": {
+   "status": "todo"
+  },
+  "T-501": {
+   "status": "todo"
+  },
+  "T-502": {
+   "status": "todo"
+  },
+  "T-504": {
+   "status": "todo"
+  },
+  "T-503": {
+   "status": "todo"
+  },
+  "T-505": {
+   "status": "todo"
+  },
+  "R-02": {
+   "status": "todo"
+  },
+  "T-430": {
+   "status": "todo"
+  },
+  "T-401": {
+   "status": "todo"
+  },
+  "T-402": {
+   "status": "todo"
+  },
+  "R-03": {
+   "status": "todo"
+  },
+  "T-405": {
+   "status": "todo"
+  },
+  "T-406": {
+   "status": "todo"
+  },
+  "R-06": {
+   "status": "todo"
+  },
+  "T-404": {
+   "status": "todo"
+  },
+  "T-407": {
+   "status": "todo"
+  },
+  "T-431": {
+   "status": "todo"
+  },
+  "T-432": {
+   "status": "todo"
+  },
+  "T-433": {
+   "status": "todo"
+  },
+  "R-07": {
+   "status": "todo"
+  },
+  "T-412a": {
+   "status": "todo"
+  },
+  "G1": {
+   "status": "todo"
+  },
+  "G2": {
+   "status": "todo"
+  },
+  "R-08": {
+   "status": "todo"
+  },
+  "T-002": {
+   "status": "todo"
+  },
+  "G3": {
+   "status": "todo"
+  },
+  "T-403": {
+   "status": "todo"
+  },
+  "T-408": {
+   "status": "todo"
+  },
+  "T-409": {
+   "status": "todo"
+  },
+  "T-413": {
+   "status": "todo"
+  },
+  "T-410": {
+   "status": "todo"
+  },
+  "T-434": {
+   "status": "todo"
+  },
+  "T-435": {
+   "status": "todo"
+  },
+  "R-09": {
+   "status": "todo"
+  },
+  "T-411": {
+   "status": "todo"
+  },
+  "T-436": {
+   "status": "todo"
+  },
+  "T-412b": {
+   "status": "todo"
+  },
+  "R-10": {
+   "status": "todo"
+  },
+  "T-003": {
+   "status": "todo"
+  },
+  "G4": {
+   "status": "todo"
+  }
+ },
+ "history": [
+  {
+   "at": "2026-09-24T10:39:51.048Z",
+   "id": "H1",
+   "status": "done",
+   "note": "키 발급·호출 확인(resultCode 0000)"
+  },
+  {
+   "at": "2026-09-24T10:39:51.158Z",
+   "id": "H4",
+   "status": "done",
+   "note": "문체부 개최계획 2017~2026 xlsx"
+  },
+  {
+   "at": "2026-09-24T10:39:51.274Z",
+   "id": "H6",
+   "status": "done",
+   "note": "PHP 8.5.4, 확장 5종, Composer 2.9.5"
+  },
+  {
+   "at": "2026-09-24T10:43:02.696Z",
+   "id": "T-000",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T10:49:28.155Z",
+   "id": "T-000",
+   "status": "done",
+   "evidence": "uv lock 81패키지(py3.12.14, lightgbm 4.6.0), check-ignore: graph·package·계약·backtest 추적/데이터·.env 제외, dev.mjs --check: Ollama 172.20.32.1 감지, sigungu.topo.json 252개 = API 코드 252(교집합), 부모 시 코드 12개 이중 계산 주의 기록"
+  }
+ ]
+}

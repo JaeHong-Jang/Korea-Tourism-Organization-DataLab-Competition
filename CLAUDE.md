@@ -57,4 +57,4 @@
 ## AI 개발 체계 (오케스트라 하네스)
 - 계획 수립 = Claude Code가 직접 작성하고, **Codex(`gpt-6-astra`)를 읽기 전용 교차 리뷰어로 돌린 뒤** 지적을 반영한다. 코드 구현 = 오케스트라 구조.
 - Claude Code = 오케스트레이터, Codex(`gpt-6-astra`: L1·L2·L3·L6, `gpt-6-sol`: L4a·L4b·L4c·L5) = 레인별 워커. 역할·레인·워커 규칙·디스패치·게이트는 `AGENTS.md`가 정본이다.
-- 일정·작업 목록: `docs/plan/07_일정_작업분해.md`. 오케스트레이터는 계약(`packages/contracts/`)·task 작성·게이트·통합·커밋을 맡고, 레인 구현은 `AGENTS.md` §7 절차로 디스패치한다.
+- 일정·작업 목록: `docs/plan/07_일정_작업분해.md`. 진행 상태·검토·되돌림은 구현 그래프(`node scripts/harness/graph.mjs status`, `docs/plan/12`). 오케스트레이터는 계약(`packages/contracts/`)·task 작성·게이트·통합·커밋을 맡고, 레인 구현은 `AGENTS.md` §7 절차로 디스패치한다.

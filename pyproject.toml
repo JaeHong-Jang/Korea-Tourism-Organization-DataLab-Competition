@@ -1,0 +1,13 @@
+# 인파예보 Python 워크스페이스 루트 — 서비스 패키지 두 개(forecast, knowledge)를 한 lock으로 관리한다
+[tool.uv.workspace]
+members = ["services/forecast", "services/knowledge"]
+
+[tool.uv]
+python-preference = "managed"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

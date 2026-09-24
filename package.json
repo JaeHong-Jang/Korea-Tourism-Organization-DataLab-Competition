@@ -1,0 +1,23 @@
+{
+  "name": "crowdcast",
+  "private": true,
+  "description": "인파예보 — 행사 열기 전에 인파를 예보합니다",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "services/gateway",
+    "packages/*"
+  ],
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "test": "node scripts/test-all.mjs",
+    "assets": "node scripts/fetch-assets.mjs",
+    "contracts:gen": "npm -w packages/contracts run gen",
+    "contracts:check": "npm -w packages/contracts run check",
+    "graph": "node scripts/harness/graph.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

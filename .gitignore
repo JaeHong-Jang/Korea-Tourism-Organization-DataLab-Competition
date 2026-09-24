@@ -89,3 +89,33 @@ ehthumbs.db
 !configs/*.yaml
 !configs/*.yml
 .omc/
+
+# -------------------- 인파예보 추가 규칙 (2026-09-24, T-000) --------------------
+# data/ 아래는 README·.gitkeep만 추적한다(원본·가공 데이터는 git 대상 아님)
+data/**
+!data/**/
+!data/**/.gitkeep
+!data/**/README.md
+# 실행 산출물·로컬 상태
+node_modules/
+traces/
+.harness/logs/
+.harness/locks/
+.fablize/
+.pytest_cache/
+.ruff_cache/
+apps/web/public/map/
+# 전역 *.json·*.csv 규칙의 예외: 설정·계약·공개 산출물은 추적한다
+!.harness/*.json
+!**/package.json
+!**/package-lock.json
+!**/tsconfig*.json
+!**/composer.json
+!**/composer.lock
+!**/biome.json
+!packages/contracts/**
+!services/*/tests/fixtures/**
+!services/gateway/evals/**
+!apps/web/src/**/*.json
+!reports/backtest/*.json
+!reports/preregistered/*.csv
