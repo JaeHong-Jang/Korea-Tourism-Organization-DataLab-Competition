@@ -1,0 +1,30 @@
+# 메뉴별 고유 인용 근거 수와 데이터랩까지 이어지는 발행 문장 비율을 집계한다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?menu (COUNT(DISTINCT ?evidence) AS ?count)
+       ?publishedClaims ?claimsReachingDatalab
+       (IF(?publishedClaims = 0, 0.0, ?claimsReachingDatalab / ?publishedClaims) AS ?ratio)
+WHERE {
+  {
+    SELECT (COUNT(DISTINCT ?claim) AS ?publishedClaims)
+           (COUNT(DISTINCT ?linkedClaim) AS ?claimsReachingDatalab)
+    WHERE {
+      ?claim a cc:Claim ; cc:status "published" .
+      OPTIONAL {
+        ?claim cito:citesAsEvidence/
+          (cc:derivedFromDataset|cc:aboutForecast/prov:wasGeneratedBy/prov:used/cc:derivedFromDataset) ?dataset .
+        GRAPH <http://crowdcast.local/id/master> { ?dataset cc:datalabMenu ?linkedMenu }
+        BIND(?claim AS ?linkedClaim)
+      }
+    }
+  }
+  OPTIONAL {
+    ?published a cc:Claim ; cc:status "published" ; cito:citesAsEvidence ?evidence .
+    ?evidence (cc:derivedFromDataset|cc:aboutForecast/prov:wasGeneratedBy/prov:used/cc:derivedFromDataset) ?source .
+    GRAPH <http://crowdcast.local/id/master> { ?source cc:datalabMenu ?menu }
+  }
+}
+GROUP BY ?menu ?publishedClaims ?claimsReachingDatalab
+ORDER BY ?menu

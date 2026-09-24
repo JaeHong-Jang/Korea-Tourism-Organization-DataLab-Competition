@@ -1,0 +1,20 @@
+[
+  {
+    "forecast": "f-yeongjong-2025",
+    "rule": "rule-internal-5000",
+    "kind": "http://crowdcast.local/ont#InternalRule",
+    "title": "대규모 기준",
+    "clause": null,
+    "clauseTitle": null,
+    "note": "자체 기준 — 순간 최대 5,000명 초과 확률 50% 이상"
+  },
+  {
+    "forecast": "f-yeongjong-2025",
+    "rule": "rule-legal-hazard",
+    "kind": "http://crowdcast.local/ont#LegalRule",
+    "title": "인원 무관 위험 요소 기준",
+    "clause": "law-disaster-act-enf-73-9",
+    "clauseTitle": "재난 및 안전관리 기본법 시행령 제73조의9",
+    "note": "산·수면 개최 또는 불·폭죽·석유류·가연성 가스 사용. 참고용 — 담당자 검토 필수"
+  }
+]

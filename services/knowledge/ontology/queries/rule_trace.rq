@@ -1,0 +1,15 @@
+# 발행 문장에 연결된 예보 판정의 법정·자체 규칙과 법령 조항을 조회한다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?forecast ?rule ?kind ?title ?clause ?clauseTitle ?note
+WHERE {
+  FILTER EXISTS { ?claim a cc:Claim ; cc:status "published" ; cc:aboutForecast ?forecast }
+  ?forecast cc:hasJudgment/cc:judgedBy ?rule .
+  GRAPH <http://crowdcast.local/id/master> {
+    ?rule a ?kind ; dcterms:title ?title .
+    OPTIONAL { ?rule cc:note ?note }
+    OPTIONAL { ?rule cc:basedOnClause ?clause . ?clause dcterms:title ?clauseTitle }
+  }
+}
+ORDER BY ?forecast ?rule

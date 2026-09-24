@@ -1,0 +1,13 @@
+# 발행 문장을 만든 에이전트 작업과 문장별 검사 결과를 조회한다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?session ?claim ?step ?agent ?checkKind ?passed ?revision
+WHERE {
+  ?claim a cc:Claim ; cc:status "published" ; cc:inSession ?session ; prov:wasGeneratedBy ?step .
+  ?step prov:wasAssociatedWith ?agent .
+  OPTIONAL {
+    ?claim cc:checkedBy [ cc:checkKind ?checkKind ; cc:passed ?passed ; cc:checksRevision ?revision ] .
+  }
+}
+ORDER BY ?session ?claim ?step ?agent ?checkKind

@@ -1,0 +1,34 @@
+# 발행 문장의 예보에서 관측값·모델 실행·수치 가정을 각각 추적한다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?forecast ?lineageKind ?node ?feature ?value ?unit ?dataset
+                ?observedAt ?availableAt ?modelVersion ?trainFrom ?trainTo
+                ?name ?low ?high ?basis
+WHERE {
+  FILTER EXISTS { ?claim a cc:Claim ; cc:status "published" ; cc:aboutForecast ?forecast }
+  ?forecast a cc:Forecast ; prov:wasGeneratedBy ?run .
+  {
+    ?run prov:used ?node .
+    ?node a cc:Observation ; cc:featureName ?feature ; cc:value ?value ; cc:unit ?unit ;
+          cc:derivedFromDataset ?dataset ; cc:observedAt ?observedAt ; cc:availableAt ?availableAt .
+    BIND("observation" AS ?lineageKind)
+  } UNION {
+    ?run prov:used ?node .
+    GRAPH <http://crowdcast.local/id/master> {
+      ?node a cc:ModelRun ; cc:modelVersion ?modelVersion ;
+            cc:trainRange [ cc:periodFrom ?trainFrom ; cc:periodTo ?trainTo ] .
+    }
+    BIND("model" AS ?lineageKind)
+  } UNION {
+    ?forecast (cc:dailyMean|cc:peakConcurrent)/cc:dependsOnAssumption ?node .
+    # 예보 계약에 필수인 구체 가정을 기준 그래프의 기본값과 섞지 않는다.
+    ?node a cc:Assumption .
+    OPTIONAL { ?node cc:name ?name }
+    OPTIONAL { ?node cc:value ?value }
+    OPTIONAL { ?node cc:rangeLow ?low ; cc:rangeHigh ?high }
+    OPTIONAL { ?node cc:basis ?basis }
+    BIND("assumption" AS ?lineageKind)
+  }
+}
+ORDER BY ?forecast ?lineageKind ?node
