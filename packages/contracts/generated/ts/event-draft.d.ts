@@ -8,7 +8,7 @@ export interface EventDraft {
   type: ("불꽃" | "공연" | "대학" | "먹거리" | "꽃" | "전통" | "기타") | null;
   startsAt: string | null;
   endsAt: string | null;
-  timeOfDay: ("주간" | "야간" | "종일") | null;
+  timeOfDay: ("주간" | "야간" | "종일" | "미상") | null;
   venueText: string | null;
   sigunguCode: string | null;
   sigunguName: string | null;

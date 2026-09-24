@@ -86,7 +86,7 @@
   "T-102": {
    "status": "running",
    "updated": "2026-09-24T15:58:20.593Z",
-   "note": "게이트 3 FAIL(High 1 정정·Med 3) → 피드백 1회차. TourAPI 실호출은 9/26 00시 뒤 오케스트레이터"
+   "note": "1회차: 3건 해결·회차 분리 미해결 → 2회차(마지막): Med 5 + 수면 오탐·유형 매핑·timeOfDay 미상(계약 v1.6)"
   },
   "T-103": {
    "status": "todo"
@@ -217,7 +217,8 @@
    "evidence": "test 18·151·stan 0, 실서버 무결성 픽스처 13/13 계약과 같은 판정, 교차 리뷰 astra PASS(Med 2 직접 반영)"
   },
   "T-504": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T16:48:16.212Z"
   },
   "T-503": {
    "status": "done",
@@ -803,6 +804,11 @@
    "id": "T-431",
    "status": "done",
    "evidence": "워커 sol 피드백 2회 + 오케스트레이터 DPR 직접 수정(astra 교차 리뷰 PASS). develop 병합 후 web 71·e2e 17·build·lint 통과, 낮 스크린샷 확인. 수정 전 코드에서 새 DPR 테스트 실패 확인"
+  },
+  {
+   "at": "2026-09-24T16:48:16.212Z",
+   "id": "T-504",
+   "status": "running"
   }
  ]
 }

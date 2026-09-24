@@ -1,4 +1,4 @@
-# packages/contracts — 서비스 간 계약 v1.5 (오케스트레이터 소유, 워커는 읽기 전용)
+# packages/contracts — 서비스 간 계약 v1.6 (오케스트레이터 소유, 워커는 읽기 전용)
 
 | 경로 | 내용 |
 |---|---|
@@ -23,4 +23,5 @@
 
 - 재생성: `npm -w packages/contracts run gen` / 검사: `npm -w packages/contracts run check`
   - 검사 내용: Ajv strict 컴파일, 픽스처 판정이 TS·Python·PHP 세 언어에서 같고 파일 이름의 기대와 맞는지, 참조 무결성, 정상 픽스처 간 일관성(카드 투영), SSE 순서, JSON-LD 기대·금지 트리플과 형식 오류 리터럴 0개, OpenAPI `$ref`(`#/$defs` 위치까지), SSE 문서가 모든 이벤트를 다루는지
+- v1.6(2026-09-25): `timeOfDay`에 `미상` 추가(문체부 개최계획 대부분이 시간대를 적지 않아 일괄 예보·사전 등록 대상이 계약 행사로 바뀌지 못함 — 체크리스트 야간 조명은 `야간`일 때만 켜지는 그대로), 초안 섹션 본문 = 발행 문장 `rendered`를 줄바꿈으로 이은 것(설명 명시)
 - 변경 제안은 워커 리포트의 `CONTRACT-CHANGE:`로. 설계: `docs/plan/05` §5, IRI·근거 그래프: `docs/plan/09` §2·§10
