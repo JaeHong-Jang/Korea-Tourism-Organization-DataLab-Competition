@@ -28,3 +28,5 @@
 | T-402 | gpt-6-sol | done | 0·0·0 | G1 ✓(이월 파일 승인 범위) · G2 test 69 · G3 astra FAIL→PASS · G4 차트 좌표·정직한 표시 확인 | gpt-6-astra PASS | b397251 | 스크린샷 해시 reports/T-402.md |
 | T-431 | gpt-6-sol + 오케스트레이터(DPR) | done | 0·0·0 | G1 ✓ · G2 test 22·build·lint·e2e 7(새 DPR 테스트는 수정 전 실패 확인) · G3 astra PASS(Med 6)→FAIL(DPR 재적용)→직접 수정 PASS · G4 낮·노을·밤 스크린샷, 병합 때 S1 주요 버튼 복원 | gpt-6-astra PASS | e1889b6 | 성능 SwiftShader p95 53.7ms |
 | R-03 | 검토(gpt-6-astra) | failed → T-402 | — | 1차 FAIL: High 근거 오연결(순간 최대 → 평시 관측)·Med 3·Low 1 — 오케스트레이터가 픽스처로 확인 → T-402 되돌림(T-401 대비 1줄·T-430 간격은 같은 회차에 허용 경로 확대) | — | — | — |
+| T-402(R-03 되돌림) | gpt-6-sol + 오케스트레이터(주석 1줄) | done | 0·0 | G1 ✓(base.css·pets.css 회차 허용) · G2 test 73·build·lint, 스크린샷 오케스트레이터 재촬영·시각 확인(칩 한 줄·카드 강조) · G3 astra PASS(R-03 5건)→FAIL(Med 포커스 복귀 — 견본 페이지라 T-406으로 이월, Low 주석 직접) · G4 ✓ | gpt-6-astra | 6508120 | 스크린샷 해시 reports/T-402.md |
+| T-303 | gpt-6-astra | done | 0·0·0 | G1 ✓ · G2 test 246→276·build·lint·✓ gateway, 수동 확인 실제 Ollama·knowledge · G3 sol FAIL(명세 S04 누락 정정·fake 기본값·되묻기 7개)→FAIL(fake 부분 문자열·자정 넘김·답 병합)→PASS · G4 되묻기 3개(주최·시각·폭죽) — 법정 위험 확인 질문 추가 | gpt-6-sol PASS | d87f8eb | trace 90dac3bf |
