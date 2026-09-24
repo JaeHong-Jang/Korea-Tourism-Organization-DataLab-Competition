@@ -34,9 +34,16 @@ def test_candidate_and_empty_session_are_private() -> None:
         scope = query.QueryScope(store.repository, session_id)
         for name in query.QUERY_BINDINGS.keys() - {"datalab_usage"}:
             assert query.run(name, {}, scope) == []
-        assert query.run("datalab_usage", {}, scope) == [
-            {"menu": None, "count": 0, "publishedClaims": 0, "claimsReachingDatalab": 0, "ratio": 0.0}
-        ]
+        rows = query.run("datalab_usage", {}, scope)
+        assert len(rows) == 14
+        assert all(
+            row["count"]
+            == row["publishedClaims"]
+            == row["claimsWithEvidence"]
+            == row["claimsReachingDatalab"]
+            == 0
+            for row in rows
+        )
 
 
 # 다른 세션이 발행되어도 현재 세션 결과와 바인딩 범위는 그대로다.
@@ -64,12 +71,12 @@ def test_datalab_direct_and_indirect_paths() -> None:
         publish_session(client, store)
     scope = query.QueryScope(store.repository, SESSION_ID)
     rows = query.run("datalab_usage", {}, scope)
-    assert [(row["menu"], row["count"]) for row in rows] == [
+    assert [(row["datalabMenu"], row["count"]) for row in rows if row["count"]] == [
         ("[테마] 문화관광축제 현황", 1),
         ("빅데이터 › 지역별 방문자수(이동통신)", 2),
     ]
     assert all(row["publishedClaims"] == 3 and row["claimsReachingDatalab"] == 2 for row in rows)
-    assert all(row["ratio"] == pytest.approx(2 / 3) for row in rows)
+    assert all(row["claimsWithEvidence"] == 3 for row in rows)
     cards = query.run("claim_evidence", {"claim": "c-yeongjong-sources"}, scope)
     data = next(row for row in cards if row["evidence"] == "ev-baseline-28110")
     assert (
@@ -99,9 +106,9 @@ def test_datalab_zero_connected_claims() -> None:
             check["revision"] = 5
     load_sequence(store, case=case)
     rows = query.run("datalab_usage", {}, query.QueryScope(store.repository, SESSION_ID))
-    assert rows == [
-        {"menu": None, "count": 0, "publishedClaims": 1, "claimsReachingDatalab": 0, "ratio": 0.0}
-    ]
+    assert len(rows) == 14
+    assert all(row["publishedClaims"] == row["claimsWithEvidence"] == 1 for row in rows)
+    assert all(row["count"] == row["claimsReachingDatalab"] == 0 for row in rows)
 
 
 # 임의 파일과 미지원 변수는 실행하지 않고 값 안의 구문은 RDF 항으로만 해석한다.

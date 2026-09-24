@@ -1,0 +1,9 @@
+# 기준 모델 실행이 아직 등록되지 않은 영종 예보 계보를 준비한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix id: <http://crowdcast.local/id/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+id:s-demo-0001 a cc:Session ; cc:revision 0 .
+id:f-yeongjong-2025 a cc:Forecast ; prov:wasGeneratedBy id:pr-f-yeongjong-2025 .
+id:pr-f-yeongjong-2025 a cc:PredictionRun ; prov:used id:mr-v0-1-0, id:obs-28110-sat-nonlocal .
+id:obs-28110-sat-nonlocal a cc:Observation ; cc:derivedFromDataset id:ds-kto-visitors-15101972 .

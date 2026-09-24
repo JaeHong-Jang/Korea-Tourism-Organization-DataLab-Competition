@@ -70,7 +70,7 @@ def run(name: str, bindings: dict[str, str | NamedNode], scope: QueryScope) -> l
         rows = repository.store.query(
             query,
             default_graph=[session],
-            named_graphs=[master],
+            named_graphs=[master, session] if name == "datalab_usage" else [master],
             substitutions=substitutions,
         )
         return [{variable.value: result_value(row[variable]) for variable in rows.variables} for row in rows]
