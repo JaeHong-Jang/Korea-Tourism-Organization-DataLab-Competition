@@ -1,4 +1,4 @@
-"""근거 그래프 서비스 경로 — 계약 파일(레포 안)과 저장소(CROWDCAST_DATA_ROOT의 data/app/knowledge)를 가리킨다(오케스트레이터 소유)."""
+"""근거 그래프 서비스 경로 — 계약 파일과 저장소(CROWDCAST_DATA_ROOT) 위치(오케스트레이터 소유)."""
 import os
 from pathlib import Path
 

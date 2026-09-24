@@ -1,4 +1,4 @@
-"""데이터·모델·산출물 경로 — 워크트리에서도 본 레포의 data/·models/를 쓰도록 CROWDCAST_DATA_ROOT를 따른다(오케스트레이터 소유)."""
+"""데이터·모델·산출물 경로 — CROWDCAST_DATA_ROOT로 본 레포 data/·models/를 쓴다(오케스트레이터 소유)."""
 import os
 from pathlib import Path
 
