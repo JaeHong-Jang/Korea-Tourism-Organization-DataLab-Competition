@@ -59,7 +59,11 @@ def judge(
     samples: Sequence[float] | NDArray[np.float64],
     event: Mapping[str, Any],
     weather: Mapping[str, Any] | None = None,
+    *,
+    basis: str = "확률",
 ) -> JudgmentResult:
+    if basis not in {"확률", "구간"}:
+        raise ValueError("판정 표시 방식은 확률 또는 구간이어야 합니다.")
     values = _peak_samples(samples)
     settings = rule_settings()
     thresholds = settings["thresholds"]
@@ -127,10 +131,17 @@ def judge(
             {**traffic, "ruleId": "rule-internal-5000", "evidenceIds": [traffic_evidence]}
         )
     judgment = {
+        "basis": basis,
         "level": level,
         "label": settings["labels"][level],
         "ruleIds": [reason["ruleId"] for reason in reasons],
         "reasons": reasons,
         "checklist": checks.checklist,
     }
+
+    # 등급·사유·근거는 그대로 두고 반환할 확률 표시만 같은 표본의 구간으로 바꾼다.
+    if basis == "구간":
+        p10, p90 = np.quantile(values, [0.1, 0.9])
+        display = settings["interval_display"].format(p10=float(p10), p90=float(p90))
+        probabilities = [{**item, "display": display} for item in probabilities]
     return JudgmentResult(judgment, probabilities, evidence)

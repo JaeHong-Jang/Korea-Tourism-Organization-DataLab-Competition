@@ -1,4 +1,5 @@
 # 판정의 법정 기준과 자체 확률 기준을 docs/plan/06 §6 및 기준 그래프대로 구분한다.
+interval_display: "표본 한계로 구간 기준 표시 · 순간 최대 {p10:,.1f}~{p90:,.1f}명 · 추정 산식 기반"
 thresholds:
   legal_crowd: 1000 # 법정: 시행령 제73조의9, 계획에 지정된 기준
   recommend_probability: 0.1 # 자체: 수립 권고 경계
