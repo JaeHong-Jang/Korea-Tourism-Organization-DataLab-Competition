@@ -14,9 +14,13 @@ from knowledge.api.evidence import router as evidence_router
 from knowledge.api.facts import router as facts_router
 from knowledge.api.health import router as health_router
 from knowledge.api.master_version import router as master_router
+from knowledge.api.model_runs import load_promoted_model
+from knowledge.api.model_runs import router as model_runs_router
 from knowledge.api.ontology import router as ontology_router
 from knowledge.api.publish import router as publish_router
 from knowledge.api.session_graph import router as session_graph_router
+from knowledge.api.stats import register_validation_logging
+from knowledge.api.stats import router as stats_router
 from knowledge.api.validate import router as validate_router
 from knowledge.query.evidence import UnpublishedResource
 from knowledge.store.facts import IntegrityError, KnowledgeStore, violations_for
@@ -31,8 +35,10 @@ def create_app(store: KnowledgeStore | None = None) -> FastAPI:
     # 앱 종료 시 Oxigraph 참조를 해제해 디스크 잠금이 남지 않게 한다.
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
         application.state.knowledge = store if store is not None else KnowledgeStore(paths.STORE)
         try:
+            load_promoted_model(application.state.knowledge)
             yield
         finally:
             del application.state.knowledge
@@ -42,6 +48,8 @@ def create_app(store: KnowledgeStore | None = None) -> FastAPI:
     application.include_router(health_router)
     application.include_router(facts_router)
     application.include_router(master_router)
+    application.include_router(model_runs_router)
+    application.include_router(stats_router)
     application.include_router(validate_router)
     application.include_router(publish_router)
     application.include_router(session_graph_router)
@@ -97,6 +105,7 @@ def create_app(store: KnowledgeStore | None = None) -> FastAPI:
         logger.error("응답 처리 실패: exception=%s", type(error).__name__)
         return contract_response(internal_error_report(), status_code=500)
 
+    register_validation_logging(application)
     return application
 
 
