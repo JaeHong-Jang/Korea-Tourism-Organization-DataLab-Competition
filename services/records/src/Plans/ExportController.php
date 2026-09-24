@@ -11,6 +11,7 @@ use Psr\Http\Message\ServerRequestInterface;
 // 이력과 분리된 현재 계획 및 불변 스냅샷으로 문서를 만든다
 final class ExportController
 {
+    // 저장본과 발행 스냅샷을 문서 렌더러에 전달한다
     public function __construct(private Service $service, private Exporter $exporter)
     {
     }

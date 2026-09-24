@@ -18,7 +18,7 @@ final class MigrationTest extends TestCase
         $db = Db::connect('sqlite::memory:');
         Migrator::run($db);
         Migrator::run($db);
-        self::assertSame(5, (int) $db->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn());
+        self::assertSame(6, (int) $db->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn());
 
         // 계약 픽스처를 원문 JSON으로 저장해 스냅샷 열의 용도를 확인한다
         $event = (string) file_get_contents(dirname(__DIR__, 3) . '/packages/contracts/fixtures/event/valid-yeongjong.json');
@@ -88,6 +88,47 @@ final class MigrationTest extends TestCase
             }
             self::assertSame($original, $db->query('SELECT rowid, * FROM forecast_snapshots')->fetch());
             self::assertSame(1, (int) $db->query('SELECT COUNT(*) FROM forecast_snapshots')->fetchColumn());
+        }
+    }
+
+    // 005까지만 설치된 운영 DB에 006을 적용해 기존 이력도 변경 불가로 만든다
+    public function testRevisionGuardsInstallOnDatabaseAlreadyAt005(): void
+    {
+        $db = Db::connect('sqlite::memory:');
+        $db->exec('CREATE TABLE schema_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)');
+        $directory = dirname(__DIR__) . '/migrations';
+        foreach (glob($directory . '/00[1-5]_*.sql') ?: [] as $file) {
+            $db->exec((string) file_get_contents($file));
+            $db->prepare('INSERT INTO schema_migrations VALUES (?, ?)')->execute([basename($file), '2026-09-24']);
+        }
+        self::assertSame(5, (int) $db->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn());
+        self::assertSame(0, (int) $db->query("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE 'plan_revisions_no_%'")->fetchColumn());
+
+        // 006 적용 전에 만든 이력도 보호 대상이어야 한다
+        $db->exec("INSERT INTO events (id, event_json, created_at, updated_at) VALUES ('e-yeongjong-fireworks-2025', '{}', '2025-10-04', '2025-10-04')");
+        $db->exec("INSERT INTO forecast_snapshots VALUES ('f-yeongjong-2025', 'e-yeongjong-fireworks-2025', '2026-09-24', '{}')");
+        $db->exec("INSERT INTO plans VALUES ('plan-yeongjong-example', 'f-yeongjong-2025', 'e-yeongjong-fireworks-2025', 's-demo-0001', '영종 안전관리계획', '2026-09-24', '2026-09-24', '참고용 초안 — 담당자 검토 필수')");
+        $db->exec("INSERT INTO plan_revisions VALUES ('plan-yeongjong-example', 1, '{}', '2026-09-24')");
+        $original = $db->query('SELECT rowid, * FROM plan_revisions')->fetch();
+        self::assertIsArray($original);
+        Migrator::run($db);
+        Migrator::run($db);
+        self::assertSame(6, (int) $db->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn());
+        self::assertSame(3, (int) $db->query("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE 'plan_revisions_no_%'")->fetchColumn());
+
+        // 재실행 후에도 세 종류의 변경 SQL이 이전 본문을 손상시키지 않아야 한다
+        foreach ([
+            "UPDATE plan_revisions SET previous_plan_json = '{\"changed\":true}' WHERE revision = 1",
+            "DELETE FROM plan_revisions WHERE revision = 1",
+            "REPLACE INTO plan_revisions VALUES ('plan-yeongjong-example', 1, '{}', '2026-09-25')",
+        ] as $sql) {
+            try {
+                $db->exec($sql);
+                self::fail('기존 이력 변경이 허용됨');
+            } catch (PDOException $error) {
+                self::assertStringContainsString('plan revision is immutable', $error->getMessage());
+            }
+            self::assertSame($original, $db->query('SELECT rowid, * FROM plan_revisions')->fetch());
         }
     }
 }

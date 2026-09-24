@@ -27,10 +27,13 @@ final class Exporter
         $word->setDefaultFontName('함초롬바탕');
         $word->setDefaultAsianFontName('함초롬바탕');
         $word->setDefaultFontSize(11);
-        $word->addFontStyle('PlanBody', ['name' => '함초롬바탕', 'size' => 11]);
-        $word->addFontStyle('PlanHeading', ['name' => '맑은 고딕', 'size' => 15, 'bold' => true]);
-        $word->addFontStyle('PlanTable', ['name' => '맑은 고딕', 'size' => 10]);
-        $word->addParagraphStyle('PlanParagraph', ['lineHeight' => 1.6, 'spaceAfter' => 120]);
+        $bodyFont = ['name' => '함초롬바탕', 'size' => 11];
+        $headingFont = ['name' => '맑은 고딕', 'size' => 15, 'bold' => true];
+        $tableFont = ['name' => '맑은 고딕', 'size' => 10];
+        // 문단 ID를 정의하고 각 런에도 같은 서체를 명시해 워드와 한글에서 적용되게 한다
+        $word->addFontStyle('PlanParagraph', $bodyFont, ['lineHeight' => 1.6, 'spaceAfter' => 120]);
+        $word->addFontStyle('PlanHeading', $headingFont, ['spaceAfter' => 120]);
+        $word->addFontStyle('PlanTable', $tableFont, []);
 
         // 문서 메타데이터는 계획 수정 시각으로 고정한다
         $updated = (new DateTimeImmutable($plan['updatedAt']))->getTimestamp();
@@ -53,32 +56,32 @@ final class Exporter
 
         // 공개 자료와 혼동할 수 있는 예시 파일에만 테스트 DB 표시를 넣는다
         if ($example) {
-            $section->addText('테스트 DB로 만든 영종 예시 — 공개 원장·실데이터 아님', 'PlanTable');
+            $section->addText('테스트 DB로 만든 영종 예시 — 공개 원장·실데이터 아님', $tableFont, 'PlanTable');
         }
         $section->addText($plan['watermark'], ['name' => '맑은 고딕', 'size' => 9, 'color' => '888888']);
-        $section->addText($plan['title'], 'PlanHeading', ['spaceAfter' => 240]);
-        $this->summary($section, $report);
+        $section->addText($plan['title'], $headingFont, 'PlanHeading');
+        $this->summary($section, $report, $tableFont);
 
         // 본문은 저장 검사와 같은 claimIds 순서로 써 줄바꿈을 문단으로 보존한다
         $claims = array_column($report['claims'], null, 'id');
         $evidence = array_column($report['evidence'], null, 'id');
         foreach ($plan['sections'] as $planSection) {
             $heading = $planSection['title'] . ($planSection['status'] === '검토 필요' ? ' [검토 필요]' : '');
-            $section->addText($heading, 'PlanHeading', ['spaceBefore' => 240, 'spaceAfter' => 80]);
+            $section->addText($heading, $headingFont, 'PlanHeading');
             if ($planSection['claimIds'] === []) {
-                $section->addText('담당자가 내용을 검토하고 필요한 사항을 작성해 주세요.', 'PlanBody', 'PlanParagraph');
+                $section->addText('담당자가 내용을 검토하고 필요한 사항을 작성해 주세요.', $bodyFont, 'PlanParagraph');
                 continue;
             }
             foreach ($planSection['claimIds'] as $claimId) {
                 $claim = $claims[$claimId];
                 $run = $section->addTextRun('PlanParagraph');
-                $run->addText($claim['rendered'], 'PlanBody');
+                $run->addText($claim['rendered'], $bodyFont);
                 foreach ($claim['evidenceIds'] as $evidenceId) {
                     if (!isset($evidence[$evidenceId])) {
                         throw new RuntimeException("스냅샷 근거가 없습니다: {$evidenceId}");
                     }
                     $note = $run->addFootnote();
-                    $note->addText((new EvidenceLabel())->format($evidence[$evidenceId], $report), 'PlanTable');
+                    $note->addText((new EvidenceLabel())->format($evidence[$evidenceId], $report), $tableFont, 'PlanTable');
                 }
             }
         }
@@ -101,8 +104,11 @@ final class Exporter
     }
 
     // 행사 요약의 모든 날짜·판정·인원 수치는 발행 스냅샷의 필드에서 읽는다
-    /** @param array<string, mixed> $report */
-    private function summary(Section $section, array $report): void
+    /**
+     * @param array<string, mixed> $report
+     * @param array<string, int|string> $tableFont
+     */
+    private function summary(Section $section, array $report, array $tableFont): void
     {
         $event = $report['event'];
         $card = $report['card'];
@@ -123,8 +129,8 @@ final class Exporter
         $table = $section->addTable(['borderSize' => 4, 'borderColor' => 'C7C7C7', 'cellMargin' => 100]);
         foreach ($rows as [$label, $value]) {
             $table->addRow();
-            $table->addCell(3000)->addText($label, 'PlanTable');
-            $table->addCell(6500)->addText($value, 'PlanTable');
+            $table->addCell(3000)->addText($label, $tableFont, 'PlanTable');
+            $table->addCell(6500)->addText($value, $tableFont, 'PlanTable');
         }
     }
 

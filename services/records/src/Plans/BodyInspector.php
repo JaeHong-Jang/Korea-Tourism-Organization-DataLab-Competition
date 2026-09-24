@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CrowdCast\Records\Plans;
 
+use CrowdCast\Records\Snapshots\CardProjection;
 use InvalidArgumentException;
 
 // 계획 본문에 발행 예보서 밖의 문장과 수치가 섞이지 않게 한다
@@ -100,7 +101,7 @@ final class BodyInspector
             ) {
                 throw new InvalidArgumentException("섹션 {$key}: lockedFields.name은 해당 수치의 실제 칸이어야 합니다");
             }
-            $expected = json_encode($number, JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION) . ' ' . $quantity['unit'];
+            $expected = CardProjection::canonical($number) . ' ' . $quantity['unit'];
             if (($field['value'] ?? null) !== $expected) {
                 throw new InvalidArgumentException("섹션 {$key}: lockedFields.value는 스냅샷 수치 {$expected}와 같아야 합니다");
             }

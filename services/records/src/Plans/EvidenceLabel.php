@@ -19,7 +19,7 @@ final class EvidenceLabel
             'data' => $title . ' · ' . $this->source($evidence['source']) . ' · 기간 '
                 . $this->period($evidence['period']) . ' · 공개일 ' . ($evidence['availableAt'] ?? '미기재'),
             'model' => $title . ' · 모델 ' . ($evidence['modelVersion'] ?? '미기재') . ' · 학습 범위 '
-                . $this->period($report['forecast']['predictionRun']['trainRange'] ?? $evidence['period']),
+                . $this->period($evidence['period'] ?? $report['forecast']['predictionRun']['trainRange'] ?? null),
             'rule' => $title . ' · ' . $this->ruleKind($evidence['ruleId'], $report)
                 . ($evidence['clauseId'] === null ? '' : ' · 조항 ' . $evidence['clauseId']),
             'assumption' => $title . ' · ' . ($evidence['summary'] === '' ? '미기재' : $evidence['summary']),

@@ -6,7 +6,9 @@ namespace CrowdCast\Records\Tests;
 
 use CrowdCast\Records\App;
 use CrowdCast\Records\Plans\Exporter;
+use CrowdCast\Records\Plans\BodyInspector;
 use CrowdCast\Records\Support\Db;
+use InvalidArgumentException;
 use PDO;
 use PDOException;
 use PHPUnit\Framework\TestCase;
@@ -72,6 +74,30 @@ final class PlansApiTest extends TestCase
             self::assertNotEmpty($this->body($response)['message'], $name);
         }
         self::assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM plans')->fetchColumn());
+    }
+
+    // 원문 표기가 달라도 같은 정수 수치는 계약 canonical 표기 하나만 허용한다
+    public function testLockedNumberUsesCanonicalForThreeJsonForms(): void
+    {
+        $inspector = new BodyInspector();
+        foreach (['21000.0', '21000.00', '2.1e4'] as $jsonNumber) {
+            $report = PlanFixture::report();
+            $number = json_decode($jsonNumber, false, 512, JSON_THROW_ON_ERROR);
+            $report['card']['peakConcurrent']['p50'] = $number;
+            $report['forecast']['peakConcurrent']['p50'] = $number;
+            $plan = $this->plan();
+            $inspector->inspect($plan, $report);
+            self::assertSame('21000 명', $plan['sections'][0]['lockedFields'][0]['value']);
+
+            // 소수점이나 지수로 다시 적은 잠금 문자열은 같은 수치라도 거부한다
+            $plan['sections'][0]['lockedFields'][0]['value'] = $jsonNumber . ' 명';
+            try {
+                $inspector->inspect($plan, $report);
+                self::fail("정규 표기 위반이 허용됨: {$jsonNumber}");
+            } catch (InvalidArgumentException $error) {
+                self::assertStringContainsString('lockedFields.value', $error->getMessage());
+            }
+        }
     }
 
     // JSON 객체를 배열처럼 보낸 섹션·claimIds는 변환 전에 계약으로 거부한다
@@ -198,9 +224,6 @@ final class PlansApiTest extends TestCase
         self::assertStringContainsString('함초롬바탕', $styles);
         self::assertStringContainsString('맑은 고딕', $styles);
         self::assertStringContainsString('w:eastAsia="함초롬바탕"', $styles);
-        self::assertStringContainsString('w:rStyle w:val="PlanBody"', $document);
-        self::assertStringContainsString('w:rStyle w:val="PlanHeading"', $document);
-        self::assertStringContainsString('w:rStyle w:val="PlanTable"', $document);
         self::assertStringContainsString('w:line="384"', $styles);
         self::assertStringContainsString('w:w="11906" w:h="16838"', $document);
         self::assertStringContainsString('인원 무관 대상(폭죽)', $footnotes);
