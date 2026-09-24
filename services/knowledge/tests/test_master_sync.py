@@ -1,5 +1,6 @@
 """이미 있는 저장소의 기준 그래프에 기준 TTL의 새 정의만 더하고 버전을 한 번 올리는지 검사한다."""
 
+import pytest
 from knowledge.store.facts import KnowledgeStore
 from knowledge.store.master import MasterCatalog
 from knowledge.store.repository import CC, ID, MASTER
@@ -48,23 +49,39 @@ def test_partial_and_conflicting_definitions() -> None:
     assert sync_definitions(stored, fresh) == (0, ["as-demo"])
 
 
-# 빈 노드 안의 값이 바뀌거나 TTL에서 술어·정의가 사라지면 저장값을 두고 충돌로 보고한다.
-def test_blank_node_change_and_removals_are_reported() -> None:
+# 빈 노드 안의 값 변경·술어 삭제·정의 삭제를 각각 따로 넣어도 저장값을 두고 충돌로 보고한다.
+@pytest.mark.parametrize(
+    ("case", "expected"),
+    [
+        ("blank", ["ds-demo"]),
+        ("predicate", ["ds-demo"]),
+        ("definition", ["ds-gone(TTL에서 삭제)"]),
+        ("same", []),
+    ],
+)
+def test_each_change_is_reported(case: str, expected: list[str]) -> None:
     from knowledge.store.master import sync_definitions
     from rdflib import BNode, Graph, Literal
     from rdflib.namespace import RDF
 
-    def graph(day: str, extra: bool) -> Graph:
+    def graph(day: str = "2024-01-01", note: bool = False, gone: bool = False) -> Graph:
         g, period = Graph(), BNode()
         g.add((ID["ds-demo"], RDF.type, CC.Dataset))
         g.add((ID["ds-demo"], CC.trainRange, period))
         g.add((period, CC.periodFrom, Literal(day)))
-        if extra:
+        if note:
             g.add((ID["ds-demo"], CC.note, Literal("옛 설명")))
+        if gone:
             g.add((ID["ds-gone"], RDF.type, CC.Dataset))
         return g
 
-    stored = graph("2024-01-01", extra=True)
-    added, conflicts = sync_definitions(stored, graph("2025-01-01", extra=False))
-    assert added == 0 and sorted(conflicts) == ["ds-demo", "ds-gone(TTL에서 삭제)"]
-    assert sync_definitions(graph("2024-01-01", extra=False), graph("2024-01-01", extra=False)) == (0, [])
+    stored = {
+        "blank": graph(),
+        "predicate": graph(note=True),
+        "definition": graph(gone=True),
+        "same": graph(),
+    }[case]
+    fresh = graph(day="2025-01-01") if case == "blank" else graph()
+    before = set(stored)
+    assert sync_definitions(stored, fresh) == (0, expected)
+    assert set(stored) == before
