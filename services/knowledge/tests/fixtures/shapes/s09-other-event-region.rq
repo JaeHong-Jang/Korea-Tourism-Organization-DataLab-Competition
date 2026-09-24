@@ -1,0 +1,11 @@
+# 영종 예보에 서울 종로구 관측값을 연결해 S09 지역 위반을 만든다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX id: <http://crowdcast.local/id/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE { id:obs-28110-sat-nonlocal cc:aboutRegion ?region }
+INSERT { id:obs-28110-sat-nonlocal cc:aboutRegion id:11110 }
+WHERE { id:obs-28110-sat-nonlocal cc:aboutRegion ?region }

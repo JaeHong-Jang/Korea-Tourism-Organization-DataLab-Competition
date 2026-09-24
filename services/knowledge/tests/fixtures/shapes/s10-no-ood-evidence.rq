@@ -1,0 +1,9 @@
+# OOD 판정 문장에서 참고용 검사 근거 인용을 없애 S10 위반을 만든다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX id: <http://crowdcast.local/id/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE WHERE { id:c-yeongjong-3 cito:citesAsEvidence id:ev-yeongjong-ood . }

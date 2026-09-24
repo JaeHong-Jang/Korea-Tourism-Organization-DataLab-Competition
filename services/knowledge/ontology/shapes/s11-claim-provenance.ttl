@@ -1,0 +1,9 @@
+# 모든 문장의 작성 작업과 담당 예보팀 에이전트 연결을 검사한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+
+cc:S11 a sh:NodeShape ; sh:targetClass cc:Claim ;
+    sh:property [ sh:path prov:wasGeneratedBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cc:AgentStep ;
+        sh:node [ sh:property [ sh:path prov:wasAssociatedWith ; sh:minCount 1 ;
+            sh:class cc:TeamAgent ] ] ] .

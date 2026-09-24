@@ -3,6 +3,8 @@
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+from knowledge.api.contract_response import contract_response
 from pydantic import BaseModel, ConfigDict, Field
 
 router = APIRouter()
@@ -19,6 +21,6 @@ class FactsRequest(BaseModel):
 
 # 동기 라우트는 작업 스레드에서 실행해 세션 잠금 대기로 이벤트 루프를 막지 않는다.
 @router.post("/v1/sessions/{id}/facts")
-def facts(id: str, body: FactsRequest, request: Request) -> dict[str, int]:
+def facts(id: str, body: FactsRequest, request: Request) -> JSONResponse:
     revision = request.app.state.knowledge.load_facts(id, body.schema_name, body.items)
-    return {"revision": revision}
+    return contract_response({"revision": revision}, "facts")

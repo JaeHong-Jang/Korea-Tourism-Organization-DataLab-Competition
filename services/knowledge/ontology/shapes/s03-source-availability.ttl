@@ -1,0 +1,8 @@
+# 데이터 근거와 관측값의 출처 및 공개 날짜가 빠지거나 중복되지 않게 한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+cc:S03 a sh:NodeShape ; sh:targetClass cc:DataEvidence, cc:Observation ;
+    sh:property [ sh:path cc:derivedFromDataset ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cc:Dataset ] ;
+    sh:property [ sh:path cc:availableAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:date ] .

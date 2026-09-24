@@ -1,0 +1,9 @@
+# 순간 최대에서 동시체류율 가정을 없애 S07 위반을 만든다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX id: <http://crowdcast.local/id/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE WHERE { id:q-f-yeongjong-2025-peak cc:dependsOnAssumption id:as-concurrency-fireworks . }
