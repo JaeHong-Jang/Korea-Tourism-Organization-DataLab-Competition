@@ -1,4 +1,4 @@
-# 법정 판정 규칙 2개와 자체 판정 규칙 3개의 근거를 정의한다.
+# 법정 판정 규칙 2개, 자체 판정 규칙 3개, 규모 외 체크리스트 규칙 7개의 근거를 정의한다.
 @prefix cc: <http://crowdcast.local/ont#> .
 @prefix id: <http://crowdcast.local/id/> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
@@ -24,3 +24,26 @@ id:rule-internal-50pct a cc:InternalRule ;
 id:rule-internal-5000 a cc:InternalRule ;
     dcterms:title "대규모 기준" ; cc:threshold 5000 ; cc:probability "0.5"^^xsd:double ;
     cc:note "자체 기준 — 순간 최대 5,000명 초과 확률 50% 이상" .
+
+# 규모 외 위험 체크리스트 규칙은 등급과 무관하게 행사 정보·날씨로 켜진다(자체 기준, docs/plan/06 §6).
+id:rule-check-vehicle a cc:InternalRule ;
+    dcterms:title "차량 진입·보행 동선 분리" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: hazards에 차량진입. 안성 사례 — 차량과 관람객 동선이 겹치면 사고 위험. 자체 기준" .
+id:rule-check-water-slope a cc:InternalRule ;
+    dcterms:title "수변·경사 구역 안전" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: hazards에 수면 또는 산. 물가·비탈에서 밀림·추락 위험. 자체 기준" .
+id:rule-check-night-lighting a cc:InternalRule ;
+    dcterms:title "야간 조명" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: timeOfDay가 야간 또는 hazards에 야간조명부족. 어두운 구간에서 넘어짐·밀집 인지 지연. 자체 기준" .
+id:rule-check-fire a cc:InternalRule ;
+    dcterms:title "화기 관리" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: hazards에 불·폭죽·가연성가스·석유류. 화재·화상, 대피로 확보. 자체 기준" .
+id:rule-check-single-exit a cc:InternalRule ;
+    dcterms:title "단일 출입구" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: hazards에 단일출입구. 출입구 한 곳에 몰리는 병목. 자체 기준" .
+id:rule-check-stage-crowd a cc:InternalRule ;
+    dcterms:title "무대 앞 밀집" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: hazards에 무대밀집 또는 type이 공연. 무대 앞 압착(군중 밀림). 자체 기준" .
+id:rule-check-rain-shelter a cc:InternalRule ;
+    dcterms:title "우천 시 대피 공간" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: 날씨 pop ≥ 30 또는 pty가 비·비/눈·눈·소나기, 날씨를 모르면(source 없음·10일 넘게 남음) 켠다. 갑작스러운 비에 한곳으로 몰림. 자체 기준" .
