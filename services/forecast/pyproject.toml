@@ -10,6 +10,7 @@ dependencies = [
   "pydantic>=2.8",
   "orjson>=3.10",
   "polars>=1.8",
+  "holidays==0.105",
   "duckdb>=1.1",
   "pyarrow>=17",
   "pandera[polars]>=0.20",
