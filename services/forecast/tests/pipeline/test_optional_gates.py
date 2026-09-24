@@ -144,14 +144,16 @@ def test_lost_golden_blocks_promotion(pipeline_root: Path) -> None:
 
 
 # 입력 자료에 골든 사례가 있으면(H8 확보) 결과가 0건이거나 일부가 빠져도 미검증이 아니라 승격 금지다.
-def test_acquired_golden_must_appear_in_results(pipeline_root: Path) -> None:
-    pl.DataFrame({"event_id": ["e-yeongjong-2025"], "is_golden": [True]}).write_parquet(
+@pytest.mark.parametrize("kept", [0, 1])
+def test_acquired_golden_must_appear_in_results(pipeline_root: Path, kept: int) -> None:
+    current = backtest()
+    sources = [row["eventId"] for row in current["golden"][:1]] + ["e-golden-extra-2025"]
+    pl.DataFrame({"event_id": sources, "is_golden": [True] * len(sources)}).write_parquet(
         paths.PROCESSED / "labels.parquet"
     )
     path = paths.REPORTS / "backtest/2025/backtest.json"
     path.parent.mkdir(parents=True)
-    current = backtest()
-    current["golden"] = []
+    current["golden"] = current["golden"][:kept]
     path.write_text(json.dumps(current))
     gate = gates.optional_gate("backtest", [path], None)
-    assert gate["passed"] is False and "결과 누락 1건" in gate["message"]
+    assert gate["passed"] is False and f"결과 누락 {2 - kept}건" in gate["message"]

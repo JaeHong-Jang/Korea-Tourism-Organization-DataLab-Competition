@@ -121,8 +121,9 @@
    "evidence": "test 185(규칙)·forecast 전체 통과, 경계 표시 표 직접 확인, 교차 리뷰 sol PASS"
   },
   "T-203": {
-   "status": "running",
-   "updated": "2026-09-24T19:19:12.816Z"
+   "status": "done",
+   "updated": "2026-09-24T22:09:10.420Z",
+   "evidence": "develop be35341+8354ef4+c98b8dc, forecast 1005, 계약 29·픽스처 129 오류 0, gateway 744, sol PASS·astra 계획 PASS, 실데이터 파이프라인 features→publish(백테스트 미검증 승격 v1-af1d52)"
   },
   "R-04": {
    "status": "todo"
@@ -957,6 +958,12 @@
    "id": "T-307",
    "status": "done",
    "evidence": "develop 병합 0a5502e, gateway 744·build·lint·✓, sol PASS 3회(재디스패치 2회)"
+  },
+  {
+   "at": "2026-09-24T22:09:10.420Z",
+   "id": "T-203",
+   "status": "done",
+   "evidence": "develop be35341+8354ef4+c98b8dc, forecast 1005, 계약 29·픽스처 129 오류 0, gateway 744, sol PASS·astra 계획 PASS, 실데이터 파이프라인 features→publish(백테스트 미검증 승격 v1-af1d52)"
   }
  ]
 }
