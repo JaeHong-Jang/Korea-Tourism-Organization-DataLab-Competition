@@ -33,4 +33,11 @@ it("확정된 빈 위험요소와 한국어 시각을 보인다", () => {
   expect(complete).not.toContain("2025-10-18T19:00:00+09:00");
   expect(waiting).toContain("확인 필요");
   expect(formatDraftDate("2025-10-18")).toBe("10월 18일(토)");
+  expect(formatDraftDate("2025-10-18T19:00:00.000+09:00")).toBe(
+    "10월 18일(토) 19:00",
+  );
+  expect(formatDraftDate("2025-10-18T10:00:00.000Z")).toBe(
+    "10월 18일(토) 19:00",
+  );
+  expect(formatDraftDate("2025-10-18T19:00:00.000")).toBe("10월 18일(토)");
 });

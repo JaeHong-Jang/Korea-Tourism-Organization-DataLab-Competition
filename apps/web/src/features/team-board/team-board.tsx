@@ -63,10 +63,12 @@ export function agentState(
 // 팀원 버튼은 클릭과 키보드로 기록을 열고 실패도 서랍 안에 알린다.
 export function TeamBoard({
   statuses,
+  stepCounts,
   gates,
   sessionId,
 }: {
   statuses: AgentStatus[];
+  stepCounts: Record<string, number>;
   gates: GateReport[];
   sessionId: string | null;
 }) {
@@ -77,7 +79,8 @@ export function TeamBoard({
   const [reload, setReload] = useState(0);
   const state = selected ? agentState(statuses, selected) : null;
   const refreshState = state === "done" || state === "error" ? state : null;
-  const requestKey = `${selected ?? ""}:${reload}:${refreshState ?? ""}`;
+  // 같은 배치에서 여러 작업이 끝나도 누적 단계 수로 기록 변경을 감지한다.
+  const requestKey = `${selected ?? ""}:${reload}:${refreshState ?? ""}:${selected ? (stepCounts[selected] ?? 0) : 0}`;
   useEffect(() => {
     if (!selected || !sessionId || !requestKey) return;
     const controller = new AbortController();

@@ -1,11 +1,45 @@
 // 되묻기 입력을 게이트웨이가 받는 행사 초안 부분 객체로 바꾼다.
+
+import commonSchema from "@crowdcast/contracts/schemas/common.schema.json";
+import draftSchema from "@crowdcast/contracts/schemas/event-draft.schema.json";
 import type { EventDraft } from "@crowdcast/contracts/types";
+import Ajv2020 from "ajv/dist/2020.js";
+import addFormats from "ajv-formats";
+
+const eventTypes = commonSchema.$defs.eventType.enum;
+const hostTypes = commonSchema.$defs.hostType.enum;
+const ajv = new Ajv2020({ allErrors: true });
+addFormats(ajv);
+ajv.addSchema(commonSchema);
+const {
+  missing: _missing,
+  ambiguities: _ambiguities,
+  ...answerProperties
+} = draftSchema.properties;
+const validateAnswer = ajv.compile({
+  $id: "https://crowdcast.local/schemas/event-answer.web.json",
+  type: "object",
+  additionalProperties: false,
+  properties: answerProperties,
+});
 
 export type Ask = {
   field: string;
   question: string;
   options: { label: string; value: string }[];
 };
+
+// 선택지가 생략된 열거형 질문도 계약의 정해진 값으로 보여 준다.
+export function askOptions(ask: Ask): Ask["options"] {
+  if (ask.options.length) return ask.options;
+  const values =
+    ask.field === "type"
+      ? eventTypes
+      : ask.field === "hostType"
+        ? hostTypes
+        : [];
+  return values.map((value) => ({ label: value, value }));
+}
 
 // 장소 후보와 주최 유형 등 단일 선택은 질문 필드명으로 보낸다.
 export function choiceAnswer(
@@ -84,15 +118,17 @@ export function combinedAnswer(
       summaries.push(inputs.hazards.join(", ") || "해당 없어요");
     } else {
       const choice = inputs.choices[ask.field]?.trim();
-      const allowed =
-        ask.field === "hostType" && !ask.options.length
-          ? ["지자체", "민간", "대학", "기타"]
-          : ask.options.map((option) => option.value);
+      const allowed = askOptions(ask).map((option) => option.value);
       if (!choice || (allowed.length > 0 && !allowed.includes(choice)))
         throw new Error(`${ask.question} 답을 확인해 주세요.`);
       answer[ask.field] = choice;
       summaries.push(choice);
     }
   }
+  // 부분 답도 행사 초안의 각 필드 계약으로 확인한 뒤 전송한다.
+  if (!validateAnswer(answer))
+    throw new Error(
+      `답 형식을 확인해 주세요: ${ajv.errorsText(validateAnswer.errors)}`,
+    );
   return { text: summaries.join(" · "), answer };
 }

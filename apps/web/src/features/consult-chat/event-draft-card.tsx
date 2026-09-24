@@ -16,16 +16,39 @@ const fields: { key: keyof EventDraft; label: string }[] = [
 
 // 전송용 ISO 값은 유지하고 한국어 날짜와 시각만 화면에 표시한다.
 export function formatDraftDate(value: string): string {
-  const matched =
-    /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}:\d{2})(?::\d{2})?(Z|[+-]\d{2}:\d{2}))?/.exec(
+  const dateOnly =
+    /^(\d{4})-(\d{2})-(\d{2})(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?)?$/.exec(value);
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly;
+    const weekday = "일월화수목금토"[
+      new Date(
+        Date.UTC(Number(year), Number(month) - 1, Number(day)),
+      ).getUTCDay()
+    ];
+    return `${Number(month)}월 ${Number(day)}일(${weekday})`;
+  }
+
+  // 시차와 소수 초가 있는 계약 일시를 한국 시각으로 변환해 표시한다.
+  if (
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(
       value,
-    );
-  if (!matched) return value;
-  const [, year, month, day, time, zone] = matched;
-  const weekday = "일월화수목금토"[
-    new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))).getUTCDay()
-  ];
-  return `${Number(month)}월 ${Number(day)}일(${weekday})${time && zone ? ` ${time}` : ""}`;
+    )
+  )
+    return value;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  const parts = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(parsed);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? "";
+  return `${Number(part("month"))}월 ${Number(part("day"))}일(${part("weekday")}) ${part("hour")}:${part("minute")}`;
 }
 
 // 확정 칩은 현재 게이트웨이에서 수정되지 않으므로 새 상담 안내만 연다.

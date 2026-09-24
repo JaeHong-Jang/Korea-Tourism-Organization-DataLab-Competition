@@ -2,7 +2,7 @@
 import type { EventDraft } from "@crowdcast/contracts/types";
 import { useState } from "react";
 import { Button } from "../../components/ui/button";
-import { type Ask, combinedAnswer } from "./answers";
+import { type Ask, askOptions, combinedAnswer } from "./answers";
 
 // 질문별 선택은 전송 전까지 로컬에 보관한다.
 export function AskReply({
@@ -10,11 +10,13 @@ export function AskReply({
   draft,
   onReply,
   disabled,
+  replyError,
 }: {
   asks: Ask[];
   draft: EventDraft | null;
   onReply: (reply: { text: string; answer: object }) => void;
   disabled: boolean;
+  replyError: string;
 }) {
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [hazards, setHazards] = useState<EventDraft["hazards"] | null>(null);
@@ -110,13 +112,7 @@ export function AskReply({
             </div>
           ) : (
             <div className="consult-choices">
-              {(ask.field === "hostType" && !ask.options.length
-                ? ["지자체", "민간", "대학", "기타"].map((value) => ({
-                    label: value,
-                    value,
-                  }))
-                : ask.options
-              ).map((option) => (
+              {askOptions(ask).map((option) => (
                 <button
                   type="button"
                   aria-pressed={choices[ask.field] === option.value}
@@ -131,7 +127,7 @@ export function AskReply({
                   {option.label}
                 </button>
               ))}
-              {!ask.options.length && ask.field !== "hostType" && (
+              {!askOptions(ask).length && (
                 <label>
                   직접 입력
                   <input
@@ -149,7 +145,7 @@ export function AskReply({
           )}
         </div>
       ))}
-      {error && <p role="alert">{error}</p>}
+      {(error || replyError) && <p role="alert">{error || replyError}</p>}
       <Button type="button" disabled={disabled} onClick={submit}>
         답하기
       </Button>

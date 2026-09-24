@@ -1,6 +1,7 @@
 // 질문 종류별 답이 게이트웨이 메시지의 text와 answer를 모두 채우는지 본다.
 import { expect, it } from "vitest";
 import {
+  askOptions,
   choiceAnswer,
   combinedAnswer,
   hazardsAnswer,
@@ -15,6 +16,57 @@ it("시각을 날짜와 두 시각으로 보낸다", () => {
       endsAt: "2026-10-18T21:00:00+09:00",
     },
   });
+});
+
+// 선택지가 없는 유형 질문도 계약의 일곱 값만 고르고 잘못된 부분 답은 막는다.
+it("유형 질문은 계약 선택지를 사용하고 임의 유형을 거절한다", () => {
+  const ask = {
+    field: "type",
+    question: "행사 유형은 무엇인가요?",
+    options: [],
+  };
+  expect(askOptions(ask).map((option) => option.value)).toEqual([
+    "불꽃",
+    "공연",
+    "대학",
+    "먹거리",
+    "꽃",
+    "전통",
+    "기타",
+  ]);
+  const inputs = {
+    choices: { type: "불꽃" },
+    hazards: null,
+    date: "",
+    start: "",
+    end: "",
+  };
+  expect(combinedAnswer([ask], inputs).answer).toEqual({ type: "불꽃" });
+  expect(() =>
+    combinedAnswer([ask], { ...inputs, choices: { type: "축제" } }),
+  ).toThrow(/답을 확인/);
+});
+
+// 질문 선택지가 계약의 위험요소 밖이면 전송 전에 부분 스키마가 거절한다.
+it("질문 선택값도 행사 초안 부분 스키마로 검증한다", () => {
+  expect(() =>
+    combinedAnswer(
+      [
+        {
+          field: "hazards",
+          question: "위험요소는요?",
+          options: [{ label: "임의 위험", value: "임의 위험" }],
+        },
+      ],
+      {
+        choices: {},
+        hazards: ["임의 위험" as never],
+        date: "",
+        start: "",
+        end: "",
+      },
+    ),
+  ).toThrow(/답 형식/);
 });
 it("위험요소 복수 선택과 해당 없음을 구분한다", () => {
   expect(hazardsAnswer(["폭죽", "불"]).answer).toEqual({

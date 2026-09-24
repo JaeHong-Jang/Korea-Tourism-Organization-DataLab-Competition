@@ -1,6 +1,7 @@
 // 대화, 행사 카드, 예보팀과 숫자 미리보기를 한 상담 흐름으로 연결한다.
 import type {
   AgentStatus,
+  AgentStep,
   EventDraft,
   ForecastCard,
   GateReport,
@@ -34,6 +35,7 @@ export function ConsultPage() {
   const [asks, setAsks] = useState<Ask[]>([]);
   const [draft, setDraft] = useState<EventDraft | null>(null);
   const [statuses, setStatuses] = useState<AgentStatus[]>([]);
+  const [stepCounts, setStepCounts] = useState<Record<string, number>>({});
   const [gates, setGates] = useState<GateReport[]>([]);
   const [card, setCard] = useState<ForecastCard | null>(null);
   const [forecastId, setForecastId] = useState<string | null>(null);
@@ -41,6 +43,7 @@ export function ConsultPage() {
     { id: string; label: string }[]
   >([]);
   const [error, setError] = useState("");
+  const [replyError, setReplyError] = useState("");
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState("행사를 적어 주세요.");
   const session = useRef<string | null>(null);
@@ -54,6 +57,14 @@ export function ConsultPage() {
       case "agent_status":
         setStatuses((current) => [...current, event.data as AgentStatus]);
         break;
+      case "agent_step": {
+        const step = event.data as AgentStep;
+        setStepCounts((current) => ({
+          ...current,
+          [step.agentId]: (current[step.agentId] ?? 0) + 1,
+        }));
+        break;
+      }
       case "event_card":
         setDraft(event.data as EventDraft);
         setSummary("행사 정보를 확인했어요.");
@@ -98,24 +109,32 @@ export function ConsultPage() {
     lastMessage.current = message;
     setBusy(true);
     setError("");
-    setAsks([]);
-    setSent((current) => [
-      ...current,
-      { id: crypto.randomUUID(), text: message.text },
-    ]);
+    setReplyError("");
+    const messageId = crypto.randomUUID();
+    setSent((current) => [...current, { id: messageId, text: message.text }]);
     setText("");
     setSummary("예보팀이 확인하고 있어요.");
     try {
       session.current ??= await createTeamSession(abort.signal);
-      await postTeamMessage(
-        session.current,
-        message,
-        abort.signal,
-        handleEvent,
-      );
+      let firstEvent = true;
+      await postTeamMessage(session.current, message, abort.signal, (event) => {
+        // 응답이 실제로 시작할 때 이전 질문을 지워 400이면 입력을 보존한다.
+        if (firstEvent) {
+          setAsks([]);
+          firstEvent = false;
+        }
+        handleEvent(event);
+      });
     } catch (cause) {
       if (abort.signal.aborted) setSummary("상담을 중단했어요.");
-      else {
+      else if (
+        message.answer &&
+        cause instanceof Error &&
+        cause.message === "상담 연결 실패: 400"
+      ) {
+        setSent((current) => current.filter((item) => item.id !== messageId));
+        setReplyError("답을 확인해 주세요. 고쳐서 다시 보내 주세요.");
+      } else {
         setCard(null);
         setForecastId(null);
         setError(
@@ -169,12 +188,13 @@ export function ConsultPage() {
                 {message.text}
               </p>
             ))}
-            {asks.length > 0 && !busy && (
+            {asks.length > 0 && (
               <AskReply
                 key={asks.map((ask) => ask.field).join("-")}
                 asks={asks}
                 draft={draft}
                 disabled={busy}
+                replyError={replyError}
                 onReply={(reply) => void send(reply)}
               />
             )}
@@ -254,6 +274,7 @@ export function ConsultPage() {
           >
             <TeamBoard
               statuses={statuses}
+              stepCounts={stepCounts}
               gates={gates}
               sessionId={session.current}
             />

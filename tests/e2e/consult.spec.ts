@@ -7,6 +7,10 @@ import { expect, type Page, test } from "@playwright/test";
 const example =
 	"10월 18일 19시부터 21시까지 영종 씨사이드파크에서 인천 중구가 여는 불꽃축제를 해요";
 const output = resolve(process.cwd(), "../../reports/figures/screens");
+const recordedAsking = readFileSync(
+	resolve(process.cwd(), "../../tests/e2e/fixtures/consult-yeongjong-live-1.sse"),
+	"utf8",
+);
 const fixture = (name: string): SseEvent[] =>
 	JSON.parse(
 		readFileSync(
@@ -23,8 +27,8 @@ const frames = (events: SseEvent[]) =>
 		.map((event) => `event: ${event.event}\ndata: ${JSON.stringify(event)}\n\n`)
 		.join("");
 
-// 녹화한 게이트웨이의 세 질문을 같은 스트림 순서로 재현한다.
-function asking(three: boolean): SseEvent[] {
+// 별도 폼 회귀 검사는 주최·시각·위험 질문을 한 응답에 모은다.
+function asking(): SseEvent[] {
 	const asks = [
 		{
 			field: "hostType",
@@ -49,27 +53,24 @@ function asking(three: boolean): SseEvent[] {
 			],
 		},
 	];
-	const selected = three ? asks : asks.slice(2);
 	const prefix = fixture("valid-new-forecast").slice(0, 4);
 	const draft = structuredClone(prefix[3].data) as Record<string, unknown>;
 	draft.hazards = [];
-	if (three) {
-		draft.hostType = null;
-		draft.startsAt = null;
-		draft.endsAt = null;
-		draft.missing = ["startsAt", "endsAt"];
-	}
+	draft.hostType = null;
+	draft.startsAt = null;
+	draft.endsAt = null;
+	draft.missing = ["startsAt", "endsAt"];
 	prefix[3] = { ...prefix[3], data: draft };
 	return [
 		...prefix,
-		...selected.map((data, index) => ({
+		...asks.map((data, index) => ({
 			event: "ask",
 			seq: prefix.length + index,
 			data,
 		})),
 		{
 			event: "done",
-			seq: prefix.length + selected.length,
+			seq: prefix.length + asks.length,
 			data: { sessionId: "s-demo-0001", forecastId: null },
 		},
 	] as SseEvent[];
@@ -97,7 +98,11 @@ async function routeConsult(
 		return route.fulfill({
 			status: 200,
 			contentType: "text/event-stream",
-			body: frames(messages.length % 2 ? asking(three) : fixture(result)),
+			body: messages.length % 2
+				? three
+					? frames(asking())
+					: recordedAsking
+				: frames(fixture(result)),
 		});
 	});
 	return messages;
@@ -172,6 +177,27 @@ test("펫 기록 조회 실패 뒤 다시 불러온다", async ({ page }) => {
 	await page.getByRole("button", { name: "다시 불러오기" }).click();
 	await expect(page.getByText("아직 기록이 없어요.")).toBeVisible();
 	expect(reads).toBe(2);
+});
+
+// 서버가 부분 답을 거절해도 선택과 질문을 보존해 같은 폼에서 다시 답한다.
+test("400 응답 뒤 되묻기 폼을 유지한다", async ({ page }) => {
+	const messages = await routeConsult(page, "valid-new-forecast");
+	let rejected = false;
+	await page.route("**/api/team/sessions/*/messages", (route) => {
+		if (messages.length === 1 && !rejected) {
+			rejected = true;
+			return route.fulfill({ status: 400, body: "{}" });
+		}
+		return route.fallback();
+	});
+	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
+	await page.getByRole("button", { name: example }).click();
+	await page.getByRole("checkbox", { name: "폭죽 써요" }).click();
+	await page.getByRole("button", { name: "답하기" }).click();
+	await expect(page.getByRole("alert")).toContainText("고쳐서 다시 보내 주세요");
+	await expect(page.getByRole("checkbox", { name: "폭죽 써요" })).toBeChecked();
+	await page.getByRole("button", { name: "답하기" }).click();
+	await expect(page.locator(".key-number strong").first()).toBeVisible();
 });
 
 // 게이트웨이 수동 기록의 주최·시각·위험 질문도 한 메시지로 답한다.
