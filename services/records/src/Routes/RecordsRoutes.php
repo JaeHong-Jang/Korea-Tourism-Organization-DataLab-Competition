@@ -12,6 +12,12 @@ use CrowdCast\Records\Ledger\CollectionController as LedgerCollection;
 use CrowdCast\Records\Ledger\Repository as LedgerRepository;
 use CrowdCast\Records\Ledger\Service as LedgerService;
 use CrowdCast\Records\Ledger\VerifyController as LedgerVerify;
+use CrowdCast\Records\Plans\CollectionController as PlanCollection;
+use CrowdCast\Records\Plans\ExportController as PlanExport;
+use CrowdCast\Records\Plans\Exporter as PlanExporter;
+use CrowdCast\Records\Plans\ItemController as PlanItem;
+use CrowdCast\Records\Plans\Repository as PlanRepository;
+use CrowdCast\Records\Plans\Service as PlanService;
 use CrowdCast\Records\Snapshots\CollectionController as SnapshotCollection;
 use CrowdCast\Records\Snapshots\MutationController as SnapshotMutation;
 use CrowdCast\Records\Snapshots\Repository as SnapshotRepository;
@@ -56,6 +62,7 @@ final class RecordsRoutes
             new EventRepository($database()),
             new ContractValidator()
         );
+        $plans = static fn(): PlanService => new PlanService(new PlanRepository($database()), new ContractValidator());
 
         // 행사 컬렉션은 조회와 생성만 허용한다
         $app->get('/v1/events', function (ServerRequestInterface $request, ResponseInterface $response) use ($events): ResponseInterface {
@@ -87,6 +94,20 @@ final class RecordsRoutes
                 return (new SnapshotMutation())->reject($request, $response);
             });
         }
+
+        // 초안은 생성·조회·수정하고 현재 본문을 편집 가능한 docx로 내보낸다
+        $app->post('/v1/plans', function (ServerRequestInterface $request, ResponseInterface $response) use ($plans): ResponseInterface {
+            return (new PlanCollection($plans()))->create($request, $response);
+        });
+        $app->get('/v1/plans/{id}', function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($plans): ResponseInterface {
+            return (new PlanItem($plans()))->get($request, $response, $args);
+        });
+        $app->put('/v1/plans/{id}', function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($plans): ResponseInterface {
+            return (new PlanItem($plans()))->update($request, $response, $args);
+        });
+        $app->get('/v1/plans/{id}/export.docx', function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($plans): ResponseInterface {
+            return (new PlanExport($plans(), new PlanExporter()))->get($request, $response, $args);
+        });
 
         // 사전 등록 원장과 처음부터 재계산한 검증 결과를 공개한다
         $app->get('/v1/ledger', function (ServerRequestInterface $request, ResponseInterface $response) use ($ledger): ResponseInterface {
