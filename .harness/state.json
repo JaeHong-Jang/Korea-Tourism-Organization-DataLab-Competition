@@ -266,7 +266,9 @@
    "status": "todo"
   },
   "T-404": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T17:44:20.929Z",
+   "note": "G3 FAIL Med 5(배치·모바일·정렬·시도·값 표) → 피드백 1회차, S1 배치 규칙 결정"
   },
   "T-407": {
    "status": "todo"
@@ -346,6 +348,10 @@
   },
   "G4": {
    "status": "todo"
+  },
+  "T-310": {
+   "status": "running",
+   "updated": "2026-09-24T17:48:54.397Z"
   }
  },
  "history": [
@@ -863,6 +869,16 @@
    "id": "T-504",
    "status": "done",
    "evidence": "develop 병합 111eabf, records 38·stan·✓, docx 예시 직접 대조, astra PASS"
+  },
+  {
+   "at": "2026-09-24T17:44:20.929Z",
+   "id": "T-404",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:48:54.397Z",
+   "id": "T-310",
+   "status": "running"
   }
  ]
 }
