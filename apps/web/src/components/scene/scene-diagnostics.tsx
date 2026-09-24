@@ -1,0 +1,105 @@
+// 장면 품질 회귀와 프레임 진단 값을 Canvas 내부에서 수집한다.
+import { PerformanceMonitor } from "@react-three/drei";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useRef } from "react";
+import type { SceneQuality } from "./quality";
+
+// 프레임 저하를 품질 단계와 R3F 회귀 계수로 알리고, DPR은 Canvas prop 한 곳에서만 정한다.
+export function QualityControl({
+  quality,
+  fixed,
+  diagnostic,
+  onQualityChange,
+  onRegressFactor,
+}: {
+  quality: SceneQuality;
+  fixed: boolean;
+  diagnostic: boolean;
+  onQualityChange: (change: -1 | 1) => void;
+  onRegressFactor: (factor: number) => void;
+}) {
+  const performance = useThree((state) => state.performance);
+  const current = useThree((state) => state.performance.current);
+
+  // R3F가 재렌더마다 Canvas dpr prop을 다시 적용하므로 회귀 계수는 prop 쪽으로 올려 보낸다.
+  useEffect(() => {
+    onRegressFactor(current);
+  }, [current, onRegressFactor]);
+
+  // 현재 품질 단계를 문서에 표시해 테스트·측정이 읽게 한다.
+  useEffect(() => {
+    document.documentElement.dataset.sceneQuality = quality;
+    return () => {
+      delete document.documentElement.dataset.sceneQuality;
+    };
+  }, [quality]);
+
+  // 진단 모드에서 회귀 신호가 실제 DPR까지 전달되는지 검사한다.
+  useEffect(() => {
+    if (!diagnostic) return;
+    window.__crowdcastRegress = () => performance.regress();
+    return () => {
+      delete window.__crowdcastRegress;
+    };
+  }, [diagnostic, performance]);
+
+  return (
+    <>
+      {!fixed && (
+        <PerformanceMonitor
+          onDecline={() => {
+            performance.regress();
+            onQualityChange(-1);
+          }}
+          onIncline={() => onQualityChange(1)}
+        />
+      )}
+    </>
+  );
+}
+
+// 첫 렌더를 표시하고 명시적인 측정 모드에서만 숫자 버퍼에 프레임을 쌓는다.
+export function FrameSignal({
+  measure,
+  diagnostic,
+}: {
+  measure: boolean;
+  diagnostic: boolean;
+}) {
+  const ready = useRef(false);
+  const gl = useThree((state) => state.gl);
+  useEffect(() => {
+    if (measure) window.__crowdcastSceneFrames = [];
+    if (diagnostic) {
+      window.__crowdcastSceneMemory = () => ({ ...gl.info.memory });
+      window.__crowdcastSceneRender = () => ({
+        calls: gl.info.render.calls,
+        triangles: gl.info.render.triangles,
+      });
+    }
+    return () => {
+      delete document.documentElement.dataset.sceneReady;
+      delete window.__crowdcastSceneFrames;
+      delete window.__crowdcastSceneMemory;
+      delete window.__crowdcastSceneRender;
+    };
+  }, [diagnostic, gl, measure]);
+  useFrame((_, delta) => {
+    if (!ready.current) {
+      document.documentElement.dataset.sceneReady = "true";
+      ready.current = true;
+    }
+    if (measure) window.__crowdcastSceneFrames?.push(delta * 1000);
+  });
+  return null;
+}
+
+declare global {
+  interface Window {
+    __crowdcastSceneFrames?: number[];
+    __crowdcastSceneMemory?: () => { geometries: number; textures: number };
+    __crowdcastToggleLand?: (visible: boolean) => void;
+    __crowdcastRegress?: () => void;
+    __crowdcastSceneRender?: () => { calls: number; triangles: number };
+  }
+}

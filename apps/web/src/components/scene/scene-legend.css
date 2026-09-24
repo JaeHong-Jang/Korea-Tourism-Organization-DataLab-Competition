@@ -5,7 +5,11 @@
 .scene-legend__grade, .scene-grade { display: inline-flex; align-items: center; gap: var(--space-1); white-space: nowrap; }
 .scene-legend__flag { width: 11px; height: 15px; border-left: 2px solid var(--ink); clip-path: polygon(0 0, 100% 0, 100% 70%, 0 100%); }
 .scene-legend__note { color: var(--ink-2); }
-.scene-name-tag { display: grid; gap: var(--space-1); width: 140px; padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); color: var(--ink); font-size: var(--text-caption); line-height: 1.3; box-shadow: var(--shadow-float); text-align: center; }
+.scene-name-tag { display: grid; gap: var(--space-1); width: 158px; padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); color: var(--ink); font-size: var(--text-caption); line-height: 1.3; box-shadow: var(--shadow-float); text-align: center; box-sizing: border-box; min-height: 48px; }
+.scene-name-tag--far { display: flex; align-items: center; gap: var(--space-1); width: 106px; min-height: 30px; padding: var(--space-1); border-radius: 999px; }
 .scene-name-tag strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .scene-name-tag .scene-grade { justify-content: center; color: var(--ink-2); }
-.scene-festival-list { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.scene-name-tag--far .scene-grade span { display: none; }
+.scene-list-control button { border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); padding: var(--space-1) var(--space-2); cursor: pointer; }
+.scene-festival-list { max-height: 180px; overflow: auto; margin: var(--space-2) 0 0; padding-left: var(--space-5); }
+.scene-festival-list li { margin-bottom: var(--space-1); }

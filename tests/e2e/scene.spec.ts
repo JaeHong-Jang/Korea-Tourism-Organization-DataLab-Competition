@@ -95,22 +95,17 @@ for (const scene of [
       `인형 1개 = ${scale.toLocaleString("ko-KR")}명`,
     );
     await expect(page.locator(".scene-legend__grade")).toHaveCount(4);
+    await page.getByRole("button", { name: "목록으로 보기" }).click();
     await expect(page.locator(".scene-festival-list li")).toHaveCount(30);
+    await page.getByRole("button", { name: "목록 닫기" }).click();
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({
       path: resolve(output, `T-432-scene-${scene.sky}.png`),
     });
-      if (scene.sky === "day") {
-        await page.mouse.move(730, 435);
-        for (let step = 0; step < 12; step++) await page.mouse.wheel(0, -120);
-        await page.locator(".scene-stage > section").evaluate((stage) => {
-          stage.style.inset = "auto";
-          stage.style.width = "400%";
-          stage.style.height = "400%";
-          stage.style.left = "-154%";
-          stage.style.top = "-124%";
-        });
-        await page.waitForTimeout(900);
+    if (scene.sky === "day") {
+      await page.goto("http://127.0.0.1:5184/?sceneFixture=1&sceneQuality=high&sceneFocus=26470&theme=day&at=2025-10-18T13:00+09:00");
+      await expect(page.locator("html")).toHaveAttribute("data-scene-ready", "true", { timeout: 30_000 });
+      await expect(page.locator(".scene-name-tag:not(.scene-name-tag--far)").first()).toBeVisible();
       await page.screenshot({ path: resolve(output, "T-432-scene-close.png") });
     }
   });
@@ -128,6 +123,7 @@ test("견본 쿼리가 없는 장면은 군중이 비어 있다", async ({ page 
     "data-scene-doll-count",
     "0",
   );
+  await page.getByRole("button", { name: "목록으로 보기" }).click();
   await expect(page.locator(".scene-festival-list li")).toHaveCount(0);
 });
 
@@ -139,10 +135,12 @@ test("WebGL2 대체 안내", async ({ page }) => {
       return kind === "webgl2" ? null : original.call(this, kind, ...args);
     } as typeof original;
   });
-  await page.goto("http://127.0.0.1:5184/");
+  await page.goto("http://127.0.0.1:5184/?sceneFixture=1");
   await expect(
     page.getByText("3D를 쓸 수 없는 환경이에요 — 목록으로 보기"),
   ).toBeVisible();
+  await page.getByRole("button", { name: "목록으로 보기" }).click();
+  await expect(page.locator(".scene-festival-list li")).toHaveCount(30);
 });
 
 // 진단 모드에서 품질 단계마다 실제 캔버스 픽셀 비율이 달라지는지 확인한다.

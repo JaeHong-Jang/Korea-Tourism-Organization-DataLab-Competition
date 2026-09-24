@@ -20,7 +20,7 @@ export function crowdScale(
   quality: SceneQuality,
 ) {
   if (festivals.length === 0)
-    return { peoplePerDoll: 100, counts: [], total: 0 };
+    return { peoplePerDoll: 100, counts: [], total: 0, capExceeded: false };
   const peaks = festivals.map((festival) => Math.max(0, festival.peakP50));
   let peoplePerDoll = 100;
   let counts = peaks.map((peak) =>
@@ -37,5 +37,6 @@ export function crowdScale(
     peoplePerDoll,
     counts,
     total: counts.reduce((sum, count) => sum + count, 0),
+    capExceeded: counts.reduce((sum, count) => sum + count, 0) > limit[quality],
   };
 }

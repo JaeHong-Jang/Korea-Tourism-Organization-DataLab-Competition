@@ -82,3 +82,51 @@ test("이름표 겹침은 등급 우선이다", () => {
     ]),
   ).toEqual(["high", "elsewhere"]);
 });
+
+// 행사 수가 상한보다 많아 최소 한 개 규칙이 우선하면 이를 명시한다.
+test("상한을 넘는 최소 인형 수를 알린다", () => {
+  const many = Array.from({ length: 501 }, (_, index) => ({
+    ...sceneFestivals[0],
+    eventId: `sample-${index}`,
+    peakP50: 0,
+  }));
+  const result = crowdScale(many, "low");
+  expect(result.total).toBe(501);
+  expect(result.capExceeded).toBe(true);
+});
+
+// 같은 좌표의 두 행사도 다른 인형과 몸통 간격을 유지한다.
+test("같은 좌표의 군중은 서로 겹치지 않는다", () => {
+  const first = { festival: sceneFestivals[0], x: 0, z: 0 };
+  const second = { festival: sceneFestivals[1], x: 0, z: 0 };
+  const instances = buildDollLayout([first, second], [100, 100]);
+  const points = instances.map(({ matrix }) => [
+    matrix.elements[12],
+    matrix.elements[14],
+  ]);
+  for (let i = 0; i < points.length; i++)
+    for (let j = i + 1; j < points.length; j++) {
+      const separation = Math.hypot(
+        points[i][0] - points[j][0],
+        points[i][1] - points[j][1],
+      );
+      expect(separation).toBeGreaterThanOrEqual(0.9 - 1e-5);
+    }
+});
+
+// 실제 48px 이름표는 세로 40px 차이에서도 높은 등급만 남는다.
+test("이름표 실제 높이와 먼 시점의 최대 수를 지킨다", () => {
+  expect(
+    visibleTagIds([
+      { id: "high", level: 4, x: 10, y: 10 },
+      { id: "low", level: 1, x: 10, y: 50 },
+    ]),
+  ).toEqual(["high"]);
+  const separate = Array.from({ length: 10 }, (_, index) => ({
+    id: String(index),
+    level: 4,
+    x: index * 120,
+    y: 0,
+  }));
+  expect(visibleTagIds(separate, true)).toHaveLength(6);
+});

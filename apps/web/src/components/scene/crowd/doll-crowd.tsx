@@ -1,38 +1,53 @@
-// 한 번 만든 행렬을 옷·머리 두 인스턴스 메쉬에 적용한다.
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { Color, type InstancedMesh, MeshStandardMaterial } from "three";
+// 전국 보기에는 가벼운 실루엣, 가까운 보기에는 블록 인형을 인스턴싱한다.
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  Color,
+  DoubleSide,
+  type InstancedMesh,
+  MeshBasicMaterial,
+} from "three";
 import type { PlacedFestival } from "../festival-models/placement";
 import { sceneColor } from "../quality";
-import { dollBodyGeometry, dollHeadGeometry } from "./doll-geometry";
+import {
+  dollBodyGeometry,
+  dollFarGeometry,
+  dollHeadGeometry,
+} from "./doll-geometry";
 import { buildDollLayout } from "./doll-layout";
 
-// 군중 수나 품질 단계가 바뀌면 배치와 GPU 버퍼를 함께 갱신한다.
+// 같은 행렬을 두 표현에 올리고 카메라가 가까워질 때만 상세 형상으로 바꾼다.
 export function DollCrowd({
   placed,
   counts,
-  shadows,
+  center,
 }: {
   placed: PlacedFestival[];
   counts: number[];
-  shadows: boolean;
+  center: [number, number];
 }) {
   const bodyRef = useRef<InstancedMesh>(null);
   const headRef = useRef<InstancedMesh>(null);
+  const farRef = useRef<InstancedMesh>(null);
+  const closeRef = useRef(false);
+  const [close, setClose] = useState(false);
+  const camera = useThree((state) => state.camera);
   const instances = useMemo(
     () => buildDollLayout(placed, counts),
     [placed, counts],
   );
   const bodyGeometry = useMemo(dollBodyGeometry, []);
   const headGeometry = useMemo(dollHeadGeometry, []);
+  const farGeometry = useMemo(dollFarGeometry, []);
   const bodyMaterial = useMemo(
-    () => new MeshStandardMaterial({ roughness: 1 }),
+    () => new MeshBasicMaterial({ side: DoubleSide }),
     [],
   );
   const headMaterial = useMemo(
     () =>
-      new MeshStandardMaterial({
+      new MeshBasicMaterial({
         color: sceneColor("doll-head"),
-        roughness: 1,
+        side: DoubleSide,
       }),
     [],
   );
@@ -45,46 +60,69 @@ export function DollCrowd({
     [],
   );
 
-  // 인스턴스 행렬과 옷 색을 한 번만 쓰고 GPU에 갱신을 알린다.
+  // 카메라 거리의 단일 경계에서만 React 상태를 바꿔 프레임 중 할당을 피한다.
+  useFrame(() => {
+    const near =
+      Math.hypot(
+        camera.position.x - center[0],
+        camera.position.y,
+        camera.position.z - center[1],
+      ) < 300;
+    if (near !== closeRef.current) {
+      closeRef.current = near;
+      setClose(near);
+    }
+  });
+
+  // 인스턴스 행렬과 옷 색을 두 거리 단계에 한 번씩 기록한다.
   useLayoutEffect(() => {
     const body = bodyRef.current;
     const head = headRef.current;
-    if (!body || !head) return;
+    const far = farRef.current;
+    if (!body || !head || !far) return;
     instances.forEach(({ matrix, colorIndex }, index) => {
       body.setMatrixAt(index, matrix);
       body.setColorAt(index, colors[colorIndex]);
       head.setMatrixAt(index, matrix);
+      far.setMatrixAt(index, matrix);
+      far.setColorAt(index, colors[colorIndex]);
     });
-    body.instanceMatrix.needsUpdate = true;
-    if (body.instanceColor) body.instanceColor.needsUpdate = true;
-    head.instanceMatrix.needsUpdate = true;
-    body.computeBoundingSphere();
-    head.computeBoundingSphere();
+    for (const mesh of [body, head, far]) {
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      mesh.computeBoundingSphere();
+    }
   }, [instances, colors]);
 
-  // 교체나 언마운트 때 형상과 재료를 GPU에서 해제한다.
+  // 교체나 언마운트 때 두 거리 단계의 형상과 재료를 해제한다.
   useEffect(
     () => () => {
       bodyGeometry.dispose();
       headGeometry.dispose();
+      farGeometry.dispose();
       bodyMaterial.dispose();
       headMaterial.dispose();
     },
-    [bodyGeometry, headGeometry, bodyMaterial, headMaterial],
+    [bodyGeometry, headGeometry, farGeometry, bodyMaterial, headMaterial],
   );
 
   if (instances.length === 0) return null;
   return (
     <group>
       <instancedMesh
+        ref={farRef}
+        args={[farGeometry, bodyMaterial, instances.length]}
+        visible={!close}
+      />
+      <instancedMesh
         ref={bodyRef}
         args={[bodyGeometry, bodyMaterial, instances.length]}
-        castShadow={shadows}
+        visible={close}
       />
       <instancedMesh
         ref={headRef}
         args={[headGeometry, headMaterial, instances.length]}
-        castShadow={shadows}
+        visible={close}
       />
     </group>
   );
