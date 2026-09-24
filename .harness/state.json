@@ -74,7 +74,8 @@
    "evidence": "R-01 6차 PASS(gpt-6-astra, 0590c11): 체크리스트 ①~④ PASS, High 0. Med 1(masterVersion 재검사)은 후속 커밋에서 반영, check 129·오류 0"
   },
   "T-100": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T13:03:12.669Z"
   },
   "T-101": {
    "status": "todo"
@@ -140,7 +141,8 @@
    "status": "todo"
   },
   "T-601": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T13:03:12.748Z"
   },
   "T-602": {
    "status": "todo"
@@ -185,7 +187,9 @@
    "status": "todo"
   },
   "T-501": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T13:03:12.906Z",
+   "note": "재리뷰 FAIL(astra: rowid 충돌 INSERT OR REPLACE로 스냅샷 삭제 High) → 피드백 2회차(마지막) 재디스패치"
   },
   "T-502": {
    "status": "todo"
@@ -206,7 +210,9 @@
    "status": "todo"
   },
   "T-401": {
-   "status": "todo"
+   "status": "done",
+   "updated": "2026-09-24T13:28:09.527Z",
+   "evidence": "게이트 1~4 통과: build·test 4·lint·e2e 10·스크린샷 9(직접 확인)·Range 206·색 하드코딩 0, 교차 리뷰 astra PASS(Med 4 → T-402 이월), d5db41a"
   },
   "T-402": {
    "status": "todo"
@@ -503,6 +509,32 @@
    "id": "R-01",
    "status": "done",
    "evidence": "R-01 6차 PASS(gpt-6-astra, 0590c11): 체크리스트 ①~④ PASS, High 0. Med 1(masterVersion 재검사)은 후속 커밋에서 반영, check 129·오류 0"
+  },
+  {
+   "at": "2026-09-24T13:03:12.669Z",
+   "id": "T-100",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:03:12.748Z",
+   "id": "T-601",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:03:12.827Z",
+   "id": "T-401",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:03:12.906Z",
+   "id": "T-501",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:28:09.527Z",
+   "id": "T-401",
+   "status": "done",
+   "evidence": "게이트 1~4 통과: build·test 4·lint·e2e 10·스크린샷 9(직접 확인)·Range 206·색 하드코딩 0, 교차 리뷰 astra PASS(Med 4 → T-402 이월), d5db41a"
   }
  ]
 }
