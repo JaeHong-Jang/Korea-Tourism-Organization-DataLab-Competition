@@ -120,6 +120,24 @@ test("품질 단계의 DPR을 캔버스에 적용한다", async ({ page }) => {
 	});
 });
 
+// Canvas가 다시 렌더돼도(창 크기 변경) 낮은 품질의 DPR이 1로 되돌아가지 않아야 한다.
+test("낮은 품질 DPR이 재렌더 뒤에도 유지된다", async ({ page }) => {
+	await page.goto("http://127.0.0.1:5184/?sceneQuality=low");
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-ready",
+		"true",
+		{ timeout: 30_000 },
+	);
+	const ratio = () =>
+		page
+			.locator("canvas")
+			.evaluate((canvas) => canvas.width / canvas.clientWidth);
+	expect(await ratio()).toBeCloseTo(0.65, 2);
+	await page.setViewportSize({ width: 1180, height: 720 });
+	await page.waitForTimeout(300);
+	expect(await ratio()).toBeCloseTo(0.65, 2);
+});
+
 // 타일을 반복해서 올렸다 내려도 렌더러의 형상·텍스처 수가 늘지 않아야 한다.
 test("타일 재마운트 후 GPU 형상 수가 유지된다", async ({ page }) => {
 	await page.goto("http://127.0.0.1:5184/?sceneDiagnostic=1&sceneQuality=high");

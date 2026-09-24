@@ -1,5 +1,5 @@
 // 시군구 경계와 해 테마를 React Three Fiber 전국 장면으로 연결한다.
-import { AdaptiveDpr, PerformanceMonitor } from "@react-three/drei";
+import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Topology } from "topojson-specification";
@@ -45,30 +45,35 @@ function useScenePreferences() {
   return { visible, reducedMotion };
 }
 
-// 품질 단계와 R3F 회귀 계수를 함께 적용하고 프레임 저하를 회귀 신호로 보낸다.
+// 프레임 저하를 품질 단계와 R3F 회귀 계수로 알리고, DPR은 Canvas prop 한 곳에서만 정한다.
 function QualityControl({
   quality,
   fixed,
   diagnostic,
   onQualityChange,
+  onRegressFactor,
 }: {
   quality: SceneQuality;
   fixed: boolean;
   diagnostic: boolean;
   onQualityChange: (change: -1 | 1) => void;
+  onRegressFactor: (factor: number) => void;
 }) {
   const performance = useThree((state) => state.performance);
   const current = useThree((state) => state.performance.current);
-  const setDpr = useThree((state) => state.setDpr);
 
-  // AdaptiveDpr 뒤에서 단계별 기준 DPR을 곱해 두 조절값을 보존한다.
+  // R3F가 재렌더마다 Canvas dpr prop을 다시 적용하므로 회귀 계수는 prop 쪽으로 올려 보낸다.
   useEffect(() => {
-    setDpr(qualityDpr(quality) * current);
+    onRegressFactor(current);
+  }, [current, onRegressFactor]);
+
+  // 현재 품질 단계를 문서에 표시해 테스트·측정이 읽게 한다.
+  useEffect(() => {
     document.documentElement.dataset.sceneQuality = quality;
     return () => {
       delete document.documentElement.dataset.sceneQuality;
     };
-  }, [current, quality, setDpr]);
+  }, [quality]);
 
   // 진단 모드에서 회귀 신호가 실제 DPR까지 전달되는지 검사한다.
   useEffect(() => {
@@ -90,7 +95,6 @@ function QualityControl({
           onIncline={() => onQualityChange(1)}
         />
       )}
-      <AdaptiveDpr pixelated />
     </>
   );
 }
@@ -139,6 +143,7 @@ export function MiniKoreaCanvas() {
   const [topology, setTopology] = useState<Topology | null>(null);
   const [error, setError] = useState(false);
   const [quality, setQuality] = useState<SceneQuality>("high");
+  const [regressFactor, setRegressFactor] = useState(1);
   const [showLand, setShowLand] = useState(true);
   const diagnostics = useMemo(() => {
     const search = new URLSearchParams(window.location.search);
@@ -184,6 +189,7 @@ export function MiniKoreaCanvas() {
     return () => controller.abort();
   }, [webgl]);
 
+  // 경계 파일을 시군구 타일·중심점·시도 대응표로 한 번만 바꾼다.
   const model = useMemo(
     () => (topology ? buildLandModel(topology) : null),
     [topology],
@@ -200,6 +206,7 @@ export function MiniKoreaCanvas() {
     [model],
   );
 
+  // 나무판과 조명 범위는 땅 경계에 여백 90km를 더한 크기로 맞춘다.
   const bounds = model?.bounds;
   const center: [number, number] = bounds
     ? [(bounds.minX + bounds.maxX) / 2, (bounds.minZ + bounds.maxZ) / 2]
@@ -237,7 +244,7 @@ export function MiniKoreaCanvas() {
       >
         <Canvas
           shadows={activeQuality === "high"}
-          dpr={1}
+          dpr={qualityDpr(activeQuality) * regressFactor}
           frameloop={visible ? "always" : "never"}
           camera={{
             position: [center[0] + 440, 650, center[1] + 920],
@@ -258,6 +265,7 @@ export function MiniKoreaCanvas() {
             onQualityChange={(change) =>
               setQuality((current) => shiftQuality(current, change))
             }
+            onRegressFactor={setRegressFactor}
           />
           <SunLight
             quality={activeQuality}
