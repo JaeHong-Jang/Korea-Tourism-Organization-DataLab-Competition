@@ -21,3 +21,5 @@
 | T-502 | gpt-6-sol + 오케스트레이터 | done | 0·0·0 | G1 ✓(App.php 명세 확대) · G2 test 18·실서버 13/13 · G3 astra FAIL→FAIL→PASS · G4 모델 실행 판정 교정 | gpt-6-astra PASS | a16f946 | — |
 | R-02 | 검토(gpt-6-sol) | done | — | 1차 FAIL→T-301 되돌림 · 2차 FAIL(dev.mjs) → 직접 수정 · 3차 PASS | gpt-6-sol PASS | — | — |
 | T-430 | gpt-6-sol | done | 0 | G1 ✓(dev-page 하위 경로 명세 허용) · G2 test 20·build·lint · G3 astra PASS · G4 펫 디자인 시각 확인 | gpt-6-astra PASS | f16c214 | 스크린샷 해시 reports/T-430.md |
+| T-503 | gpt-6-sol | done | 0·0 | G1 ✓(예시 CSV 공개 경로 제거) · G2 test 24·해시 Python 독립 재계산 · G3 astra FAIL→PASS | gpt-6-astra PASS | e3cd85f | — |
+| T-302 | gpt-6-astra + 오케스트레이터(모델 결정) | done | 0·0 | G1 ✓(루트 lock) · G2 test 181·날짜·금액 경계 직접 재현 · G3 sol FAIL→PASS | gpt-6-sol PASS | a124d57 | 평가 MD 6efb0aa6 |

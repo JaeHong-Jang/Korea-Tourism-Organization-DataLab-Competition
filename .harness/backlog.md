@@ -5,7 +5,10 @@
 - [T-502 리뷰] records 스냅샷 저장은 **knowledge `/publish` 성공 뒤에만**(records는 모델 실행 등록 여부를 보지 않는다 — S08이 발행 때 본다).
 - SSE 스트림 테스트는 `@crowdcast/contracts/rules/sse-sequence.mjs`의 `sequenceProblems(events, ctx)`로 판정(새 예보·후속 요청 두 모드).
 
-## T-503 (records 초안·docx)
+## T-304 (해설가·OLLAMA_MODEL_WRITE 평가)
+- [T-302 리뷰 Med] `services/gateway/evals/run-extract-eval.ts:196` — 저장 결과를 다시 채점하면 보고서가 새 측정(차이 3칸)과 과거 승인 근거(1칸 차이)를 함께 쓴다 → 과거 승인 근거는 날짜와 함께 분리하고, 새 측정이 승인 근거와 다르면 "재검토 필요"로 표시.
+
+## T-504 (records 초안·docx)
 - [R-02 Low] `services/records/src/Health/Controller.php:16` — health 응답을 반환 직전 계약(OpenAPI health 스키마)으로 검증.
 
 ## T-204 (예측 API)
