@@ -12,23 +12,23 @@ from crowdcast.pipeline import gates
 from pipeline_fixtures import TODAY, region_frame
 
 
-# 정확히 오늘-40은 통과하고 전날·미래 관측일은 실패해야 한다.
-@pytest.mark.parametrize(("age", "passed"), [(40, True), (41, False), (-1, False)])
+# 실제 반영 지연 35일은 통과하고 36일·미래 관측일은 실패해야 한다.
+@pytest.mark.parametrize(("age", "passed"), [(35, True), (36, False), (-1, False)])
 def test_freshness_boundary(pipeline_root: Path, age: int, passed: bool) -> None:
     region_frame(latest=TODAY - timedelta(days=age)).write_parquet(paths.PROCESSED / "region_daily.parquet")
     assert gates.fetch_gate(TODAY)["passed"] is passed
 
 
-# 50칸에서 구분 하나만 없어도 결측 1칸이며 정확히 2%는 실패한다.
+# 세 구분을 포함한 150칸에서 3칸 결측인 정확히 2%는 실패한다.
 def test_grid_missingness_strict_boundary(pipeline_root: Path) -> None:
     path = paths.PROCESSED / "region_daily.parquet"
-    region_frame(25).slice(1).write_parquet(path)
+    region_frame(25).slice(3).write_parquet(path)
     gate = gates.fetch_gate(TODAY)
     assert gate["passed"] is False
-    assert "1/50=2.000000%" in gate["message"]
-    region_frame(26).slice(1).write_parquet(path)
+    assert "3/150=2.000000%" in gate["message"]
+    region_frame(26).slice(3).write_parquet(path)
     assert gates.fetch_gate(TODAY)["passed"] is True
-    assert "1/52=" in gates.fetch_gate(TODAY)["message"]
+    assert "3/156=" in gates.fetch_gate(TODAY)["message"]
 
 
 # 한 지역의 날 전체가 없거나 수치가 null·NaN이면 행 수 대신 격자 결측으로 잡는다.
@@ -53,7 +53,7 @@ def test_incomplete_cells(pipeline_root: Path, kind: str) -> None:
     frame.write_parquet(paths.PROCESSED / "region_daily.parquet")
     gate = gates.fetch_gate(TODAY)
     assert gate["passed"] is False
-    assert "1/4=25.000000%" in gate["message"]
+    assert ("3/12=25.000000%" if kind == "absent" else "1/12=8.333333%") in gate["message"]
 
 
 # 완료 체크포인트의 전체 누락 날짜도 분모에 남기며 손상된 체크포인트는 거부한다.
@@ -65,7 +65,7 @@ def test_checkpoint_dates_and_hash(pipeline_root: Path) -> None:
     }
     path.with_suffix(".progress.json").write_text(json.dumps(progress))
     gate = gates.fetch_gate(TODAY)
-    assert gate["passed"] is False and "2/6=" in gate["message"]
+    assert gate["passed"] is False and "6/18=" in gate["message"]
     progress["parquet_sha256"] = "0" * 64
     path.with_suffix(".progress.json").write_text(json.dumps(progress))
     assert "해시 불일치" in gates.fetch_gate(TODAY)["message"]

@@ -16,12 +16,14 @@ from pipeline_fixtures import latest_record
 def test_selection_and_missing_modules(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
     monkeypatch.setattr(stages, "command", lambda entry, args=None: (calls.append(entry) or 0, ""))
-    assert cli.main(["--from", "labels", "--to", "batch"]) == 0
+    assert cli.main(["--from", "labels", "--to", "batch"]) == 2
     record = latest_record(pipeline_root)
     assert [s["status"] for s in record["stages"]] == ["skipped", "passed", *(["skipped"] * 5)]
     assert calls == ["crowdcast.labels"]
     assert "진입점 없음" in record["stages"][2]["gate"]["message"]
     assert record["stages"][2]["gate"]["passed"] is None
+    assert record["status"] == "failed"
+    assert "미구현 단계: features, train, backtest, batch" in record["summary"]
     validate("pipeline-run", record)
 
 
@@ -58,14 +60,14 @@ def test_available_optional_module(pipeline_root: Path, monkeypatch: pytest.Monk
     assert latest_record(pipeline_root)["stages"][2]["status"] == "passed"
 
 
-# 두 번째 시도도 같은 client.ledger를 써서 전체 max-calls를 다시 충전하지 않는다.
+# 네트워크 실패의 두 번째 시도도 같은 client.ledger를 써서 예산을 다시 충전하지 않는다.
 @pytest.mark.parametrize("recover", [True, False])
 def test_fetch_retry_once_with_shared_budget(
     pipeline_root: Path,
     monkeypatch: pytest.MonkeyPatch,
     recover: bool,
 ) -> None:
-    clients, checks = [], []
+    clients = []
 
     # 합성 전송도 장부 객체의 이번 실행 예산을 먼저 확인한다.
     def collect(client: object, *args: object, **kwargs: object) -> None:
@@ -73,19 +75,15 @@ def test_fetch_retry_once_with_shared_budget(
         if client.ledger.calls >= client.ledger.max_calls:
             raise CallLimitReached("이번 실행의 max_calls 한도 도달")
         client.ledger.calls += 1
-
-    # 첫 게이트 실패와 선택적인 회복을 만들어 재시도 횟수를 확인한다.
-    def gate(today: object) -> dict:
-        checks.append(today)
-        return {"passed": recover and len(checks) == 2, "message": "합성 수집 게이트"}
+        if not recover or len(clients) == 1:
+            raise TimeoutError("응답 시간 초과")
 
     # 두 번의 게이트 검사가 같은 예산 객체를 공유하는지 기록까지 확인한다.
     monkeypatch.setattr(stages, "collect_visitors", collect)
-    monkeypatch.setattr(stages.gates, "fetch_gate", gate)
     monkeypatch.setattr(stages, "command", lambda *args: (0, ""))
-    assert cli.main(["--max-calls", "1", "--to", "labels"]) == (0 if recover else 1)
+    assert cli.main(["--max-calls", "2", "--to", "labels"]) == (0 if recover else 1)
     assert len(clients) == 2 and clients[0] is clients[1]
-    assert clients[0].ledger.calls == 1
+    assert clients[0].ledger.calls == 2
     record = latest_record(pipeline_root)
     assert "시도 1:" in record["stages"][0]["gate"]["message"]
     assert "시도 2:" in record["stages"][0]["gate"]["message"]
@@ -104,16 +102,16 @@ def test_dry_preserves_all_inputs_and_writes_only_records(
         raise AssertionError("dry가 실행 코드를 호출했습니다")
 
     # 실행 경로를 막은 상태에서 dry 기록만 추가되고 입력은 보존돼야 한다.
-    monkeypatch.setattr(cli, "DataGoClient", reject)
+    monkeypatch.setattr(stages, "VisitorClient", reject)
     monkeypatch.setattr(stages, "execute_stage", reject)
-    assert cli.main(["--dry", "--max-calls", "800"]) == 0
+    assert cli.main(["--dry", "--max-calls", "800"]) == 2
     after = {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in before}
     assert before == after
     added = {p for p in pipeline_root.rglob("*") if p.is_file()} - set(before)
     assert {p.name for p in added} == {"run.json", "run.md", "latest.json"}
     assert all(p.is_relative_to(paths.REPORTS / "runs") for p in added)
     record = latest_record(pipeline_root)
-    assert record["runId"].startswith("dry-") and record["status"] == "passed"
+    assert record["runId"].startswith("dry-") and record["status"] == "failed"
     assert all(stage["artifacts"] == [] for stage in record["stages"])
     assert record["stages"][-1]["status"] == "skipped"
 

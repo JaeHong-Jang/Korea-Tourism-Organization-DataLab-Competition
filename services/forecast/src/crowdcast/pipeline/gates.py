@@ -2,7 +2,7 @@
 
 import csv
 import json
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +10,7 @@ import polars as pl
 from crowdcast import paths
 from crowdcast.api.contract import validate
 from crowdcast.data.call_ledger import DAILY_LIMIT
+from crowdcast.data.crosswalk import CODE_CHANGE_DATE, INCHEON_BREAK_CODES
 from crowdcast.data.visitors import TOU_DIV
 from crowdcast.pipeline.run_record import sha256
 
@@ -32,47 +33,58 @@ def ledger_calls(today: date) -> int:
     return total
 
 
-# 실제 관측일과 수집 완료일의 격자로 누락 지역·구분·전체 날짜를 함께 센다.
-def fetch_gate(today: date) -> dict[str, Any]:
+# 기준 사전의 방문자 대상 지역과 연속 날짜로 전체 누락까지 분모에 남긴다.
+def fetch_gate(today: date, start: date | None = None) -> dict[str, Any]:
     output = paths.PROCESSED / "region_daily.parquet"
     frame = pl.read_parquet(output)
     if frame.is_empty():
         return {"passed": False, "message": "region_daily가 비어 있습니다"}
     if frame.select(pl.any_horizontal(pl.col("date", "sigungu_code", "tou_div").is_null()).any()).item():
         return {"passed": False, "message": "region_daily 격자 키 결측"}
-    days = set(frame["date"].to_list())
+    first, latest = frame["date"].min(), frame["date"].max()
+    first = min(first, start) if start else first
     checkpoint = output.with_suffix(".progress.json")
     if checkpoint.exists():
         progress = json.loads(checkpoint.read_bytes())
         if progress["parquet_sha256"] != sha256(output):
             return {"passed": False, "message": "region_daily 체크포인트 해시 불일치"}
-        days.update(date.fromisoformat(day) for day in progress["completed_dates"])
+        first = min([first, *(date.fromisoformat(day) for day in progress["completed_dates"])])
 
-    # 결측률 = (시군구 수 × 확보·완료 날짜 수 − 완전한 칸 수) / 전체 칸 수.
-    # 미수집 연도·구간은 분모에 넣지 않으며, 한 칸은 현지인·외지인·외국인 모두 유효해야 한다.
-    expected = frame["sigungu_code"].n_unique() * len(days)
+    # 결측률 = (기준 API 지역 × 첫날~최신일 전체 날짜 × 세 구분 − 유효 칸) / 전체 칸.
+    # 부모 시도 포함하며 2026-07-01 이후 인천 단절 지역만 분자·분모에서 함께 제외한다.
+    admin = pl.read_parquet(paths.PROCESSED / "admin_dict.parquet")
+    codes = admin.filter(pl.col("source").list.contains("visitors")).select("sigungu_code").unique()
+    days = pl.DataFrame({"date": pl.date_range(first, latest, eager=True)})
+    grid = codes.join(days, how="cross").filter(
+        ~((pl.col("date") >= CODE_CHANGE_DATE) & pl.col("sigungu_code").is_in(INCHEON_BREAK_CODES))
+    )
+    expected = grid.height * len(TOU_DIV)
+    if not expected:
+        return {"passed": False, "message": "방문자 기준 격자가 비어 있습니다"}
     valid = (
-        frame.group_by("sigungu_code", "date")
+        frame.join(grid, on=["sigungu_code", "date"], how="semi")
+        .filter(pl.col("tou_div").is_in(list(TOU_DIV.values())))
+        .group_by("sigungu_code", "date", "tou_div")
         .agg(
             (pl.col("visitors").is_not_null() & pl.col("visitors").is_finite() & (pl.col("visitors") >= 0))
             .all()
             .alias("valid"),
-            pl.col("tou_div").n_unique().alias("divisions"),
-            pl.col("tou_div").is_in(list(TOU_DIV.values())).all().alias("known"),
             pl.len().alias("rows"),
         )
-        .filter(pl.col("valid") & pl.col("known") & (pl.col("divisions") == 3) & (pl.col("rows") == 3))
+        .filter(pl.col("valid") & (pl.col("rows") == 1))
         .height
     )
     missing = expected - valid
-    latest, cutoff = frame["date"].max(), today - timedelta(days=40)
+    lag = (today - latest).days
     calls = ledger_calls(today)
-    passed = missing * 50 < expected and cutoff <= latest <= today and calls <= DAILY_LIMIT
+    passed = missing * 50 < expected and 0 <= lag <= 35 and calls <= DAILY_LIMIT
     return {
         "passed": passed,
         "message": (
-            f"시군구×확보·완료일 격자 결측 {missing}/{expected}={missing / expected:.6%} (<2%); "
-            f"최신 관측일 {latest} (기준 {cutoff} 이상, 미래 제외); 공유 장부 {calls}/{DAILY_LIMIT}건"
+            f"시군구×전체 날짜×세 구분 격자 {first}~{latest} 결측 "
+            f"{missing}/{expected}={missing / expected:.6%} (<2%); "
+            f"최신 관측일 {latest}; 실제 반영 지연={lag}일 (실행일 {today}, 0~35일); "
+            f"{'반영 지연 가정 위반; ' if lag > 35 else ''}공유 장부 {calls}/{DAILY_LIMIT}건"
         ),
     }
 
@@ -125,7 +137,22 @@ def previous_result(stage: str) -> Any:
 # 후속 모듈의 검증 종료 코드 외에 저장 산출물과 단계 간 비교 게이트를 확인한다.
 def optional_gate(stage: str, files: list[Path], previous: Any) -> dict[str, Any]:
     if stage == "features":
-        return {"passed": True, "message": "피처 모듈 종료 코드 0; available_at 검사는 모듈에서 수행"}
+        audit_path = paths.PROCESSED / "features_availability.json"
+        if not audit_path.is_file():
+            return {"passed": False, "message": "features_availability.json 없음"}
+        audit = json.loads(audit_path.read_bytes())
+        if (
+            any(type(audit[k]) is not int or audit[k] < 0 for k in ("checked", "violations"))
+            or not isinstance(audit["asOfRule"], str)
+            or not audit["asOfRule"].strip()
+            or audit["violations"] > audit["checked"]
+        ):
+            raise ValueError("피처 공개 시점 검사 결과 형식 오류")
+        return {
+            "passed": audit["checked"] > 0 and audit["violations"] == 0,
+            "message": f"공개 시점 검사 checked={audit['checked']}, violations={audit['violations']}; "
+            f"asOfRule={audit['asOfRule']}",
+        }
     if not files:
         return {"passed": False, "message": f"{stage} 산출물 없음"}
     if stage == "train":
@@ -149,6 +176,8 @@ def optional_gate(stage: str, files: list[Path], previous: Any) -> dict[str, Any
         ).read_bytes()
     )
     validate("backtest-summary", current)
+    if not current["golden"]:
+        return {"passed": None, "message": "골든 결과 0건: 미검증; 모델 승격 보류"}
     # 골든 ID만 남아 있어도 단위가 맞는 실제 재현 판정이 실패하면 승격을 막는다.
     golden = all(
         row["verdict"] == ("포함" if row["unitsComparable"] else "정성 비교") for row in current["golden"]

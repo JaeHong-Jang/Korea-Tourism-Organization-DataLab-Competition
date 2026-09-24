@@ -39,6 +39,12 @@ def pipeline_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(cli, "korea_today", lambda: TODAY)
     processed = paths.PROCESSED
     region_frame().write_parquet(processed / "region_daily.parquet")
+    pl.DataFrame({"sigungu_code": ["41800", "51150"], "source": [["visitors"], ["visitors"]]}).write_parquet(
+        processed / "admin_dict.parquet"
+    )
+    (processed / "features_availability.json").write_text(
+        json.dumps({"checked": 12, "violations": 0, "asOfRule": "available_at <= as_of (개최 D-14)"})
+    )
     events = pl.DataFrame({"event_id": ["ev-연천구석기축제-2025"], "is_golden": [False]})
     events.write_parquet(processed / "events.parquet")
     events.write_parquet(processed / "labels.parquet")

@@ -11,6 +11,24 @@ from crowdcast import paths
 from crowdcast.api.contract import validate
 from crowdcast.data.call_ledger import KST, atomic_write
 
+FETCH_STATE_MARKER = "; 수집 상태 JSON: "
+
+
+# dry·진행 중 기록을 제외하고 직전 수집 단계의 관측일·성공 시각을 이어받는다.
+def fetch_history() -> dict[str, str | None]:
+    runs = paths.REPORTS / "runs"
+    for path in sorted(runs.glob("*/run.json"), reverse=True):
+        if path.parent.name.startswith("dry-"):
+            continue
+        record = json.loads(path.read_bytes())
+        if record["finishedAt"] is None:
+            continue
+        for stage in record["stages"]:
+            message = stage["gate"]["message"]
+            if stage["name"] == "fetch" and FETCH_STATE_MARKER in message:
+                return json.loads(message.rsplit(FETCH_STATE_MARKER, 1)[1])
+    return {"latest": None, "last_success": None}
+
 
 # 큰 산출물도 한 번에 메모리에 올리지 않고 실제 파일 바이트를 해시한다.
 def sha256(path: Path) -> str:
@@ -98,10 +116,19 @@ def write_record(record: dict[str, Any]) -> Path:
     return directory / "run.json"
 
 
-# 누락 단계가 있어도 전체 상태는 계약 enum 안에서 기록하되 요약에 건너뜀을 명시한다.
-def finish_record(record: dict[str, Any], dry: bool) -> None:
+# 선택 단계의 미완료는 실패로 기록하고 게이트 실패와 다른 종료 코드를 준다.
+def finish_record(record: dict[str, Any], dry: bool, selected: tuple[str, ...]) -> int:
     record["finishedAt"] = datetime.now(KST).isoformat()
     failed = next((stage for stage in record["stages"] if stage["status"] == "failed"), None)
-    record["status"] = "failed" if failed else "passed"
+    skipped = [s["name"] for s in record["stages"] if s["name"] in selected and s["status"] == "skipped"]
+    absent = [
+        s["name"] for s in record["stages"] if s["name"] in skipped and "진입점 없음:" in s["gate"]["message"]
+    ]
+    record["status"] = "failed" if failed or skipped else "passed"
     summary = "; ".join(f"{stage['name']}={stage['status']}" for stage in record["stages"])
     record["summary"] = ("dry 검사: " if dry else "실행 결과: ") + summary + "."
+    if absent:
+        record["summary"] += " 미구현 단계: " + ", ".join(absent) + "."
+    if unverified := [name for name in skipped if name not in absent]:
+        record["summary"] += " 미검증 단계: " + ", ".join(unverified) + "."
+    return 1 if failed else (2 if skipped else 0)

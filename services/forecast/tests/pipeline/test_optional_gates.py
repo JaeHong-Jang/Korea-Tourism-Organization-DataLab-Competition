@@ -7,28 +7,7 @@ import polars as pl
 import pytest
 from crowdcast import paths
 from crowdcast.pipeline import gates, stages
-
-
-# 표시 지표는 백분율로 고정해 비율과 %p를 섞지 않는다.
-def backtest(mdape: float = 12.5, coverage: float = 80) -> dict:
-    return {
-        "runId": "backtest-2025",
-        "modelRunId": "mr-2025",
-        "modelVersion": "2025",
-        "target": "일평균 방문객",
-        "evalYears": [2025],
-        "metrics": {
-            "mdape": mdape,
-            "coverage80": coverage,
-            "coverageN": 10,
-            "judgmentRecall": None,
-            "judgmentPrecision": None,
-            "baselineDeltaPp": None,
-            "comparablePairs": 10,
-        },
-        "points": [],
-        "golden": [],
-    }
+from pipeline_fixtures import backtest
 
 
 # MdAPE +3%p와 포함률 -5%p는 경계를 포함하며 초과 악화는 실패한다.

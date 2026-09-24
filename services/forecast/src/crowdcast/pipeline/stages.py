@@ -11,8 +11,8 @@ from typing import Any
 
 import polars as pl
 from crowdcast import paths
-from crowdcast.data.call_ledger import CallLimitReached
-from crowdcast.data.datago_client import DataGoClient, safe_error
+from crowdcast.data.call_ledger import KST, CallLimitReached
+from crowdcast.data.datago_client import ApiPage, DataGoClient, safe_error
 from crowdcast.data.visitors import VISITORS_LAG_DAYS, IncompleteVisitors, collect_visitors
 from crowdcast.pipeline import gates
 
@@ -36,9 +36,24 @@ OUTPUTS = {
         "admin_dict.parquet",
     ),
     "labels": ("labels.parquet", "labels_g0.json", "labels_qc.md", "diy_labels_template.csv"),
-    "features": ("features.parquet",),
+    "features": ("features.parquet", "features_availability.json"),
     "batch": ("upcoming.parquet", "upcoming_forecasts.jsonl", "upcoming_qc.md"),
 }
+
+
+# 기존 수집기를 그대로 호출하며 실제 전송으로 받은 관측과 성공 시각만 추적한다.
+class VisitorClient(DataGoClient):
+    collected_rows = 0
+    last_success: str | None = None
+
+    # 캐시 재사용과 실패한 호출을 새 수집 성공으로 기록하지 않는다.
+    def page(self, *args: Any, **kwargs: Any) -> ApiPage:
+        before = self.ledger.calls
+        page = super().page(*args, **kwargs)
+        if self.ledger.calls > before and page.items:
+            self.collected_rows += len(page.items)
+            self.last_success = page.fetched_at.astimezone(KST).isoformat()
+        return page
 
 
 # 범위를 역순으로 지정하면 아무 작업도 시작하지 않는다.
@@ -67,7 +82,7 @@ def missing_entrypoint(stage: str) -> str | None:
 # dry 검사에는 실행 모듈을 부르지 않고 이미 있는 필수 입력 경로만 사용한다.
 def input_files(stage: str) -> list[Path]:
     names = {
-        "fetch": ("region_daily.parquet", "mcst_festivals.parquet"),
+        "fetch": ("region_daily.parquet", "admin_dict.parquet", "mcst_festivals.parquet"),
         "labels": ("events.parquet", "region_daily.parquet", "diy_targets.csv"),
         "features": ("events.parquet", "region_daily.parquet", "labels.parquet"),
         "train": ("labels.parquet",),
@@ -85,7 +100,7 @@ def input_files(stage: str) -> list[Path]:
 
 
 # 단계가 소유한 산출물만 해시 대상으로 모아 다른 레인의 파일을 섞지 않는다.
-def output_files(stage: str) -> list[Path]:
+def output_files(stage: str, backtest_directory: Path | None = None) -> list[Path]:
     files = [paths.PROCESSED / name for name in OUTPUTS.get(stage, ())]
     if stage == "train":
         card = paths.MODELS / "model_card.json"
@@ -102,10 +117,11 @@ def output_files(stage: str) -> list[Path]:
                 and not any(part.startswith(".") for part in path.relative_to(directory).parts)
             ]
     if stage == "backtest":
-        summaries = list((paths.REPORTS / "backtest").glob("*/backtest.json"))
-        if summaries:
-            latest = max(summaries, key=lambda path: path.stat().st_mtime_ns)
-            files = [latest, latest.with_name("backtest.md"), latest.with_name("points.parquet")]
+        files = (
+            []
+            if backtest_directory is None
+            else [backtest_directory / name for name in ("backtest.json", "backtest.md", "points.parquet")]
+        )
     return [path for path in files if path.is_file()]
 
 
@@ -145,24 +161,52 @@ def fetch_range(today: date) -> tuple[date, date]:
     path = paths.PROCESSED / "region_daily.parquet"
     start = end.replace(day=1)
     if path.exists():
-        first = pl.scan_parquet(path).select(pl.col("date").min()).collect().item()
+        first, latest = (
+            pl.scan_parquet(path)
+            .select(pl.col("date").min().alias("first"), pl.col("date").max().alias("latest"))
+            .collect()
+            .row(0)
+        )
         if first is not None:
-            start = min(first, start)
+            start, end = first, max(latest, end)
     return start, end
 
 
+# 수집 전후 최신 관측일을 읽어 직전 실행 이후의 날짜 감소를 감시한다.
+def latest_observation() -> str | None:
+    path = paths.PROCESSED / "region_daily.parquet"
+    if not path.is_file():
+        return None
+    latest = pl.scan_parquet(path).select(pl.col("date").max()).collect().item()
+    return latest.isoformat() if latest else None
+
+
 # 예산·미공개 중단은 확보 자료 게이트로 판단하되 실제 수집 오류는 실패로 전파한다.
-def fetch(client: DataGoClient, today: date) -> dict[str, Any]:
+def fetch(client: VisitorClient, today: date, history: dict[str, str | None]) -> dict[str, Any]:
     start, end = fetch_range(today)
     note = f"방문자 계획 {start}~{end}"
     try:
         collect_visitors(client, start, end, output=paths.PROCESSED / "region_daily.parquet")
     except (CallLimitReached, IncompleteVisitors) as exc:
         note += "; 수집 일시정지: " + safe_error(exc)
+    latest = (
+        pl.scan_parquet(paths.PROCESSED / "region_daily.parquet")
+        .select(pl.col("date").max())
+        .collect()
+        .item()
+    )
+    if (
+        client.collected_rows
+        and history["latest"]
+        and (latest is None or latest < date.fromisoformat(history["latest"]))
+    ):
+        return {"passed": False, "message": f"최신 관측일 감소: {history['latest']} → {latest}; 재시도 없음"}
+    gate = gates.fetch_gate(today, start)
+    if not gate["passed"]:
+        return gate
     code, detail = golden_command(ENTRYPOINTS["fetch"][1], ["--offline"])
     if code != 0:
         return {"passed": False, "message": f"events 종료 코드 {code}: {detail}"}
-    gate = gates.fetch_gate(today)
     gate["message"] += f"; {note}; 이번 실행 외부 호출={client.ledger.calls}; events --offline 종료 코드 0"
     return gate
 
@@ -174,11 +218,13 @@ def inspect_stage(stage: str, today: date) -> dict[str, Any]:
     if missing:
         return {"passed": False, "message": "dry 입력 없음: " + ", ".join(missing)}
     if stage == "fetch":
-        gate = gates.fetch_gate(today)
         start, end = fetch_range(today)
+        gate = gates.fetch_gate(today, start)
         gate["message"] += f"; 방문자 계획 {start}~{end}; events --offline"
     elif stage == "labels":
         gate = gates.labels_gate()
+    elif stage == "features":
+        gate = gates.optional_gate(stage, [], None)
     else:
         return {
             "passed": None,
@@ -189,21 +235,35 @@ def inspect_stage(stage: str, today: date) -> dict[str, Any]:
 
 
 # 기존 모듈 종료 코드가 실패면 과거 성공 산출물이 있어도 게이트를 통과시키지 않는다.
-def execute_stage(stage: str, today: date, client: DataGoClient | None) -> dict[str, Any]:
+def execute_stage(
+    stage: str,
+    today: date,
+    client: VisitorClient | None,
+    files: list[Path],
+    history: dict[str, str | None],
+) -> dict[str, Any]:
     if stage == "fetch":
         if client is None:
             raise ValueError("fetch 호출 예산이 초기화되지 않았습니다")
-        return fetch(client, today)
+        return fetch(client, today, history)
     previous = gates.previous_result(stage)
+    directories = set((paths.REPORTS / "backtest").glob("*/")) if stage == "backtest" else set()
     code, detail = (
         golden_command(ENTRYPOINTS[stage][0], []) if stage == "labels" else command(ENTRYPOINTS[stage][0])
     )
     if code != 0:
         return {"passed": False, "message": f"{stage} 종료 코드 {code}: {detail}"}
-    gate = (
-        gates.labels_gate()
-        if stage == "labels"
-        else gates.optional_gate(stage, output_files(stage), previous)
-    )
+    # 과거 디렉터리 수정은 새 결과가 아니며 여러 새 결과도 임의로 선택하지 않는다.
+    directory = None
+    if stage == "backtest":
+        created = set((paths.REPORTS / "backtest").glob("*/")) - directories
+        if len(created) != 1:
+            return {"passed": False, "message": f"이번 백테스트 디렉터리 {len(created)}개: 정확히 1개 필요"}
+        directory = created.pop()
+        summary = directory / "backtest.json"
+        if not summary.is_file():
+            return {"passed": False, "message": "이번 단계 시작 이후 backtest.json 없음"}
+    files.extend(output_files(stage, directory))
+    gate = gates.labels_gate() if stage == "labels" else gates.optional_gate(stage, files, previous)
     gate["message"] += "; 종료 코드 0"
     return gate
