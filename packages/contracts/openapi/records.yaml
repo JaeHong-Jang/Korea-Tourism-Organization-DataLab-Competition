@@ -296,6 +296,7 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               required:
                 - eventId
                 - actual
@@ -320,6 +321,7 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               required:
                 - forecastId
               properties:

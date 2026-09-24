@@ -84,13 +84,29 @@ async function waitHealthy(url) {
   return false;
 }
 
+// 공유 링크 토큰(sh-…)은 접근 로그에 그대로 남지 않게 가린다(PHP 개발 서버가 요청 URL을 찍는다)
+const maskSecrets = (line) => line.replace(/(?<![A-Za-z0-9_-])sh-[A-Za-z0-9_-]{16,64}/g, "sh-***");
+
+// 종료 직전에 개행 없이 남은 로그 조각을 내보낼 함수들
+const flushers = [];
+
 // 서비스 하나를 띄우고 로그 앞에 이름을 붙인다
 function start(svc, env) {
   const child = spawn(svc.cmd, svc.args, { cwd: ROOT, env, stdio: ["ignore", "pipe", "pipe"] });
   const tag = `\x1b[${svc.color}m[${svc.name}]\x1b[0m `;
-  const pipe = (stream) => stream.on("data", (buf) => {
-    for (const line of buf.toString().split("\n")) if (line.trim()) process.stdout.write(tag + line + "\n");
-  });
+  // 청크 경계에서 토큰이 둘로 나뉘지 않게 완전한 줄을 모은 뒤 가린다
+  const pipe = (stream) => {
+    let rest = "";
+    const write = (line) => { if (line.trim()) process.stdout.write(tag + maskSecrets(line) + "\n"); };
+    stream.on("data", (buf) => {
+      const lines = (rest + buf.toString()).split("\n");
+      rest = lines.pop() ?? "";
+      for (const line of lines) write(line);
+    });
+    const flush = () => { write(rest); rest = ""; };
+    stream.on("end", flush);
+    flushers.push(flush);
+  };
   pipe(child.stdout);
   pipe(child.stderr);
   child.on("exit", (code) => process.stdout.write(`${tag}종료(code ${code})\n`));
@@ -115,7 +131,12 @@ for (const s of SERVICES.filter((x) => !present.includes(x) && (!only || only.ha
 for (const s of present) children.push(start(s, env));
 
 // Ctrl+C로 전부 함께 끈다
-const stopAll = (code = 0) => { for (const c of children) c.kill("SIGTERM"); process.exit(code); };
+// 남은 로그를 내보내고 stdout 쓰기가 끝난 뒤에 종료한다(파이프로 이어진 stdout은 비동기라 바로 exit하면 잘린다)
+const stopAll = (code = 0) => {
+  for (const flush of flushers) flush();
+  for (const c of children) c.kill("SIGTERM");
+  process.stdout.write("", () => process.exit(code));
+};
 process.on("SIGINT", () => stopAll());
 process.on("SIGTERM", () => stopAll());
 
