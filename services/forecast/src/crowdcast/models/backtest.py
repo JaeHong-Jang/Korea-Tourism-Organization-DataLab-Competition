@@ -145,7 +145,9 @@ def run_backtest(
             continue
 
         # 두 모델 모두 같은 학습 구간을 쓰며 단순 모델의 구간은 학습 잔차로만 만든다.
-        simple = SimpleModel().fit(training)
+        simple = SimpleModel().fit(
+            training, {"gold": config["gold_weight"], "silver": config["silver_weight"]}
+        )
         models, encoding = fit_quantiles(training, names, config)
         correction = calibrate(models, encoding, calibration)
         ood = fit_ood(training, names)

@@ -50,8 +50,9 @@ def model_card(
         f"명절 실버 채점 불가 {shown['unscorable']}건, 실측 대상 미만 {shown['belowThresholdActual']}건. "
     )
     notes = (
-        counts + f"labels SHA-256={labels_sha256}; 실버 가중치={config['silver_weight']}; "
-        f"골드 가중치={config['gold_weight']}; 코로나(2020·2021) 제외={config['exclude_covid']}; "
+        counts + f"labels SHA-256={labels_sha256}; 실버 가중치={config['silver_weight']}·"
+        f"골드 가중치={config['gold_weight']}(단순 모델 계층 중앙값·잔차 분위수와 LightGBM 모두 적용, "
+        f"B0 기준선만 무가중 유형 중앙값); 코로나(2020·2021) 제외={config['exclude_covid']}; "
         f"G0={g0['branch']}, 주 모델={g0['primary_model']}, judgment.basis={g0['basis']}; "
         f"정의 일치 골드 고유 행사={g0['gold_summary']['gold_event_count']}; 목표 포함률 80%(보장 아님). "
         "표본 한계로 구간 기준 표시 시에도 등급·적용 규칙은 같은 표본의 확률 판정으로 정한다. "

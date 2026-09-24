@@ -83,3 +83,19 @@ def test_b0_uses_training_type_medians() -> None:
     assert model.b0({"type": 5.0}) == 5000
     assert model.b0({"type": 1.0}) is None
     assert model.center({"type": 1.0}) == 2600
+
+
+# 실버는 가중치를 낮춰 단순 모델 중앙값에 덜 반영되고, B0 기준선은 무가중 유형 중앙값 그대로다.
+def test_simple_model_downweights_silver() -> None:
+    training = pl.DataFrame(
+        {
+            "type": [0.0, 0.0, 0.0],
+            "daily_mean": [1000, 3000, 3000],
+            "label_tier": ["goldA", "silver", "silver"],
+        }
+    )
+    weighted = SimpleModel().fit(training, {"gold": 1.0, "silver": 0.5})
+    unweighted = SimpleModel().fit(training)
+    assert weighted.b0({"type": 0.0}) == unweighted.b0({"type": 0.0}) == 3000
+    assert weighted.center({"type": 0.0}) == pytest.approx(1000 + 2000 * 0.25 / 0.375)
+    assert unweighted.center({"type": 0.0}) == 3000
