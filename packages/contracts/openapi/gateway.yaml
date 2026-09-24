@@ -173,7 +173,7 @@ paths:
                   $ref: ../schemas/festival-summary.schema.json
   /api/records/{path}:
     get:
-      summary: records 중계(허용 목록 — events·events/{id}/snapshots·plans/{id}·plans/{id}/export.docx·ledger·ledger/verify·snapshots/{forecastId}). 요청·응답은 records.yaml의 같은 경로 계약으로 검증
+      summary: records 중계(허용 목록 — events·events/{id}/snapshots·plans/{id}·plans/{id}/export.docx·ledger·ledger/verify·snapshots/{forecastId}·shares/{token}). 요청·응답은 records.yaml의 같은 경로 계약으로 검증
       parameters:
         - name: path
           in: path

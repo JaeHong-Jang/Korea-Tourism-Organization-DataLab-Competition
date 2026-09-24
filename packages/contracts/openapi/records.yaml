@@ -337,3 +337,22 @@ paths:
                 properties:
                   token:
                     type: string
+  /v1/shares/{token}:
+    get:
+      summary: 공유 링크로 발행 스냅샷 열기(읽기 전용, 만료 없음 — 로컬 제품)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^sh-[A-Za-z0-9_-]{16,64}$
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/forecast-report.schema.json
+        "404":
+          description: 없는 토큰
