@@ -14,7 +14,10 @@ from crowdcast.api.contract import validate
 from crowdcast.data.call_ledger import DAILY_LIMIT
 from crowdcast.data.crosswalk import CODE_CHANGE_DATE, INCHEON_BREAK_CODES, PARENT_CITY_CODES
 from crowdcast.data.visitors import TOU_DIV
-from crowdcast.pipeline.run_record import sha256
+from crowdcast.pipeline.run_record import model_directory, sha256
+
+# T-203 학습 산출물 — 분위수(p10·p50·p90) LightGBM 모델 파일.
+REQUIRED_MODEL_FILES = ("p10.txt", "p50.txt", "p90.txt")
 
 
 # 손상된 장부를 0건으로 취급하지 않고 모든 행의 날짜·횟수를 검증한다.
@@ -164,12 +167,13 @@ def labels_gate() -> dict[str, Any]:
     }
 
 
-# 기존 결과를 실행 전에 읽어 백테스트·일괄 예보의 비교 기준을 보존한다.
+# 기존 결과를 실행 전에 읽어 백테스트·일괄 예보의 비교 기준을 보존한다(백테스트는 완료 포인터가 가리킨 결과).
 def previous_result(stage: str) -> Any:
     if stage == "backtest":
-        files = list((paths.REPORTS / "backtest").glob("*/backtest.json"))
-        if files:
-            return json.loads(max(files, key=lambda path: path.stat().st_mtime_ns).read_bytes())
+        pointer = paths.REPORTS / "backtest/latest.json"
+        if pointer.is_file():
+            summary = pointer.parent / json.loads(pointer.read_bytes())["runId"] / "backtest.json"
+            return json.loads(summary.read_bytes()) if summary.is_file() else None
     if stage == "batch" and (paths.PROCESSED / "upcoming.parquet").exists():
         return pl.scan_parquet(paths.PROCESSED / "upcoming.parquet").select(pl.len()).collect().item()
     return None
@@ -197,9 +201,15 @@ def optional_gate(stage: str, files: list[Path], previous: Any) -> dict[str, Any
     if not files:
         return {"passed": False, "message": f"{stage} 산출물 없음"}
     if stage == "train":
-        card = json.loads((paths.MODELS / "model_card.json").read_bytes())
+        directory = model_directory()
+        if directory is None or not (directory / "model_card.json").is_file():
+            return {"passed": False, "message": "완료 포인터가 가리키는 모델 카드 없음"}
+        card = json.loads((directory / "model_card.json").read_bytes())
         validate("model-card", card)
-        saved = any(path.parent != paths.MODELS for path in files)
+        if card["modelVersion"] != directory.name:
+            return {"passed": False, "message": "모델 카드 버전과 완료 포인터의 modelVersion 불일치"}
+        # 분위수 모델 세 파일이 각각 이번 버전 폴더에 있어야 학습 산출물로 인정한다.
+        saved = all(directory / name in files for name in REQUIRED_MODEL_FILES)
         return {"passed": saved, "message": f"학습 모듈 종료 코드 0; 모델 카드 계약 통과; 모델 파일={saved}"}
     if stage == "batch":
         count = pl.scan_parquet(paths.PROCESSED / "upcoming.parquet").select(pl.len()).collect().item()
@@ -210,7 +220,7 @@ def optional_gate(stage: str, files: list[Path], previous: Any) -> dict[str, Any
             + ("경고: 직전 90% 미만 (중단하지 않음)" if warning else "예보 수 게이트 통과"),
         }
 
-    # 백테스트 표시 지표는 백분율(예: 포함률 80)이므로 %p를 그대로 더하고 뺀다.
+    # 계약 단위: MdAPE는 %, 포함률은 비율(0~1) — 허용 폭도 각 단위로 비교한다(+3%p, -0.05).
     current = json.loads(
         max(
             (p for p in files if p.name == "backtest.json"), key=lambda path: path.stat().st_mtime_ns
@@ -234,9 +244,10 @@ def optional_gate(stage: str, files: list[Path], previous: Any) -> dict[str, Any
     golden = golden and {row["eventId"] for row in previous["golden"]} <= {
         row["eventId"] for row in current["golden"]
     }
-    passed = new["mdape"] <= old["mdape"] + 3 and new["coverage80"] >= old["coverage80"] - 5
+    passed = new["mdape"] <= old["mdape"] + 3 and new["coverage80"] >= old["coverage80"] - 0.05
     return {
         "passed": passed and golden,
         "message": f"MdAPE={new['mdape']}% (직전 {old['mdape']}% +3%p); "
-        f"포함률={new['coverage80']}% (직전 {old['coverage80']}% -5%p); 골든 재현={golden}",
+        f"포함률={new['coverage80'] * 100:.1f}% (직전 {old['coverage80'] * 100:.1f}% -5%p); "
+        f"골든 재현={golden}",
     }

@@ -84,7 +84,7 @@ export const backtest: BacktestSummary = {
   evalYears: [2025],
   metrics: {
     mdape: 12.5,
-    coverage80: 80,
+    coverage80: 0.8,
     coverageN: 10,
     judgmentRecall: null,
     judgmentPrecision: null,

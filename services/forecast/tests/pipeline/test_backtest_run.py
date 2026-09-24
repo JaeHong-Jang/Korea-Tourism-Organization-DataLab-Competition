@@ -129,7 +129,6 @@ def test_unverified_backtest_records_artifact(pipeline_root: Path, monkeypatch: 
     assert "미검증 단계: backtest" in record["summary"]
 
 
-
 # 옛 latest.json에 미래 finishedAt이 남아 있어도 이번 단계가 파일을 새로 쓰지 않았으면 실패한다.
 def test_stale_pointer_with_future_finish_fails(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     import os
@@ -149,7 +148,6 @@ def test_stale_pointer_with_future_finish_fails(pipeline_root: Path, monkeypatch
     record = latest_record(pipeline_root)
     assert record["stages"][4]["status"] == "failed"
     assert "latest.json" in record["stages"][4]["gate"]["message"]
-
 
 
 # 실행 직전에 쓰인 옛 표식(미래 finishedAt)이라도 이번 단계에서 내용이 바뀌지 않으면 실패한다.

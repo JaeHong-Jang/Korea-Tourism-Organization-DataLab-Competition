@@ -21,7 +21,7 @@ from crowdcast.pipeline import gates, run_record
 ENTRYPOINTS = {
     "fetch": ("crowdcast.data.visitors", "crowdcast.data.events"),
     "labels": ("crowdcast.labels",),
-    "features": ("crowdcast.features.build",),
+    "features": ("crowdcast.models:features",),
     "train": ("crowdcast.models:train",),
     "backtest": ("crowdcast.models:backtest",),
     "batch": ("crowdcast.analytics.upcoming",),
@@ -40,10 +40,11 @@ OUTPUTS = {
     "features": ("features.parquet", "features_availability.json"),
     "batch": ("upcoming.parquet", "upcoming_forecasts.jsonl", "upcoming_qc.md"),
 }
-# 후속 단계는 이 필수 산출물 전부를 갱신해야 하며 백테스트는 완료 표식으로 식별한다.
+# 후속 단계는 이 필수 산출물 전부를 갱신해야 하며 학습·백테스트는 불변 발행이라 완료 포인터로 식별한다.
+POINTER_STAGES = ("train", "backtest")
 REQUIRED_OUTPUTS = {
     "features": ("data/processed/features_availability.json", "data/processed/features.parquet"),
-    "train": ("models/model_card.json", "models/{modelVersion}/**/*"),
+    "train": ("reports/backtest/latest.json",),
     "backtest": ("reports/backtest/latest.json",),
     "batch": ("data/processed/upcoming.parquet",),
 }
@@ -104,8 +105,11 @@ def input_files(stage: str) -> list[Path]:
         files.append(paths.EXTERNAL / "boundaries/sigungu.topo.json")
     if stage == "labels":
         files += [paths.PROCESSED / "labels_g0.json", paths.PROCESSED / "labels.parquet"]
+    # 일괄 예보는 완료 포인터와 그 포인터가 가리키는 모델 카드가 모두 있어야 한다.
     if stage == "batch":
-        files.append(paths.MODELS / "model_card.json")
+        files.append(paths.REPORTS / "backtest/latest.json")
+        if (directory := run_record.model_directory()) is not None:
+            files.append(directory / "model_card.json")
     return files
 
 
@@ -113,7 +117,7 @@ def input_files(stage: str) -> list[Path]:
 def output_files(stage: str, backtest_directory: Path | None = None) -> list[Path]:
     files = [paths.PROCESSED / name for name in OUTPUTS.get(stage, ())]
     if stage == "train":
-        files = [paths.MODELS / "model_card.json", *run_record.model_files()]
+        files = run_record.model_files()
     if stage == "backtest":
         files = (
             []
@@ -240,15 +244,17 @@ def execute_stage(
     client: VisitorClient | None,
     files: list[Path],
     history: dict[str, str | None],
+    baseline: Any = None,
 ) -> dict[str, Any]:
     if stage == "fetch":
         if client is None:
             raise ValueError("fetch 호출 예산이 초기화되지 않았습니다")
         return fetch(client, today, history)
-    previous = gates.previous_result(stage)
+    # train이 먼저 새 결과를 발행하므로 백테스트 비교 기준은 파이프라인 시작 때 읽은 결과를 쓴다.
+    previous = baseline if stage == "backtest" else gates.previous_result(stage)
     # 백테스트 완료 표식의 실행 전 내용 — 실행 뒤 내용이 바뀌어야 이번 결과로 인정한다.
     pointer = paths.REPORTS / "backtest/latest.json"
-    pointer_before = pointer.read_bytes() if stage == "backtest" and pointer.is_file() else None
+    pointer_before = pointer.read_bytes() if stage in POINTER_STAGES and pointer.is_file() else None
     started_ns = time_ns()
     code, detail = (
         golden_command(ENTRYPOINTS[stage][0], []) if stage == "labels" else command(ENTRYPOINTS[stage][0])
@@ -256,13 +262,14 @@ def execute_stage(
     if code != 0:
         return {"passed": False, "message": f"{stage} 종료 코드 {code}: {detail}"}
     # 완료 표식은 같은 runId 재실행을 허용하고 나머지 단계는 필수 파일의 갱신을 확인한다.
-    if stage == "backtest":
+    if stage in POINTER_STAGES:
         latest = pointer
         # 완료 표식 내용이 실행 전과 달라야 한다(같은 runId 재실행도 finishedAt이 새로 쓰여 내용이 바뀐다).
         if not latest.is_file() or latest.read_bytes() == pointer_before:
-            message = "이번 백테스트가 latest.json을 갱신하지 않았습니다; 종료 코드 0"
+            message = f"이번 {stage} 실행이 latest.json을 갱신하지 않았습니다; 종료 코드 0"
             return {"passed": False, "message": message}
-        files.extend(output_files(stage, run_record.current_backtest(started_ns)))
+        backtest_directory = run_record.current_backtest(started_ns)
+        files.extend(output_files(stage, backtest_directory))
         files.append(latest)
     elif stage in REQUIRED_OUTPUTS:
         required = run_record.current_outputs(REQUIRED_OUTPUTS[stage], started_ns)

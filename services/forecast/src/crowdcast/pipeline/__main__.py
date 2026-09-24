@@ -10,7 +10,7 @@ from typing import Any
 import httpx
 from crowdcast.data.call_ledger import korea_today
 from crowdcast.data.datago_client import DataGoError, TransientDataGoError, safe_error
-from crowdcast.pipeline import run_record, stages
+from crowdcast.pipeline import gates, run_record, stages
 
 
 # 공개 단계는 모든 선행 단계의 실제 통과가 확인될 때만 통과시킨다.
@@ -54,6 +54,7 @@ def run_stage(
     dry: bool,
     client: stages.VisitorClient | None,
     files: list[Path],
+    baseline: Any = None,
 ) -> dict[str, Any]:
     if name == "publish":
         return publish_gate(record, dry)
@@ -70,7 +71,7 @@ def run_stage(
             gate = (
                 stages.inspect_stage(name, korea_today())
                 if dry
-                else stages.execute_stage(name, korea_today(), client, files, history)
+                else stages.execute_stage(name, korea_today(), client, files, history, baseline)
             )
         except Exception as exc:
             gate = {"passed": False, "message": f"{type(exc).__name__}: {safe_error(exc)}"}
@@ -120,6 +121,8 @@ def main(argv: list[str] | None = None) -> int:
     run_record.write_record(record)
 
     # 각 상태 전이도 저장해 긴 실행 도중 운영 화면에서 진행 상황을 읽을 수 있게 한다.
+    # 백테스트 비교 기준은 train이 새 결과를 발행하기 전, 실행 시작 때의 완료 포인터 결과로 고정한다.
+    baseline = gates.previous_result("backtest")
     with ExitStack() as stack:
         client = None
         for stage in record["stages"]:
@@ -134,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
                 if name == "fetch" and not args.dry:
                     client = stack.enter_context(stages.VisitorClient(max_calls=args.max_calls))
                 files: list[Path] = []
-                gate = run_stage(name, record, args.dry, client, files)
+                gate = run_stage(name, record, args.dry, client, files, baseline)
                 # dry와 미실행 단계에는 기존 파일을 새 산출물처럼 기록하지 않는다.
                 if not args.dry:
                     if name == "fetch":

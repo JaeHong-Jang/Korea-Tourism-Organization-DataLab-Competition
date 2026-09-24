@@ -10,7 +10,7 @@ import pytest
 from crowdcast import paths
 from crowdcast.pipeline import __main__ as cli
 from crowdcast.pipeline import run_record, stages
-from pipeline_fixtures import latest_record, write_features
+from pipeline_fixtures import backtest, latest_record, write_backtest, write_features
 
 
 # 각 모듈이 실제로 저장할 계약·표 모양의 소형 산출물을 준비한다.
@@ -19,15 +19,18 @@ def prepare_outputs(stage: str) -> list[Path]:
         write_features()
         return [paths.PROCESSED / "features_availability.json", paths.PROCESSED / "features.parquet"]
     if stage == "train":
-        card = paths.MODELS / "model_card.json"
         fixture = paths.REPO_ROOT / "packages/contracts/fixtures/model-card/valid-v0-1-0.json"
         content = json.loads(fixture.read_bytes())
-        card.write_text(json.dumps(content))
         directory = paths.MODELS / content["modelVersion"]
         directory.mkdir(exist_ok=True)
+        card = directory / "model_card.json"
+        card.write_text(json.dumps(content))
         models = [directory / f"p{quantile}.txt" for quantile in (10, 50, 90)]
         for model in models:
             model.write_text("연천구석기축제 합성 학습 모형")
+        summary = backtest()
+        summary["modelVersion"] = content["modelVersion"]
+        write_backtest(summary)
         return [card, *models]
     upcoming = paths.PROCESSED / "upcoming.parquet"
     pl.DataFrame({"event_id": ["ev-연천구석기축제-2025"]}).write_parquet(upcoming)
@@ -35,7 +38,7 @@ def prepare_outputs(stage: str) -> list[Path]:
 
 
 # 필수 파일 하나라도 과거·누락이면 실패하며 전부 갱신했을 때만 통과해야 한다.
-@pytest.mark.parametrize("stage", ["features", "train", "batch"])
+@pytest.mark.parametrize("stage", ["features", "batch"])
 @pytest.mark.parametrize("change", ["none", "missing", "first_only", "last_only", "all"])
 def test_required_outputs_must_all_be_current(
     pipeline_root: Path, monkeypatch: pytest.MonkeyPatch, stage: str, change: str
@@ -72,21 +75,30 @@ def test_required_outputs_must_all_be_current(
         assert "산출물" in row["gate"]["message"]
 
 
-# 모델 카드만 저장하고 실제 버전 디렉터리를 비워 둔 학습은 성공이 아니다.
-def test_empty_model_directory_fails(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+# 학습은 완료 포인터로 판정한다 — 새 포인터·모델 파일이면 통과, 포인터가 그대로거나 모델 파일이 없으면 실패.
+@pytest.mark.parametrize("case", ["published", "unchanged", "empty"])
+def test_train_uses_completion_pointer(
+    pipeline_root: Path, monkeypatch: pytest.MonkeyPatch, case: str
+) -> None:
+    files = prepare_outputs("train")
+
+    # 정상 종료 가짜 학습이 포인터를 새로 쓰거나(같은 버전 재실행) 아무것도 쓰지 않는 경우를 재현한다.
     def command(*args: object) -> tuple[int, str]:
-        files = prepare_outputs("train")
-        for model in files[1:]:
-            model.unlink()
-        written_ns = time_ns()
-        os.utime(files[0], ns=(written_ns, written_ns))
+        if case != "unchanged":
+            summary = backtest()
+            summary["modelVersion"] = json.loads(files[0].read_bytes())["modelVersion"]
+            write_backtest(summary)
+        if case == "empty":
+            for model in files[1:]:
+                model.unlink()
         return 0, ""
 
-    # 카드 계약과 무관하게 모델 파일 존재 조건을 따로 확인한다.
     monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
     monkeypatch.setattr(stages, "command", command)
-    assert cli.main(["--from", "train", "--to", "train"]) == 1
-    assert "모델 파일" in latest_record(pipeline_root)["stages"][3]["gate"]["message"]
+    assert cli.main(["--from", "train", "--to", "train"]) == (0 if case == "published" else 1)
+    message = latest_record(pipeline_root)["stages"][3]["gate"]["message"]
+    expected = {"published": "모델 카드 계약 통과", "unchanged": "latest.json", "empty": "모델 파일=False"}
+    assert expected[case] in message
 
 
 # 수정 시각이 단계 시작과 같으면 허용하고 단 1ns라도 이전이면 거부한다.
@@ -110,3 +122,25 @@ def test_stage_without_output_spec_is_skipped(pipeline_root: Path, monkeypatch: 
     assert cli.main(["--from", "features", "--to", "features"]) == 2
     stage = latest_record(pipeline_root)["stages"][2]
     assert stage["status"] == "skipped" and "필수 산출물 표 없음" in stage["gate"]["message"]
+
+
+# 연속 실행에서 train이 먼저 새 결과를 발행해도 backtest는 실행 시작 때의 결과와 비교해 악화를 잡는다.
+def test_backtest_compares_with_result_before_train(
+    pipeline_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    files = prepare_outputs("train")
+    version = json.loads(files[0].read_bytes())["modelVersion"]
+
+    # 가짜 학습·백테스트가 같은 새 버전(포함률 0.8 → 0.5)을 발행하고 완료 포인터를 새로 쓴다.
+    def command(*args: object) -> tuple[int, str]:
+        worse = backtest(coverage=0.5)
+        worse["runId"], worse["modelVersion"] = "backtest-worse", version
+        write_backtest(worse)
+        return 0, ""
+
+    monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
+    monkeypatch.setattr(stages, "command", command)
+    assert cli.main(["--from", "train", "--to", "backtest"]) == 1
+    row = latest_record(pipeline_root)["stages"][4]
+    assert row["gate"]["passed"] is False
+    assert "직전 80.0%" in row["gate"]["message"]

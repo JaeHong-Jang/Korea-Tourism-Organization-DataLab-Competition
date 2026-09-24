@@ -139,8 +139,8 @@ def golden_cases() -> list[dict]:
     ]
 
 
-# 표시 지표는 백분율로 고정해 비율과 %p를 섞지 않는다.
-def backtest(mdape: float = 12.5, coverage: float = 80) -> dict:
+# 계약 단위 그대로 — MdAPE는 %, 포함률은 비율(0~1).
+def backtest(mdape: float = 12.5, coverage: float = 0.8) -> dict:
     return {
         "runId": "backtest-2025",
         "modelRunId": "mr-2025",

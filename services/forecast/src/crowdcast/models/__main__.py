@@ -8,7 +8,6 @@ import json
 import shutil
 import tempfile
 import time
-from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -16,10 +15,9 @@ from typing import Any
 import polars as pl
 import yaml
 from crowdcast import paths
-from crowdcast.features.build import build_features, filename_sensitivity
-from crowdcast.models.backtest import run_backtest, summary
-from crowdcast.models.card import backtest_markdown, model_card, validate_contract
+from crowdcast.models.card import backtest_markdown, validate_contract
 from crowdcast.models.compat import check_compatibility
+from crowdcast.models.evaluate import run_models, select_features
 from crowdcast.models.g0 import freeze_g0, previous_version, verify_qc
 from crowdcast.models.publish import (
     publish_directory,
@@ -28,7 +26,6 @@ from crowdcast.models.publish import (
     write_artifact_hashes,
     write_atomic,
 )
-from crowdcast.models.train import select_labels
 
 # 실행 기록·해시 목록은 재실행마다 달라져 발행본 비교에서 뺀다.
 VOLATILE_MODEL_FILES = frozenset({"run.json", "artifact_hashes.json"})
@@ -177,85 +174,6 @@ def execute_locked(config_path: Path, compare_run: str | None) -> dict[str, Any]
     }
 
 
-# 학습·평가 모델 파일은 임시 폴더에만 쓰고 계약 문서는 메모리에서 함께 만든다.
-def run_models(
-    frames: dict[str, pl.DataFrame],
-    config: dict[str, Any],
-    g0_path: Path,
-    hashes: dict[str, str],
-    models_stage: Path,
-    report_directory: Path,
-    version: str,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], Any]:
-    events = frames["events"].to_dicts()
-    labels, excluded = select_labels(frames["labels"], events, config)
-    golden_ids = set(frames["labels"].filter(pl.col("is_golden"))["event_id"]) | {
-        event["event_id"] for event in events if event.get("is_golden")
-    }
-    index = {event["event_id"]: event for event in events}
-    golden_ids &= {
-        event["event_id"]
-        for event in events
-        if event.get("start") and event.get("end") and event["end"] >= event["start"]
-    }
-    golden_labels = frames["labels"].filter(
-        pl.col("event_id").is_in(golden_ids)
-        & pl.col("is_primary")
-        & (pl.col("daily_mean") > 0)
-        & pl.col("available_at").is_not_null()
-    )
-
-    # 피처는 실제 공개일 검사 뒤에만 라벨과 결합하며 골든은 별도 평가 표로 분리한다.
-    features, names = build_features(
-        events,
-        frames["labels"].to_dicts(),
-        frames["region_daily"],
-        set(labels["event_id"]) | set(golden_labels["event_id"]),
-    )
-    frame = labels.join(features, on="event_id", how="inner")
-    golden_frame = golden_labels.join(features, on="event_id", how="inner")
-    features.write_parquet(models_stage / "feature_availability.parquet")
-    result = run_backtest(frame, names, index, config, g0_path, hashes, models_stage, golden_frame)
-
-    # 같은 표본·설정·분할에서 속성만 가린 참고 모델을 별도 위치에 저장한다.
-    sensitivity_directory = models_stage / "filename_sensitivity"
-    sensitivity_directory.mkdir(exist_ok=True)
-    sensitivity = filename_sensitivity(features, names, index, config["event_filename_dates"])
-    sensitivity.write_parquet(sensitivity_directory / "feature_availability.parquet")
-    result["sensitivity"] = run_backtest(
-        labels.join(sensitivity, on="event_id", how="inner"),
-        names,
-        index,
-        config,
-        g0_path,
-        hashes,
-        sensitivity_directory,
-    )
-    if result["folds"] != result["sensitivity"]["folds"]:
-        raise RuntimeError("조건부·민감도 백테스트 분할 불일치")
-    selected_counts = Counter(
-        (row["year"], index[row["event_id"]].get("type") or "미상") for row in labels.to_dicts()
-    )
-    result["selected_counts"] = [
-        {"year": year, "type": kind, "n": count} for (year, kind), count in sorted(selected_counts.items())
-    ]
-
-    # 평가 가능 연도가 없으면 실행 폴더와 분리된 실패 기록에 사유만 남기고 계약 수치는 만들지 않는다.
-    if not result["points"]:
-        failure = report_directory.parent / "failures" / f"{report_directory.name}.md"
-        failure.parent.mkdir(parents=True, exist_ok=True)
-        failure.write_text(
-            "평가 가능 연도 없음. 계약 수치 지표를 생성하지 않았습니다.\n"
-            + json.dumps(result["folds"], ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-        raise ValueError(f"모든 평가 연도를 건너뛰었습니다 — {failure.name}의 표본 수·사유 확인 필요")
-    backtest = summary(result, report_directory.name, version)
-    missing = {name: features[name].null_count() for name in names}
-    card = model_card(result, version, report_directory.name, names, config, hashes["labels"], missing)
-    return result, card, backtest, excluded
-
-
 # 비교 실행은 이미 발행된 실행의 조건부 점수만 읽는다.
 def comparison_points(compare_run: str | None) -> tuple[str, list[dict[str, Any]]] | None:
     if compare_run is None:
@@ -280,14 +198,30 @@ def json_bytes(value: dict[str, Any]) -> bytes:
     )
 
 
+# 파이프라인 features 단계: 백테스트와 같은 표본 선택으로 피처와 공개 시점 검사 결과를 저장한다.
+def write_features(config_path: Path) -> dict[str, Any]:
+    with run_lock(paths.MODELS):
+        frames, _, _ = read_inputs(paths.PROCESSED)
+        features = select_features(frames, read_config(config_path))["features"]
+        buffer = io.BytesIO()
+        features.write_parquet(buffer)
+        write_atomic(paths.PROCESSED / "features.parquet", buffer.getvalue())
+    return {"features": features.height, "path": "data/processed/features.parquet"}
+
+
 # 데이터 추가 뒤에도 같은 명령을 쓰도록 입력 위치는 공용 경로 설정을 따른다.
 def main() -> None:
     parser = argparse.ArgumentParser(description="공개 시점 피처·G0 고정·롤링 백테스트")
-    parser.add_argument("command", choices=["backtest"])
+    # 학습과 롤링 백테스트는 한 실행이다(최종 모델 = 마지막 분할) — train·backtest 단계가 같은 명령을 부른다.
+    parser.add_argument("command", choices=["features", "train", "backtest"])
     parser.add_argument("--config", type=Path, default=paths.REPO_ROOT / "configs/model.yaml")
     parser.add_argument("--compare-run", help="보고서에만 나란히 표시할 수정 전 실행 ID")
     arguments = parser.parse_args()
-    print(json.dumps(execute(arguments.config, arguments.compare_run), ensure_ascii=False, indent=2))
+    if arguments.command == "features":
+        result = write_features(arguments.config)
+    else:
+        result = execute(arguments.config, arguments.compare_run)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

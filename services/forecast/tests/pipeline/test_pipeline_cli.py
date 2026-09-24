@@ -16,6 +16,12 @@ from pipeline_fixtures import latest_record, write_features
 def test_selection_and_missing_modules(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
     monkeypatch.setattr(stages, "command", lambda entry, args=None: (calls.append(entry) or 0, ""))
+    # T-203 병합 뒤에도 모듈이 없는 경로를 재현하려고 모델·일괄 예보 모듈 탐색을 가린다.
+    find_spec = stages.importlib.util.find_spec
+    hidden = {"crowdcast.models", "crowdcast.analytics.upcoming"}
+    monkeypatch.setattr(
+        stages.importlib.util, "find_spec", lambda name, *a: None if name in hidden else find_spec(name, *a)
+    )
     assert cli.main(["--from", "labels", "--to", "batch"]) == 2
     record = latest_record(pipeline_root)
     assert [s["status"] for s in record["stages"]] == ["skipped", "passed", *(["skipped"] * 5)]
@@ -64,7 +70,7 @@ def test_available_optional_module(pipeline_root: Path, monkeypatch: pytest.Monk
     monkeypatch.setattr(stages, "missing_entrypoint", lambda name: None)
     monkeypatch.setattr(stages, "command", command)
     assert cli.main(["--from", "features", "--to", "features"]) == 0
-    assert calls == ["crowdcast.features.build"]
+    assert calls == ["crowdcast.models:features"]
     assert latest_record(pipeline_root)["stages"][2]["status"] == "passed"
 
 

@@ -105,14 +105,12 @@ def test_first_fetch_without_admin_dictionary(pipeline_root: Path, monkeypatch: 
     assert cli.main(["--dry", "--to", "fetch"]) == 0
 
 
-
 # 경계 파일이 정본 수보다 적으면 기준 목록으로 쓰지 않는다(결측률 분모가 줄어 누락을 숨기지 않게).
 def test_incomplete_boundary_is_rejected(pipeline_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     write_boundary(("41800", "51150"))
     monkeypatch.setattr(gates, "EXPECTED_BOUNDARY_CODES", 3)
     with pytest.raises(ValueError, match="정본 3개와 다름"):
         gates.visitor_codes()
-
 
 
 # 개수는 같아도 코드 하나가 바뀐 경계는 정본 해시로 거부한다.
