@@ -141,3 +141,17 @@ def test_lost_golden_blocks_promotion(pipeline_root: Path) -> None:
     assert gate["passed"] is False and "골든 사례 소실" in gate["message"]
     first = gates.optional_gate("backtest", [path], None)
     assert first["passed"] is None and "최초 모델: 직전 비교 불가" in first["message"]
+
+
+# 입력 자료에 골든 사례가 있으면(H8 확보) 결과가 0건이거나 일부가 빠져도 미검증이 아니라 승격 금지다.
+def test_acquired_golden_must_appear_in_results(pipeline_root: Path) -> None:
+    pl.DataFrame({"event_id": ["e-yeongjong-2025"], "is_golden": [True]}).write_parquet(
+        paths.PROCESSED / "labels.parquet"
+    )
+    path = paths.REPORTS / "backtest/2025/backtest.json"
+    path.parent.mkdir(parents=True)
+    current = backtest()
+    current["golden"] = []
+    path.write_text(json.dumps(current))
+    gate = gates.optional_gate("backtest", [path], None)
+    assert gate["passed"] is False and "결과 누락 1건" in gate["message"]

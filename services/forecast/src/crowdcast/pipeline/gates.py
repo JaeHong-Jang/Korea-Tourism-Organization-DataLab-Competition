@@ -178,6 +178,17 @@ def promoted_result() -> tuple[Any, str | None]:
     return json.loads(summary.read_bytes()), None
 
 
+# 입력 자료(라벨·행사 마스터)에 골든으로 표시된 행사 — H8 확보 여부의 기준이다.
+def golden_source_ids() -> set[str]:
+    ids: set[str] = set()
+    for name in ("labels.parquet", "events.parquet"):
+        path = paths.PROCESSED / name
+        if path.is_file() and "is_golden" in pl.read_parquet_schema(path):
+            frame = pl.read_parquet(path, columns=["event_id", "is_golden"])
+            ids |= set(frame.filter(pl.col("is_golden"))["event_id"])
+    return ids
+
+
 # 기존 결과를 실행 전에 읽어 일괄 예보의 비교 기준을 보존한다(백테스트 기준은 promoted_result).
 def previous_result(stage: str) -> Any:
     if stage == "batch" and (paths.PROCESSED / "upcoming.parquet").exists():
@@ -245,13 +256,20 @@ def optional_gate(stage: str, files: list[Path], previous: Any) -> dict[str, Any
         )
         if not (new["mdape"] <= old["mdape"] + 3 and new["coverage80"] >= old["coverage80"] - 0.05):
             return {"passed": False, "message": f"허용 악화폭 초과: {metrics}"}
-    # 미검증 임시 사용은 사용 모델에도 골든 사례가 없을 때(H8 미확보)만 — 있던 사례가 사라지면 승격 금지.
+    # H8 확보 여부는 결과가 아니라 입력 자료로 정한다 — 확보한 골든 사례가 결과에서 하나라도 빠지면 승격 금지.
+    sources = golden_source_ids()
+    missing = sorted(sources - {row["eventId"] for row in current["golden"]})
+    if missing:
+        return {
+            "passed": False,
+            "message": f"{metrics}; 골든 사례 {len(sources)}건 중 결과 누락 {len(missing)}건",
+        }
+    if previous is not None and previous["golden"] and not current["golden"]:
+        return {
+            "passed": False,
+            "message": f"{metrics}; 골든 사례 소실: 사용 모델 {len(previous['golden'])}건 → 0건",
+        }
     if not current["golden"]:
-        if previous is not None and previous["golden"]:
-            return {
-                "passed": False,
-                "message": f"{metrics}; 골든 사례 소실: 사용 모델 {len(previous['golden'])}건 → 0건",
-            }
         return {"passed": None, "message": f"{metrics}; 골든 사례 0건(H8 미확보): 골든 재현 미검증"}
 
     # 골든 ID만 남아 있어도 단위가 맞는 실제 재현 판정이 실패하면 승격을 막는다.

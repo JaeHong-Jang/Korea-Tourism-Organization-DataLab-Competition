@@ -8,6 +8,7 @@ from time import perf_counter_ns
 from typing import Any
 
 import httpx
+from crowdcast import paths
 from crowdcast.data.call_ledger import korea_today
 from crowdcast.data.datago_client import DataGoError, TransientDataGoError, safe_error
 from crowdcast.pipeline import gates, run_record, stages
@@ -19,12 +20,20 @@ def publish_gate(record: dict[str, Any], dry: bool) -> dict[str, Any]:
     absent = [
         row["name"] for row in previous if row["status"] != "passed" or row["gate"]["passed"] is not True
     ]
+    # 사용 허용(승격된 모델)과 검증 상태(verdict)를 실행 기록에 함께 남겨 미검증이 통과로 읽히지 않게 한다.
+    pointer = paths.REPORTS / "backtest/promoted.json"
+    promoted = json.loads(pointer.read_bytes()) if pointer.is_file() else None
+    usage = (
+        f"; 사용 모델 {promoted['modelVersion']}(verdict={promoted.get('verdict', '미기록')})"
+        if promoted
+        else "; 사용 모델 없음"
+    )
     if dry or absent:
         return {
             "passed": None,
-            "message": "publish 미실행: " + ("dry 검사" if dry else ", ".join(absent) + " 미통과"),
+            "message": "publish 미실행: " + ("dry 검사" if dry else ", ".join(absent) + " 미통과") + usage,
         }
-    return {"passed": True, "message": "선행 게이트 전부 통과; 실행 기록 발행 (승격은 backtest 단계)"}
+    return {"passed": True, "message": "선행 게이트 전부 통과; 실행 기록 발행 (승격은 backtest 단계)" + usage}
 
 
 # 기존 수집기가 감싼 예외도 원인 체인에서 확인하며 데이터 오류는 재시도하지 않는다.
