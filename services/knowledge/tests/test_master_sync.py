@@ -46,3 +46,25 @@ def test_partial_and_conflicting_definitions() -> None:
     assert (subject, RDF.type, CC.Assumption) in stored and added == 4
     assert conflicts == ["as-demo"] and stored.value(subject, CC.value) == Literal(2.0)
     assert sync_definitions(stored, fresh) == (0, ["as-demo"])
+
+
+# 빈 노드 안의 값이 바뀌거나 TTL에서 술어·정의가 사라지면 저장값을 두고 충돌로 보고한다.
+def test_blank_node_change_and_removals_are_reported() -> None:
+    from knowledge.store.master import sync_definitions
+    from rdflib import BNode, Graph, Literal
+    from rdflib.namespace import RDF
+
+    def graph(day: str, extra: bool) -> Graph:
+        g, period = Graph(), BNode()
+        g.add((ID["ds-demo"], RDF.type, CC.Dataset))
+        g.add((ID["ds-demo"], CC.trainRange, period))
+        g.add((period, CC.periodFrom, Literal(day)))
+        if extra:
+            g.add((ID["ds-demo"], CC.note, Literal("옛 설명")))
+            g.add((ID["ds-gone"], RDF.type, CC.Dataset))
+        return g
+
+    stored = graph("2024-01-01", extra=True)
+    added, conflicts = sync_definitions(stored, graph("2025-01-01", extra=False))
+    assert added == 0 and sorted(conflicts) == ["ds-demo", "ds-gone(TTL에서 삭제)"]
+    assert sync_definitions(graph("2024-01-01", extra=False), graph("2024-01-01", extra=False)) == (0, [])

@@ -8,6 +8,7 @@ from knowledge.convert.integrity import Master
 from knowledge.paths import ONTOLOGY
 from knowledge.store.repository import CC, ID, MASTER, TBOX, GraphRepository
 from rdflib import BNode, Graph, Literal, URIRef
+from rdflib.compare import isomorphic
 from rdflib.namespace import RDF, XSD
 
 logger = logging.getLogger(__name__)
@@ -100,30 +101,46 @@ class MasterCatalog:
             return version + 1
 
 
-# 저장된 정의에 없는 술어만 더하고, 같은 술어에 다른 값이 있으면 저장값을 두고 충돌로 돌려준다.
+# 저장된 정의에 없는 술어만 더하고, 값이 다르거나 TTL에서 사라진 술어·정의는 저장값을 두고 보고한다.
 def sync_definitions(graph: Graph, fresh: Graph) -> tuple[int, list[str]]:
     added, conflicts = 0, []
-    for subject in sorted({s for s in fresh.subjects() if isinstance(s, URIRef) and s != MASTER}):
-        stored = {p for p in graph.predicates(subject)}
-        changed = False
-        for predicate in sorted(set(fresh.predicates(subject))):
+    fresh_subjects = {s for s in fresh.subjects() if isinstance(s, URIRef) and s != MASTER}
+    for subject in sorted(fresh_subjects):
+        stored = set(graph.predicates(subject))
+        wanted = set(fresh.predicates(subject))
+        changed = bool(stored - wanted) and bool(stored)
+        for predicate in sorted(wanted):
             if predicate in stored:
-                if not same_values(graph, fresh, subject, predicate):
-                    changed = True
+                changed = changed or not same_values(graph, fresh, subject, predicate)
                 continue
             for obj in fresh.objects(subject, predicate):
                 added += copy_node(graph, fresh, (subject, predicate, obj), set())
         if changed:
             conflicts.append(str(subject).removeprefix(str(ID)))
+
+    # 기준 TTL에서 사라진 정의(실행 중 등록되는 모델 실행 제외)도 마이그레이션 필요 항목이다.
+    for subject in sorted({s for s in graph.subjects() if isinstance(s, URIRef) and s != MASTER}):
+        if subject not in fresh_subjects and (subject, RDF.type, CC.ModelRun) not in graph:
+            conflicts.append(str(subject).removeprefix(str(ID)) + "(TTL에서 삭제)")
     return added, conflicts
 
 
-# 빈 노드가 아닌 값끼리 비교한다(빈 노드는 개수만 — 내용 비교는 마이그레이션에서).
+# 값 집합을 빈 노드 아래 내용까지 포함해 동형으로 비교한다(순환도 안전).
 def same_values(graph: Graph, fresh: Graph, subject: URIRef, predicate: URIRef) -> bool:
-    old, new = set(graph.objects(subject, predicate)), set(fresh.objects(subject, predicate))
-    plain_old = {o for o in old if not isinstance(o, BNode)}
-    plain_new = {o for o in new if not isinstance(o, BNode)}
-    return plain_old == plain_new and len(old - plain_old) == len(new - plain_new)
+    return isomorphic(closure(graph, subject, predicate), closure(fresh, subject, predicate))
+
+
+# (주어, 술어)에서 닿는 값과 빈 노드 하위 트리플만 모은 작은 그래프.
+def closure(source: Graph, subject: URIRef, predicate: URIRef) -> Graph:
+    result, visited = Graph(), set()
+    pending = [(subject, predicate, obj) for obj in source.objects(subject, predicate)]
+    while pending:
+        triple = pending.pop()
+        result.add(triple)
+        if isinstance(triple[2], BNode) and triple[2] not in visited:
+            visited.add(triple[2])
+            pending.extend(source.triples((triple[2], None, None)))
+    return result
 
 
 # 트리플 하나와 그 값이 빈 노드면 그 아래까지 복사한다 — 방문 기록으로 순환을 막는다.
