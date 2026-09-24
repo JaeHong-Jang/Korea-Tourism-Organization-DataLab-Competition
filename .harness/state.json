@@ -81,7 +81,7 @@
   "T-101": {
    "status": "running",
    "updated": "2026-09-24T15:00:28.274Z",
-   "note": "게이트 2 test 224·키 누출 0, 게이트 3 FAIL(sol: 픽스처 gitignore·2026 화성 부모 시 High), 벌크에서 2026 코드 체계 전환 발견 → 대응표 포함 피드백 1회차"
+   "note": "1회차 수정 확인(242 tests), API 반영 지연 31일 실측 → available_at 규칙 35일로(06 §3), 피드백 2회차(마지막)"
   },
   "T-102": {
    "status": "todo"
@@ -179,7 +179,8 @@
    "evidence": "게이트 1~4 통과, 교차 리뷰 PASS"
   },
   "T-303": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T15:38:45.126Z"
   },
   "T-304": {
    "status": "todo"
@@ -740,6 +741,11 @@
    "id": "T-603",
    "status": "done",
    "evidence": "test 246·ruff·✓ knowledge, 교차 리뷰 sol PASS(Med → T-604)"
+  },
+  {
+   "at": "2026-09-24T15:38:45.126Z",
+   "id": "T-303",
+   "status": "running"
   }
  ]
 }
