@@ -30,6 +30,18 @@ final class Repository
         return array_map(static fn(array $row): string => $row['report_json'], $rows);
     }
 
+    // 예보 ID의 기본 키로 발행 원문과 행사 소속을 한 번에 찾는다
+    /** @return array{event_id: string, report_json: string}|null */
+    public function findByForecastId(string $forecastId): ?array
+    {
+        $statement = $this->db->prepare(
+            'SELECT event_id, report_json FROM forecast_snapshots WHERE forecast_id = :forecast_id'
+        );
+        $statement->execute(['forecast_id' => $forecastId]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+        return $row === false ? null : $row;
+    }
+
     // 예보 ID가 중복되면 데이터베이스 불변 트리거가 원문 변경을 거부한다
     public function insert(string $forecastId, string $eventId, string $publishedAt, string $json): void
     {
