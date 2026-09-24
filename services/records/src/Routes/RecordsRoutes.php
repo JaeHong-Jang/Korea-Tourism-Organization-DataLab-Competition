@@ -8,6 +8,10 @@ use CrowdCast\Records\Events\CollectionController as EventCollection;
 use CrowdCast\Records\Events\ItemController as EventItem;
 use CrowdCast\Records\Events\Repository as EventRepository;
 use CrowdCast\Records\Events\Service as EventService;
+use CrowdCast\Records\Ledger\CollectionController as LedgerCollection;
+use CrowdCast\Records\Ledger\Repository as LedgerRepository;
+use CrowdCast\Records\Ledger\Service as LedgerService;
+use CrowdCast\Records\Ledger\VerifyController as LedgerVerify;
 use CrowdCast\Records\Snapshots\CollectionController as SnapshotCollection;
 use CrowdCast\Records\Snapshots\MutationController as SnapshotMutation;
 use CrowdCast\Records\Snapshots\Repository as SnapshotRepository;
@@ -47,6 +51,11 @@ final class RecordsRoutes
             new EventRepository($database()),
             new ContractValidator()
         );
+        $ledger = static fn(): LedgerService => new LedgerService(
+            new LedgerRepository($database()),
+            new EventRepository($database()),
+            new ContractValidator()
+        );
 
         // 행사 컬렉션은 조회와 생성만 허용한다
         $app->get('/v1/events', function (ServerRequestInterface $request, ResponseInterface $response) use ($events): ResponseInterface {
@@ -78,5 +87,16 @@ final class RecordsRoutes
                 return (new SnapshotMutation())->reject($request, $response);
             });
         }
+
+        // 사전 등록 원장과 처음부터 재계산한 검증 결과를 공개한다
+        $app->get('/v1/ledger', function (ServerRequestInterface $request, ResponseInterface $response) use ($ledger): ResponseInterface {
+            return (new LedgerCollection($ledger()))->all($request, $response);
+        });
+        $app->post('/v1/ledger', function (ServerRequestInterface $request, ResponseInterface $response) use ($ledger): ResponseInterface {
+            return (new LedgerCollection($ledger()))->create($request, $response);
+        });
+        $app->get('/v1/ledger/verify', function (ServerRequestInterface $request, ResponseInterface $response) use ($ledger): ResponseInterface {
+            return (new LedgerVerify($ledger()))->get($request, $response);
+        });
     }
 }
