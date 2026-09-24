@@ -14,16 +14,24 @@ export function createForecastClient(options: ServiceClientOptions) {
   return {
     // 행사 카드로 예보 전체를 요청한다
     predict(event: Event) {
-      return requestJson(options, "/v1/predict", forecastSchema, event);
+      return requestJson(options, "/v1/predict", forecastSchema, {
+        method: "POST",
+        body: event,
+      });
     },
     // 근거를 포함한 유사 행사 목록을 요청한다
     similar(event: Event) {
-      return requestJson(options, "/v1/similar", similarSchema, event);
+      return requestJson(options, "/v1/similar", similarSchema, {
+        method: "POST",
+        body: event,
+      });
     },
     // 공개 시점 이전 지역 평시 값을 조회한다
     baseline(sigunguCode: string, before: string) {
       const query = new URLSearchParams({ sigunguCode, before });
-      return requestJson(options, `/v1/baseline?${query}`, baselineSchema);
+      return requestJson(options, `/v1/baseline?${query}`, baselineSchema, {
+        method: "GET",
+      });
     },
     // 좌표와 시각을 쿼리로 인코딩해 날씨를 조회한다
     weather(lat: number, lng: number, at: string) {
@@ -32,7 +40,9 @@ export function createForecastClient(options: ServiceClientOptions) {
         lng: String(lng),
         at,
       });
-      return requestJson(options, `/v1/weather?${query}`, weatherSchema);
+      return requestJson(options, `/v1/weather?${query}`, weatherSchema, {
+        method: "GET",
+      });
     },
   };
 }

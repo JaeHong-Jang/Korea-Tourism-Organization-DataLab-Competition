@@ -14,7 +14,9 @@ export function createRecordsClient(options: ServiceClientOptions) {
   return {
     // 저장한 행사 목록을 항목별로 검증한다
     listEvents() {
-      return requestJson(options, "/v1/events", eventsSchema);
+      return requestJson(options, "/v1/events", eventsSchema, {
+        method: "GET",
+      });
     },
     // 행사 식별자로 저장된 행사 정보를 조회한다
     getEvent(id: string) {
@@ -22,11 +24,15 @@ export function createRecordsClient(options: ServiceClientOptions) {
         options,
         `/v1/events/${encodeURIComponent(id)}`,
         eventSchema,
+        { method: "GET" },
       );
     },
     // 저장 결과가 행사 계약을 만족하는지 확인한다
     saveEvent(event: Event) {
-      return requestJson(options, "/v1/events", eventSchema, event);
+      return requestJson(options, "/v1/events", eventSchema, {
+        method: "POST",
+        body: event,
+      });
     },
     // 행사에 남긴 발행 예보서 스냅샷 목록을 읽는다
     getSnapshots(eventId: string) {
@@ -34,6 +40,7 @@ export function createRecordsClient(options: ServiceClientOptions) {
         options,
         `/v1/events/${encodeURIComponent(eventId)}/snapshots`,
         snapshotsSchema,
+        { method: "GET" },
       );
     },
     // 스냅샷을 추가하고 반환된 발행 예보서 전체를 검증한다
@@ -42,7 +49,7 @@ export function createRecordsClient(options: ServiceClientOptions) {
         options,
         `/v1/events/${encodeURIComponent(eventId)}/snapshots`,
         snapshotSchema,
-        report,
+        { method: "POST", body: report },
       );
     },
   };

@@ -12,6 +12,7 @@ async function checkService(baseUrl: string, fetcher: typeof fetch) {
       { baseUrl, fetch: fetcher, timeoutMs: HEALTH_TIMEOUT_MS },
       "/health",
       serviceHealthSchema,
+      { method: "GET" },
     );
     return { ok: true, latencyMs: Math.round(performance.now() - started) };
   } catch {
@@ -20,7 +21,7 @@ async function checkService(baseUrl: string, fetcher: typeof fetch) {
 }
 
 // Ollama는 모델 생성 없이 버전 엔드포인트의 접속 상태만 확인한다
-async function checkOllama(host: string, fetcher: typeof fetch) {
+export async function checkOllama(host: string, fetcher: typeof fetch) {
   try {
     const ok = await withRequestDeadline(HEALTH_TIMEOUT_MS, async (signal) => {
       const response = await fetcher(`${host}/api/version`, { signal });
