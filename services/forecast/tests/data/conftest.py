@@ -1,10 +1,15 @@
 """네트워크를 차단하고 실제 연도별 머리글 구조를 닮은 작은 xlsx를 만든다."""
 
+import json
 import socket
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
+from typing import Any
 
+import httpx
 import pytest
+from crowdcast import config
+from crowdcast.data.datago_client import DataGoClient
 from openpyxl import Workbook
 
 
@@ -38,3 +43,49 @@ def xlsx(tmp_path: Path) -> Callable:
         return path
 
     return write
+
+
+# 승인된 7일 실호출 응답 여섯 페이지를 키·요청 URL 없이 재생한다.
+@pytest.fixture
+def datago_recordings() -> list[dict[str, Any]]:
+    folder = Path(__file__).parent / "fixtures" / "datago"
+    return [json.loads(path.read_bytes()) for path in sorted(folder.glob("visitors_*.json"))]
+
+
+# 실제 .env를 건드리지 않고 각 테스트의 캐시·장부·인증키·전송을 격리한다.
+@pytest.fixture
+def datago_factory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    datago_recordings: list[dict[str, Any]],
+) -> Iterator[Callable[..., DataGoClient]]:
+    env_file = tmp_path / ".env"
+    env_file.write_text("DATA_GO_KR_KEY=fixture-only-token+/=\n", encoding="utf-8")
+    monkeypatch.setattr(config, "ENV_FILE", env_file)
+    config.get_settings.cache_clear()
+    clients = []
+
+    # 페이지 번호는 녹화된 실제 응답의 번호와 일치해야 한다.
+    def recorded_response(request: httpx.Request) -> httpx.Response:
+        number = int(request.url.params["pageNo"])
+        return httpx.Response(200, json=datago_recordings[number - 1]["payload"])
+
+    # 여러 클라이언트를 생성하면 같은 임시 장부와 페이지 캐시를 공유한다.
+    def create(
+        *,
+        max_calls: int = 800,
+        respond: Callable[[httpx.Request], httpx.Response] | None = None,
+        cache_dir: Path | None = None,
+    ) -> DataGoClient:
+        client = DataGoClient(
+            cache_dir=cache_dir or tmp_path / "datago",
+            max_calls=max_calls,
+            transport=httpx.MockTransport(respond or recorded_response),
+        )
+        clients.append(client)
+        return client
+
+    yield create
+    for client in clients:
+        client.__exit__()
+    config.get_settings.cache_clear()
