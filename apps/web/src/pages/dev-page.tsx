@@ -1,9 +1,12 @@
 // 개발 중 부품 견본을 확인할 수 있는 비공개 메뉴 화면이다.
+
 import { PageHeading } from "../components/common/page-heading";
+import { PetsGallery } from "../components/pets";
 import { Button } from "../components/ui/button";
 
 // 공용 버튼의 세 모양을 같은 토큰 환경에서 확인한다.
 export function DevPage() {
+  if (window.location.pathname === "/dev/pets") return <PetsGallery />;
   return (
     <div className="page-wrap regular-page">
       <PageHeading
