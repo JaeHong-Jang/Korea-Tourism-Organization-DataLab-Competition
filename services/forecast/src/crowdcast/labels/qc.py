@@ -23,7 +23,7 @@ def quality_report(
     audit: dict[str, Any],
 ) -> str:
     silver = labels.filter(pl.col("label_tier") == "silver")
-    usable = silver.filter(pl.col("usable_for_training")).height
+    usable = silver.filter(pl.col("is_primary") & pl.col("usable_for_training")).height
     lines = [
         "# 라벨 QC",
         "",
@@ -43,7 +43,8 @@ def quality_report(
             group = labels.filter((pl.col("label_tier") == tier) & (pl.col("year") == year))
             lines.append(
                 f"| {tier} | {year} | {group.height} | {group['is_primary'].sum()} | "
-                f"{group['usable_for_training'].sum()} | {group['is_golden'].sum()} |"
+                f"{group.filter(pl.col('is_primary') & pl.col('usable_for_training')).height} | "
+                f"{group['is_golden'].sum()} |"
             )
 
     # G0와 실버 부호 검사는 기계용 JSON과 동일한 집계 객체를 표시한다.
@@ -54,7 +55,7 @@ def quality_report(
         "",
         "## 실버 후보와 제외",
         "",
-        f"입력 행사 {event_count}건 → 계산 가능 후보 {silver.height}건 → 학습 가능 {usable}건.",
+        f"입력 행사 {event_count}건 → 계산 가능 후보 {silver.height}건 → 대표·학습 가능 {usable}건.",
         "계산 불가 행사는 음수 여부를 알 수 없어 분모에서 제외한다. "
         "후보에는 골든·음수·저신호·명절을 모두 포함한다. 부호 검사는 반올림 전 수치를 사용한다.",
         "구조적 제외는 일정→기간→코드→연속성→기간 관측→기준선 순 첫 사유 하나.",
@@ -64,11 +65,11 @@ def quality_report(
     ]
     lines += [f"| {reason} | {count} |" for reason, count in sorted(excluded.items())]
     rejected = Counter(
-        "골든" if row["is_golden"] else row["quality_flag"]
+        "비대표" if not row["is_primary"] else ("골든" if row["is_golden"] else row["quality_flag"])
         for row in silver.iter_rows(named=True)
-        if not row["usable_for_training"]
+        if not (row["is_primary"] and row["usable_for_training"])
     )
-    lines += ["", "| 후보 중 학습 제외 사유(골든 우선, 나머지 조합별) | 건수 |", "|---|---:|"]
+    lines += ["", "| 후보 중 학습 제외 사유(비대표·골든 우선, 나머지 조합별) | 건수 |", "|---|---:|"]
     lines += [f"| {reason} | {count} |" for reason, count in sorted(rejected.items())]
     lines += [
         "",
@@ -87,8 +88,8 @@ def quality_report(
         "중앙값은 가산적이지 않아 구분별 합과 전체 순증은 다를 수 있다.",
         "기준선은 [시작일−28일, 시작일−1일]에 고정; 필요한 요일마다 공휴일 제외 ≥3일. "
         "필요한 요일의 잔차를 중복 없이 모은 표본 표준편차(ddof=1)를 SNR 분모로 사용.",
-        "순증 > 3σ만 학습 가능(경계 제외). σ=0은 snr=null·zero_baseline_std; "
-        "양의 순증이면 부등식에 따라 학습 가능. 부모 시는 원본 부모 합계만 사용.",
+        "σ>0이며 순증 > 3σ만 학습 가능(경계 제외). σ=0은 snr=null·zero_sigma·학습 제외. "
+        "학습 표본 수는 is_primary & usable_for_training 기준. 부모 시는 원본 부모 합계만 사용.",
         f"공휴일: holidays=={holidays.__version__}, KR(대체·임시 공휴일 포함). 외부 API 호출 0건.",
         "골드A 시도: 명시 열 또는 동반 목적지 검색순위 CSV의 축제명과 일치하는 목적지 주소. "
         "시도 근거가 없거나 상충하면 미매칭; 마스터만 보고 시도를 추측하지 않는다.",

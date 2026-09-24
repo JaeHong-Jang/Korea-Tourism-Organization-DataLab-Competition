@@ -189,5 +189,5 @@ def silver_row(
     if daily < 0:
         flag(row, "negative_increment")
     if sigma == 0:
-        flag(row, "zero_baseline_std", exclude=False)
+        flag(row, "zero_sigma")
     return row

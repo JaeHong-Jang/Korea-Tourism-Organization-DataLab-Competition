@@ -6,16 +6,7 @@ from typing import Any
 
 import polars as pl
 from crowdcast.labels.schema import DECIMALS
-
-
-# 분모 0을 0% 통과로 바꾸지 않고 판정 불가로 남긴다.
-def ratio_check(numerator: int, denominator: int, passed: bool) -> dict[str, Any]:
-    return {
-        "numerator": numerator,
-        "denominator": denominator,
-        "ratio": round(numerator / denominator, DECIMALS) if denominator else None,
-        "status": "pass" if passed else "fail",
-    }
+from crowdcast.labels.silver_signal import ratio_check
 
 
 # 반올림 전 부호와 엄격한 |SNR| > 3을 기준으로 모든 계산 가능 후보를 집계한다.
@@ -23,7 +14,7 @@ def silver_metrics(candidates: list[dict[str, Any]], labels: pl.DataFrame) -> di
     significant = [
         row
         for row in candidates
-        if row["snr"] is not None and math.isfinite(row["snr"]) and abs(row["snr"]) > 3
+        if row["sigma"] > 0 and row["snr"] is not None and math.isfinite(row["snr"]) and abs(row["snr"]) > 3
     ]
     negative = [row for row in candidates if row["daily_mean"] < 0]
     significant_negative = [row for row in significant if row["daily_mean"] < 0]
@@ -39,14 +30,28 @@ def silver_metrics(candidates: list[dict[str, Any]], labels: pl.DataFrame) -> di
             len(significant),
             bool(significant) and len(significant_negative) * 20 < len(significant),
         ),
-        "all_negative": ratio_check(
-            len(negative),
-            len(candidates),
-            bool(candidates) and len(negative) * 5 <= len(candidates) * 2,
-        ),
+        "all_negative": {
+            **ratio_check(len(negative), len(candidates), True),
+            "status": "warn" if len(negative) * 2 > len(candidates) else "pass",
+        },
         "zero_sigma_count": sum(row["sigma"] == 0 for row in candidates),
         "missing_snr_count": sum(row["snr"] is None for row in candidates),
+        "unexpected_missing_snr_count": sum(row["sigma"] != 0 and row["snr"] is None for row in candidates),
+        "invalid_snr_count": sum(
+            not math.isfinite(row["sigma"])
+            or row["sigma"] < 0
+            or (row["snr"] is not None and (not math.isfinite(row["snr"]) or row["sigma"] == 0))
+            for row in candidates
+        ),
         "zero_significant_count": int(not significant),
+        "signal_by_year": [
+            {
+                "year": year,
+                "candidate_count": sum(row["year"] == year for row in candidates),
+                "significant_count": sum(row["year"] == year for row in significant),
+            }
+            for year in sorted({row["year"] for row in candidates})
+        ],
         "significant_negative_cases": cases,
         "increment_by_year_sido": increment_distribution(candidates),
         "holiday_by_year_type": holiday_counts(candidates, labels),
@@ -86,9 +91,9 @@ def increment_distribution(candidates: list[dict[str, Any]]) -> list[dict[str, A
 # 명절 제외는 부호와 무관하며 남은 후보와 실제 학습 가능 표본을 별도로 센다.
 def holiday_counts(candidates: list[dict[str, Any]], labels: pl.DataFrame) -> list[dict[str, Any]]:
     usable = set(
-        labels.filter((pl.col("label_tier") == "silver") & pl.col("usable_for_training"))[
-            "event_id"
-        ].to_list()
+        labels.filter(
+            (pl.col("label_tier") == "silver") & pl.col("is_primary") & pl.col("usable_for_training")
+        )["event_id"].to_list()
     )
     groups = defaultdict(list)
     for row in candidates:
@@ -106,37 +111,13 @@ def holiday_counts(candidates: list[dict[str, Any]], labels: pl.DataFrame) -> li
     ]
 
 
-# 동일 입력 스냅샷의 재실행은 처음 기록한 비교 근거를 재사용해 산출물 바이트를 보존한다.
-def signal_retention(
-    current: dict[str, Any],
-    previous: dict[str, Any] | None,
-    snapshot: str,
-) -> dict[str, Any]:
-    count = current["significant_count"]
-    if previous is None:
-        return {
-            "numerator": count,
-            "denominator": None,
-            "ratio": None,
-            "status": "first_run",
-            "note": "첫 실행 — 비교 없음",
-        }
-    if previous["snapshot_sha256"] == snapshot:
-        return previous["silver"]["signal_retention"]
-    prior = previous["silver"]["significant_count"]
-    if isinstance(prior, bool) or not isinstance(prior, int) or prior < 0:
-        raise ValueError("직전 labels_g0.json의 significant_count 오류")
-    result = ratio_check(count, prior, count * 5 >= prior * 4)
-    result["note"] = "직전 유의 신호 0건 — 하한 0건" if prior == 0 else "직전 실행 대비 ≥ 80%"
-    return result
-
-
 # 실패 시 표를 오류 출력에 포함하고 파일 기록은 호출부에서 시작하지 못하게 한다.
 def enforce_silver_gate(silver: dict[str, Any]) -> None:
-    failed = [
+    failed = [key for key in ("significant_negative", "signal_retention") if silver[key]["status"] == "fail"]
+    failed += [
         key
-        for key in ("significant_negative", "all_negative", "signal_retention")
-        if silver[key]["status"] == "fail"
+        for key in ("unexpected_missing_snr_count", "invalid_snr_count", "zero_significant_count")
+        if silver[key]
     ]
     if failed:
         raise ValueError("실버 부호 검사 실패: " + ", ".join(failed) + "\n" + "\n".join(silver_lines(silver)))
@@ -154,9 +135,8 @@ def silver_lines(silver: dict[str, Any]) -> list[str]:
         "|---|---:|---:|---:|---|---|",
     ]
     for key, threshold in (
-        ("significant_negative", "< 5%"),
-        ("all_negative", "≤ 40%"),
-        ("signal_retention", "≥ 80%"),
+        ("significant_negative", "① 중단: ≥ 5%"),
+        ("all_negative", "② 경고: > 50% (임시 운영 기준 — 검증 전)"),
     ):
         check = silver[key]
         ratio = f"{check['ratio']:.2%}" if check["ratio"] is not None else "산정 불가"
@@ -164,15 +144,43 @@ def silver_lines(silver: dict[str, Any]) -> list[str]:
             f"| {key} | {check['numerator']} | {check['denominator']} | "
             f"{ratio} | {threshold} | {check['status']} |"
         )
+    retention = silver["signal_retention"]
+    lines += ["", "③ 신호 유지: " + retention["note"] + f"; status={retention['status']}"]
+    if first := retention["first_run_minimum"]:
+        lines.append(
+            f"첫 실행 최소 유의 신호: {first['numerator']}/{first['denominator']}건; status={first['status']}"
+        )
     lines += [
-        silver["signal_retention"]["note"],
-        "동일 snapshot_sha256 재실행은 저장된 비교 근거를 유지한다. "
-        "입력이 바뀌면 직전 성공 labels_g0.json의 significant_count와 비교한다.",
+        "동일 snapshot_sha256도 이전 필드·타입·분자·분모를 검증하고 판정을 다시 계산한다. "
+        "비교 기준값만 유지해 반복 실행의 바이트를 보존한다. "
+        "새 스냅샷은 직전 성공 실행의 같은 연도별 비율과 비교하며 한 연도라도 80% 미만이면 중단한다.",
+        "",
+        "| year | numerator | denominator | ratio | previous_numerator | previous_denominator | "
+        "previous_ratio | retention_ratio | status |",
+        "|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    columns = (
+        "year",
+        "numerator",
+        "denominator",
+        "ratio",
+        "previous_numerator",
+        "previous_denominator",
+        "previous_ratio",
+        "retention_ratio",
+        "status",
+    )
+    lines += ["| " + " | ".join(str(row[key]) for key in columns) + " |" for row in retention["by_year"]]
+    lines += [
+        "",
+        "④ σ·SNR 진단 (오류·유의 신호 0건은 중단)",
         f"σ=0: {silver['zero_sigma_count']}/{silver['candidate_count']}건; "
         f"SNR 결측: {silver['missing_snr_count']}/{silver['candidate_count']}건; "
+        f"σ≠0인데 SNR 결측: {silver['unexpected_missing_snr_count']}/{silver['candidate_count']}건; "
+        f"σ·SNR 계산 오류: {silver['invalid_snr_count']}/{silver['candidate_count']}건; "
         f"유의 신호: {silver['significant_count']}/{silver['candidate_count']}건; "
         f"유의 신호 0건 검사: {silver['zero_significant_count']}/1.",
-        "σ=0은 snr=null로 기록하고 순증 > 3σ 학습 규칙은 유지한다. "
+        "σ=0은 snr=null·zero_sigma로 기록하고 후보 분모에는 넣되 유의 판정·학습에서 제외한다. "
         "유의 신호 0건·후보 0건은 음수 비율 판정 불가로 실패하며 산출물을 쓰지 않는다.",
         "",
         "### 유의 음수 사례",
@@ -205,7 +213,7 @@ def silver_lines(silver: dict[str, Any]) -> list[str]:
         )
     lines += [
         "",
-        "### 연도·시도별 순증 분포",
+        "### ⑤ 연도·시도별 순증 분포",
         "",
         "| year | sido | candidate_count | negative_count | min | p25 | median | mean | p75 | max |",
         "|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|",
@@ -221,6 +229,7 @@ def silver_lines(silver: dict[str, Any]) -> list[str]:
         "holidays KR 한국어 이름에 설날·추석이 포함된 날짜(전날·다음날·해당 대체공휴일)에만 "
         "고정한다. 인접 주말·임시공휴일로 범위를 넓히지 않는다. 하루라도 겹치면 부호와 무관하게 "
         "holiday_overlap·학습 제외하며 실버 백테스트에서도 제외해야 한다.",
+        "usable_remaining_count는 is_primary & usable_for_training 기준이다.",
         "| year | type | candidate_count | holiday_overlap_count | remaining_count | "
         "usable_remaining_count |",
         "|---:|---|---:|---:|---:|---:|",

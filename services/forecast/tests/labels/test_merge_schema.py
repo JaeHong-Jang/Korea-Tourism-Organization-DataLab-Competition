@@ -16,6 +16,7 @@ def test_priority_golden_and_covid() -> None:
     for tier in ("silver", "goldA", "goldB"):
         row = label_row(festival(year=2020, end=date(2020, 5, 5)), tier, "연천.csv", "2")
         row.update(daily_mean=100.0, total=400.0, days=4, method="일평균")
+        row["snr"] = 10.0 if tier == "silver" else None
         rows.append(row)
     frame = validate_labels(merge_labels(rows, set()))
     assert frame.filter(pl.col("is_primary"))["label_tier"].to_list() == ["goldB"]
@@ -40,6 +41,8 @@ def test_priority_golden_and_covid() -> None:
         "type",
         "golden_training",
         "missing_primary",
+        "zero_sigma_training",
+        "missing_silver_snr",
     ],
 )
 def test_schema_rejects_invalid_labels(bad: str) -> None:
@@ -64,6 +67,14 @@ def test_schema_rejects_invalid_labels(bad: str) -> None:
         frame = frame.with_columns(pl.lit(True).alias("is_golden"))
     elif bad == "missing_primary":
         frame = frame.with_columns(pl.lit(False).alias("is_primary"))
+    elif bad == "zero_sigma_training":
+        frame = frame.with_columns(
+            pl.lit("silver").alias("label_tier"),
+            pl.lit(10.0).alias("snr"),
+            pl.lit("zero_sigma").alias("quality_flag"),
+        )
+    elif bad == "missing_silver_snr":
+        frame = frame.with_columns(pl.lit("silver").alias("label_tier"))
     with pytest.raises((pa.errors.SchemaErrors, pa.errors.SchemaError)):
         validate_labels(frame)
 

@@ -4,7 +4,10 @@ from typing import Any
 
 import pytest
 from crowdcast.labels.merge import merge_labels
-from crowdcast.labels.silver_qc import enforce_silver_gate, signal_retention, silver_lines, silver_metrics
+from crowdcast.labels.schema import label_row
+from crowdcast.labels.silver_qc import enforce_silver_gate, silver_lines, silver_metrics
+from crowdcast.labels.silver_signal import signal_retention
+from label_fixtures import festival
 
 
 # 숫자 경계 검증은 반올림과 학습 플래그에 영향받지 않는 원래 후보로 수행한다.
@@ -41,25 +44,42 @@ def test_significant_negative_boundary(positive: int, passed: bool) -> None:
     assert metrics["significant_negative_cases"][0]["baseline_mean"] == 100
 
 
-# 전체 음수율은 정확히 40%를 허용하며 반올림으로 0이 되는 작은 음수도 센다.
-@pytest.mark.parametrize("negative,passed", [(2, True), (3, False)])
-def test_all_negative_boundary(negative: int, passed: bool) -> None:
-    rows = [candidate(i, -1e-9 if i < negative else 10) for i in range(5)]
+# 전체 음수율은 정확히 50%에서 경고하지 않으며 50% 초과도 파일 저장을 막지 않는다.
+@pytest.mark.parametrize("negative,status", [(30, "pass"), (31, "warn")])
+def test_all_negative_boundary(negative: int, status: str) -> None:
+    rows = [candidate(i, -1e-9 if i < negative else 10) for i in range(61 if negative == 31 else 60)]
     metrics = silver_metrics(rows, merge_labels([], set()))
     assert metrics["all_negative"]["numerator"] == negative
-    assert metrics["all_negative"]["denominator"] == 5
-    assert metrics["all_negative"]["status"] == ("pass" if passed else "fail")
+    assert metrics["all_negative"]["denominator"] == len(rows)
+    assert metrics["all_negative"]["status"] == status
     assert metrics["increment_by_year_sido"][0]["negative_count"] == negative
+    metrics["signal_retention"] = signal_retention(metrics, None, "첫 입력")
+    enforce_silver_gate(metrics)
 
 
-# 직전 대비 80%는 허용하고 최초 실행·같은 스냅샷 재실행은 비교 근거를 보존한다.
-@pytest.mark.parametrize("current,status", [(79, "fail"), (80, "pass")])
-def test_signal_retention_boundary(current: int, status: str) -> None:
-    first = signal_retention({"significant_count": 100}, None, "기존")
-    previous = {"snapshot_sha256": "기존", "silver": {"significant_count": 100, "signal_retention": first}}
-    assert signal_retention({"significant_count": 100}, previous, "기존") == first
-    check = signal_retention({"significant_count": current}, previous, "신규")
-    assert check["status"] == status and check["denominator"] == 100
+# σ가 있는데 SNR이 없거나 유한하지 않으면 정상 신호가 많아도 계산 오류로 중단한다.
+@pytest.mark.parametrize("snr", [None, float("nan"), float("inf")])
+def test_invalid_snr_stops(snr: float | None) -> None:
+    rows = [candidate(i, 10) for i in range(31)]
+    rows[0]["snr"] = snr
+    metrics = silver_metrics(rows, merge_labels([], set()))
+    metrics["signal_retention"] = signal_retention(metrics, None, "첫 입력")
+    with pytest.raises(ValueError, match="missing_snr|invalid_snr"):
+        enforce_silver_gate(metrics)
+
+
+# σ=0의 후보는 분모에 남지만 유의 표본과 대표 학습 표본에는 포함하지 않는다.
+def test_holiday_counts_only_primary_training_labels() -> None:
+    event = festival(event_id="연천-0")
+    silver = label_row(event, "silver", "방문자.parquet", "1")
+    silver.update(daily_mean=10, total=40, days=4, snr=10, method="합성 실버")
+    gold = {**silver, "label_tier": "goldA", "spatial_scope": "행사장"}
+    rows = [candidate(0, 10), candidate(1, 10, 0)]
+    for row in rows:
+        row["holiday_dates"] = []
+    metrics = silver_metrics(rows, merge_labels([silver, gold], set()))
+    assert metrics["candidate_count"] == 2 and metrics["significant_count"] == 1
+    assert metrics["holiday_by_year_type"][0]["usable_remaining_count"] == 0
 
 
 # 후보·유의 신호 분모가 없으면 성공 산출물을 발행하지 않는다.

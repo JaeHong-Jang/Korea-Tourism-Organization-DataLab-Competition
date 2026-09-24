@@ -18,7 +18,9 @@ from crowdcast.labels.merge import merge_labels
 from crowdcast.labels.qc import quality_report
 from crowdcast.labels.schema import validate_labels
 from crowdcast.labels.silver import build_silver
-from crowdcast.labels.silver_qc import enforce_silver_gate, signal_retention, silver_metrics
+from crowdcast.labels.silver_history import read_previous
+from crowdcast.labels.silver_qc import enforce_silver_gate, silver_metrics
+from crowdcast.labels.silver_signal import signal_retention
 
 
 # 정렬된 JSON과 고정 줄바꿈을 모든 스냅샷·출력 해시에 공통으로 적용한다.
@@ -41,11 +43,7 @@ def build(golden_file: Path | None = None) -> dict[str, object]:
     golden = read_golden(golden_file)
     g0_path = paths.PROCESSED / "labels_g0.json"
     previous_g0_bytes = g0_path.read_bytes() if g0_path.exists() else None
-    previous_g0 = json.loads(previous_g0_bytes) if previous_g0_bytes is not None else None
-    if previous_g0_bytes is not None and (
-        not isinstance(previous_g0, dict) or previous_g0.get("schema_version") != 1
-    ):
-        raise ValueError("직전 labels_g0.json 형식·schema_version 오류")
+    previous_g0 = read_previous(previous_g0_bytes, paths.PROCESSED / "labels.parquet")
     events = pl.read_parquet(paths.PROCESSED / "events.parquet").to_dicts()
     if len({event["event_id"] for event in events}) != len(events):
         raise ValueError("events.event_id 중복")
@@ -72,9 +70,9 @@ def build(golden_file: Path | None = None) -> dict[str, object]:
         buffer, compression="zstd", compression_level=3, statistics=True, row_group_size=65_536
     )
 
-    # 반올림 전 후보와 입력을 묶어 같은 스냅샷인지 확인한 뒤 직전 신호 수를 비교한다.
+    # 반올림 전 후보와 입력을 묶어 같은 스냅샷인지 확인한 뒤 같은 연도별 신호 비율을 비교한다.
     audit = {
-        "schema_version": 1,
+        "schema_version": 2,
         "labels_sha256": hashlib.sha256(buffer.getvalue()).hexdigest(),
         "g0": build_g0(labels, events),
         "silver": silver_metrics(diagnostics, labels),

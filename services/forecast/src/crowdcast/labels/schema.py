@@ -97,7 +97,7 @@ def finite(data: pa.PolarsData) -> pl.LazyFrame:
     return data.lazyframe.select(pl.col(data.key).is_finite())
 
 
-# 골든·음수·공개일 미상·명절 겹침 행은 학습에 쓰이지 않는다.
+# 골든·음수·공개일 미상·명절 겹침·잡음 0인 행은 학습에 쓰이지 않는다.
 def training_check(data: pa.PolarsData) -> pl.LazyFrame:
     return data.lazyframe.select(
         ~pl.col("usable_for_training")
@@ -105,7 +105,8 @@ def training_check(data: pa.PolarsData) -> pl.LazyFrame:
             ~pl.col("is_golden")
             & (pl.col("daily_mean") > 0)
             & pl.col("available_at").is_not_null()
-            & ~pl.col("quality_flag").str.contains("holiday_overlap")
+            & ~pl.col("quality_flag").str.contains("holiday_overlap|zero_sigma")
+            & ((pl.col("label_tier") != "silver") | pl.col("snr").is_not_null())
         )
     )
 

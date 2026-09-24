@@ -62,7 +62,7 @@ def test_parent_city_and_zero_noise() -> None:
     event = festival(start=start, end=start, sigungu_code="41110", sigungu_match="parent")
     row = build_silver([event], pl.concat([parent, children]), "방문자.parquet")[0][0]
     assert row["daily_mean"] == 1 and row["snr"] is None
-    assert row["usable_for_training"] and row["quality_flag"] == "zero_baseline_std"
+    assert not row["usable_for_training"] and row["quality_flag"] == "zero_sigma"
     assert "부모 합계 직접 사용=True" in row["method"]
 
 
