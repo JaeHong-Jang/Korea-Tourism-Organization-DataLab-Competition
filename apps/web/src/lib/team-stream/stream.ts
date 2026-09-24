@@ -19,6 +19,7 @@ const validate = ajv.getSchema(
 // 전송 청크가 프레임이나 UTF-8 글자 사이에서 끊겨도 완성된 프레임만 꺼낸다.
 export function createSseParser(onEvent: (event: SseEvent) => void) {
   let pending = "";
+  // 프레임 이름과 JSON 본문을 함께 검증한 뒤 화면 콜백에 넘긴다.
   const consume = (frame: string) => {
     const lines = frame.split("\n");
     const name = lines
@@ -42,6 +43,7 @@ export function createSseParser(onEvent: (event: SseEvent) => void) {
     onEvent(event as SseEvent);
   };
   return {
+    // 완료된 프레임만 소비하고 나머지 조각은 다음 청크까지 보관한다.
     push(chunk: string) {
       pending += chunk;
       pending = pending.replaceAll("\r\n", "\n");
@@ -52,6 +54,7 @@ export function createSseParser(onEvent: (event: SseEvent) => void) {
         end = pending.indexOf("\n\n");
       }
     },
+    // 연결 종료 시 미완성 프레임이 남으면 정상 완료로 취급하지 않는다.
     finish() {
       if (pending.trim()) throw new Error("SSE 프레임이 중간에 끊겼어요.");
     },
@@ -117,6 +120,10 @@ export async function postTeamMessage(
     const problems = checkSequence(events, true);
     if (problems.length)
       throw new Error(`SSE 순서 위반: ${problems.join("; ")}`);
+  } catch (cause) {
+    // 계약·순서 오류가 나면 남은 네트워크 응답을 즉시 취소한다.
+    await reader.cancel().catch(() => {});
+    throw cause;
   } finally {
     reader.releaseLock();
   }

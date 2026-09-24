@@ -40,3 +40,59 @@ export function hazardsAnswer(values: EventDraft["hazards"]): {
     answer: { hazards: values },
   };
 }
+
+type ReplyInputs = {
+  choices: Record<string, string>;
+  hazards: EventDraft["hazards"] | null;
+  date: string;
+  start: string;
+  end: string;
+};
+
+// 직전 질문의 필드만 모아 한 번의 답으로 보내고 선택·시각을 검증한다.
+export function combinedAnswer(
+  asks: Ask[],
+  inputs: ReplyInputs,
+): { text: string; answer: object } {
+  const answer: Record<string, unknown> = {};
+  const summaries: string[] = [];
+  for (const ask of asks) {
+    if (ask.field === "time") {
+      const { date, start, end } = inputs;
+      const valid =
+        /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+        /^\d{2}:\d{2}$/.test(start) &&
+        /^\d{2}:\d{2}$/.test(end);
+      if (
+        !valid ||
+        Number.isNaN(Date.parse(`${date}T${start}:00+09:00`)) ||
+        Number.isNaN(Date.parse(`${date}T${end}:00+09:00`)) ||
+        end <= start
+      )
+        throw new Error("시작·종료 날짜와 시각을 확인해 주세요.");
+      Object.assign(answer, timeAnswer(date, start, end).answer);
+      summaries.push(`${date} ${start}~${end}`);
+    } else if (ask.field === "hazards") {
+      if (inputs.hazards === null)
+        throw new Error("위험요소를 고르거나 해당 없어요를 선택해 주세요.");
+      const allowed = ask.options
+        .filter((option) => option.value !== "[]")
+        .map((option) => option.value);
+      if (inputs.hazards.some((value) => !allowed.includes(value)))
+        throw new Error("위험요소 선택값을 확인해 주세요.");
+      answer.hazards = inputs.hazards;
+      summaries.push(inputs.hazards.join(", ") || "해당 없어요");
+    } else {
+      const choice = inputs.choices[ask.field]?.trim();
+      const allowed =
+        ask.field === "hostType" && !ask.options.length
+          ? ["지자체", "민간", "대학", "기타"]
+          : ask.options.map((option) => option.value);
+      if (!choice || (allowed.length > 0 && !allowed.includes(choice)))
+        throw new Error(`${ask.question} 답을 확인해 주세요.`);
+      answer[ask.field] = choice;
+      summaries.push(choice);
+    }
+  }
+  return { text: summaries.join(" · "), answer };
+}

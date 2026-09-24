@@ -1,4 +1,4 @@
-// 행사 초안의 채운 값과 누락 값을 칩으로 보여 주고 수정 입력을 연다.
+// 행사 초안의 확정 값과 질문 대기 항목을 읽기 전용 칩으로 보여 준다.
 import type { EventDraft } from "@crowdcast/contracts/types";
 import { useState } from "react";
 import { Button } from "../../components/ui/button";
@@ -14,18 +14,29 @@ const fields: { key: keyof EventDraft; label: string }[] = [
   { key: "hazards", label: "위험요소" },
 ];
 
-// 필드 칩 선택 뒤 수정 내용을 새 메시지의 원문과 답 객체로 함께 보낸다.
+// 전송용 ISO 값은 유지하고 한국어 날짜와 시각만 화면에 표시한다.
+export function formatDraftDate(value: string): string {
+  const matched =
+    /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}:\d{2})(?::\d{2})?(Z|[+-]\d{2}:\d{2}))?/.exec(
+      value,
+    );
+  if (!matched) return value;
+  const [, year, month, day, time, zone] = matched;
+  const weekday = "일월화수목금토"[
+    new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))).getUTCDay()
+  ];
+  return `${Number(month)}월 ${Number(day)}일(${weekday})${time && zone ? ` ${time}` : ""}`;
+}
+
+// 확정 칩은 현재 게이트웨이에서 수정되지 않으므로 새 상담 안내만 연다.
 export function EventDraftCard({
   draft,
-  onEdit,
-  disabled,
+  pendingFields,
 }: {
   draft: EventDraft | null;
-  onEdit: (message: { text: string; answer: object }) => void;
-  disabled: boolean;
+  pendingFields: string[];
 }) {
-  const [editing, setEditing] = useState<keyof EventDraft | null>(null);
-  const [value, setValue] = useState("");
+  const [notice, setNotice] = useState(false);
   if (!draft)
     return (
       <p className="consult-muted">
@@ -37,63 +48,51 @@ export function EventDraftCard({
       <div className="consult-field-list">
         {fields.map(({ key, label }) => {
           const raw = draft[key];
-          const shown = Array.isArray(raw)
-            ? raw.join(", ")
-            : raw == null
-              ? ""
-              : String(raw);
+          const pending =
+            pendingFields.includes(key) ||
+            (pendingFields.includes("time") &&
+              (key === "startsAt" || key === "endsAt"));
+          const missing =
+            key === "hazards" ? pending : raw == null || raw === "";
+          const shown =
+            key === "hazards" && Array.isArray(raw)
+              ? raw.join(", ") || (pending ? "확인 필요" : "해당 없음")
+              : typeof raw === "string" &&
+                  (key === "startsAt" || key === "endsAt")
+                ? formatDraftDate(raw)
+                : raw == null
+                  ? ""
+                  : String(raw);
           return (
             <button
               type="button"
               key={key}
-              className={`consult-field${shown ? "" : " consult-field--missing"}`}
-              disabled={disabled}
-              onClick={() => {
-                setEditing(key);
-                setValue(shown);
-              }}
+              className={`consult-field${missing ? " consult-field--missing" : ""}`}
+              onClick={() => setNotice(true)}
             >
               <strong>{label}</strong> {shown || "확인 필요"}
             </button>
           );
         })}
       </div>
-      {editing && (
-        <form
-          className="consult-edit"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!value.trim()) return;
-            onEdit({
-              text: `${fields.find((field) => field.key === editing)?.label}: ${value}`,
-              answer: {
-                [editing]:
-                  editing === "hazards"
-                    ? value.split(",").map((part) => part.trim())
-                    : value,
-              },
-            });
-            setEditing(null);
-          }}
-        >
-          <label>
-            {fields.find((field) => field.key === editing)?.label} 수정
-            <input
-              value={value}
-              onChange={(event) => setValue(event.target.value)}
-            />
-          </label>
-          <Button type="submit" variant="outline">
-            수정 보내기
+      {notice && (
+        <div className="consult-edit">
+          <p>고치려면 새 상담을 시작해 주세요.</p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => window.location.assign("/consult")}
+          >
+            새 상담
           </Button>
           <Button
             type="button"
             variant="ghost"
-            onClick={() => setEditing(null)}
+            onClick={() => setNotice(false)}
           >
             닫기
           </Button>
-        </form>
+        </div>
       )}
     </div>
   );

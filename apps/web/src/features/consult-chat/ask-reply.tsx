@@ -1,129 +1,158 @@
-// 질문 종류에 맞는 버튼과 시간 입력으로 같은 상담에 답을 보낸다.
+// 여러 되묻기를 한 폼에 모아 게이트웨이에 답 한 번으로 보낸다.
 import type { EventDraft } from "@crowdcast/contracts/types";
 import { useState } from "react";
 import { Button } from "../../components/ui/button";
-import { type Ask, choiceAnswer, hazardsAnswer, timeAnswer } from "./answers";
+import { type Ask, combinedAnswer } from "./answers";
 
-type Reply = { text: string; answer: object };
-
-// 위험요소는 여러 개를 고른 뒤 보내고 해당 없음은 즉시 빈 배열로 확정한다.
+// 질문별 선택은 전송 전까지 로컬에 보관한다.
 export function AskReply({
-  ask,
+  asks,
   draft,
   onReply,
   disabled,
 }: {
-  ask: Ask;
+  asks: Ask[];
   draft: EventDraft | null;
-  onReply: (reply: Reply) => void;
+  onReply: (reply: { text: string; answer: object }) => void;
   disabled: boolean;
 }) {
-  const [hazards, setHazards] = useState<EventDraft["hazards"]>([]);
-  const [date, setDate] = useState(draft?.startsAt?.slice(0, 10) ?? "");
-  const [start, setStart] = useState(draft?.startsAt?.slice(11, 16) ?? "18:00");
+  const [choices, setChoices] = useState<Record<string, string>>({});
+  const [hazards, setHazards] = useState<EventDraft["hazards"] | null>(null);
+  const [date, setDate] = useState(
+    draft?.startsAt?.slice(0, 10) ?? draft?.endsAt?.slice(0, 10) ?? "",
+  );
+  const [start, setStart] = useState(draft?.startsAt?.slice(11, 16) ?? "19:00");
   const [end, setEnd] = useState(draft?.endsAt?.slice(11, 16) ?? "21:00");
+  const [error, setError] = useState("");
+
+  // 질문에서 받은 선택지만 허용하고 시각은 날짜와 함께 검증한다.
+  const submit = () => {
+    try {
+      onReply(combinedAnswer(asks, { choices, hazards, date, start, end }));
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "답을 확인해 주세요.");
+    }
+  };
+
   return (
     <fieldset className="consult-ask" aria-label="되묻기">
-      <p className="consult-bubble consult-bubble--ask">{ask.question}</p>
-      {ask.field === "time" ? (
-        <div className="consult-time">
-          <label>
-            행사 날짜
-            <input
-              type="date"
-              value={date}
-              readOnly={Boolean(draft?.startsAt)}
-              onChange={(event) => setDate(event.target.value)}
-            />
-          </label>
-          <label>
-            시작 시각
-            <input
-              type="time"
-              value={start}
-              onChange={(event) => setStart(event.target.value)}
-            />
-          </label>
-          <label>
-            종료 시각
-            <input
-              type="time"
-              value={end}
-              onChange={(event) => setEnd(event.target.value)}
-            />
-          </label>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={disabled || !date || !start || !end}
-            onClick={() => onReply(timeAnswer(date, start, end))}
-          >
-            시각 확인
-          </Button>
-        </div>
-      ) : ask.field === "hazards" ? (
-        <div className="consult-choices">
-          {ask.options
-            .filter((option) => option.value !== "[]")
-            .map((option) => (
-              <label key={option.value} className="consult-choice">
+      {asks.map((ask) => (
+        <div className="consult-ask__item" key={`${ask.field}-${ask.question}`}>
+          <p className="consult-bubble consult-bubble--ask">{ask.question}</p>
+          {ask.field === "time" ? (
+            <div className="consult-time">
+              <label>
+                행사 날짜
+                <input
+                  type="date"
+                  value={date}
+                  readOnly={Boolean(draft?.startsAt)}
+                  onChange={(event) => setDate(event.target.value)}
+                />
+              </label>
+              <label>
+                시작 시각
+                <input
+                  type="time"
+                  value={start}
+                  onChange={(event) => setStart(event.target.value)}
+                />
+              </label>
+              <label>
+                종료 시각
+                <input
+                  type="time"
+                  value={end}
+                  onChange={(event) => setEnd(event.target.value)}
+                />
+              </label>
+            </div>
+          ) : ask.field === "hazards" ? (
+            <div className="consult-choices">
+              {ask.options
+                .filter((option) => option.value !== "[]")
+                .map((option) => (
+                  <label className="consult-choice" key={option.value}>
+                    <input
+                      type="checkbox"
+                      checked={
+                        hazards?.includes(
+                          option.value as EventDraft["hazards"][number],
+                        ) ?? false
+                      }
+                      onChange={(event) =>
+                        setHazards((current) =>
+                          event.target.checked
+                            ? [
+                                ...(current ?? []),
+                                option.value as EventDraft["hazards"][number],
+                              ]
+                            : (current ?? []).filter(
+                                (value) => value !== option.value,
+                              ),
+                        )
+                      }
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              <label className="consult-choice">
                 <input
                   type="checkbox"
-                  checked={hazards.includes(
-                    option.value as EventDraft["hazards"][number],
-                  )}
+                  checked={hazards?.length === 0}
                   onChange={(event) =>
-                    setHazards((current) =>
-                      event.target.checked
-                        ? [
-                            ...current,
-                            option.value as EventDraft["hazards"][number],
-                          ]
-                        : current.filter((value) => value !== option.value),
-                    )
+                    setHazards(event.target.checked ? [] : null)
                   }
                 />
-                {option.label}
+                해당 없어요
               </label>
-            ))}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={disabled}
-            onClick={() => onReply(hazardsAnswer(hazards))}
-          >
-            선택 확인
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={disabled}
-            onClick={() => onReply(hazardsAnswer([]))}
-          >
-            해당 없어요
-          </Button>
+            </div>
+          ) : (
+            <div className="consult-choices">
+              {(ask.field === "hostType" && !ask.options.length
+                ? ["지자체", "민간", "대학", "기타"].map((value) => ({
+                    label: value,
+                    value,
+                  }))
+                : ask.options
+              ).map((option) => (
+                <button
+                  type="button"
+                  aria-pressed={choices[ask.field] === option.value}
+                  key={option.value}
+                  onClick={() =>
+                    setChoices((current) => ({
+                      ...current,
+                      [ask.field]: option.value,
+                    }))
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
+              {!ask.options.length && ask.field !== "hostType" && (
+                <label>
+                  직접 입력
+                  <input
+                    value={choices[ask.field] ?? ""}
+                    onChange={(event) =>
+                      setChoices((current) => ({
+                        ...current,
+                        [ask.field]: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              )}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="consult-choices">
-          {(ask.field === "hostType" && !ask.options.length
-            ? ["지자체", "민간", "대학", "기타"].map((value) => ({
-                label: value,
-                value,
-              }))
-            : ask.options
-          ).map((option) => (
-            <Button
-              key={option.value}
-              type="button"
-              variant="outline"
-              disabled={disabled}
-              onClick={() => onReply(choiceAnswer(ask.field, option.value))}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
-      )}
+      ))}
+      {error && <p role="alert">{error}</p>}
+      <Button type="button" disabled={disabled} onClick={submit}>
+        답하기
+      </Button>
     </fieldset>
   );
 }

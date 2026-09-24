@@ -1,0 +1,36 @@
+event: agent_status
+data: {"event":"agent_status","seq":0,"data":{"agentId":"lead","team":"lead","state":"working","note":"새 예보 작업을 배정해요.","stepId":"st-5054413a-8504-4560-abee-1573853a904e","at":"2026-09-24T19:01:15.022Z"}}
+id: 0
+
+event: agent_status
+data: {"event":"agent_status","seq":1,"data":{"agentId":"lead","team":"lead","state":"done","note":"계약 예시 예보로 분석을 시작해요.","stepId":"st-5054413a-8504-4560-abee-1573853a904e","at":"2026-09-24T19:01:15.029Z"}}
+id: 1
+
+event: agent_step
+data: {"event":"agent_step","seq":2,"data":{"stepId":"st-5054413a-8504-4560-abee-1573853a904e","agentId":"lead","team":"lead","startedAt":"2026-09-24T19:01:15.022Z","finishedAt":"2026-09-24T19:01:15.029Z","ms":7,"status":"done","inputSummary":"새 예보 작업을 배정해요.","outputEvidenceIds":[],"outputClaimIds":[],"usedLlm":false,"model":null,"note":"계약 예시 예보로 분석을 시작해요."}}
+id: 2
+
+event: agent_status
+data: {"event":"agent_status","seq":3,"data":{"agentId":"dictation","team":"analysis","state":"working","note":"행사 문장의 필수값을 확인해요.","stepId":"st-27afce65-e412-41e1-93f6-1b12e1686138","at":"2026-09-24T19:01:15.036Z"}}
+id: 3
+
+event: agent_status
+data: {"event":"agent_status","seq":4,"data":{"agentId":"dictation","team":"analysis","state":"blocked","note":"행사 정보를 더 확인해 주세요.","stepId":"st-27afce65-e412-41e1-93f6-1b12e1686138","at":"2026-09-24T19:01:19.409Z"}}
+id: 4
+
+event: agent_step
+data: {"event":"agent_step","seq":5,"data":{"stepId":"st-27afce65-e412-41e1-93f6-1b12e1686138","agentId":"dictation","team":"analysis","startedAt":"2026-09-24T19:01:15.036Z","finishedAt":"2026-09-24T19:01:19.409Z","ms":4374,"status":"blocked","inputSummary":"행사 문장의 필수값을 확인해요.","outputEvidenceIds":[],"outputClaimIds":[],"usedLlm":true,"model":"qwen3:4b-instruct-2507-q4_K_M","note":"행사 정보를 더 확인해 주세요."}}
+id: 5
+
+event: event_card
+data: {"event":"event_card","seq":6,"data":{"name":"불꽃축제","type":"불꽃","startsAt":"2026-10-18T19:00:00+09:00","endsAt":"2026-10-18T21:00:00+09:00","timeOfDay":"야간","venueText":"영종 씨사이드파크","sigunguName":null,"sigunguCode":null,"ambiguities":[],"fee":"미상","hostType":"지자체","budgetKrw":null,"promo":[],"hazards":[],"missing":[]}}
+id: 6
+
+event: ask
+data: {"event":"ask","seq":7,"data":{"field":"hazards","question":"위험요소를 확인해 주세요. 여러 항목을 선택할 수 있고, 없으면 ‘해당 없어요’를 골라 주세요.","options":[{"label":"폭죽 써요","value":"폭죽"},{"label":"해당 없어요","value":"[]"}]}}
+id: 7
+
+event: done
+data: {"event":"done","seq":8,"data":{"sessionId":"s-1790276475003-6bc97ceb-af18-4a17-bdeb-14422f316ea8","forecastId":null}}
+id: 8
+

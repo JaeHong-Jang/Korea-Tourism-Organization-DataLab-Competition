@@ -1,9 +1,12 @@
-// 계약 SSE를 POST 응답으로 흘려 상담 질문과 숫자 발행 전 단계를 검사한다.
+// 계약 SSE를 POST 응답으로 흘려 되묻기와 숫자 발행 전 단계를 검사한다.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { SseEvent } from "@crowdcast/contracts/types";
 import { expect, type Page, test } from "@playwright/test";
 
+const example =
+	"10월 18일 19시부터 21시까지 영종 씨사이드파크에서 인천 중구가 여는 불꽃축제를 해요";
+const output = resolve(process.cwd(), "../../reports/figures/screens");
 const fixture = (name: string): SseEvent[] =>
 	JSON.parse(
 		readFileSync(
@@ -15,18 +18,70 @@ const fixture = (name: string): SseEvent[] =>
 			"utf8",
 		),
 	);
-const output = resolve(process.cwd(), "../../reports/figures/screens");
 const frames = (events: SseEvent[]) =>
 	events
 		.map((event) => `event: ${event.event}\ndata: ${JSON.stringify(event)}\n\n`)
 		.join("");
 
-// 첫 응답은 카드 확인 질문으로 끝나고 답 뒤에는 정상 계약 예보를 전송한다.
+// 녹화한 게이트웨이의 세 질문을 같은 스트림 순서로 재현한다.
+function asking(three: boolean): SseEvent[] {
+	const asks = [
+		{
+			field: "hostType",
+			question: "주최 유형을 확인해 주세요.",
+			options: ["지자체", "민간", "대학", "기타"].map((value) => ({
+				label: value,
+				value,
+			})),
+		},
+		{
+			field: "time",
+			question: "행사의 시작·종료 날짜와 시각을 함께 입력해 주세요.",
+			options: [],
+		},
+		{
+			field: "hazards",
+			question:
+				"위험요소를 확인해 주세요. 여러 항목을 선택할 수 있고, 없으면 ‘해당 없어요’를 골라 주세요.",
+			options: [
+				{ label: "폭죽 써요", value: "폭죽" },
+				{ label: "해당 없어요", value: "[]" },
+			],
+		},
+	];
+	const selected = three ? asks : asks.slice(2);
+	const prefix = fixture("valid-new-forecast").slice(0, 4);
+	const draft = structuredClone(prefix[3].data) as Record<string, unknown>;
+	draft.hazards = [];
+	if (three) {
+		draft.hostType = null;
+		draft.startsAt = null;
+		draft.endsAt = null;
+		draft.missing = ["startsAt", "endsAt"];
+	}
+	prefix[3] = { ...prefix[3], data: draft };
+	return [
+		...prefix,
+		...selected.map((data, index) => ({
+			event: "ask",
+			seq: prefix.length + index,
+			data,
+		})),
+		{
+			event: "done",
+			seq: prefix.length + selected.length,
+			data: { sessionId: "s-demo-0001", forecastId: null },
+		},
+	] as SseEvent[];
+}
+
+// 첫 응답은 질문으로 끝나고 답을 보내면 계약 픽스처의 결과를 재생한다.
 async function routeConsult(
 	page: Page,
 	result: "valid-new-forecast" | "valid-gate-a-failed",
+	three = false,
 ) {
-	let calls = 0;
+	const messages: { text: string; answer?: Record<string, unknown> }[] = [];
 	await page.route("**/api/team/sessions", (route) =>
 		route.fulfill({
 			status: 200,
@@ -37,72 +92,53 @@ async function routeConsult(
 	await page.route("**/api/team/sessions/*/steps", (route) =>
 		route.fulfill({ status: 200, contentType: "application/json", body: "[]" }),
 	);
-	await page.route("**/api/team/sessions/*/messages", async (route) => {
-		calls++;
-		const initial = fixture("valid-new-forecast").slice(0, 4);
-		const asking = [
-			...initial,
-			{
-				event: "ask",
-				seq: 4,
-				data: {
-					field: "hostType",
-					question: "주최 유형을 확인해 주세요.",
-					options: ["지자체", "민간", "대학", "기타"].map((value) => ({
-						label: value,
-						value,
-					})),
-				},
-			},
-			{
-				event: "done",
-				seq: 5,
-				data: { sessionId: "s-demo-0001", forecastId: null },
-			},
-		] as SseEvent[];
-		await route.fulfill({
+	await page.route("**/api/team/sessions/*/messages", (route) => {
+		messages.push(route.request().postDataJSON());
+		return route.fulfill({
 			status: 200,
 			contentType: "text/event-stream",
-			body: frames(calls % 2 === 1 ? asking : fixture(result)),
+			body: frames(messages.length % 2 ? asking(three) : fixture(result)),
 		});
 	});
-	return () => calls;
+	return messages;
 }
 
-// 예시, 주최 버튼 두 번으로 수치 카드가 나오고 발행 전 문장은 보이지 않는다.
+// 예시·위험 선택·답하기의 세 번 클릭으로 숫자 카드까지 간다.
 test("질문 뒤 숫자 카드와 테마별 화면", async ({ page }) => {
-	const count = await routeConsult(page, "valid-new-forecast");
+	const messages = await routeConsult(page, "valid-new-forecast");
 	await page.setViewportSize({ width: 1366, height: 768 });
 	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
 	await page.screenshot({
 		path: resolve(output, "T-405-consult-start-day.png"),
 		fullPage: true,
 	});
-	await page
-		.getByRole("button", {
-			name: "10월 18일 영종 씨사이드파크에서 불꽃축제를 해요",
-		})
-		.click();
-	await expect(page.getByText("주최 유형을 확인해 주세요.")).toBeVisible();
+	await page.getByRole("button", { name: example }).click();
+	await expect(
+		page.getByText("위험요소를 확인해 주세요.", { exact: false }),
+	).toBeVisible();
 	await page.screenshot({
 		path: resolve(output, "T-405-consult-asking-day.png"),
 		fullPage: true,
 	});
-	await page.getByRole("button", { name: "지자체", exact: true }).click();
-	await expect(page.getByText("순간 최대", { exact: true })).toBeVisible();
+	await page.getByRole("checkbox", { name: "폭죽 써요" }).click();
+	await page.getByRole("button", { name: "답하기" }).click();
 	await expect(page.locator(".key-number strong").first()).toBeVisible();
-	expect(count()).toBe(2);
+	expect(messages[1].answer).toEqual({ hazards: ["폭죽"] });
+	await expect(page.getByText("게이트 publish")).toHaveCount(0);
+	await expect(page.getByText("2025-10-18T19:00:00+09:00")).toHaveCount(0);
 	await page.screenshot({
 		path: resolve(output, "T-405-consult-forecast-day.png"),
 		fullPage: true,
 	});
+	await page.locator(".consult-field").first().click();
+	await expect(
+		page.getByText("고치려면 새 상담을 시작해 주세요."),
+	).toBeVisible();
+	await expect(page.getByRole("button", { name: "새 상담" })).toBeVisible();
 	await page.goto("/consult?theme=night&at=2026-10-18T19:00+09:00");
-	await page
-		.getByRole("button", {
-			name: "10월 18일 영종 씨사이드파크에서 불꽃축제를 해요",
-		})
-		.click();
-	await page.getByRole("button", { name: "지자체", exact: true }).click();
+	await page.getByRole("button", { name: example }).click();
+	await page.getByRole("checkbox", { name: "폭죽 써요" }).click();
+	await page.getByRole("button", { name: "답하기" }).click();
 	await expect(page.locator(".key-number strong").first()).toBeVisible();
 	await page.screenshot({
 		path: resolve(output, "T-405-consult-forecast-night.png"),
@@ -115,24 +151,63 @@ test("질문 뒤 숫자 카드와 테마별 화면", async ({ page }) => {
 	});
 });
 
-// 게이트 A 실패 응답에는 수치가 없고 오류와 위반 사유가 남는다.
+// 기록 조회가 실패하면 오류를 유지하고 명시적 재시도로 다시 조회한다.
+test("펫 기록 조회 실패 뒤 다시 불러온다", async ({ page }) => {
+	await routeConsult(page, "valid-new-forecast");
+	let reads = 0;
+	await page.route("**/api/team/sessions/*/steps", (route) => {
+		reads++;
+		return route.fulfill({
+			status: reads === 1 ? 503 : 200,
+			contentType: "application/json",
+			body: reads === 1 ? "{}" : "[]",
+		});
+	});
+	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
+	await page.getByRole("button", { name: example }).click();
+	await page.getByRole("button", { name: "받아쓰기 작업 기록 열기" }).click();
+	await expect(
+		page.getByRole("button", { name: "다시 불러오기" }),
+	).toBeVisible();
+	await page.getByRole("button", { name: "다시 불러오기" }).click();
+	await expect(page.getByText("아직 기록이 없어요.")).toBeVisible();
+	expect(reads).toBe(2);
+});
+
+// 게이트웨이 수동 기록의 주최·시각·위험 질문도 한 메시지로 답한다.
+test("세 종류의 질문을 한 번에 답한다", async ({ page }) => {
+	const messages = await routeConsult(page, "valid-new-forecast", true);
+	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
+	await page.getByRole("button", { name: example }).click();
+	await page.getByRole("button", { name: "지자체", exact: true }).click();
+	await page.getByLabel("행사 날짜").fill("2026-10-18");
+	await page.getByRole("checkbox", { name: "폭죽 써요" }).click();
+	await page.getByRole("button", { name: "답하기" }).click();
+	await expect(page.locator(".key-number strong").first()).toBeVisible();
+	expect(messages).toHaveLength(2);
+	expect(messages[1].answer).toEqual({
+		hostType: "지자체",
+		startsAt: "2026-10-18T19:00:00+09:00",
+		endsAt: "2026-10-18T21:00:00+09:00",
+		hazards: ["폭죽"],
+	});
+});
+
+// 검사 실패에서는 오류와 게이트 위반만 보이고 수치가 없다.
 test("게이트 A 실패는 숫자 카드를 열지 않는다", async ({ page }) => {
 	await routeConsult(page, "valid-gate-a-failed");
 	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
-	await page
-		.getByRole("button", {
-			name: "10월 18일 영종 씨사이드파크에서 불꽃축제를 해요",
-		})
-		.click();
-	await page.getByRole("button", { name: "지자체", exact: true }).click();
+	await page.getByRole("button", { name: example }).click();
+	await page.getByRole("checkbox", { name: "폭죽 써요" }).click();
+	await page.getByRole("button", { name: "답하기" }).click();
 	await expect(page.getByRole("alert")).toContainText(
 		"분석 결과 검사를 통과하지 못해",
 	);
 	await expect(page.getByText("순간 최대", { exact: true })).toHaveCount(0);
-	await expect(page.getByText("위반 · 게이트 A")).toBeVisible();
+	await expect(page.getByText("위반 · 분석 검증")).toBeVisible();
 });
 
-// 잘못된 순서가 들어오면 숫자 대신 계약 오류 카드를 보여 준다.
+// 순서 위반 픽스처는 숫자 이벤트가 있어도 오류 카드가 우선한다.
 for (const name of [
 	"invalid-forecast-before-gate-a",
 	"invalid-forecast-after-failed-gate",
@@ -154,17 +229,13 @@ for (const name of [
 			}),
 		);
 		await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
-		await page
-			.getByRole("button", {
-				name: "10월 18일 영종 씨사이드파크에서 불꽃축제를 해요",
-			})
-			.click();
+		await page.getByRole("button", { name: example }).click();
 		await expect(page.getByRole("alert")).toContainText("SSE 순서 위반");
 		await expect(page.locator(".key-number strong")).toHaveCount(0);
 	});
 }
 
-// 스키마가 맞지 않는 SSE도 같은 오류 상태로 알려 준다.
+// 스키마가 맞지 않는 이벤트도 계약 오류로 알린다.
 test("계약 위반 SSE 오류 카드", async ({ page }) => {
 	await page.route("**/api/team/sessions", (route) =>
 		route.fulfill({
@@ -181,63 +252,6 @@ test("계약 위반 SSE 오류 카드", async ({ page }) => {
 		}),
 	);
 	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
-	await page
-		.getByRole("button", {
-			name: "10월 18일 영종 씨사이드파크에서 불꽃축제를 해요",
-		})
-		.click();
+	await page.getByRole("button", { name: example }).click();
 	await expect(page.getByRole("alert")).toContainText("SSE 계약 위반");
-});
-
-// 선택지 대신 직접 입력한 주최 답도 같은 세션의 answer 필드로 보낸다.
-test("직접 입력 답을 같은 세션에 보낸다", async ({ page }) => {
-	const messages: { text: string; answer?: { hostType?: string } }[] = [];
-	await page.route("**/api/team/sessions", (route) =>
-		route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify({ sessionId: "s-demo-0001" }),
-		}),
-	);
-	await page.route("**/api/team/sessions/*/messages", async (route) => {
-		messages.push(route.request().postDataJSON());
-		const initial = fixture("valid-new-forecast").slice(0, 4);
-		const asking = [
-			...initial,
-			{
-				event: "ask",
-				seq: 4,
-				data: {
-					field: "hostType",
-					question: "주최 유형을 확인해 주세요.",
-					options: [],
-				},
-			},
-			{
-				event: "done",
-				seq: 5,
-				data: { sessionId: "s-demo-0001", forecastId: null },
-			},
-		] as SseEvent[];
-		await route.fulfill({
-			status: 200,
-			contentType: "text/event-stream",
-			body: frames(
-				messages.length === 1 ? asking : fixture("valid-new-forecast"),
-			),
-		});
-	});
-	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
-	await page
-		.getByRole("button", {
-			name: "10월 18일 영종 씨사이드파크에서 불꽃축제를 해요",
-		})
-		.click();
-	await expect(page.getByText("주최 유형을 확인해 주세요.")).toBeVisible();
-	await page
-		.getByRole("textbox", { name: "행사를 설명해 주세요" })
-		.fill("민간");
-	await page.getByRole("button", { name: "보내기" }).click();
-	await expect(page.locator(".key-number strong").first()).toBeVisible();
-	expect(messages[1]).toEqual({ text: "민간", answer: { hostType: "민간" } });
 });

@@ -21,9 +21,9 @@ import { createTeamSession } from "../lib/api-client";
 import { postTeamMessage } from "../lib/team-stream/stream";
 
 const examples = [
-  "10월 18일 영종 씨사이드파크에서 불꽃축제를 해요",
-  "11월 7일 서울숲에서 작은 음악 공연을 해요",
-  "5월 15일 전주 한옥마을에서 먹거리 행사를 해요",
+  "10월 18일 19시부터 21시까지 영종 씨사이드파크에서 인천 중구가 여는 불꽃축제를 해요",
+  "11월 7일 14시부터 17시까지 서울숲에서 작은 음악 공연을 해요",
+  "5월 15일 11시부터 16시까지 전주 한옥마을에서 먹거리 행사를 해요",
 ];
 type Message = { text: string; answer?: object };
 
@@ -67,8 +67,8 @@ export function ConsultPage() {
         setGates((current) => [...current, gate]);
         setSummary(
           gate.passed
-            ? `게이트 ${gate.gate}를 통과했어요.`
-            : `게이트 ${gate.gate}에서 멈췄어요.`,
+            ? `${gate.gate === "A" ? "분석 검증" : gate.gate === "B" ? "문장 검증" : "발행"}을 통과했어요.`
+            : `${gate.gate === "A" ? "분석 검증" : gate.gate === "B" ? "문장 검증" : "발행"}에서 멈췄어요.`,
         );
         break;
       }
@@ -169,15 +169,15 @@ export function ConsultPage() {
                 {message.text}
               </p>
             ))}
-            {asks.map((ask) => (
+            {asks.length > 0 && !busy && (
               <AskReply
-                key={`${ask.field}-${ask.question}`}
-                ask={ask}
+                key={asks.map((ask) => ask.field).join("-")}
+                asks={asks}
                 draft={draft}
                 disabled={busy}
                 onReply={(reply) => void send(reply)}
               />
-            ))}
+            )}
             {suggestions.length > 0 && (
               <fieldset className="consult-choices" aria-label="다음 할 일">
                 {suggestions.map((suggestion) => (
@@ -211,10 +211,7 @@ export function ConsultPage() {
             className="consult-compose"
             onSubmit={(event) => {
               event.preventDefault();
-              const field = asks.find(
-                (item) => item.field !== "time" && item.field !== "hazards",
-              )?.field;
-              void send(field ? { text, answer: { [field]: text } } : { text });
+              if (!asks.length) void send({ text });
             }}
           >
             <label htmlFor="consult-text">행사를 설명해 주세요</label>
@@ -224,10 +221,13 @@ export function ConsultPage() {
               onChange={(event) => setText(event.target.value)}
               rows={3}
               placeholder="행사 날짜, 장소, 종류를 적어 주세요"
-              disabled={busy}
+              disabled={busy || asks.length > 0}
             />
             <div className="consult-compose__actions">
-              <Button type="submit" disabled={busy || !text.trim()}>
+              <Button
+                type="submit"
+                disabled={busy || asks.length > 0 || !text.trim()}
+              >
                 보내기
               </Button>
               {busy && (
@@ -240,6 +240,9 @@ export function ConsultPage() {
                 </Button>
               )}
             </div>
+            {asks.length > 0 && (
+              <p className="consult-muted">위 질문에 답해 주세요.</p>
+            )}
           </form>
         </FeaturePanel>
         <div className="consult-right">
@@ -271,8 +274,7 @@ export function ConsultPage() {
           >
             <EventDraftCard
               draft={draft}
-              onEdit={(message) => void send(message)}
-              disabled={busy}
+              pendingFields={asks.map((ask) => ask.field)}
             />
           </FeaturePanel>
         </div>

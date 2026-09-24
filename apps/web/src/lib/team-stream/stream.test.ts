@@ -89,3 +89,33 @@ it("순서가 틀린 POST 스트림을 중단한다", async () => {
     false,
   );
 });
+
+// 계약 또는 순서 위반 시 열린 응답 본문을 취소한 뒤 잠금을 해제한다.
+it("잘못된 SSE에서 reader를 취소한다", async () => {
+  const cancel = vi.fn(async () => {});
+  const releaseLock = vi.fn();
+  const read = vi.fn(async () => ({
+    done: false,
+    value: new TextEncoder().encode(
+      'event: forecast\ndata: {"event":"forecast","seq":0,"data":{"id":"f-bad"}}\n\n',
+    ),
+  }));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({
+      ok: true,
+      headers: new Headers({ "Content-Type": "text/event-stream" }),
+      body: { getReader: () => ({ read, cancel, releaseLock }) },
+    })),
+  );
+  await expect(
+    postTeamMessage(
+      "s-demo",
+      { text: "영종 씨사이드파크 불꽃축제" },
+      new AbortController().signal,
+      vi.fn(),
+    ),
+  ).rejects.toThrow(/계약 위반/);
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(releaseLock).toHaveBeenCalledOnce();
+});

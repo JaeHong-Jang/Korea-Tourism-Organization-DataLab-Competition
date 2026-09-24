@@ -27,6 +27,27 @@ const groups = [
   },
 ] as const;
 type AgentId = AgentStatus["agentId"];
+const names: Record<AgentId, string> = {
+  lead: "지휘",
+  dictation: "받아쓰기",
+  "local-guide": "동네지기",
+  archivist: "기록관",
+  forecaster: "예보관",
+  "source-check": "출처확인",
+  "number-check": "숫자대조",
+  "rule-check": "법규담당",
+  skeptic: "깐깐이",
+  explainer: "해설가",
+  "card-maker": "카드장인",
+  "plan-writer": "계획서",
+  briefer: "브리핑",
+};
+const gateNames = {
+  A: "분석 검증",
+  B: "문장 검증",
+  publish: "발행",
+  integrity: "무결성 검사",
+} as const;
 
 // 아직 상태 이벤트가 없는 펫은 계약의 기본 대기 상태로 둔다.
 export function agentState(
@@ -53,10 +74,16 @@ export function TeamBoard({
   const [steps, setSteps] = useState<AgentStep[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [reload, setReload] = useState(0);
+  const state = selected ? agentState(statuses, selected) : null;
+  const refreshState = state === "done" || state === "error" ? state : null;
+  const requestKey = `${selected ?? ""}:${reload}:${refreshState ?? ""}`;
   useEffect(() => {
-    if (!selected || !sessionId) return;
+    if (!selected || !sessionId || !requestKey) return;
     const controller = new AbortController();
     setLoading(true);
+    setError("");
+    setSteps([]);
     getTeamSteps(sessionId, controller.signal)
       .then(setSteps)
       .catch((cause: unknown) => {
@@ -69,7 +96,7 @@ export function TeamBoard({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [selected, sessionId]);
+  }, [selected, sessionId, requestKey]);
   const failed = gates.filter((gate) => !gate.passed);
   return (
     <>
@@ -90,9 +117,9 @@ export function TeamBoard({
                     key={id}
                     onClick={() => {
                       setSelected(id);
-                      setError("");
+                      if (selected === id) setReload((current) => current + 1);
                     }}
-                    aria-label={`${id} 작업 기록 열기`}
+                    aria-label={`${names[id]} 작업 기록 열기`}
                   >
                     <PetAvatar
                       agentId={id}
@@ -122,7 +149,7 @@ export function TeamBoard({
             key={`${gate.gate}-${gate.revision}-${gate.masterVersion}-${gate.passed}`}
           >
             <summary>
-              {gate.passed ? "통과" : "위반"} · 게이트 {gate.gate}
+              {gate.passed ? "통과" : "위반"} · {gateNames[gate.gate]}
             </summary>
             {gate.violations.length ? (
               <ul>
@@ -148,7 +175,7 @@ export function TeamBoard({
           aria-label="팀원 작업 기록"
         >
           <div className="team-steps__head">
-            <strong>{selected} 작업 기록</strong>
+            <strong>{names[selected]} 작업 기록</strong>
             <button type="button" onClick={() => setSelected(null)}>
               닫기
             </button>
@@ -156,7 +183,15 @@ export function TeamBoard({
           {loading ? (
             <p>기록을 불러오는 중이에요.</p>
           ) : error ? (
-            <p role="alert">{error}</p>
+            <div>
+              <p role="alert">{error}</p>
+              <button
+                type="button"
+                onClick={() => setReload((current) => current + 1)}
+              >
+                다시 불러오기
+              </button>
+            </div>
           ) : steps.filter((step) => step.agentId === selected).length ? (
             <ul>
               {steps
