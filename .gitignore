@@ -136,3 +136,7 @@ apps/web/public/geo/
 /reports/evals
 /reports/figures/screens
 /reports/figures/perf
+
+# Playwright 실행 결과물(워크트리마다 생김)
+**/test-results/
+**/playwright-report/
