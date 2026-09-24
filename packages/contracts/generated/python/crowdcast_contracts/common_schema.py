@@ -283,6 +283,11 @@ class Observation(BaseModel):
     sigunguCode: SigunguCode
 
 
+class ModelVerdict(Enum):
+    통과 = '통과'
+    미검증 = '미검증'
+
+
 class PredictionRun(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -293,6 +298,12 @@ class PredictionRun(BaseModel):
     asOf: Date
     observationIds: Annotated[list[ObservationId], Field(min_length=1)]
     trainRange: Period
+    modelVerdict: Annotated[
+        ModelVerdict | None,
+        Field(
+            description="사용 모델의 검증 상태(reports/backtest/promoted.json의 verdict, 06 §8). 미검증이면 화면·인쇄·docx에 '골든 사례 0건 — 사례 재현 검증 전 임시 사용'"
+        ),
+    ] = None
 
 
 class Basis(Enum):

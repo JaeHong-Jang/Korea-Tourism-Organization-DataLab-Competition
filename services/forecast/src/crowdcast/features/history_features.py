@@ -9,6 +9,8 @@ from crowdcast.features.availability import Feature, publication_date
 
 # 행사장 방문객을 직접 센 정답 등급(데이터랩 축제 현황·DIY).
 GOLD_TIERS = frozenset({"goldA", "goldB"})
+# 골드 등급별 출처 데이터셋(master-ids).
+GOLD_DATASETS = {"goldA": "ds-datalab-festival-status", "goldB": "ds-datalab-diy"}
 
 
 # 회차·연도 표기를 제거한 이름과 지역이 같은 행사만 연결하고 유사 이름은 추측하지 않는다.
@@ -56,5 +58,12 @@ def history_features(
         or available > as_of
     ):
         return result
-    result["previous_daily_mean"] = Feature(float(label["daily_mean"]), available)
+    result["previous_daily_mean"] = Feature(
+        float(label["daily_mean"]),
+        available,
+        dataset_id=GOLD_DATASETS[label["label_tier"]],
+        sigungu_code=prior.get("sigungu_code"),
+        observed_at=prior.get("end") or prior["start"],
+        unit="명/일",
+    )
     return result

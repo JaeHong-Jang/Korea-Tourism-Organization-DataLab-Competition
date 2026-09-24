@@ -19,6 +19,14 @@ from crowdcast.features.event_features import event_features
 from crowdcast.features.history_features import history_features
 from crowdcast.features.region_features import prepare_regions, region_features
 
+# 관측 피처의 계보 열(계약 observation의 datasetId·sigunguCode·observedAt·unit)과 형식.
+LINEAGE_FIELDS = {
+    "dataset_id": pl.String,
+    "sigungu_code": pl.String,
+    "observed_at": pl.Date,
+    "unit": pl.String,
+}
+
 
 # 선택된 피처 값과 공개일을 같은 행에 남겨 API와 감사에서 그대로 읽게 한다.
 def build_features(
@@ -66,6 +74,7 @@ def build_features(
             write_availability(audit_path, audit)
         check_availability(features, as_of)
         names = list(features)
+        observed = [name for name, feature in features.items() if feature.is_observation]
         rows.append(
             {
                 "event_id": event["event_id"],
@@ -73,6 +82,12 @@ def build_features(
                 **{name: feature.value for name, feature in features.items()},
                 **{f"{name}_available_at": feature.available_at for name, feature in features.items()},
                 **{f"{name}_is_observation": feature.is_observation for name, feature in features.items()},
+                # 관측 피처는 예보 계보(observation)를 만들 수 있게 출처·지역·관측일·단위를 함께 둔다.
+                **{
+                    f"{name}_{field}": getattr(features[name], field)
+                    for name in observed
+                    for field in LINEAGE_FIELDS
+                },
             }
         )
     if not rows:
@@ -85,6 +100,7 @@ def build_features(
         **dict.fromkeys(names, pl.Float64),
         **{f"{name}_available_at": pl.Date for name in names},
         **{f"{name}_is_observation": pl.Boolean for name in names},
+        **{f"{name}_{field}": dtype for name in observed for field, dtype in LINEAGE_FIELDS.items()},
     }
     frame = pl.DataFrame(rows, schema=schema)
     columns = {

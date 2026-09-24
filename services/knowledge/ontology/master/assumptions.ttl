@@ -41,3 +41,9 @@ id:as-concurrency-other a cc:Assumption ; dcterms:title "동시체류율(기타)
     cc:value "0.50"^^xsd:double ; cc:rangeLow "0.40"^^xsd:double ; cc:rangeHigh "0.60"^^xsd:double ;
     cc:estimated true ; cc:basis "docs/plan/06 §4 초기 가정" ;
     cc:note "운영 8시간·체류 2.5시간·피크계수 1.6. 추정 산식 기반" .
+
+# 달력 피처는 법정·대체공휴일 규칙만 쓰고, 지정 시각을 복원할 수 없는 임시공휴일은 넣지 않는다(06 §3, T-203).
+id:as-temporary-holiday-excluded a cc:Assumption ; dcterms:title "임시공휴일 미반영" ; cc:estimated true ;
+    cc:value "0"^^xsd:double ; cc:rangeLow "0"^^xsd:double ; cc:rangeHigh "1"^^xsd:double ;
+    cc:basis "docs/plan/06 §3 달력 피처 — 값은 달력에 반영한 임시공휴일 일수, 범위는 행사 기간에 실제로 있을 수 있는 일수" ;
+    cc:note "예보 기준일(D-14)에 지정돼 있던 임시공휴일도 달력 피처에 넣지 않는다 — 연휴 길이가 실제보다 짧게 잡힐 수 있다" .

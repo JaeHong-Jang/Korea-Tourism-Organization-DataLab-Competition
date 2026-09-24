@@ -221,6 +221,10 @@ export interface PredictionRun {
    */
   observationIds: [string, ...string[]];
   trainRange: Period;
+  /**
+   * 사용 모델의 검증 상태(reports/backtest/promoted.json의 verdict, 06 §8). 미검증이면 화면·인쇄·docx에 '골든 사례 0건 — 사례 재현 검증 전 임시 사용'
+   */
+  modelVerdict?: "통과" | "미검증";
 }
 export interface Period {
   from: string;

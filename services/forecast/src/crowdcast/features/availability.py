@@ -7,11 +7,16 @@ from zoneinfo import ZoneInfo
 
 
 # 값이 없는 피처도 같은 구조로 남겨 결측과 공개일 미상을 구분한다.
+# 관측 피처는 계보(계약 observation — 출처 데이터셋·시군구·관측일·단위)를 함께 들고 다닌다.
 @dataclass(frozen=True)
 class Feature:
     value: float | None
     available_at: date | None
     is_observation: bool = True
+    dataset_id: str | None = None
+    sigungu_code: str | None = None
+    observed_at: date | None = None
+    unit: str | None = None
 
 
 # 시간대가 있는 원본 발표 시점은 한국 날짜로 정규화한다.

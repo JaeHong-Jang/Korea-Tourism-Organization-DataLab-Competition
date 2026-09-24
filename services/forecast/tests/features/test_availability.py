@@ -179,7 +179,37 @@ def test_region_window_and_publication() -> None:
             )
     regions = prepare_regions(pl.DataFrame(rows))
     result = region_features("41800", cutoff, regions)
-    assert result["region_daily_mean"] == Feature(450.0, cutoff)
-    assert result["nonlocal_share"].value == pytest.approx(1 / 3)
-    assert result["weekend_ratio"].value == 2
-    assert region_features("41800", cutoff, regions, continuity_break=True)["region_daily_mean"].value is None
+    assert result["region_daily_mean"] == Feature(
+        450.0,
+        cutoff,
+        dataset_id="ds-kto-visitors-15101972",
+        sigungu_code="41800",
+        observed_at=date(2025, 4, 5),
+        unit="명/일",
+    )
+    assert result["nonlocal_share"].value == pytest.approx(1 / 3) and result["nonlocal_share"].unit == "비율"
+    assert result["weekend_ratio"].value == 2 and result["weekend_ratio"].unit == "배"
+    # 개편 전 기준일이면 끊김 여부와 관계없이 같은 창이다.
+    assert region_features("41800", cutoff, regions, continuity_break=True) == result
+
+
+# 연속성이 끊긴 지역은 기준일이 개편 뒤여도 2026-06-30까지의 여덟 주만 쓴다(06 §1).
+def test_continuity_break_uses_window_before_change() -> None:
+    rows = []
+    for day, count in ((date(2026, 6, 20), 100.0), (date(2026, 6, 27), 300.0), (date(2026, 7, 4), 9000.0)):
+        for group in ("현지인", "외지인", "외국인"):
+            rows.append(
+                {
+                    "sigungu_code": "28110",
+                    "date": day,
+                    "available_at": day + timedelta(days=31),
+                    "visitors": count,
+                    "tou_div": group,
+                    "continuity_break": False,
+                }
+            )
+    regions = prepare_regions(pl.DataFrame(rows))
+    as_of = date(2026, 10, 4)
+    broken = region_features("28110", as_of, regions, continuity_break=True)["region_daily_mean"]
+    assert broken.value == 600.0 and broken.observed_at == date(2026, 6, 27)
+    assert region_features("28110", as_of, regions)["region_daily_mean"].value is None

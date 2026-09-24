@@ -41,7 +41,8 @@
     "as-concurrency-food",
     "as-concurrency-flower",
     "as-concurrency-traditional",
-    "as-concurrency-other"
+    "as-concurrency-other",
+    "as-temporary-holiday-excluded"
   ],
   "agents": [
     "agent-lead",
