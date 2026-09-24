@@ -138,6 +138,7 @@
 - 레인 워크트리는 WSL 홈에 둔다(`/mnt/c`에서는 npm·git이 느리다).
   `git worktree add ~/crowdcast-wt/L1 -b feat/astra-forecast-data develop`
 - git 밖 산출물은 본 레포 한 곳에 둔다. `traces/` `reports/runs/` `reports/evals/` `reports/figures/screens/` `reports/figures/perf/` `.env`는 워크트리에 심볼릭 링크로 공유하고, **`data/`·`models/`는 링크하지 않고 `CROWDCAST_DATA_ROOT`(본 레포 경로, `.env`)로 연다** — Python은 `crowdcast.paths`·`knowledge.paths`, PHP·TS는 환경 변수를 직접 읽는다. 워크트리 안의 `data/`에는 원본이 없다.
+- 서비스 기동 확인은 **자기 서비스만** 띄운다: `node scripts/dev.mjs --check --only <forecast|knowledge|records|gateway|web>`(여러 레인 워커가 동시에 돌 때 포트 8010·8020·8030·8787·5173이 부딪히지 않게). 실패하면 종료 코드 1.
 - 워커 샌드박스(`dispatch.sh`)는 본 레포의 `data/processed` `data/cache` `data/app` `models` `traces` `reports/runs` `reports/evals` `reports/figures/screens` `reports/figures/perf`만 쓰기로 연다(`--add-dir`). 원본(`data/20*_festival` `data/raw` `data/external`)은 읽기만 한다. 공유 산출물을 바꾼 task는 리포트와 LEDGER에 파일 해시(`sha256sum`)를 남긴다.
 - 레인 잠금: 디스패치 전에 `.harness/locks/<레인>`을 만들고 끝나면 지운다. 잠금 파일이 있으면 그 레인에 새 task를 보내지 않는다.
 

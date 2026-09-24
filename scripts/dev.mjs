@@ -90,15 +90,18 @@ let ollama = null;
 for (const h of hosts) if (await probe(`${h}/api/version`)) { ollama = h; break; }
 if (ollama) env.OLLAMA_HOST = ollama;
 
+// --only forecast,knowledge: 그 서비스만 띄운다(병렬 워커가 같은 포트를 두고 부딪히지 않게)
+const onlyAt = process.argv.indexOf("--only");
+const only = onlyAt > 0 ? new Set(process.argv[onlyAt + 1].split(",")) : null;
 const children = [];
-const present = SERVICES.filter((s) => existsSync(join(ROOT, s.marker)));
-for (const s of SERVICES.filter((x) => !present.includes(x))) console.log(`· ${s.name}: 아직 없음(${s.marker})`);
+const present = SERVICES.filter((s) => existsSync(join(ROOT, s.marker)) && (!only || only.has(s.name)));
+for (const s of SERVICES.filter((x) => !present.includes(x) && (!only || only.has(x.name)))) console.log(`· ${s.name}: 아직 없음(${s.marker})`);
 for (const s of present) children.push(start(s, env));
 
 // Ctrl+C로 전부 함께 끈다
-const stopAll = () => { for (const c of children) c.kill("SIGTERM"); process.exit(0); };
-process.on("SIGINT", stopAll);
-process.on("SIGTERM", stopAll);
+const stopAll = (code = 0) => { for (const c of children) c.kill("SIGTERM"); process.exit(code); };
+process.on("SIGINT", () => stopAll());
+process.on("SIGTERM", () => stopAll());
 
 // health 결과와 주소를 출력한다
 const results = await Promise.all(present.map(async (s) => [s, await waitHealthy(s.health)]));
@@ -106,4 +109,5 @@ console.log("\n── 인파예보 로컬 실행 ──");
 for (const [s, ok] of results) console.log(`${ok ? "✓" : "✗"} ${s.name.padEnd(9)} ${s.health}`);
 console.log(`${ollama ? "✓" : "·"} ollama    ${ollama ?? "연결 안 됨 — 템플릿 모드로 동작"} (${hosts.join(", ")})`);
 if (present.some((s) => s.name === "web")) console.log("\n열기: http://127.0.0.1:5173");
-if (process.argv.includes("--check")) stopAll();
+// --check: 확인만 하고 끈다. 고른 서비스 중 하나라도 실패하면 종료 코드 1(게이트에서 쓴다)
+if (process.argv.includes("--check")) stopAll(results.every(([, ok]) => ok) ? 0 : 1);

@@ -75,7 +75,8 @@
   },
   "T-100": {
    "status": "running",
-   "updated": "2026-09-24T13:03:12.669Z"
+   "updated": "2026-09-24T13:03:12.669Z",
+   "note": "1회차 수정 5건 원본 대조 확인, 날짜 채움률 회귀((예정) 표기 96건 거부) → 피드백 2회차(마지막)"
   },
   "T-101": {
    "status": "todo"
@@ -102,7 +103,9 @@
    "status": "todo"
   },
   "T-201": {
-   "status": "todo"
+   "status": "done",
+   "updated": "2026-09-24T13:53:08.889Z",
+   "evidence": "게이트 1~4: test 38·ruff·✓ forecast, 교차 리뷰 sol PASS(형식 검사 반례 확인), f2b0916"
   },
   "T-202": {
    "status": "todo"
@@ -141,8 +144,9 @@
    "status": "todo"
   },
   "T-601": {
-   "status": "running",
-   "updated": "2026-09-24T13:03:12.748Z"
+   "status": "done",
+   "updated": "2026-09-24T13:53:08.965Z",
+   "evidence": "게이트 1~4: test 89·ruff·✓ knowledge·경고 37268→1, 교차 리뷰 sol PASS(Python/JS 판정 불일치 0/112, 422 무쓰기 20/20), a97cacd"
   },
   "T-602": {
    "status": "todo"
@@ -157,7 +161,8 @@
    "status": "todo"
   },
   "T-301": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T13:34:26.192Z"
   },
   "T-302": {
    "status": "todo"
@@ -541,6 +546,28 @@
    "id": "T-501",
    "status": "done",
    "evidence": "게이트 1~4 통과(게이트 3 두 번 되돌림: REPLACE 우회 → rowid 충돌 우회), composer test 7·46, stan 0, 우회 7종 직접 재현 거부, 교차 리뷰 astra 3차 PASS, a288638"
+  },
+  {
+   "at": "2026-09-24T13:34:26.116Z",
+   "id": "T-201",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:34:26.192Z",
+   "id": "T-301",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:53:08.889Z",
+   "id": "T-201",
+   "status": "done",
+   "evidence": "게이트 1~4: test 38·ruff·✓ forecast, 교차 리뷰 sol PASS(형식 검사 반례 확인), f2b0916"
+  },
+  {
+   "at": "2026-09-24T13:53:08.965Z",
+   "id": "T-601",
+   "status": "done",
+   "evidence": "게이트 1~4: test 89·ruff·✓ knowledge·경고 37268→1, 교차 리뷰 sol PASS(Python/JS 판정 불일치 0/112, 422 무쓰기 20/20), a97cacd"
   }
  ]
 }
