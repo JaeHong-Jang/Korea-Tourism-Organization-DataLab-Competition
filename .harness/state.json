@@ -97,7 +97,8 @@
    "status": "todo"
   },
   "T-104": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T19:22:02.639Z"
   },
   "T-105": {
    "status": "todo"
@@ -923,6 +924,11 @@
   {
    "at": "2026-09-24T19:20:23.514Z",
    "id": "T-505",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T19:22:02.639Z",
+   "id": "T-104",
    "status": "running"
   }
  ]
