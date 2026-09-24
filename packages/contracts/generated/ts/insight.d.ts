@@ -65,7 +65,10 @@ export interface Insight {
   title: string;
   headline: {
     value: number;
-    unit: "명" | "명/일" | "%" | "원" | "배" | "비율";
+    /**
+     * 인원(명·명/일)·비율(%·비율·배)·금액(원)·기간(일 — 예: 반영한 임시공휴일 일수)
+     */
+    unit: "명" | "명/일" | "%" | "원" | "배" | "비율" | "일";
     text: string;
   };
   sampleSize: number;

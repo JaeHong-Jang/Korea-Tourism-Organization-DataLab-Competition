@@ -86,7 +86,10 @@ export interface Quantity {
   p10: number | null;
   p50: number | null;
   p90: number | null;
-  unit: "명" | "명/일" | "%" | "원" | "배" | "비율";
+  /**
+   * 인원(명·명/일)·비율(%·비율·배)·금액(원)·기간(일 — 예: 반영한 임시공휴일 일수)
+   */
+  unit: "명" | "명/일" | "%" | "원" | "배" | "비율" | "일";
   timeUnit: "순간" | "일" | "기간누적";
   spatialScope: "행사장" | "행정동" | "시군구";
   valueKind: "사전예상" | "사후집계" | "예측" | "관측";

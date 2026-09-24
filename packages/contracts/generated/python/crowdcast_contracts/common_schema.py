@@ -185,6 +185,7 @@ class Unit(Enum):
     원 = '원'
     배 = '배'
     비율 = '비율'
+    일 = '일'
 
 
 class AgentId(Enum):
@@ -238,7 +239,7 @@ class Quantity(BaseModel):
 
 
 class DailyMeanQuantity(Quantity):
-    unit: Literal['명/일']
+    unit: Annotated[Literal['명/일'], Field(description='인원(명·명/일)·비율(%·비율·배)·금액(원)·기간(일 — 예: 반영한 임시공휴일 일수)')]
     timeUnit: Literal['일']
     estimated: Literal[False]
     valueKind: Literal['예측']
@@ -248,7 +249,7 @@ class DailyMeanQuantity(Quantity):
 
 
 class PeakQuantity(Quantity):
-    unit: Literal['명']
+    unit: Annotated[Literal['명'], Field(description='인원(명·명/일)·비율(%·비율·배)·금액(원)·기간(일 — 예: 반영한 임시공휴일 일수)')]
     timeUnit: Literal['순간']
     estimated: Literal[True]
     valueKind: Literal['예측']
