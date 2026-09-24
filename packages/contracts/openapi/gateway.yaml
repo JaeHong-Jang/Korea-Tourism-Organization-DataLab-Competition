@@ -131,7 +131,37 @@ paths:
                 $ref: ../schemas/sse-event.schema.json
   /api/festivals:
     get:
-      summary: 다가오는 행사(필터)
+      summary: 다가오는 행사(필터) — forecast /v1/festivals/upcoming 중계 + 필터
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: sido
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: ../schemas/common.schema.json#/$defs/eventType
+        - name: level
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 4
       responses:
         "200":
           description: 성공
@@ -141,6 +171,54 @@ paths:
                 type: array
                 items:
                   $ref: ../schemas/festival-summary.schema.json
+  /api/records/{path}:
+    get:
+      summary: records 중계(허용 목록 — events·events/{id}/snapshots·plans/{id}·plans/{id}/export.docx·ledger·ledger/verify·snapshots/{forecastId}). 요청·응답은 records.yaml의 같은 경로 계약으로 검증
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: records 응답 그대로(계약 검증 통과분)
+        "404":
+          description: 허용 목록 밖 경로
+        "503":
+          description: records 연결 실패·계약 위반
+    post:
+      summary: records 중계(허용 목록 — events·plans·actuals·shares)
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: records 응답 그대로(계약 검증 통과분)
+        "400":
+          description: 계약 위반 요청
+        "404":
+          description: 허용 목록 밖 경로
+        "503":
+          description: records 연결 실패·계약 위반
+    put:
+      summary: records 중계(허용 목록 — plans/{id})
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: records 응답 그대로(계약 검증 통과분)
+        "409":
+          description: 오래된 수정
+        "503":
+          description: records 연결 실패·계약 위반
   /api/regions.topojson:
     get:
       summary: 시군구 경계

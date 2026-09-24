@@ -84,12 +84,13 @@
    "evidence": "test 250·키 누출 0, 2026 코드 대응·35일 공개일 산출물 확인, 교차 리뷰 sol PASS, region_daily 861505행"
   },
   "T-102": {
-   "status": "running",
-   "updated": "2026-09-24T15:58:20.593Z",
-   "note": "1회차: 3건 해결·회차 분리 미해결 → 2회차(마지막): Med 5 + 수면 오탐·유형 매핑·timeOfDay 미상(계약 v1.6)"
+   "status": "done",
+   "updated": "2026-09-24T17:31:34.481Z",
+   "evidence": "develop 병합 971f446, forecast 668 통과, events 10,179행·채움률 95.16%·가을 213건 계약 변환. TourAPI 보강 실행은 9/26 오케스트레이터(backlog)"
   },
   "T-103": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T17:31:36.077Z"
   },
   "T-107": {
    "status": "todo"
@@ -217,8 +218,9 @@
    "evidence": "test 18·151·stan 0, 실서버 무결성 픽스처 13/13 계약과 같은 판정, 교차 리뷰 astra PASS(Med 2 직접 반영)"
   },
   "T-504": {
-   "status": "running",
-   "updated": "2026-09-24T16:48:16.212Z"
+   "status": "done",
+   "updated": "2026-09-24T17:42:16.657Z",
+   "evidence": "develop 병합 111eabf, records 38·stan·✓, docx 예시 직접 대조, astra PASS"
   },
   "T-503": {
    "status": "done",
@@ -249,12 +251,13 @@
    "evidence": "R-03 되돌림 2회: 근거 오연결 등 5건 + 칩 배치 해결(astra 확인), 포커스 복귀 Med는 T-406 이월(견본 페이지). test 73·build·lint, 시각 확인"
   },
   "R-03": {
-   "status": "running",
-   "updated": "2026-09-24T17:00:51.613Z",
-   "note": "상위 T-402 되돌림"
+   "status": "done",
+   "updated": "2026-09-24T17:40:30.801Z",
+   "evidence": "2차 PASS: 1차 5건 중 4건 해결·간격 일부 Low, 밤 중앙선 대비 Low → T-406·T-405로 이월"
   },
   "T-405": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T17:40:32.762Z"
   },
   "T-406": {
    "status": "todo"
@@ -275,7 +278,8 @@
   },
   "T-432": {
    "status": "running",
-   "updated": "2026-09-24T17:03:52.124Z"
+   "updated": "2026-09-24T17:03:52.124Z",
+   "note": "G3 FAIL(성능 3.2배 — draw call 445·그림자 재생성, 이름표·군중 겹침, 접근성 목록) + G4 이름표 층·전국 보기 → 피드백 1회차"
   },
   "T-433": {
    "status": "todo"
@@ -831,6 +835,34 @@
    "at": "2026-09-24T17:03:52.124Z",
    "id": "T-432",
    "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:31:34.481Z",
+   "id": "T-102",
+   "status": "done",
+   "evidence": "develop 병합 971f446, forecast 668 통과, events 10,179행·채움률 95.16%·가을 213건 계약 변환. TourAPI 보강 실행은 9/26 오케스트레이터(backlog)"
+  },
+  {
+   "at": "2026-09-24T17:31:36.077Z",
+   "id": "T-103",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:40:30.801Z",
+   "id": "R-03",
+   "status": "done",
+   "evidence": "2차 PASS: 1차 5건 중 4건 해결·간격 일부 Low, 밤 중앙선 대비 Low → T-406·T-405로 이월"
+  },
+  {
+   "at": "2026-09-24T17:40:32.762Z",
+   "id": "T-405",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:42:16.657Z",
+   "id": "T-504",
+   "status": "done",
+   "evidence": "develop 병합 111eabf, records 38·stan·✓, docx 예시 직접 대조, astra PASS"
   }
  ]
 }

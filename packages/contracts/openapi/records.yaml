@@ -127,6 +127,25 @@ paths:
                 $ref: ../schemas/forecast-report.schema.json
         "409":
           description: 이미 있는 스냅샷 변경 시도
+  /v1/snapshots/{forecastId}:
+    get:
+      summary: 예보 id로 발행 스냅샷 하나(forecastId는 전역 유일 — 새로고침·공유 링크용)
+      parameters:
+        - name: forecastId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^f-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/forecast-report.schema.json
+        "404":
+          description: 없는 예보
   /v1/plans:
     post:
       summary: 초안 저장(섹션 body = 발행 문장 rendered의 연결인지 확인)

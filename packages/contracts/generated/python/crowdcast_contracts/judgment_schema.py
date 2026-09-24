@@ -44,6 +44,11 @@ class ChecklistItem(BaseModel):
     evidenceIds: Annotated[list[common_schema.EvidenceId], Field(min_length=1)]
 
 
+class Basis(Enum):
+    확률 = '확률'
+    구간 = '구간'
+
+
 class Judgment(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -53,3 +58,9 @@ class Judgment(BaseModel):
     ruleIds: Annotated[list[common_schema.RuleId], Field(min_length=1)]
     reasons: Annotated[list[Reason], Field(min_length=1)]
     checklist: list[ChecklistItem]
+    basis: Annotated[
+        Basis | None,
+        Field(
+            description="판정 결과를 보이는 방식. 없으면 확률. 등급·사유는 두 방식 모두 같은 확률 판정(판정 함수 하나)으로 정해지고, 구간(골드 표본이 부족할 때 — 06 §11 G0)은 표시만 바꾼다: 확률 %를 쓰지 않고 순간 최대 p10~p90과 '표본 한계로 구간 기준 표시'를 보인다"
+        ),
+    ] = None
