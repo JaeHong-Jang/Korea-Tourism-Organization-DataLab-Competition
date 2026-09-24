@@ -1,0 +1,11 @@
+# 계획 문서가 지정한 지역축제 안전관리계획 조항을 식별한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix id: <http://crowdcast.local/id/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+id:law-disaster-act-enf-73-9 a cc:LegalClause ;
+    dcterms:title "재난 및 안전관리 기본법 시행령 제73조의9" ;
+    dcterms:publisher "국가법령정보센터" ;
+    cc:accessUrl "https://www.law.go.kr/법령/재난및안전관리기본법시행령/제73조의9"^^xsd:anyURI ;
+    cc:note "docs/plan/03 §1·09의 조항 참조. 참고용 — 담당자 검토 필수" .

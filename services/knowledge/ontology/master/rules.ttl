@@ -1,0 +1,26 @@
+# 법정 판정 규칙 2개와 자체 판정 규칙 3개의 근거를 정의한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix id: <http://crowdcast.local/id/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# 법정 규칙은 반드시 지정한 법령 조항으로 이어진다.
+id:rule-legal-1000 a cc:LegalRule ;
+    dcterms:title "순간 최대 예상 인원 기준" ; cc:threshold 1000 ;
+    cc:basedOnClause id:law-disaster-act-enf-73-9 ;
+    cc:note "순간 최대 관람객 1,000명 이상 예상. 참고용 — 담당자 검토 필수" .
+id:rule-legal-hazard a cc:LegalRule ;
+    dcterms:title "인원 무관 위험 요소 기준" ;
+    cc:basedOnClause id:law-disaster-act-enf-73-9 ;
+    cc:note "산·수면 개최 또는 불·폭죽·석유류·가연성 가스 사용. 참고용 — 담당자 검토 필수" .
+
+# 자체 확률 기준은 법정 의무와 별개의 권고 판단이다.
+id:rule-internal-10pct a cc:InternalRule ;
+    dcterms:title "경계선 수립 권고 기준" ; cc:threshold 1000 ; cc:probability "0.1"^^xsd:double ;
+    cc:note "자체 기준 — docs/plan/03의 판정 규칙" .
+id:rule-internal-50pct a cc:InternalRule ;
+    dcterms:title "수립 대상 가능성 기준" ; cc:threshold 1000 ; cc:probability "0.5"^^xsd:double ;
+    cc:note "자체 기준 — docs/plan/03의 판정 규칙" .
+id:rule-internal-5000 a cc:InternalRule ;
+    dcterms:title "대규모 기준" ; cc:threshold 5000 ; cc:probability "0.5"^^xsd:double ;
+    cc:note "자체 기준 — 순간 최대 5,000명 초과 확률 50% 이상" .
