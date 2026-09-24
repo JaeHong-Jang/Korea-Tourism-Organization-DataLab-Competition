@@ -267,6 +267,7 @@ def replay_golden(
 def summary(result: dict[str, Any], run_id: str, version: str) -> dict[str, Any]:
     points = [p for p in result["points"] if p["model"] == result["g0"]["primary_model"]]
     fields = ("eventId", "name", "year", "tier", "actual", "p10", "p50", "p90")
+    levels = {"level": "level", "actualLevel": "actual_level"}
     return {
         "runId": run_id,
         "modelRunId": f"mr-{version}",
@@ -274,7 +275,10 @@ def summary(result: dict[str, Any], run_id: str, version: str) -> dict[str, Any]
         "target": "일평균 방문객",
         "evalYears": sorted({p["year"] for p in points}),
         "metrics": metrics(points),
-        "points": [{key: p[key] for key in fields} for p in points],
+        "points": [
+            {**{key: p[key] for key in fields}, **{name: int(p[key]) for name, key in levels.items()}}
+            for p in points
+        ],
         "golden": result["golden"],
         "disclosure": disclosure(result),
     }

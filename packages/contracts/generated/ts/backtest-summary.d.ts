@@ -36,6 +36,14 @@ export interface BacktestSummary {
     p10: number;
     p50: number;
     p90: number;
+    /**
+     * 예측 분포의 환산 판정 등급(1~4, 3 이상 = 수립 대상) — 순간 최대 환산은 가정
+     */
+    level?: number;
+    /**
+     * 실측 일평균을 같은 환산으로 판정한 등급 — 사분면(예측 × 실측 대상 여부)용, 가정
+     */
+    actualLevel?: number;
   }[];
   golden: {
     eventId: string;

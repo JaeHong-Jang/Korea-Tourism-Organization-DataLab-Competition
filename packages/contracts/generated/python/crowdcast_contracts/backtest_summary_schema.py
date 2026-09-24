@@ -88,6 +88,12 @@ class Point(BaseModel):
     p10: float
     p50: float
     p90: float
+    level: Annotated[
+        int | None, Field(description='예측 분포의 환산 판정 등급(1~4, 3 이상 = 수립 대상) — 순간 최대 환산은 가정', ge=1, le=4)
+    ] = None
+    actualLevel: Annotated[
+        int | None, Field(description='실측 일평균을 같은 환산으로 판정한 등급 — 사분면(예측 × 실측 대상 여부)용, 가정', ge=1, le=4)
+    ] = None
 
 
 class Model(BaseModel):
