@@ -85,7 +85,8 @@
   },
   "T-102": {
    "status": "running",
-   "updated": "2026-09-24T15:58:20.593Z"
+   "updated": "2026-09-24T15:58:20.593Z",
+   "note": "게이트 3 FAIL(High 1 정정·Med 3) → 피드백 1회차. TourAPI 실호출은 9/26 00시 뒤 오케스트레이터"
   },
   "T-103": {
    "status": "todo"
@@ -241,12 +242,15 @@
    "evidence": "게이트 1~4 통과: build·test 4·lint·e2e 10·스크린샷 9(직접 확인)·Range 206·색 하드코딩 0, 교차 리뷰 astra PASS(Med 4 → T-402 이월), d5db41a"
   },
   "T-402": {
-   "status": "done",
-   "updated": "2026-09-24T16:02:19.518Z",
-   "evidence": "test 69·build·lint·색 0, 스크린샷 낮·밤·모바일 확인(기준선 정렬·단위 분리), 교차 리뷰 astra PASS"
+   "status": "running",
+   "updated": "2026-09-24T16:20:54.393Z",
+   "evidence": "test 69·build·lint·색 0, 스크린샷 낮·밤·모바일 확인(기준선 정렬·단위 분리), 교차 리뷰 astra PASS",
+   "note": "되돌림: R-03 실패 — 사용성 검토 FAIL — High 근거 오연결(순간 최대 → 평시 관측), Med 로그축·범례, KPI 출처, 밤 선택 대비 2.11:1(T-401 파일 — T-402 회차에서 함께), Low 블록 간격 3곳. 지적 전부 오케스트레이터가 코드·픽스처로 확인"
   },
   "R-03": {
-   "status": "todo"
+   "status": "stale",
+   "updated": "2026-09-24T16:20:54.315Z",
+   "note": "상위 T-402 되돌림"
   },
   "T-405": {
    "status": "todo"
@@ -264,9 +268,9 @@
    "status": "todo"
   },
   "T-431": {
-   "status": "running",
-   "updated": "2026-09-24T15:06:19.294Z",
-   "note": "피드백 1회차로 줄무늬·대비·노을 해결(스크린샷 확인), 교차 리뷰 PASS(Med 6·Low 1 — 그림자 범위·AdaptiveDpr·dispose 등) → 피드백 2회차(마지막)"
+   "status": "done",
+   "updated": "2026-09-24T16:34:41.612Z",
+   "evidence": "워커 sol 피드백 2회 + 오케스트레이터 DPR 직접 수정(astra 교차 리뷰 PASS). develop 병합 후 web 71·e2e 17·build·lint 통과, 낮 스크린샷 확인. 수정 전 코드에서 새 DPR 테스트 실패 확인"
   },
   "T-432": {
    "status": "todo"
@@ -764,6 +768,40 @@
    "id": "T-402",
    "status": "done",
    "evidence": "test 69·build·lint·색 0, 스크린샷 낮·밤·모바일 확인(기준선 정렬·단위 분리), 교차 리뷰 astra PASS"
+  },
+  {
+   "at": "2026-09-24T16:04:03.737Z",
+   "id": "R-03",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:20:54.315Z",
+   "id": "R-03",
+   "status": "failed",
+   "note": "→ T-402: 사용성 검토 FAIL — High 근거 오연결(순간 최대 → 평시 관측), Med 로그축·범례, KPI 출처, 밤 선택 대비 2.11:1(T-401 파일 — T-402 회차에서 함께), Low 블록 간격 3곳. 지적 전부 오케스트레이터가 코드·픽스처로 확인"
+  },
+  {
+   "at": "2026-09-24T16:20:54.315Z",
+   "id": "T-402",
+   "status": "todo",
+   "note": "되돌림: R-03 실패 — 사용성 검토 FAIL — High 근거 오연결(순간 최대 → 평시 관측), Med 로그축·범례, KPI 출처, 밤 선택 대비 2.11:1(T-401 파일 — T-402 회차에서 함께), Low 블록 간격 3곳. 지적 전부 오케스트레이터가 코드·픽스처로 확인"
+  },
+  {
+   "at": "2026-09-24T16:20:54.315Z",
+   "id": "R-03",
+   "status": "stale",
+   "note": "상위 T-402 되돌림"
+  },
+  {
+   "at": "2026-09-24T16:20:54.393Z",
+   "id": "T-402",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:34:41.612Z",
+   "id": "T-431",
+   "status": "done",
+   "evidence": "워커 sol 피드백 2회 + 오케스트레이터 DPR 직접 수정(astra 교차 리뷰 PASS). develop 병합 후 web 71·e2e 17·build·lint 통과, 낮 스크린샷 확인. 수정 전 코드에서 새 DPR 테스트 실패 확인"
   }
  ]
 }

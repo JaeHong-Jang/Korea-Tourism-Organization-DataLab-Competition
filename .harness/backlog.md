@@ -28,6 +28,13 @@
 
 ## 오케스트레이터 벌크 수집 일정(15101972, 하루 안전선 900건)
 - 9/25 완료: 2024·2025 전체, 2023 대부분, 2026-07-01~08-25(8/26 이후는 공개 전) — 약 84만 행
+- 9/26 00시 뒤 **먼저** T-102 TourAPI 보강(`python -m crowdcast.data.events`, 30건 이하) → 그다음 visitors를 `--max-calls 860`으로(공유 장부 900건 — 9/25 몫은 visitors가 다 씀)
 - 9/26: 2023 나머지 → 2026-01~06 → 2022(약 900건)
 - 9/27: 2021 → 2019 → 2018(2020은 코로나 — 06 §2에 따라 학습 제외 가능, 남으면)
 - 명령: `cd ~/crowdcast-wt/L1 && uv run --package crowdcast-forecast python -m crowdcast.data.visitors --from <시작> --to <끝> --max-calls <n>` (재시작 가능, 캐시)
+
+## 다음 웹 task(T-404 또는 T-405) — e2e 격리
+- `apps/web/playwright.config.ts`의 `reuseExistingServer: true` 때문에 5173에 다른 워크트리(또는 본 레포)의 vite가 떠 있으면 **그 서버를 찍는다** → 워크트리마다 다른 포트(환경 변수 `WEB_PORT`)를 쓰고 `reuseExistingServer: false`(또는 서버 cwd 확인).
+
+## T-207 (사전 등록 선정) · T-203 (백테스트)
+- [T-102 리뷰 High 판단] TourAPI 일정은 수집 시점(`date_available_at`)이 D-14 뒤일 수 있다 → 06 §9 D-14 규칙은 **피처**에 건다(T-203 피처 빌더). 행사 일정은 예보 대상의 정의이므로 T-207은 `date_available_at ≤ 등록일`만 확인하고, 등록 대상은 연속성 끊김(인천 개편) 지역을 뺀다(06 §1).
