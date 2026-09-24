@@ -1,8 +1,9 @@
-// 장면의 예보값과 연출 움직임을 항상 구별해 표시한다.
+// 장면 속 인형 규모와 연출 움직임의 의미를 분명히 알린다.
 export function HonestNote() {
   return (
-    <div className="scene-stage__note">
-      인원 규모는 예보값 비례 · 움직임은 연출
-    </div>
+    <span className="scene-legend__note">
+      인원 규모는 예보값 비례 · 움직임은 연출 · 인형 위치는 실제 사람 위치가
+      아니에요.
+    </span>
   );
 }

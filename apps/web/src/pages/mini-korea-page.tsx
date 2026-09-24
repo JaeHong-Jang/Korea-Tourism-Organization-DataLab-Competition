@@ -1,20 +1,29 @@
 // 미니 대한민국 장면과 그 위에 놓일 필터·목록·타임라인 자리를 둔다.
 import { ArrowUpRight } from "lucide-react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { MiniKoreaCanvas } from "../components/scene";
+import { sceneFestivals } from "../components/scene/__fixtures__/festivals";
+import { SceneLegend } from "../components/scene/scene-legend";
 import { Button } from "../components/ui/button";
 
 // 장면이 화면을 차지하고 부가 정보는 가장자리에 머물게 한다.
 export function MiniKoreaPage() {
-  const debug = new URLSearchParams(useLocation().search).get("debug") === "1";
+  const [peoplePerDoll, setPeoplePerDoll] = useState(100);
+  const search = new URLSearchParams(useLocation().search);
+  const debug = search.get("debug") === "1";
+  const festivals = search.get("sceneFixture") === "1" ? sceneFestivals : [];
   return (
     <div className="scene-page">
       <section className="scene-stage" aria-labelledby="scene-title">
         <h1 id="scene-title" className="sr-only">
           미니 대한민국
         </h1>
-        <MiniKoreaCanvas />
+        <MiniKoreaCanvas
+          festivals={festivals}
+          onScaleChange={setPeoplePerDoll}
+        />
       </section>
       <div className="scene-cta">
         <Button asChild size="sm">
@@ -41,6 +50,7 @@ export function MiniKoreaPage() {
         description="행사 흐름과 등급별 주간 변화를 살펴보세요."
         className="scene-timeline"
       />
+      <SceneLegend peoplePerDoll={peoplePerDoll} />
       <span className="scene-id" data-feature="M1-F1" aria-hidden="true">
         {debug ? "M1-F1 · 전국 판" : null}
       </span>

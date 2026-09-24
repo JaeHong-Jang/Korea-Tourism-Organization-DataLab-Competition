@@ -81,10 +81,10 @@ async function runDictation(host) {
 }
 
 // 품질과 DPR을 높음·1로 고정한 R3F 프레임과 Chromium 메모리를 읽는다.
-async function measure(browser, ollamaHost) {
+async function measure(browser, ollamaHost, fixture = false) {
   const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   const page = await context.newPage();
-  await page.goto("http://127.0.0.1:5185/?theme=day&at=2025-10-18T13:00+09:00&sceneMeasure=1");
+  await page.goto(`http://127.0.0.1:5185/?theme=day&at=2025-10-18T13:00+09:00&sceneMeasure=1${fixture ? "&sceneFixture=1" : ""}`);
   await page.waitForFunction(() => document.documentElement.dataset.sceneReady === "true", { timeout: 30000 });
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const renderer = await page.evaluate(() => {
@@ -105,6 +105,7 @@ async function measure(browser, ollamaHost) {
     heapUsed: performance.memory?.usedJSHeapSize ?? null,
     heapTotal: performance.memory?.totalJSHeapSize ?? null,
     quality: document.documentElement.dataset.sceneQuality ?? null,
+    dolls: Number(document.documentElement.dataset.sceneDollCount ?? 0),
     actualDpr: (() => {
       const canvas = document.querySelector("canvas");
       return canvas && canvas.clientWidth ? canvas.width / canvas.clientWidth : null;
@@ -116,6 +117,7 @@ async function measure(browser, ollamaHost) {
     ...frameSummary(metrics.frames),
     quality: metrics.quality,
     actual_dpr: metrics.actualDpr,
+    dolls: metrics.dolls,
     renderer,
     software_renderer: /swiftshader|llvmpipe|software/i.test(renderer),
     js_heap_used_bytes: metrics.heapUsed,
@@ -135,6 +137,24 @@ const server = await startServer();
 let browser;
 try {
   browser = await chromium.launch({ args: ["--enable-gpu", "--use-gl=egl", "--enable-precise-memory-info", "--enable-unsafe-swiftshader"] });
+  if (process.argv.includes("--t432")) {
+    const crowd = await measure(browser, null, true);
+    if (crowd.dolls !== 2000) throw new Error(`인형 2,000개 조건 불일치: ${crowd.dolls}개`);
+    const baselinePath = join(output, "T-431-frame-time.json");
+    const baseline = existsSync(baselinePath) ? JSON.parse(readFileSync(baselinePath, "utf8")).standalone : null;
+    const report = { task: "T-432", viewport: "1366x768", requested_dpr: 1, quality: "high (고정)", seconds: 30, baseline_t431: baseline ? { p50_ms: baseline.p50_ms, p95_ms: baseline.p95_ms, renderer: baseline.renderer } : null, crowd };
+    mkdirSync(output, { recursive: true });
+    writeFileSync(join(output, "T-432-frame-time.json"), `${JSON.stringify(report, null, 2)}\n`);
+    writeFileSync(join(output, "T-432-frame-time.md"), [
+      "# T-432 3D 인형 2,000개 프레임 시간", "",
+      `- 조건: Chromium ${browser.version()}, ${report.viewport}, high, DPR ${crowd.actual_dpr}, ${crowd.dolls}개, 30초`,
+      `- 렌더러: ${crowd.renderer}${crowd.software_renderer ? " (소프트웨어 렌더러)" : ""}`,
+      `- T-432: p50 ${crowd.p50_ms?.toFixed(2)}ms, p95 ${crowd.p95_ms?.toFixed(2)}ms`,
+      baseline ? `- T-431 기준: p50 ${baseline.p50_ms?.toFixed(2)}ms, p95 ${baseline.p95_ms?.toFixed(2)}ms (${baseline.renderer})` : "- T-431 기준: 기록 없음",
+      "- 프레임 시간은 이 실행 환경의 렌더러에만 해당한다.", "",
+    ].join("\n"));
+    console.log(`인형 ${crowd.dolls}개 p50 ${crowd.p50_ms?.toFixed(2)}ms / p95 ${crowd.p95_ms?.toFixed(2)}ms; ${crowd.renderer}`);
+  } else {
   const standalone = await measure(browser, null);
   const ollama = await findOllama();
   const concurrent = !ollama ? "측정 불가(Ollama 없음)" : !ollama.modelAvailable
@@ -171,6 +191,7 @@ try {
     "",
   ].join("\n"));
   console.log(`단독 p50 ${standalone.p50_ms?.toFixed(2)}ms / p95 ${standalone.p95_ms?.toFixed(2)}ms; Ollama: ${typeof concurrent === "string" ? concurrent : "측정 완료"}`);
+  }
 } finally {
   await browser?.close();
   server.kill();

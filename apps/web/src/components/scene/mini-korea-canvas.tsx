@@ -1,4 +1,5 @@
 // 시군구 경계와 해 테마를 React Three Fiber 전국 장면으로 연결한다.
+
 import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -6,7 +7,7 @@ import type { Topology } from "topojson-specification";
 import { useSelectionStore } from "../../lib/selection-store";
 import { Board } from "./board";
 import { CameraRig } from "./camera-rig";
-import { HonestNote } from "./honest-note";
+import * as FestivalScene from "./festival-scene";
 import { buildLandModel, LandTiles } from "./land-tiles";
 import {
   qualityDpr,
@@ -139,7 +140,10 @@ declare global {
 }
 
 // 경계 로딩과 실패를 분리하고 선택 코드를 시도 필터에 연결한다.
-export function MiniKoreaCanvas() {
+export function MiniKoreaCanvas({
+  festivals = [],
+  onScaleChange,
+}: FestivalScene.Props) {
   const [topology, setTopology] = useState<Topology | null>(null);
   const [error, setError] = useState(false);
   const [quality, setQuality] = useState<SceneQuality>("high");
@@ -158,6 +162,7 @@ export function MiniKoreaCanvas() {
     return { measure, debug, fixedQuality };
   }, []);
   const activeQuality = diagnostics.fixedQuality ?? quality;
+  const scene = FestivalScene.useScene(festivals, activeQuality, onScaleChange);
 
   // 명시적 진단 모드에서만 타일 재마운트를 허용해 GPU 해제량을 확인한다.
   useEffect(() => {
@@ -275,6 +280,7 @@ export function MiniKoreaCanvas() {
           />
           <Board center={center} width={width} depth={depth} />
           {showLand && <LandTiles model={model} onPick={onPick} />}
+          <FestivalScene.Layer scene={scene} quality={activeQuality} />
           <CameraRig
             center={center}
             selected={picked ? (model.centers.get(picked) ?? null) : null}
@@ -286,7 +292,7 @@ export function MiniKoreaCanvas() {
           />
         </Canvas>
       </section>
-      <HonestNote />
+      <FestivalScene.List scene={scene} />
     </>
   );
 }
