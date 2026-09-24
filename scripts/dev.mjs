@@ -1,4 +1,5 @@
 // 앱 서비스 5개를 한 번에 띄우고 health를 기다린 뒤 주소를 알려 준다(Ollama 상태는 따로 표시만 한다)
+import { parseEnv } from "node:util";
 import { spawn, execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -46,10 +47,8 @@ function loadEnv() {
   const path = join(ROOT, ".env");
   const env = { ...process.env };
   if (!existsSync(path)) return env;
-  for (const line of readFileSync(path, "utf8").split("\n")) {
-    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-    if (m && env[m[1]] === undefined) env[m[1]] = m[2];
-  }
+  // 게이트웨이와 같은 Node 표준 파서(node:util parseEnv)로 따옴표·줄 끝 주석을 처리한다
+  for (const [key, value] of Object.entries(parseEnv(readFileSync(path, "utf8")))) env[key] ??= value;
   return env;
 }
 

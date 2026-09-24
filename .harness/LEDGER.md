@@ -17,3 +17,5 @@
 | T-301 | gpt-6-astra | done | 0 | G1 ✓(루트 lock 허용) · G2 test 42·build·lint·health 직접 확인 · G3 sol PASS · G4 ✓(.env 미로드 Med → T-302) | gpt-6-sol PASS | bbdab1f | — |
 | T-100 | gpt-6-astra + 오케스트레이터 | done | 0·0·0 | G1 ✓ · G2 test 181·ruff·파이프라인 재현 · G3 sol FAIL→(피드백 2회)→직접 수정 3회 리뷰 · G4 1회차와 행 단위 대조 | gpt-6-sol(마지막 Med 반영) | 3f45a36 | parquet ae9238ac · qc 8d4e9bbe · diy 36a4551b |
 | T-602 | gpt-6-astra | done | 0·0 | G1 ✓ · G2 test 222 · G3 sol FAIL→PASS(발행 전체 재검증) · G4 ✓ | gpt-6-sol PASS | 8277b4c | — |
+| T-202 | gpt-6-astra | done | 0·0·0·0 | G1 ✓ · G2 test 185·영종 4등급·작은 행사 1등급 확인 · G3 sol FAIL→FAIL→PASS · G4 경계 표시 표 ✓ | gpt-6-sol PASS | 0edaa98 | — |
+| T-502 | gpt-6-sol + 오케스트레이터 | done | 0·0·0 | G1 ✓(App.php 명세 확대) · G2 test 18·실서버 13/13 · G3 astra FAIL→FAIL→PASS · G4 모델 실행 판정 교정 | gpt-6-astra PASS | a16f946 | — |

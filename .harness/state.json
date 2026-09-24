@@ -108,9 +108,9 @@
    "evidence": "게이트 1~4: test 38·ruff·✓ forecast, 교차 리뷰 sol PASS(형식 검사 반례 확인), f2b0916"
   },
   "T-202": {
-   "status": "running",
-   "updated": "2026-09-24T13:59:40.626Z",
-   "note": "1회차 해결, 재리뷰 FAIL(sol: 경계 직전 확률 표시가 등급과 모순 High) → 피드백 2회차(마지막)"
+   "status": "done",
+   "updated": "2026-09-24T14:51:02.199Z",
+   "evidence": "test 185(규칙)·forecast 전체 통과, 경계 표시 표 직접 확인, 교차 리뷰 sol PASS"
   },
   "T-203": {
    "status": "todo"
@@ -203,9 +203,9 @@
    "evidence": "게이트 1~4 통과(게이트 3 두 번 되돌림: REPLACE 우회 → rowid 충돌 우회), composer test 7·46, stan 0, 우회 7종 직접 재현 거부, 교차 리뷰 astra 3차 PASS, a288638"
   },
   "T-502": {
-   "status": "running",
-   "updated": "2026-09-24T13:59:40.795Z",
-   "note": "피드백 1회차 해결 확인, 재리뷰 FAIL(astra: 카드 투영·예보서 참조 무결성 High 2, 정렬 Med) → 계약 규칙 PHP 이식 피드백 2회차(마지막)"
+   "status": "done",
+   "updated": "2026-09-24T14:54:56.287Z",
+   "evidence": "test 18·151·stan 0, 실서버 무결성 픽스처 13/13 계약과 같은 판정, 교차 리뷰 astra PASS(Med 2 직접 반영)"
   },
   "T-504": {
    "status": "todo"
@@ -217,9 +217,9 @@
    "status": "todo"
   },
   "R-02": {
-   "status": "stale",
-   "updated": "2026-09-24T14:04:19.104Z",
-   "note": "상위 T-301 되돌림"
+   "status": "running",
+   "updated": "2026-09-24T14:45:58.422Z",
+   "note": "r2 FAIL(sol): High = scripts/dev.mjs .env 파서(따옴표·주석) — 오케스트레이터 스크립트 한 곳이라 T-001 되돌림(하류 전체 stale) 대신 직접 수정·확인, Med(게이트웨이 발신 검증)·Low(records health) → backlog T-303·T-503"
   },
   "T-430": {
    "status": "running",
@@ -656,6 +656,23 @@
    "id": "T-602",
    "status": "done",
    "evidence": "test 222·ruff, 교차 리뷰 sol 재리뷰 PASS(S09 발행 거부·응답 계약·위반 집합 확인), 300트리플 76ms"
+  },
+  {
+   "at": "2026-09-24T14:45:58.422Z",
+   "id": "R-02",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T14:51:02.199Z",
+   "id": "T-202",
+   "status": "done",
+   "evidence": "test 185(규칙)·forecast 전체 통과, 경계 표시 표 직접 확인, 교차 리뷰 sol PASS"
+  },
+  {
+   "at": "2026-09-24T14:54:56.287Z",
+   "id": "T-502",
+   "status": "done",
+   "evidence": "test 18·151·stan 0, 실서버 무결성 픽스처 13/13 계약과 같은 판정, 교차 리뷰 astra PASS(Med 2 직접 반영)"
   }
  ]
 }
