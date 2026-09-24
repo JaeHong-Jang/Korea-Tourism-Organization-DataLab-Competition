@@ -37,11 +37,22 @@ class MasterCatalog:
                 if fresh.value(MASTER, CC.masterVersion) is None:
                     raise ValueError("기준 그래프 masterVersion이 없다")
                 repository.replace_graph(MASTER, fresh)
-            elif added := add_new_definitions(graph, fresh):
-                version = int(graph.value(MASTER, CC.masterVersion))
-                graph.set((MASTER, CC.masterVersion, Literal(version + 1, datatype=XSD.integer)))
-                repository.replace_graph(MASTER, graph)
-                logger.info("기준 TTL 새 정의 %d개 추가 — masterVersion %d → %d", added, version, version + 1)
+            else:
+                # 저장소 쓰기 주체는 knowledge 프로세스 하나라는 전제 — 잠금은 그 안에서 직렬화한다.
+                added, conflicts = sync_definitions(graph, fresh)
+                if conflicts:
+                    logger.warning(
+                        "기준 TTL과 저장값이 다른 정의 %d개 — 저장값 유지, 마이그레이션 필요: %s",
+                        len(conflicts),
+                        ", ".join(conflicts),
+                    )
+                if added:
+                    version = int(graph.value(MASTER, CC.masterVersion))
+                    graph.set((MASTER, CC.masterVersion, Literal(version + 1, datatype=XSD.integer)))
+                    repository.replace_graph(MASTER, graph)
+                    logger.info(
+                        "기준 TTL 트리플 %d개 추가 — masterVersion %d → %d", added, version, version + 1
+                    )
             if not repository.read_graph(TBOX):
                 repository.replace_graph(TBOX, Graph().parse(ONTOLOGY / "crowdcast.ttl", format="turtle"))
 
@@ -89,15 +100,38 @@ class MasterCatalog:
             return version + 1
 
 
-# 저장된 기준 그래프에 없는 주어(정의)만 옮긴다 — 빈 노드 값은 따라가며 함께 복사한다.
-def add_new_definitions(graph: Graph, fresh: Graph) -> int:
-    known = {subject for subject in graph.subjects() if isinstance(subject, URIRef)}
-    new = {s for s in fresh.subjects() if isinstance(s, URIRef) and s != MASTER and s not in known}
-    pending = list(new)
-    while pending:
-        subject = pending.pop()
-        for triple in fresh.triples((subject, None, None)):
-            graph.add(triple)
-            if isinstance(triple[2], BNode):
-                pending.append(triple[2])
-    return len(new)
+# 저장된 정의에 없는 술어만 더하고, 같은 술어에 다른 값이 있으면 저장값을 두고 충돌로 돌려준다.
+def sync_definitions(graph: Graph, fresh: Graph) -> tuple[int, list[str]]:
+    added, conflicts = 0, []
+    for subject in sorted({s for s in fresh.subjects() if isinstance(s, URIRef) and s != MASTER}):
+        stored = {p for p in graph.predicates(subject)}
+        changed = False
+        for predicate in sorted(set(fresh.predicates(subject))):
+            if predicate in stored:
+                if not same_values(graph, fresh, subject, predicate):
+                    changed = True
+                continue
+            for obj in fresh.objects(subject, predicate):
+                added += copy_node(graph, fresh, (subject, predicate, obj), set())
+        if changed:
+            conflicts.append(str(subject).removeprefix(str(ID)))
+    return added, conflicts
+
+
+# 빈 노드가 아닌 값끼리 비교한다(빈 노드는 개수만 — 내용 비교는 마이그레이션에서).
+def same_values(graph: Graph, fresh: Graph, subject: URIRef, predicate: URIRef) -> bool:
+    old, new = set(graph.objects(subject, predicate)), set(fresh.objects(subject, predicate))
+    plain_old = {o for o in old if not isinstance(o, BNode)}
+    plain_new = {o for o in new if not isinstance(o, BNode)}
+    return plain_old == plain_new and len(old - plain_old) == len(new - plain_new)
+
+
+# 트리플 하나와 그 값이 빈 노드면 그 아래까지 복사한다 — 방문 기록으로 순환을 막는다.
+def copy_node(graph: Graph, fresh: Graph, triple: tuple, visited: set[BNode]) -> int:
+    graph.add(triple)
+    count, obj = 1, triple[2]
+    if isinstance(obj, BNode) and obj not in visited:
+        visited.add(obj)
+        for child in fresh.triples((obj, None, None)):
+            count += copy_node(graph, fresh, child, visited)
+    return count

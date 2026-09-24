@@ -24,3 +24,25 @@ def test_existing_store_gets_new_definitions_once() -> None:
     MasterCatalog(store.repository)
     assert store.master.snapshot()[0] == version
     assert store.repository.read_graph(MASTER).value(ID["as-peak-day-factor"], CC.value) == title
+
+
+# 일부 속성만 남은 정의는 빠진 속성을 채우고, 값이 다른 속성은 저장값을 두고 충돌로 알린다.
+def test_partial_and_conflicting_definitions() -> None:
+    from knowledge.store.master import sync_definitions
+    from rdflib import BNode, Graph, Literal
+    from rdflib.namespace import RDF
+
+    fresh = Graph()
+    subject = ID["as-demo"]
+    fresh.add((subject, RDF.type, CC.Assumption))
+    fresh.add((subject, CC.value, Literal(1.0)))
+    first, second = BNode(), BNode()
+    fresh.add((subject, CC.trainRange, first))
+    fresh.add((first, CC.next, second))
+    fresh.add((second, CC.next, first))  # 빈 노드 순환도 끝나야 한다
+    stored = Graph()
+    stored.add((subject, CC.value, Literal(2.0)))
+    added, conflicts = sync_definitions(stored, fresh)
+    assert (subject, RDF.type, CC.Assumption) in stored and added == 4
+    assert conflicts == ["as-demo"] and stored.value(subject, CC.value) == Literal(2.0)
+    assert sync_definitions(stored, fresh) == (0, ["as-demo"])
