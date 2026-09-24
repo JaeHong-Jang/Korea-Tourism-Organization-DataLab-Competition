@@ -44,6 +44,11 @@ class ChecklistItem(BaseModel):
     evidenceIds: Annotated[list[common_schema.EvidenceId], Field(min_length=1)]
 
 
+class Basis(Enum):
+    확률 = '확률'
+    구간 = '구간'
+
+
 class Judgment(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -53,3 +58,9 @@ class Judgment(BaseModel):
     ruleIds: Annotated[list[common_schema.RuleId], Field(min_length=1)]
     reasons: Annotated[list[Reason], Field(min_length=1)]
     checklist: list[ChecklistItem]
+    basis: Annotated[
+        Basis | None,
+        Field(
+            description='판정 근거 방식. 없으면 확률. 구간 = 골드 표본이 부족할 때(06 §11 G0) 순간 최대 p10·p50·p90과 기준값을 직접 비교한 판정 — 화면은 확률 %를 보이지 않는다'
+        ),
+    ] = None
