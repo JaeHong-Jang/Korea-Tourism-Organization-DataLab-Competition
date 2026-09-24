@@ -187,9 +187,9 @@
    "status": "todo"
   },
   "T-501": {
-   "status": "running",
-   "updated": "2026-09-24T13:03:12.906Z",
-   "note": "재리뷰 FAIL(astra: rowid 충돌 INSERT OR REPLACE로 스냅샷 삭제 High) → 피드백 2회차(마지막) 재디스패치"
+   "status": "done",
+   "updated": "2026-09-24T13:29:43.654Z",
+   "evidence": "게이트 1~4 통과(게이트 3 두 번 되돌림: REPLACE 우회 → rowid 충돌 우회), composer test 7·46, stan 0, 우회 7종 직접 재현 거부, 교차 리뷰 astra 3차 PASS, a288638"
   },
   "T-502": {
    "status": "todo"
@@ -535,6 +535,12 @@
    "id": "T-401",
    "status": "done",
    "evidence": "게이트 1~4 통과: build·test 4·lint·e2e 10·스크린샷 9(직접 확인)·Range 206·색 하드코딩 0, 교차 리뷰 astra PASS(Med 4 → T-402 이월), d5db41a"
+  },
+  {
+   "at": "2026-09-24T13:29:43.654Z",
+   "id": "T-501",
+   "status": "done",
+   "evidence": "게이트 1~4 통과(게이트 3 두 번 되돌림: REPLACE 우회 → rowid 충돌 우회), composer test 7·46, stan 0, 우회 7종 직접 재현 거부, 교차 리뷰 astra 3차 PASS, a288638"
   }
  ]
 }
