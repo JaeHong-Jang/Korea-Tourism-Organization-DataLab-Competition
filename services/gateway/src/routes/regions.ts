@@ -10,8 +10,10 @@ export function createRegionsRoute(
   fetcher: typeof fetch,
 ) {
   const route = createProxyRoute();
-  route.get("/", async () => {
-    const result = await readRegions(proxyOptions(config, "forecast", fetcher));
+  route.get("/", async (c) => {
+    const result = await readRegions(
+      proxyOptions(config, "forecast", fetcher, c.req.raw.signal),
+    );
     return proxyJson(regionsSchema, result.body, result.headers);
   });
   return route;

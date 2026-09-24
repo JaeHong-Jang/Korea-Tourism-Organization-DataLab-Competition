@@ -17,10 +17,12 @@ export function createForecastsRoute(
   fetcher: typeof fetch,
 ) {
   const route = createProxyRoute();
-  const client = createRecordsClient(proxyOptions(config, "records", fetcher));
   route.get("/:id", async (c) => {
     const id = c.req.param("id");
     if (!id.startsWith("f-")) throw new ProxyInputError();
+    const client = createRecordsClient(
+      proxyOptions(config, "records", fetcher, c.req.raw.signal),
+    );
     return proxyJson(reportSchema, await client.getSnapshot(id));
   });
   return route;

@@ -189,3 +189,58 @@ it.each(["ops", "spec"])("%s 병렬 요청은 5초에 끝난다", async (kind) =
   );
   expect(vi.getTimerCount()).toBe(0);
 });
+
+// 병렬 조회는 한 브라우저 요청의 취소에 모두 중단된다
+it.each(["ops", "spec"])(
+  "%s 연결이 끊기면 병렬 상류를 전부 취소한다",
+  async (kind) => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    const fetcher = vi.fn<typeof fetch>(() => new Promise(() => {}));
+    const pending =
+      kind === "ops"
+        ? createOpsRoute(proxyConfig, fetcher, async () => null).request(
+            "/status",
+            { signal: controller.signal },
+          )
+        : createApp(proxyConfig, fetcher).request(
+            "/api/insights/datalab-spec",
+            { signal: controller.signal },
+          );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetcher).toHaveBeenCalledTimes(kind === "ops" ? 3 : 2);
+    controller.abort();
+    expect((await pending).status).toBe(503);
+    expect(fetcher.mock.calls.every(([, init]) => init?.signal?.aborted)).toBe(
+      true,
+    );
+    expect(vi.getTimerCount()).toBe(0);
+  },
+);
+
+// 필수 상류 실패와 사용자 취소를 구분해 나머지 조회를 다룬다
+it("운영 상류 하나가 실패해도 다른 상류는 연결 종료 시에 취소한다", async () => {
+  vi.useFakeTimers();
+  const controller = new AbortController();
+  const fetcher = vi.fn<typeof fetch>((input) =>
+    String(input).endsWith("/freshness")
+      ? Promise.reject(new Error("상류 연결 실패"))
+      : new Promise(() => {}),
+  );
+  const response = await createOpsRoute(
+    proxyConfig,
+    fetcher,
+    async () => null,
+  ).request("/status", { signal: controller.signal });
+  expect(response.status).toBe(503);
+  expect(fetcher).toHaveBeenCalledTimes(3);
+  expect(
+    fetcher.mock.calls.every(([, init]) => init?.signal?.aborted === false),
+  ).toBe(true);
+  controller.abort();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(
+    fetcher.mock.calls.slice(1).every(([, init]) => init?.signal?.aborted),
+  ).toBe(true);
+  expect(vi.getTimerCount()).toBe(0);
+});

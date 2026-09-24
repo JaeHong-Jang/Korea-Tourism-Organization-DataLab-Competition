@@ -33,9 +33,6 @@ export function createWeatherRoute(
   fetcher: typeof fetch,
 ) {
   const route = createProxyRoute();
-  const client = createForecastClient(
-    proxyOptions(config, "forecast", fetcher),
-  );
   route.get("/", async (c) => {
     const query = {
       lat: queryNumber(c.req.query("lat")),
@@ -43,6 +40,9 @@ export function createWeatherRoute(
       at: c.req.query("at"),
     };
     if (!querySchema(query)) throw new ProxyInputError();
+    const client = createForecastClient(
+      proxyOptions(config, "forecast", fetcher, c.req.raw.signal),
+    );
     return proxyJson(
       weatherSchema,
       await client.weather(query.lat, query.lng, query.at),

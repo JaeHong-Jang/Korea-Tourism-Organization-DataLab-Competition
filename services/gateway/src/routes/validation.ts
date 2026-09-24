@@ -14,17 +14,23 @@ export function createValidationRoute(
   fetcher: typeof fetch,
 ) {
   const route = createProxyRoute();
-  const client = createForecastQueries(
-    proxyOptions(config, "forecast", fetcher),
-  );
-  route.get("/backtest", async () =>
-    proxyJson(backtestSchema, await client.backtest()),
-  );
-  route.get("/preregistration", async () =>
-    proxyJson(preregistrationSchema, await client.preregistration()),
-  );
-  route.get("/model-card", async () =>
-    proxyJson(modelCardSchema, await client.modelCard()),
-  );
+  route.get("/backtest", async (c) => {
+    const client = createForecastQueries(
+      proxyOptions(config, "forecast", fetcher, c.req.raw.signal),
+    );
+    return proxyJson(backtestSchema, await client.backtest());
+  });
+  route.get("/preregistration", async (c) => {
+    const client = createForecastQueries(
+      proxyOptions(config, "forecast", fetcher, c.req.raw.signal),
+    );
+    return proxyJson(preregistrationSchema, await client.preregistration());
+  });
+  route.get("/model-card", async (c) => {
+    const client = createForecastQueries(
+      proxyOptions(config, "forecast", fetcher, c.req.raw.signal),
+    );
+    return proxyJson(modelCardSchema, await client.modelCard());
+  });
   return route;
 }

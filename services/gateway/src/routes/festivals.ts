@@ -45,9 +45,6 @@ export function createFestivalsRoute(
   fetcher: typeof fetch,
 ) {
   const route = createProxyRoute();
-  const client = createForecastQueries(
-    proxyOptions(config, "forecast", fetcher),
-  );
   route.get("/", async (c) => {
     const filters = {
       from: c.req.query("from"),
@@ -57,6 +54,9 @@ export function createFestivalsRoute(
       level: queryNumber(c.req.query("level")),
     };
     if (!filtersSchema(filters)) throw new ProxyInputError();
+    const client = createForecastQueries(
+      proxyOptions(config, "forecast", fetcher, c.req.raw.signal),
+    );
     const festivals = await client.festivals(filters.from, filters.to);
     const filtered = festivals.filter(
       (festival) =>

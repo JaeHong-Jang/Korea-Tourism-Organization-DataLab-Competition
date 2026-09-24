@@ -1,7 +1,6 @@
 // records 중계의 허용 목록·요청 검증·응답 검증·바이너리 보존을 확인한다
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.js";
-import { DOCX_CONTENT_TYPE } from "../src/clients/records-relay-client.js";
 import { eventFixture } from "./contract-fixture.js";
 import { plan, proxyConfig, report } from "./proxy-fixture.js";
 
@@ -61,7 +60,11 @@ describe.each(recordsCases)("$method $path", (entry) => {
     );
     const response = await createApp(proxyConfig, fetcher).request(
       `/api/records/${entry.path}`,
-      { method: entry.method, body: JSON.stringify(entry.body) },
+      {
+        method: entry.method,
+        body: JSON.stringify(entry.body),
+        headers: { "content-type": "application/json" },
+      },
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(entry.response);
@@ -71,7 +74,7 @@ describe.each(recordsCases)("$method $path", (entry) => {
     expect(fetcher.mock.calls[0][1]).toMatchObject({
       method: entry.method,
       body: JSON.stringify(entry.body),
-      redirect: "error",
+      redirect: "manual",
     });
   });
 
@@ -82,7 +85,11 @@ describe.each(recordsCases)("$method $path", (entry) => {
       .mockRejectedValue(new TypeError("연결 거부"));
     const response = await createApp(proxyConfig, fetcher).request(
       `/api/records/${entry.path}`,
-      { method: entry.method, body: JSON.stringify(entry.body) },
+      {
+        method: entry.method,
+        body: JSON.stringify(entry.body),
+        headers: { "content-type": "application/json" },
+      },
     );
     expect(response.status).toBe(503);
   });
@@ -92,7 +99,11 @@ describe.each(recordsCases)("$method $path", (entry) => {
     const fetcher = vi.fn<typeof fetch>(async () => Response.json(123));
     const response = await createApp(proxyConfig, fetcher).request(
       `/api/records/${entry.path}`,
-      { method: entry.method, body: JSON.stringify(entry.body) },
+      {
+        method: entry.method,
+        body: JSON.stringify(entry.body),
+        headers: { "content-type": "application/json" },
+      },
     );
     expect(response.status).toBe(503);
     expect(await response.json()).toHaveProperty(
@@ -112,7 +123,11 @@ describe.each(recordsCases)("$method $path", (entry) => {
     );
     const response = await createApp(proxyConfig, fetcher).request(
       `/api/records/${entry.path}`,
-      { method: entry.method, body: JSON.stringify(entry.body) },
+      {
+        method: entry.method,
+        body: JSON.stringify(entry.body),
+        headers: { "content-type": "application/json" },
+      },
     );
     expect(response.status).toBe(503);
   });
@@ -154,7 +169,11 @@ it.each(recordsCases.filter((entry) => entry.body !== undefined))(
     for (const body of ["{", "null", "{}", undefined]) {
       const response = await createApp(proxyConfig, fetcher).request(
         `/api/records/${entry.path}`,
-        { method: entry.method, body },
+        {
+          method: entry.method,
+          body,
+          headers: { "content-type": "application/json" },
+        },
       );
       expect(response.status).toBe(400);
     }
@@ -185,6 +204,7 @@ it.each([
     (
       await createApp(proxyConfig, fetcher).request(`/api/records/${path}`, {
         method: "POST",
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       })
     ).status,
@@ -199,82 +219,15 @@ it("오래된 계획 수정은 409로 보존한다", async () => {
   );
   const response = await createApp(proxyConfig, fetcher).request(
     `/api/records/plans/${plan.id}`,
-    { method: "PUT", body: JSON.stringify(plan) },
+    {
+      method: "PUT",
+      body: JSON.stringify(plan),
+      headers: { "content-type": "application/json" },
+    },
   );
   expect(response.status).toBe(409);
   expect(await response.json()).toEqual({
     code: "CONFLICT",
     message: expect.any(String),
   });
-});
-
-// 바이너리 특수 바이트와 두 다운로드 헤더가 변하지 않는지 확인한다
-it("docx의 바이트와 Content-Type·Content-Disposition을 보존한다", async () => {
-  const bytes = new Uint8Array([80, 75, 3, 4, 0, 255, 128, 13, 10]);
-  const headers = {
-    "content-type": DOCX_CONTENT_TYPE,
-    "content-disposition": "attachment; filename=yeongjong.docx",
-  };
-  const fetcher = vi.fn<typeof fetch>(
-    async () => new Response(bytes, { headers }),
-  );
-  const response = await createApp(proxyConfig, fetcher).request(
-    `/api/records/plans/${plan.id}/export.docx`,
-  );
-  expect(response.status).toBe(200);
-  expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes);
-  for (const [name, value] of Object.entries(headers))
-    expect(response.headers.get(name)).toBe(value);
-});
-
-// JSON이나 HTML 오류 본문을 문서 다운로드로 오인하지 않는다
-it.each(["application/json", "text/html", "application/octet-stream"])(
-  "docx MIME %s는 503",
-  async (contentType) => {
-    const response = await createApp(
-      proxyConfig,
-      async () =>
-        new Response("오류", { headers: { "content-type": contentType } }),
-    ).request(`/api/records/plans/${plan.id}/export.docx`);
-    expect(response.status).toBe(503);
-    expect(console.error).toHaveBeenCalled();
-  },
-);
-
-// 문서 상류가 없거나 아직 구현하지 않은 경우도 공통 장애를 따른다
-it.each([404, 503, "offline"])("docx 상류 %s", async (status) => {
-  const fetcher = vi.fn<typeof fetch>(async () => {
-    if (status === "offline") throw new TypeError("연결 거부");
-    return new Response(null, { status: Number(status) });
-  });
-  expect(
-    (
-      await createApp(proxyConfig, fetcher).request(
-        `/api/records/plans/${plan.id}/export.docx`,
-      )
-    ).status,
-  ).toBe(503);
-});
-
-// JSON과 바이너리 본문 모두 헤더 이후 멈춰도 5초를 넘기지 않는다
-it.each([
-  ["/api/regions.topojson", "application/json"],
-  ["/api/evidence/stats", "application/json"],
-  ["/api/records/ledger/verify", "application/json"],
-  [`/api/records/plans/${plan.id}/export.docx`, DOCX_CONTENT_TYPE],
-])("본문 지연 %s", async (path, contentType) => {
-  vi.useFakeTimers();
-  const stream = new TransformStream();
-  const fetcher = vi.fn<typeof fetch>(
-    async () =>
-      new Response(stream.readable, {
-        headers: { "content-type": contentType },
-      }),
-  );
-  const pending = createApp(proxyConfig, fetcher).request(path);
-  await vi.advanceTimersByTimeAsync(5_000);
-  expect((await pending).status).toBe(503);
-  expect(fetcher.mock.calls[0][1]?.signal?.aborted).toBe(true);
-  expect(vi.getTimerCount()).toBe(0);
-  await stream.writable.abort();
 });

@@ -16,13 +16,13 @@ export function createInsightsRoute(
   fetcher: typeof fetch,
 ) {
   const route = createProxyRoute();
-  const forecast = createForecastQueries(
-    proxyOptions(config, "forecast", fetcher),
-  );
-  const knowledge = createKnowledgeQueries(
-    proxyOptions(config, "knowledge", fetcher),
-  );
-  route.get("/datalab-spec", async () => {
+  route.get("/datalab-spec", async (c) => {
+    const forecast = createForecastQueries(
+      proxyOptions(config, "forecast", fetcher, c.req.raw.signal),
+    );
+    const knowledge = createKnowledgeQueries(
+      proxyOptions(config, "knowledge", fetcher, c.req.raw.signal),
+    );
     const [spec, usage] = await Promise.all([
       forecast.datalabSpec(),
       knowledge.datalabUsage(),
@@ -44,6 +44,9 @@ export function createInsightsRoute(
   route.get("/:key", async (c) => {
     const key = c.req.param("key");
     if (!/^I[1-6]$/.test(key)) throw new ProxyInputError();
+    const forecast = createForecastQueries(
+      proxyOptions(config, "forecast", fetcher, c.req.raw.signal),
+    );
     return proxyJson(insightSchema, await forecast.insight(key));
   });
   return route;

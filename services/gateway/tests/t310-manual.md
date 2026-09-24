@@ -71,3 +71,43 @@ SHA-256: 2e72944c51e7de96e86ccb02cd5bbb43d6d4f6602a6dc1d6469b82920903039a
 - `services/gateway/tests/`: `proxy-fixture.ts`, `proxy-queries.test.ts`, `proxy-filters.test.ts`, `proxy-records.test.ts`, `proxy-aggregates.test.ts`, `eval-reader.test.ts`, `t310-manual.md` 추가.
 
 의존성 변경·계약 파일 변경·git 조작 없음.
+
+## 게이트 피드백 1회차 수정·재검증
+
+2026-09-25. 교차 리뷰의 여섯 항목을 반영했다.
+
+- 조회 응답은 HTTP 200만 성공으로 받는다. `redirect: "manual"`을 적용하고 201·206·301·302·307·308을 503으로 처리한다. 기존 계약의 오류 매핑은 유지한다.
+- records JSON 응답은 `application/json`, docx는 계약 MIME을 확인한 뒤 읽는다. POST·PUT 요청도 JSON MIME을 본문 파싱 전에 확인한다. gateway 계약에 415가 없어 잘못된 요청 MIME은 400이다.
+- JSON은 2 × 1024²바이트, docx는 20 × 1024²바이트로 제한한다. Content-Length뿐 아니라 실제 누적 바이트를 검사한다. 길이가 없는 docx도 초과 시 503을 반환할 수 있도록 상류 본문을 제한된 임시 파일에 먼저 받고, 검증이 끝난 파일을 64KiB 역압 기준으로 스트리밍한다. 다운로드 완료·오류·취소에 파일을 삭제한다. 상류의 5초 마감은 파일 수신까지 적용한다.
+- 요청별 `signal`을 모든 조회·records 상류에 연결했다. 운영 상태·데이터랩 명세의 병렬 요청도 연결 종료 시 함께 중단한다. 모델·그래프 전체가 없는 경우의 503 및 계약상 null 조립 규칙은 유지한다.
+- `c.req.raw.url`의 점 세그먼트도 거부한다. 설치된 `@hono/node-server` 2.1.1은 이 URL까지 정규화하므로 실제 서버에서는 `c.env.incoming.url`을 우선 검사한다. 실제 HTTP 요청의 `tmp/../ledger`, `tmp/%2E%2e/ledger`도 404를 확인했다.
+
+최종 자동 검증:
+
+- `npm -w services/gateway test`: 32개 파일, 683개 테스트 통과(기존 535개에서 148개 추가).
+- `npm -w services/gateway run build`: 통과.
+- `npm -w services/gateway run lint`: 108개 파일 통과.
+- `GATEWAY_PORT=18878 node scripts/dev.mjs --check --only gateway`: 종료 코드 0, `✓ gateway http://127.0.0.1:18878/api/health`.
+- `git diff --check`: 통과.
+
+테스트 보강 중에는 닫힌 가짜 스트림의 취소 콜백 기대와 병렬 테스트의 공유 임시 디렉터리 관찰이 실패했다. 가짜 스트림의 미리 읽기를 끄고 임시 루트를 테스트별로 격리한 뒤 재검증했다. 본문 수신 중 취소·5초 마감, 다운로드 중 취소, 크기 초과 시에도 임시 파일 정리를 확인한다. 점 세그먼트, 리다이렉트 미추적, 브라우저 연결 종료는 실제 로컬 HTTP 서버로도 검증한다.
+
+수동 재확인은 develop 작업 트리 HEAD `f254af9`의 knowledge·records와 수정된 L3 gateway로 실행했다. 다른 실행과의 충돌을 피하려고 최종 확인은 임의 포트 knowledge 50497·records 48637·gateway 39663을 사용하고, 직접 시작한 프로세스의 생존 여부도 확인했다. 데이터 루트는 `/tmp/crowdcast-t310-review-manual-*`, forecast 주소는 서비스 없는 48851이다. 행사·예보서·계획 픽스처 저장은 모두 200이었다.
+
+| curl 경로 | 결과 |
+|---|---|
+| `/api/evidence/stats` | 503, `UPSTREAM_UNAVAILABLE`; 실제 knowledge `/v1/stats/datalab-usage` 직접 조회는 404 |
+| `/api/records/ledger/verify` | 200, `{"valid":true,"count":0,"brokenAt":null}` |
+| `/api/records/plans/plan-yeongjong-example/export.docx` | 200, 10,717바이트, ZIP 시작 바이트 `504b0304`, Content-Type·Content-Disposition 보존 |
+| `/api/festivals`, `/api/weather?...`, `/api/validation/backtest` | 각각 503, `UPSTREAM_UNAVAILABLE` |
+| `/api/records/tmp/../ledger`, `/api/records/tmp/%2E%2e/ledger` (`curl --path-as-is`) | 각각 404, `NOT_FOUND` |
+
+재검증 docx SHA-256: `026bd4a0ba25de9e18302368d46eef85e0de7e0f1026d1bb620be6d1f2f1fff1`.
+
+기동한 서비스와 임시 DB·다운로드·실패한 테스트의 임시 파일을 정리했다. 공유 실행 산출물을 변경하지 않았으며 의존성·계약·git 변경은 없다. 수정은 gateway 클라이언트 4개(크기 제한 파일 추가 포함), 프록시 라우트 10개, 관련 테스트·이 기록에 한정했다.
+
+피드백 수정 파일 목록:
+
+- `services/gateway/src/clients/`: `request-json.ts`, `regions-client.ts`, `records-relay-client.ts`, `records-response-body.ts`(추가).
+- `services/gateway/src/routes/`: `proxy-response.ts`, `festivals.ts`, `regions.ts`, `forecasts.ts`, `evidence.ts`, `weather.ts`, `validation.ts`, `insights.ts`, `ops.ts`, `records-relay.ts`.
+- `services/gateway/tests/`: `proxy-queries.test.ts`, `proxy-aggregates.test.ts`, `proxy-records.test.ts`, `proxy-docx.test.ts`(분리), `proxy-records-guards.test.ts`(추가), `proxy-records-size.test.ts`(추가), `proxy-http.test.ts`(추가), `t310-manual.md`.

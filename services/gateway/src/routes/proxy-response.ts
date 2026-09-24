@@ -41,11 +41,13 @@ export function proxyOptions(
   config: GatewayConfig,
   service: keyof GatewayConfig["services"],
   fetcher: typeof fetch,
+  signal: AbortSignal,
 ) {
   return {
     baseUrl: config.services[service],
     fetch: fetcher,
     timeoutMs: 5_000,
+    signal,
   };
 }
 

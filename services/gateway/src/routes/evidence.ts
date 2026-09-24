@@ -19,15 +19,18 @@ export function createEvidenceRoute(
   fetcher: typeof fetch,
 ) {
   const route = createProxyRoute();
-  const options = proxyOptions(config, "knowledge", fetcher);
-  const client = createKnowledgeClient(options);
-  const queries = createKnowledgeQueries(options);
-  route.get("/stats", async () =>
-    proxyJson(datalabUsageSchema, await queries.datalabUsage()),
-  );
+  route.get("/stats", async (c) => {
+    const queries = createKnowledgeQueries(
+      proxyOptions(config, "knowledge", fetcher, c.req.raw.signal),
+    );
+    return proxyJson(datalabUsageSchema, await queries.datalabUsage());
+  });
   route.get("/:id", async (c) => {
     const id = c.req.param("id");
     if (!id.startsWith("ev-")) throw new ProxyInputError();
+    const client = createKnowledgeClient(
+      proxyOptions(config, "knowledge", fetcher, c.req.raw.signal),
+    );
     return proxyJson(evidenceSchema, await client.getEvidence(id));
   });
   return route;

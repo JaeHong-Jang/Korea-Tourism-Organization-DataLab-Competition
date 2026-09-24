@@ -13,14 +13,19 @@ export function createOpsRoute(
   readEvals = readLatestEval,
 ) {
   const route = createProxyRoute();
-  const forecast = createForecastQueries(
-    proxyOptions(config, "forecast", fetcher),
-  );
-  const knowledge = createKnowledgeQueries(
-    proxyOptions(config, "knowledge", fetcher),
-  );
-  route.get("/runs", async () => proxyJson(runsSchema, await forecast.runs()));
-  route.get("/status", async () => {
+  route.get("/runs", async (c) => {
+    const forecast = createForecastQueries(
+      proxyOptions(config, "forecast", fetcher, c.req.raw.signal),
+    );
+    return proxyJson(runsSchema, await forecast.runs());
+  });
+  route.get("/status", async (c) => {
+    const forecast = createForecastQueries(
+      proxyOptions(config, "forecast", fetcher, c.req.raw.signal),
+    );
+    const knowledge = createKnowledgeQueries(
+      proxyOptions(config, "knowledge", fetcher, c.req.raw.signal),
+    );
     const [freshness, card, graph, evals] = await Promise.all([
       forecast.freshness(),
       forecast.modelCard(),

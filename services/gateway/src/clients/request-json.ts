@@ -65,9 +65,10 @@ export async function requestJson<T>(
               ? undefined
               : JSON.stringify(request.body),
           signal,
+          redirect: "manual",
         },
       );
-      if (!response.ok) {
+      if (request.method === "GET" ? response.status !== 200 : !response.ok) {
         const validateError = request.errorSchemas?.[response.status];
         if (!validateError) {
           await response.body?.cancel();

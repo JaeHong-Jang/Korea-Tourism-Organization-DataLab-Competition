@@ -1,5 +1,6 @@
 // gateway 허용 목록에 있는 records 경로만 본문·응답 검증 후 중계한다
 import type { Plan } from "@crowdcast/contracts/types";
+import type { HttpBindings } from "@hono/node-server";
 import type { ValidateFunction } from "ajv";
 import { queryListSchema, querySchema } from "../clients/query-schemas.js";
 import { relayRecords } from "../clients/records-relay-client.js";
@@ -111,6 +112,7 @@ const allowedPaths: {
 
 // 인코딩된 경로 구분자와 이중 인코딩을 거부해 허용 목록 우회를 막는다
 function recordsPath(path: string) {
+  if (!path.startsWith("/api/records/")) return null;
   try {
     const parts = path
       .slice("/api/records/".length)
@@ -142,7 +144,12 @@ export function createRecordsRelayRoute(
 ) {
   const route = createProxyRoute();
   route.all("/*", async (c) => {
-    const path = recordsPath(c.req.path);
+    // Node 어댑터는 raw.url도 정규화하므로 원시 HTTP 경로를 우선 검사한다
+    const incoming = (c.env as Partial<HttpBindings> | undefined)?.incoming;
+    const rawPath = (incoming?.url ?? c.req.raw.url)
+      .replace(/^https?:\/\/[^/]+/, "")
+      .split(/[?#]/)[0];
+    const path = recordsPath(rawPath);
     const contract = allowedPaths.find(
       (entry) =>
         entry.method === c.req.method && path !== null && entry.path.test(path),
@@ -156,6 +163,12 @@ export function createRecordsRelayRoute(
     // JSON 구문 오류와 스키마 위반은 같은 요청 오류로 반환한다
     let body: unknown;
     if (contract.bodySchema) {
+      // gateway 계약에 415가 없어 JSON 이외 미디어 타입은 400으로 거부한다
+      if (
+        c.req.header("content-type")?.split(";")[0].trim().toLowerCase() !==
+        "application/json"
+      )
+        throw new ProxyInputError();
       try {
         body = await c.req.json();
       } catch {
@@ -166,11 +179,14 @@ export function createRecordsRelayRoute(
 
     // 계약에 없는 쿼리를 보내지 않고 경로 조각은 다시 안전하게 인코딩한다
     try {
-      return await relayRecords(proxyOptions(config, "records", fetcher), {
-        ...contract,
-        path: `/v1/${path.split("/").map(encodeURIComponent).join("/")}`,
-        body,
-      });
+      return await relayRecords(
+        proxyOptions(config, "records", fetcher, c.req.raw.signal),
+        {
+          ...contract,
+          path: `/v1/${path.split("/").map(encodeURIComponent).join("/")}`,
+          body,
+        },
+      );
     } catch (error) {
       if (
         contract.method === "PUT" &&

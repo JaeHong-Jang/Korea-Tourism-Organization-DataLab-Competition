@@ -13,7 +13,7 @@ export function readRegions(options: ServiceClientOptions) {
         {
           headers: { accept: "application/json" },
           signal,
-          redirect: "error",
+          redirect: "manual",
         },
       );
       if (response.status !== 200) {

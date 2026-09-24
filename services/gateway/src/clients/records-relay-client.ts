@@ -1,5 +1,6 @@
 // 허용된 records 요청을 검증해 보내고 JSON 또는 docx를 마감 안에 읽는다
 import type { ValidateFunction } from "ajv";
+import { readRecordsJson, stageRecordsDocx } from "./records-response-body.js";
 import { withRequestDeadline } from "./request-deadline.js";
 import { type ServiceClientOptions, ServiceHttpError } from "./request-json.js";
 
@@ -35,7 +36,7 @@ export function relayRecords(
         {
           method: request.method,
           signal,
-          redirect: "error",
+          redirect: "manual",
           headers: {
             accept: request.docx ? DOCX_CONTENT_TYPE : "application/json",
             ...(request.bodySchema
@@ -50,24 +51,28 @@ export function relayRecords(
         throw new ServiceHttpError(response.status);
       }
 
-      // 바이너리는 계약 MIME과 다운로드 이름을 유지하고 바이트를 바꾸지 않는다
+      // JSON·문서 모두 계약 미디어 타입을 확인한 뒤에만 본문을 읽는다
+      const contentType = response.headers.get("content-type");
+      if (
+        !contentType ||
+        contentType.split(";")[0].trim().toLowerCase() !==
+          (request.docx ? DOCX_CONTENT_TYPE : "application/json")
+      ) {
+        await response.body?.cancel();
+        throw new Error("records 응답 계약 위반: Content-Type");
+      }
+
+      // 바이너리는 상한 검사를 마친 임시 파일에서 다운로드 헤더와 함께 전달한다
       if (request.docx) {
-        const contentType = response.headers.get("content-type");
-        if (
-          contentType?.split(";")[0].trim().toLowerCase() !== DOCX_CONTENT_TYPE
-        ) {
-          await response.body?.cancel();
-          throw new Error("docx 응답 계약 위반");
-        }
-        const bytes = await response.arrayBuffer();
+        const stream = await stageRecordsDocx(response, signal, options.signal);
         const headers = new Headers({ "content-type": contentType });
         const disposition = response.headers.get("content-disposition");
         if (disposition) headers.set("content-disposition", disposition);
-        return new Response(bytes, { headers });
+        return new Response(stream, { headers });
       }
 
       // JSON은 records.yaml의 해당 경로 응답 검사기를 통과해야 반환한다
-      const body: unknown = await response.json();
+      const body = await readRecordsJson(response, signal);
       if (!request.responseSchema?.(body))
         throw new Error("records 응답 계약 위반");
       return Response.json(body);

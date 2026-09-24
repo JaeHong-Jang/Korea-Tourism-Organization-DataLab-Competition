@@ -109,6 +109,40 @@ describe.each(queryCases)("$route", ({ route, upstream, body }) => {
     expect(console.error).toHaveBeenCalled();
   });
 
+  // 유효한 JSON이라도 미등록 성공 상태와 리다이렉트는 발행하지 않는다
+  it.each([201, 206, 301, 302, 307, 308])(
+    "상류 HTTP %i를 거부한다",
+    async (status) => {
+      const fetcher = vi.fn<typeof fetch>(async () =>
+        Response.json(body, {
+          status,
+          headers: { location: "http://redirect.test/private" },
+        }),
+      );
+      const response = await createApp(proxyConfig, fetcher).request(route);
+      expect(response.status).toBe(503);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(fetcher.mock.calls[0][1]?.redirect).toBe("manual");
+    },
+  );
+
+  // 요청마다 독립적인 브라우저 취소 신호가 상류 마감까지 이어진다
+  it("연결이 끊기면 5초를 기다리지 않고 상류를 취소한다", async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    const fetcher = vi.fn<typeof fetch>(() => new Promise(() => {}));
+    const pending = createApp(proxyConfig, fetcher).request(route, {
+      signal: controller.signal,
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher.mock.calls[0][1]?.signal?.aborted).toBe(false);
+    controller.abort();
+    expect((await pending).status).toBe(503);
+    expect(fetcher.mock.calls[0][1]?.signal?.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   // DNS나 연결 거부도 응답 계약을 갖춘 장애로 처리한다
   it("연결이 없으면 503을 준다", async () => {
     const fetcher = vi
