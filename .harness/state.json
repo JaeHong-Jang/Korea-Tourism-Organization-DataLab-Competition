@@ -79,9 +79,9 @@
    "evidence": "10,198행·DIY 60, test 181, 1회차 대비 날짜 교정 12건·모호 원문만 제외 42건(행 대조), 교차 리뷰 sol 반복 → 반례 테스트 고정, 3f45a36"
   },
   "T-101": {
-   "status": "running",
-   "updated": "2026-09-24T15:00:28.274Z",
-   "note": "1회차 수정 확인(242 tests), API 반영 지연 31일 실측 → available_at 규칙 35일로(06 §3), 피드백 2회차(마지막)"
+   "status": "done",
+   "updated": "2026-09-24T15:58:17.375Z",
+   "evidence": "test 250·키 누출 0, 2026 코드 대응·35일 공개일 산출물 확인, 교차 리뷰 sol PASS, region_daily 861505행"
   },
   "T-102": {
    "status": "todo"
@@ -242,7 +242,7 @@
   "T-402": {
    "status": "running",
    "updated": "2026-09-24T15:02:48.576Z",
-   "note": "게이트 2 test 63·build·lint·스크린샷 확인(기준선 라벨 위치 지적), 게이트 3 FAIL(astra: 주최측 예상 단위 불일치 표시 High + Med 5) → 피드백 1회차"
+   "note": "재리뷰 PASS(Med 3·Low 1 — 기준선 10px 어긋남·▲ 대표값·칩 번호) → 차트 정확성 피드백 2회차(마지막)"
   },
   "R-03": {
    "status": "todo"
@@ -265,7 +265,7 @@
   "T-431": {
    "status": "running",
    "updated": "2026-09-24T15:06:19.294Z",
-   "note": "PARTIAL(경계 링크 누락 — worktree.sh 보완), 게이트 4 스크린샷: 줄무늬 결함·대비·노을 강제·렌더러 미기록 → 피드백 1회차"
+   "note": "피드백 1회차로 줄무늬·대비·노을 해결(스크린샷 확인), 교차 리뷰 PASS(Med 6·Low 1 — 그림자 범위·AdaptiveDpr·dispose 등) → 피드백 2회차(마지막)"
   },
   "T-432": {
    "status": "todo"
@@ -746,6 +746,12 @@
    "at": "2026-09-24T15:38:45.126Z",
    "id": "T-303",
    "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:58:17.375Z",
+   "id": "T-101",
+   "status": "done",
+   "evidence": "test 250·키 누출 0, 2026 코드 대응·35일 공개일 산출물 확인, 교차 리뷰 sol PASS, region_daily 861505행"
   }
  ]
 }
