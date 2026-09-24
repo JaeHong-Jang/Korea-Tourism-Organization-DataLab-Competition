@@ -93,7 +93,7 @@ function sequenceRun(spec) {
   const problems = [];
   let revision = 0;
   spec.steps.forEach((st, i) => {
-    const scope = sessionScope(spec.sessionId, loaded);
+    const scope = sessionScope(spec.sessionId, loaded, revision);
     if (st.publish) {
       for (const id of st.publish) {
         const p = publishProblems(scope.claims.get(id), revision);

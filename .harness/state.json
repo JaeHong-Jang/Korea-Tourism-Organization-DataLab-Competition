@@ -65,12 +65,12 @@
   },
   "T-001": {
    "status": "done",
-   "updated": "2026-09-24T12:39:04.672Z",
-   "evidence": "contracts v1.4: check 스키마29·픽스처118·오류0(문장 수명 주기·내용 revision·적재 순서 10, SSE 14 — 후속 요청 모드·R10)"
+   "updated": "2026-09-24T12:50:00.337Z",
+   "evidence": "contracts v1.5: check 스키마29·픽스처128·오류0(재검사·자연 키·masterVersion 고정·revision 단조)"
   },
   "R-01": {
    "status": "stale",
-   "updated": "2026-09-24T12:31:17.283Z",
+   "updated": "2026-09-24T12:47:48.589Z",
    "note": "상위 T-001 되돌림"
   },
   "T-100": {
@@ -463,6 +463,35 @@
    "id": "T-001",
    "status": "done",
    "evidence": "contracts v1.4: check 스키마29·픽스처118·오류0(문장 수명 주기·내용 revision·적재 순서 10, SSE 14 — 후속 요청 모드·R10)"
+  },
+  {
+   "at": "2026-09-24T12:39:15.638Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T12:47:48.589Z",
+   "id": "R-01",
+   "status": "failed",
+   "note": "→ T-001: r5 FAIL(astra): 새 사실 뒤 재검증 경로 없음 — candidate 검사 갱신·게이트 B 재실행 금지(High), id 없는 평시·유사 사례 revision 누락, B·발행 masterVersion 비교 누락(Med 2)"
+  },
+  {
+   "at": "2026-09-24T12:47:48.589Z",
+   "id": "T-001",
+   "status": "todo",
+   "note": "되돌림: R-01 실패 — r5 FAIL(astra): 새 사실 뒤 재검증 경로 없음 — candidate 검사 갱신·게이트 B 재실행 금지(High), id 없는 평시·유사 사례 revision 누락, B·발행 masterVersion 비교 누락(Med 2)"
+  },
+  {
+   "at": "2026-09-24T12:47:48.589Z",
+   "id": "R-01",
+   "status": "stale",
+   "note": "상위 T-001 되돌림"
+  },
+  {
+   "at": "2026-09-24T12:50:00.337Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "contracts v1.5: check 스키마29·픽스처128·오류0(재검사·자연 키·masterVersion 고정·revision 단조)"
   }
  ]
 }

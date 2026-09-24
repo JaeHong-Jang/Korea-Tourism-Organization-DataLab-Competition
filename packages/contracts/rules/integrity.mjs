@@ -13,6 +13,10 @@ const FROM_MASTER = new Set(["rules", "clauses", "datasets", "modelRuns"]);
 // 정의로 모을 id 접두사 → 종류. 같은 id에 다른 내용이 오면 충돌(행사·예보도 세션 안에서 바뀌지 않는다), 문장만 수명 주기 전이를 허용한다
 const DEF_PREFIX = { "q-": "quantities", "ev-": "evidence", "obs-": "observations", "as-": "assumptions", "c-": "claims", "e-": "events", "f-": "forecasts" };
 
+// 자체 id가 없는 적재 객체(평시·유사 사례)는 자연 키로 식별한다: 평시 = 지역+기간, 유사 사례 = 과거 행사 id
+const PART_KINDS = ["baselines", "similars"];
+const baselineKey = (b) => `${b.sigunguCode}:${b.period.from}:${b.period.to}`;
+
 // 기준 그래프 id 목록(master-ids.json)과 등록된 모델 실행 id로 조회용 집합을 만든다
 export function masterSets(masterIds, modelRunIds = []) {
   const set = (k) => new Set(masterIds[k] ?? []);
@@ -22,15 +26,16 @@ export function masterSets(masterIds, modelRunIds = []) {
 // 빈 정의 모음(세션 범위 하나)
 function emptyDefs(sessionId = null) {
   const defs = { sessionId, caseEvents: new Set(), conflicts: [] };
-  for (const kind of Object.values(DEF_PREFIX)) defs[kind] = new Map();
+  for (const kind of [...Object.values(DEF_PREFIX), ...PART_KINDS]) defs[kind] = new Map();
   return defs;
 }
 
 // 정의 모음을 복사한다(세션 범위를 건드리지 않고 문서 하나를 더해 보기 위해)
 function copyDefs(d) {
   const out = emptyDefs(d.sessionId);
+  out.revision = d.revision;
   out.caseEvents = new Set(d.caseEvents);
-  for (const kind of Object.values(DEF_PREFIX)) out[kind] = new Map(d[kind]);
+  for (const kind of [...Object.values(DEF_PREFIX), ...PART_KINDS]) out[kind] = new Map(d[kind]);
   return out;
 }
 
@@ -51,22 +56,31 @@ function addDefinitions(defs, schema, doc, via = "facts") {
     for (const [k, v] of Object.entries(node)) visit(v, k);
   };
   visit(doc);
-  if (schema === "similar-event") defs.caseEvents.add(doc.eventId);
-  if (schema === "forecast-report") for (const s of doc.similar) defs.caseEvents.add(s.eventId);
+  // 평시·유사 사례: 자연 키가 같으면 내용도 같아야 한다(세션 안 불변)
+  const part = (kind, key, node) => {
+    const prev = defs[kind].get(key);
+    if (prev && canonical(prev) !== canonical(node)) defs.conflicts.push(`같은 ${kind === "baselines" ? "평시" : "유사 사례"} ${key}에 다른 내용`);
+    defs[kind].set(key, node);
+  };
+  const similars = schema === "similar-event" ? [doc] : schema === "forecast-report" ? doc.similar : [];
+  const baselines = schema === "region-baseline" ? [doc] : schema === "forecast-report" && doc.baseline ? [doc.baseline] : [];
+  for (const s of similars) { defs.caseEvents.add(s.eventId); part("similars", s.eventId, s); }
+  for (const b of baselines) part("baselines", baselineKey(b), b);
 }
 
-// 세션 그래프에 이미 적재된 문서들로 세션 범위를 만든다(loaded = [{schema, doc, via}], 적재 순서대로, via = "facts" | "publish")
-export function sessionScope(sessionId, loaded) {
+// 세션 그래프에 이미 적재된 문서들로 세션 범위를 만든다(loaded = [{schema, doc, via}], 적재 순서대로, via = "facts" | "publish", revision = 지금 내용 revision)
+export function sessionScope(sessionId, loaded, revision) {
   const defs = emptyDefs(sessionId);
+  defs.revision = revision;
   for (const { schema, doc, via } of loaded) addDefinitions(defs, schema, doc, via);
   return defs;
 }
 
-// 이 적재가 세션의 내용 revision을 올리는지: 새 정의가 하나라도 생기면 올린다. 같은 내용 재적재와 문장 상태 전이(같은 id)는 올리지 않는다
+// 이 적재가 세션의 내용 revision을 올리는지: 새 정의(id 객체·평시·유사 사례)가 하나라도 생기면 올린다. 같은 내용 재적재와 문장 상태 전이·재검사(같은 id)는 올리지 않는다
 export function changesContent(scope, schema, doc) {
   const probe = emptyDefs();
   addDefinitions(probe, schema, doc);
-  for (const kind of Object.values(DEF_PREFIX)) {
+  for (const kind of [...Object.values(DEF_PREFIX), ...PART_KINDS]) {
     for (const [id, node] of probe[kind]) {
       const prev = scope[kind].get(id);
       if (!prev) return true;
@@ -124,6 +138,8 @@ function contextProblems(doc, kind, defs, master, scope) {
     if (doc.sessionId !== defs.sessionId) out.push(`claim ${doc.id} → 다른 세션 ${doc.sessionId}`);
     if (!defs.forecasts.has(doc.forecastId)) out.push(`claim ${doc.id} → 예보 ${doc.forecastId} 없음`);
     if (!master.agents.has(`agent-${doc.generatedBy.agentId}`)) out.push(`claim ${doc.id} → 에이전트 ${doc.generatedBy.agentId} 기준 그래프에 없음`);
+    // 검사 결과는 이미 있는 내용 revision에서만 나올 수 있다(scope.revision = 지금 내용 revision, 알 때만)
+    if (scope?.revision !== undefined) for (const c of doc.checks) if (c.revision > scope.revision) out.push(`claim ${doc.id} ${c.checkKind} 검사 revision ${c.revision}은 아직 없다(지금 ${scope.revision})`);
   }
   if (kind === "evidence") out.push(...forecastOf(doc));
   if (kind === "similar-event" || kind === "region-baseline") {
