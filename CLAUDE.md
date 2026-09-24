@@ -6,10 +6,11 @@
 
 ## 디렉토리 구조 (레인 소유권은 AGENTS.md §2)
 ```
-├── apps/web/                 # React(Vite) 프론트엔드                         [L4a·L4b]
+├── apps/web/                 # React(Vite) 프론트엔드·3D 미니 대한민국         [L4a·L4b·L4c]
 ├── services/
-│   ├── gateway/              # TypeScript(Hono) 게이트웨이 + AI 에이전트(Ollama) [L3]
-│   ├── forecast/             # Python(FastAPI) 데이터·모델·판정                 [L1·L2]
+│   ├── gateway/              # TypeScript(Hono) 게이트웨이 + 예보팀(Ollama)     [L3]
+│   ├── forecast/             # Python(FastAPI) 데이터·모델·판정·날씨            [L1·L2]
+│   ├── knowledge/            # Python(FastAPI) 온톨로지·근거 그래프·SHACL        [L6]
 │   └── records/              # PHP(Slim) 행사 기록·계획 초안 docx·사전 등록 원장  [L5]
 ├── packages/contracts/       # 서비스 간 계약(JSON Schema·OpenAPI·SSE·디자인 토큰) [오케스트레이터]
 ├── configs/                  # 모델·판정 설정(yaml)                            [L2]
@@ -30,9 +31,9 @@
 - 노트북 파일명: `XX_주제_이름.ipynb` (예: `01_eda_jaehong.ipynb`)
 
 ## 주요 기술 (상세는 docs/plan/05_기술_아키텍처.md)
-- 프론트: React + Vite + TypeScript, Tailwind CSS v4 + shadcn/ui, MapLibre GL(Protomaps 로컬 타일), Recharts, TanStack Query
+- 프론트: React + Vite + TypeScript, Tailwind CSS v4 + shadcn/ui, React Three Fiber(3D), Recharts, React Flow, TanStack Query
 - 게이트웨이: Node 22 + Hono, Ollama(로컬 LLM)
-- 예측: FastAPI, pandas·pyarrow, LightGBM 4.6(고정), scikit-learn, shap
+- 예측: FastAPI, Polars·DuckDB, Pandera, LightGBM 4.6(고정), MAPIE, shap / 근거 그래프: rdflib·pySHACL·pyoxigraph
 - 기록·문서: PHP 8.5 + Slim 4, PDO SQLite, PHPWord
 - 실행: 로컬(`npm run dev`), 서버 배포 없음
 
@@ -54,6 +55,6 @@
 - 100MB 이상 파일은 Git에 포함하지 않음
 
 ## AI 개발 체계 (오케스트라 하네스)
-- 계획 수립 = Claude Code가 직접 작성(필요하면 Codex를 읽기 전용 교차 리뷰로만 사용). 코드 구현 = 오케스트라 구조.
-- Claude Code = 오케스트레이터, Codex(`gpt-6-astra`: L1·L2·L3, `gpt-6-sol`: L4a·L4b·L5) = 레인별 워커. 역할·레인·워커 규칙·디스패치·게이트는 `AGENTS.md`가 정본이다.
+- 계획 수립 = Claude Code가 직접 작성하고, **Codex(`gpt-6-astra`)를 읽기 전용 교차 리뷰어로 돌린 뒤** 지적을 반영한다. 코드 구현 = 오케스트라 구조.
+- Claude Code = 오케스트레이터, Codex(`gpt-6-astra`: L1·L2·L3·L6, `gpt-6-sol`: L4a·L4b·L4c·L5) = 레인별 워커. 역할·레인·워커 규칙·디스패치·게이트는 `AGENTS.md`가 정본이다.
 - 일정·작업 목록: `docs/plan/07_일정_작업분해.md`. 오케스트레이터는 계약(`packages/contracts/`)·task 작성·게이트·통합·커밋을 맡고, 레인 구현은 `AGENTS.md` §7 절차로 디스패치한다.
