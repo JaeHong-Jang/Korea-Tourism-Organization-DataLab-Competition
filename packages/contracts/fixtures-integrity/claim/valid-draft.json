@@ -7,7 +7,7 @@
   "claimType": "판정",
   "status": "draft",
   "evidenceIds": [
-    "ev-missing"
+    "ev-rule-legal-hazard"
   ],
   "placeholders": [],
   "generatedBy": {

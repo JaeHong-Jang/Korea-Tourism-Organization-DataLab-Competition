@@ -229,7 +229,7 @@
     "data": {
       "gate": "B",
       "passed": true,
-      "revision": 6,
+      "revision": 7,
       "masterVersion": 1,
       "violations": []
     }

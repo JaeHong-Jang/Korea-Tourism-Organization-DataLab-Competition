@@ -77,7 +77,7 @@
       "timeUnit": "순간",
       "estimated": true,
       "assumptionIds": [
-        "as-peak-day-factor",
+        "as-not-registered",
         "as-concurrency-fireworks"
       ],
       "value": null,
@@ -151,7 +151,7 @@
       "timeUnit": "순간",
       "estimated": true,
       "assumptionIds": [
-        "as-peak-day-factor",
+        "as-not-registered",
         "as-concurrency-fireworks"
       ],
       "value": null,
@@ -273,7 +273,7 @@
     ],
     "assumptions": [
       {
-        "id": "as-peak-day-factor",
+        "id": "as-not-registered",
         "name": "피크일 계수",
         "value": 1.0,
         "low": 0.8,
@@ -383,11 +383,11 @@
         "ruleId": null,
         "clauseId": null,
         "caseEventId": null,
-        "assumptionId": "as-peak-day-factor",
+        "assumptionId": "as-not-registered",
         "forecastId": null,
         "modelVersion": null,
         "checkResult": null,
-        "id": "ev-as-peak-day-factor",
+        "id": "ev-as-not-registered",
         "kind": "assumption",
         "title": "피크일 계수",
         "summary": "1일 행사 1.0(범위 0.8~1.2, 가정)"
@@ -459,41 +459,6 @@
         {
           "name": "peak_p50",
           "quantityId": "q-f-yeongjong-2025-peak",
-          "field": "p50"
-        }
-      ],
-      "generatedBy": {
-        "agentId": "explainer",
-        "stepId": "st-explainer-01"
-      },
-      "checks": [
-        {
-          "checkKind": "evidence",
-          "passed": true,
-          "revision": 7
-        },
-        {
-          "checkKind": "number",
-          "passed": true,
-          "revision": 7
-        }
-      ]
-    },
-    {
-      "id": "c-yeongjong-5",
-      "sessionId": "s-demo-0001",
-      "forecastId": "f-yeongjong-2025",
-      "text": "작년 같은 축제는 하루 평균 {{prev_mean}}명이 찾았어요",
-      "rendered": "작년 같은 축제는 하루 평균 15,200명이 찾았어요",
-      "claimType": "설명",
-      "status": "published",
-      "evidenceIds": [
-        "ev-case-e-yeongjong-2024"
-      ],
-      "placeholders": [
-        {
-          "name": "prev_mean",
-          "quantityId": "q-e-yeongjong-2024-measured",
           "field": "p50"
         }
       ],
@@ -605,11 +570,11 @@
       "ruleId": null,
       "clauseId": null,
       "caseEventId": null,
-      "assumptionId": "as-peak-day-factor",
+      "assumptionId": "as-not-registered",
       "forecastId": null,
       "modelVersion": null,
       "checkResult": null,
-      "id": "ev-as-peak-day-factor",
+      "id": "ev-as-not-registered",
       "kind": "assumption",
       "title": "피크일 계수",
       "summary": "1일 행사 1.0(범위 0.8~1.2, 가정)"
@@ -632,110 +597,9 @@
       "kind": "assumption",
       "title": "동시체류율(불꽃)",
       "summary": "불꽃 행사 동시체류율 1.0(범위 0.8~1.0, 가정)"
-    },
-    {
-      "quantityIds": [
-        "q-e-yeongjong-2024-measured",
-        "q-e-yeongjong-2024-announced"
-      ],
-      "period": {
-        "from": "2024-10-19",
-        "to": "2024-10-19"
-      },
-      "source": {
-        "datasetId": "ds-datalab-festival-status",
-        "title": "데이터랩 문화관광축제 현황",
-        "publisher": "한국관광공사",
-        "datalabMenu": "축제 > 문화관광축제 현황",
-        "accessUrl": "https://datalab.visitkorea.or.kr"
-      },
-      "availableAt": "2025-01-15",
-      "ruleId": null,
-      "clauseId": null,
-      "caseEventId": "e-yeongjong-fireworks-2024",
-      "assumptionId": null,
-      "forecastId": null,
-      "modelVersion": null,
-      "checkResult": null,
-      "id": "ev-case-e-yeongjong-2024",
-      "kind": "case",
-      "title": "2024 영종 불꽃축제",
-      "summary": "같은 행사 전년 실측(데이터랩 기준 일평균)"
     }
   ],
-  "similar": [
-    {
-      "eventId": "e-yeongjong-fireworks-2024",
-      "name": "영종 씨사이드파크 불꽃축제",
-      "year": 2024,
-      "sigunguName": "인천 중구",
-      "type": "불꽃",
-      "measured": {
-        "id": "q-e-yeongjong-2024-measured",
-        "name": "2024 일평균 방문객(실측)",
-        "value": 15200,
-        "p10": null,
-        "p50": null,
-        "p90": null,
-        "unit": "명/일",
-        "timeUnit": "일",
-        "spatialScope": "시군구",
-        "valueKind": "사후집계",
-        "estimated": false,
-        "assumptionIds": [],
-        "announcedAt": "2025-01-15"
-      },
-      "announced": {
-        "id": "q-e-yeongjong-2024-announced",
-        "name": "2024 주최측 발표",
-        "value": 50000,
-        "p10": null,
-        "p50": null,
-        "p90": null,
-        "unit": "명",
-        "timeUnit": "기간누적",
-        "spatialScope": "행사장",
-        "valueKind": "사후집계",
-        "estimated": false,
-        "assumptionIds": [],
-        "announcedAt": "2024-10-21"
-      },
-      "unitsComparable": false,
-      "similarity": 0.92,
-      "evidenceId": "ev-case-e-yeongjong-2024",
-      "evidence": [
-        {
-          "quantityIds": [
-            "q-e-yeongjong-2024-measured",
-            "q-e-yeongjong-2024-announced"
-          ],
-          "period": {
-            "from": "2024-10-19",
-            "to": "2024-10-19"
-          },
-          "source": {
-            "datasetId": "ds-datalab-festival-status",
-            "title": "데이터랩 문화관광축제 현황",
-            "publisher": "한국관광공사",
-            "datalabMenu": "축제 > 문화관광축제 현황",
-            "accessUrl": "https://datalab.visitkorea.or.kr"
-          },
-          "availableAt": "2025-01-15",
-          "ruleId": null,
-          "clauseId": null,
-          "caseEventId": "e-yeongjong-fireworks-2024",
-          "assumptionId": null,
-          "forecastId": null,
-          "modelVersion": null,
-          "checkResult": null,
-          "id": "ev-case-e-yeongjong-2024",
-          "kind": "case",
-          "title": "2024 영종 불꽃축제",
-          "summary": "같은 행사 전년 실측(데이터랩 기준 일평균)"
-        }
-      ]
-    }
-  ],
+  "similar": [],
   "baseline": null,
   "layout": [
     {
@@ -755,17 +619,8 @@
       ],
       "evidenceIds": [
         "ev-model-f-yeongjong-2025",
-        "ev-as-peak-day-factor",
+        "ev-as-not-registered",
         "ev-as-concurrency-fireworks"
-      ]
-    },
-    {
-      "slot": "similar",
-      "claimIds": [
-        "c-yeongjong-5"
-      ],
-      "evidenceIds": [
-        "ev-case-e-yeongjong-2024"
       ]
     }
   ],

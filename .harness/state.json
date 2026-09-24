@@ -65,12 +65,12 @@
   },
   "T-001": {
    "status": "done",
-   "updated": "2026-09-24T12:24:03.471Z",
-   "evidence": "contracts v1.3: check 스키마29·픽스처101·오류0(무결성 45 — 세션 범위·충돌, SSE 순서 11 — 게이트 전이 R1~R9)"
+   "updated": "2026-09-24T12:39:04.672Z",
+   "evidence": "contracts v1.4: check 스키마29·픽스처118·오류0(문장 수명 주기·내용 revision·적재 순서 10, SSE 14 — 후속 요청 모드·R10)"
   },
   "R-01": {
    "status": "stale",
-   "updated": "2026-09-24T12:20:22.732Z",
+   "updated": "2026-09-24T12:31:17.283Z",
    "note": "상위 T-001 되돌림"
   },
   "T-100": {
@@ -434,6 +434,35 @@
    "id": "T-001",
    "status": "done",
    "evidence": "contracts v1.3: check 스키마29·픽스처101·오류0(무결성 45 — 세션 범위·충돌, SSE 순서 11 — 게이트 전이 R1~R9)"
+  },
+  {
+   "at": "2026-09-24T12:24:36.471Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T12:31:17.283Z",
+   "id": "R-01",
+   "status": "failed",
+   "note": "→ T-001: r4 FAIL(astra): 충돌 검사가 Claim 상태 전환(draft→candidate) 차단(High 회귀), Event·Forecast 내용 충돌 누락, 예보서 내부 가정 등록 검사 누락, 후속 플레이북 SSE 오판(Med 3)"
+  },
+  {
+   "at": "2026-09-24T12:31:17.283Z",
+   "id": "T-001",
+   "status": "todo",
+   "note": "되돌림: R-01 실패 — r4 FAIL(astra): 충돌 검사가 Claim 상태 전환(draft→candidate) 차단(High 회귀), Event·Forecast 내용 충돌 누락, 예보서 내부 가정 등록 검사 누락, 후속 플레이북 SSE 오판(Med 3)"
+  },
+  {
+   "at": "2026-09-24T12:31:17.283Z",
+   "id": "R-01",
+   "status": "stale",
+   "note": "상위 T-001 되돌림"
+  },
+  {
+   "at": "2026-09-24T12:39:04.672Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "contracts v1.4: check 스키마29·픽스처118·오류0(문장 수명 주기·내용 revision·적재 순서 10, SSE 14 — 후속 요청 모드·R10)"
   }
  ]
 }

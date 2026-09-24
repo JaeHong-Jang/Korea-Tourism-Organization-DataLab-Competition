@@ -6,7 +6,8 @@ import { spawnSync } from "node:child_process";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import YAML from "yaml";
-import { masterSets, refProblems, sessionScope } from "../rules/integrity.mjs";
+import { changesContent, masterSets, refProblems, sessionScope } from "../rules/integrity.mjs";
+import { publishProblems, published } from "../rules/claim-lifecycle.mjs";
 import { cardDiff } from "../rules/card-projection.mjs";
 import { sequenceProblems } from "../rules/sse-sequence.mjs";
 
@@ -71,7 +72,7 @@ const scopeFor = (kind) => {
   const before = scopeSpec.loadOrder.slice(0, upto < 0 ? undefined : upto).filter(([, file]) => file);
   return sessionScope(scopeSpec.sessionId, before.map(([schema, file]) => ({ schema, doc: readJson(file) })));
 };
-for (const kind of existsSync(integrityDir) ? readdirSync(integrityDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name) : []) {
+for (const kind of existsSync(integrityDir) ? readdirSync(integrityDir, { withFileTypes: true }).filter((d) => d.isDirectory() && d.name !== "sequences").map((d) => d.name) : []) {
   const validate = ajv.getSchema(schemas[kind].$id);
   const scope = scopeFor(kind);
   for (const f of readdirSync(join(integrityDir, kind)).sort()) {
@@ -83,6 +84,41 @@ for (const kind of existsSync(integrityDir) ? readdirSync(integrityDir, { withFi
     if (!ok) errors.push(`무결성 ${kind}/${f}: 스키마 ${schemaOk}, 끊긴 참조 ${problems.length}개(기대 ${expect ? "0" : "1개 이상"}) ${problems.join("; ")}`);
     rows.push(`${ok ? "✓" : "✗"} 무결성 ${(kind + "/" + f).padEnd(44)} 끊긴 참조 ${problems.length}${expect ? "" : ` (${problems[0] ?? "—"})`}`);
   }
+}
+
+// 적재 순서 시퀀스: 단계마다 스키마 → 무결성(앞 단계까지를 세션 범위로) → 통과하면 적재하고 내용 revision 계산, publish 단계는 수명 주기 규칙
+// 단계의 revisionAfter는 계약이 정한 값이다(T-601의 /facts 응답이 같아야 한다)
+function sequenceRun(spec) {
+  const loaded = [];
+  const problems = [];
+  let revision = 0;
+  spec.steps.forEach((st, i) => {
+    const scope = sessionScope(spec.sessionId, loaded);
+    if (st.publish) {
+      for (const id of st.publish) {
+        const p = publishProblems(scope.claims.get(id), revision);
+        problems.push(...p.map((x) => `#${i} ${x}`));
+        if (!p.length) loaded.push({ schema: "claim", doc: published(scope.claims.get(id)), via: "publish" });
+      }
+    } else {
+      const p = [...(ajv.getSchema(schemas[st.facts].$id)(st.doc) ? [] : [`${st.facts} 스키마 위반`]), ...refProblems(st.doc, st.facts, master, scope)];
+      problems.push(...p.map((x) => `#${i} ${x}`));
+      if (!p.length) {
+        if (changesContent(scope, st.facts, st.doc)) revision += 1;
+        loaded.push({ schema: st.facts, doc: st.doc });
+      }
+    }
+    if (st.revisionAfter !== undefined && st.revisionAfter !== revision) problems.push(`#${i} revision ${revision}(계약 값 ${st.revisionAfter})`);
+  });
+  return problems;
+}
+const seqDir = join(integrityDir, "sequences");
+for (const f of existsSync(seqDir) ? readdirSync(seqDir).sort() : []) {
+  const problems = sequenceRun(readJson("fixtures-integrity", "sequences", f));
+  const expect = f.startsWith("valid-");
+  const ok = (problems.length === 0) === expect;
+  if (!ok) errors.push(`적재 순서 ${f}: ${problems.join("; ") || "위반을 잡지 못함"}`);
+  rows.push(`${ok ? "✓" : "✗"} 적재 순서 ${f.padEnd(40)} 위반 ${problems.length}${expect ? "" : ` (${problems[0] ?? "—"})`}`);
 }
 
 // 정상 픽스처끼리의 일관성: 스키마 픽스처의 정상 예보서도 무결성 통과, 숫자 카드 = 예보의 투영
@@ -101,9 +137,11 @@ for (const [name, problems] of coherence) {
 const sseValidate = ajv.getSchema(schemas["sse-event"].$id);
 const sseDir = join(ROOT, "fixtures-sse");
 for (const f of existsSync(sseDir) ? readdirSync(sseDir).filter((x) => x.endsWith(".json")).sort() : []) {
-  const events = JSON.parse(readFileSync(join(sseDir, f), "utf8"));
+  // 파일이 배열이면 새 예보, {mode, forecastId, events}면 그 문맥(후속 요청)
+  const spec = JSON.parse(readFileSync(join(sseDir, f), "utf8"));
+  const [events, ctx] = Array.isArray(spec) ? [spec, { mode: "new" }] : [spec.events, { mode: spec.mode, forecastId: spec.forecastId }];
   const bad = events.map((e, i) => (sseValidate(e) ? null : `#${i} ${e.event} 스키마 위반`)).filter(Boolean);
-  const problems = sequenceProblems(events);
+  const problems = sequenceProblems(events, ctx);
   const expect = f.startsWith("valid-");
   const ok = bad.length === 0 && (problems.length === 0) === expect;
   if (!ok) errors.push(`SSE 순서 ${f}: ${[...bad, ...problems].join("; ") || "위반을 잡지 못함"}`);

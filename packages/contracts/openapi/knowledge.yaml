@@ -1,8 +1,8 @@
-# 인파예보 knowledge 서비스 OpenAPI v1.2 — 스키마는 ../schemas를 참조한다(계약 정본)
+# 인파예보 knowledge 서비스 OpenAPI v1.4 — 스키마는 ../schemas를 참조한다(계약 정본)
 openapi: 3.1.0
 info:
   title: 인파예보 근거 그래프 서비스
-  version: 1.2.0
+  version: 1.4.0
 servers:
   - url: http://127.0.0.1:8020
 paths:
@@ -26,7 +26,7 @@ paths:
                     type: string
   /v1/sessions/{id}/facts:
     post:
-      summary: 계약 JSON 적재(jsonld/types.json + context.jsonld로 RDF 변환, rules/integrity.mjs와 같은 참조 무결성 검사) → 새 revision. forecast-report는 적재하지 않는다
+      summary: "계약 JSON 적재 → 새 revision. 변환 = jsonld/types.json + context.jsonld, 판정 = rules/integrity.mjs(참조·충돌) + rules/claim-lifecycle.mjs(문장 전이: 새 문장은 draft, 같은 id 재적재로 draft→candidate·→rejected, 발행은 /publish만). 행사·예보 등은 세션 안에서 불변. forecast-report는 적재하지 않는다"
       parameters:
         - name: id
           in: path
@@ -68,7 +68,7 @@ paths:
                   revision:
                     type: integer
         "422":
-          description: 끊긴 참조 — 아무것도 쓰지 않고 거부(gate = integrity)
+          description: 끊긴 참조·같은 id 내용 충돌·허용되지 않는 문장 전이 — 아무것도 쓰지 않고 거부(gate = integrity)
           content:
             application/json:
               schema:
@@ -109,7 +109,7 @@ paths:
           description: revision 또는 masterVersion이 현재와 다름
   /v1/sessions/{id}/publish:
     post:
-      summary: S12 확인 후 candidate → published(한 트랜잭션). 검증한 revision·masterVersion과 같아야 한다
+      summary: S12 확인 후 candidate → published(한 트랜잭션, rules/claim-lifecycle.mjs의 publishProblems — candidate만). 검증한 revision·masterVersion과 같아야 한다
       parameters:
         - name: id
           in: path

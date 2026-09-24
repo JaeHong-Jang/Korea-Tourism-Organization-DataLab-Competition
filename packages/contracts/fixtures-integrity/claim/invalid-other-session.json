@@ -3,9 +3,9 @@
   "sessionId": "s-demo-0002",
   "forecastId": "f-yeongjong-2025",
   "text": "폭죽을 쓰는 행사라 인원과 관계없이 안전관리계획 수립 대상이에요",
-  "rendered": "폭죽을 쓰는 행사라 인원과 관계없이 안전관리계획 수립 대상이에요",
+  "rendered": null,
   "claimType": "판정",
-  "status": "published",
+  "status": "draft",
   "evidenceIds": [
     "ev-rule-legal-hazard"
   ],
@@ -14,16 +14,5 @@
     "agentId": "explainer",
     "stepId": "st-explainer-01"
   },
-  "checks": [
-    {
-      "checkKind": "evidence",
-      "passed": true,
-      "revision": 7
-    },
-    {
-      "checkKind": "rule",
-      "passed": true,
-      "revision": 7
-    }
-  ]
+  "checks": []
 }

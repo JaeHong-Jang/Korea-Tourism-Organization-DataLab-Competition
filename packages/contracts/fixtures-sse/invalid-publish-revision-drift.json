@@ -241,7 +241,7 @@
     "data": {
       "gate": "publish",
       "passed": true,
-      "revision": 7,
+      "revision": 8,
       "masterVersion": 1,
       "violations": []
     }
@@ -320,8 +320,71 @@
     }
   },
   {
-    "event": "suggest",
+    "event": "evidence",
     "seq": 15,
+    "data": {
+      "items": [
+        {
+          "quantityIds": [
+            "q-f-yeongjong-2025-mean"
+          ],
+          "period": null,
+          "source": null,
+          "availableAt": null,
+          "ruleId": null,
+          "clauseId": null,
+          "caseEventId": null,
+          "assumptionId": null,
+          "forecastId": "f-yeongjong-2025",
+          "modelVersion": "v0.1.0",
+          "checkResult": null,
+          "id": "ev-model-f-yeongjong-2025",
+          "kind": "model",
+          "title": "예측 모델",
+          "summary": "LightGBM 분위수 + CQR"
+        },
+        {
+          "quantityIds": [],
+          "period": null,
+          "source": null,
+          "availableAt": null,
+          "ruleId": "rule-legal-hazard",
+          "clauseId": "law-disaster-act-enf-73-9",
+          "caseEventId": null,
+          "assumptionId": null,
+          "forecastId": null,
+          "modelVersion": null,
+          "checkResult": null,
+          "id": "ev-rule-legal-hazard",
+          "kind": "rule",
+          "title": "인원 무관 대상(폭죽)",
+          "summary": "불·폭죽 사용 행사는 인원과 관계없이 안전관리계획 수립 대상"
+        },
+        {
+          "quantityIds": [
+            "q-f-yeongjong-2025-peak"
+          ],
+          "period": null,
+          "source": null,
+          "availableAt": null,
+          "ruleId": null,
+          "clauseId": null,
+          "caseEventId": null,
+          "assumptionId": "as-concurrency-fireworks",
+          "forecastId": null,
+          "modelVersion": null,
+          "checkResult": null,
+          "id": "ev-as-concurrency-fireworks",
+          "kind": "assumption",
+          "title": "동시체류율(불꽃)",
+          "summary": "불꽃 행사 동시체류율 1.0(범위 0.8~1.0, 가정)"
+        }
+      ]
+    }
+  },
+  {
+    "event": "suggest",
+    "seq": 16,
     "data": {
       "actions": [
         {
@@ -337,7 +400,7 @@
   },
   {
     "event": "done",
-    "seq": 16,
+    "seq": 17,
     "data": {
       "sessionId": "s-demo-0001",
       "forecastId": "f-yeongjong-2025"

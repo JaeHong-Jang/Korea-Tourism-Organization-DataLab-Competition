@@ -35,7 +35,7 @@ agent_status(lead) → agent_status/agent_step(dictation) → event_card → [as
 - `error.code`: `ANALYSIS_GATE_FAILED` · `SERVICE_UNAVAILABLE` · `DEADLINE_EXCEEDED` · `OUT_OF_SCOPE`.
 - LLM이 꺼져 있어도 순서는 같다. 문장은 템플릿으로 만들어져 같은 게이트를 지난다.
 
-**순서 규칙** — `rules/sse-sequence.mjs`의 `sequenceProblems(events)`가 판정한다. 계약 검사는 `fixtures-sse/`(정상 3 · 위반 8)로, 게이트웨이 스트림 테스트(T-303)는 실제 스트림을 같은 함수에 넣어 확인한다.
+**순서 규칙** — `rules/sse-sequence.mjs`의 `sequenceProblems(events, ctx)`가 판정한다. `ctx.mode`는 `new`(새 예보·what-if: A → B → 발행)와 `followup`(발행된 예보 `ctx.forecastId`에 대한 설명·초안: B → 발행, `docs/plan/10` §3 다른 플레이북)이다. 후속 요청에는 게이트 A·숫자 카드·행사 카드·되묻기가 없고, 문장과 `done`의 `forecastId`는 기존 예보 id다. 계약 검사는 `fixtures-sse/`(새 예보 정상 3 · 위반 9, 후속 요청 정상 1 · 위반 2)로, 게이트웨이 스트림 테스트(T-303)는 실제 스트림을 같은 함수에 넣어 확인한다.
 - R1 `seq`는 0부터 1씩 늘고, R2 `done` 뒤에는 이벤트가 없다.
 - R3 게이트 A가 실패하면 그 뒤에는 `agent_status`·`agent_step`·`error`·`done`만 보낸다.
 - R4 게이트 전이는 A(한 번) → B(실패하면 재작성·템플릿 교체 뒤 다시 B, 최대 3번, 통과하면 끝) → publish(한 번). 발행 검사 뒤에는 어떤 게이트도 보내지 않는다(발행 승인을 되돌리는 역행 금지). `gate`로 `integrity`를 보내지 않는다(적재 거부는 서비스 응답).
@@ -44,3 +44,4 @@ agent_status(lead) → agent_status/agent_step(dictation) → event_card → [as
 - R7 `done.forecastId`는 발행했으면 카드 id, 아니면 `null`.
 - R8 스트림은 `done`으로 끝나고, 게이트 A 실패면 `ANALYSIS_GATE_FAILED` 오류가 있으며, 문장이 가리킨 근거는 모두 `evidence`로 보낸다.
 - R9 `event_card`·`ask`는 게이트 A 전에만 보낸다(분석이 시작된 뒤 행사 정보를 바꾸지 않는다).
+- R10 발행 검사의 `revision`은 마지막으로 통과한 게이트 B의 `revision`과 같고, 발행 문장의 검사(`checks[].revision`)도 그 값이다(게이트 B 뒤 새 사실이 들어오면 다시 검사). revision은 **내용 revision**이다 — 문장 상태 전이·발행·같은 내용 재적재로는 올라가지 않는다(`docs/plan/09` §1).
