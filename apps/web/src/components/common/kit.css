@@ -17,7 +17,7 @@
 .range-bar__track { position: relative; height: 34px; border-bottom: 1px solid var(--axis); }
 .range-bar__band { position: absolute; top: 8px; height: 20px; border: 0; border-radius: var(--radius-input); background: var(--seq-2); }
 .range-bar__median, .range-bar__threshold { position: absolute; top: 3px; height: 22px; }
-.range-bar__median::before, .range-bar__threshold::before { position: absolute; top: 0; left: 50%; height: 22px; border-left: 2px solid var(--ink); content: ""; }
+.range-bar__median::before, .range-bar__threshold::before { position: absolute; top: 0; left: 50%; height: 22px; border-left: 2px solid var(--ink); outline: 1px solid var(--surface); content: ""; }
 .range-bar__threshold::before { border-left: 1px dashed var(--ink-2); }
 .range-bar__host { position: absolute; top: -9px; color: var(--link); font-size: var(--text-caption); transform: translateX(-50%); }
 .range-bar__target { width: 20px; min-height: 28px; padding: 0; border-top: 0; border-right: 0; border-bottom: 0; background: transparent; cursor: help; transform: translateX(-50%); }

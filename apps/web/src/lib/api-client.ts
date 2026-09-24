@@ -73,3 +73,38 @@ export function getForecastReport(
     signal,
   );
 }
+
+// 상담 세션의 식별자를 서버에서 받고 형식을 확인한다.
+export async function createTeamSession(signal?: AbortSignal): Promise<string> {
+  const response = await fetch("/api/team/sessions", {
+    method: "POST",
+    signal,
+  });
+  if (!response.ok) throw new Error(`상담 세션 생성 실패: ${response.status}`);
+  const data: unknown = await response.json();
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !("sessionId" in data) ||
+    typeof data.sessionId !== "string" ||
+    !data.sessionId.startsWith("s-")
+  )
+    throw new Error("상담 세션 응답 형식이 맞지 않아요.");
+  return data.sessionId;
+}
+
+// 펫 서랍에 표시할 기록도 계약의 에이전트 단계 스키마로 검사한다.
+export function getTeamSteps(
+  sessionId: string,
+  signal?: AbortSignal,
+): Promise<import("@crowdcast/contracts/types").AgentStep[]> {
+  const validator = ajv.compile({
+    type: "array",
+    items: { $ref: "https://crowdcast.local/schemas/agent-step.schema.json" },
+  });
+  return getJson(
+    `/team/sessions/${encodeURIComponent(sessionId)}/steps`,
+    validator,
+    signal,
+  );
+}

@@ -9,22 +9,62 @@
 .scene-id { position: absolute; top: var(--space-8); left: 48%; color: var(--ink-2); font-size: var(--text-caption); }
 .scene-cta { position: absolute; z-index: var(--z-panel); top: var(--space-8); left: 50%; transform: translateX(-50%); }
 
-/* 상담 화면은 왼쪽 대화 40%, 오른쪽 작업판과 미리보기 60%다. */
+/* 상담은 대화와 검증 결과를 구분하고 작은 화면에서는 세로로 읽는다. */
 .consult-page { padding-block: var(--space-8) var(--space-14); }
-.consult-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--space-8); min-height: 580px; }
+.consult-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--space-8); align-items: start; }
 .consult-chat { min-height: 580px; }
-.consult-chat__space { flex: 1; }
-.chat-input-placeholder { min-height: 74px; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); color: var(--ink-2); font-size: var(--text-ui); }
-.consult-right { display: grid; grid-template-rows: 120px minmax(280px, 1fr) auto; gap: var(--space-6); }
-.team-board { overflow: hidden; padding-block: var(--space-4); }
-.team-board .feature-panel__empty { display: none; }
-.report-preview { min-height: 280px; }
-.report-preview__skeleton { display: grid; align-content: start; gap: var(--space-4); margin-top: var(--space-8); }
-.report-preview__skeleton span { height: 16px; width: 75%; background: var(--surface-sunken); border-radius: var(--radius-input); }
-.report-preview__skeleton span:first-child { width: 47%; height: 34px; }
-.report-preview__skeleton span:last-child { width: 59%; }
-.event-summary { min-height: 116px; }
-.event-summary .feature-panel__empty { display: none; }
+.consult-page .consult-right { display: grid; grid-template-rows: none; gap: var(--space-8); min-width: 0; }
+.consult-conversation { display: grid; align-content: start; gap: var(--space-4); min-height: 250px; padding-block: var(--space-5); }
+.consult-greeting { display: flex; gap: var(--space-3); align-items: center; }
+.consult-greeting p { padding: var(--space-3); border-radius: var(--radius-card); background: var(--surface-sunken); color: var(--ink); }
+.consult-examples, .consult-choices, .consult-preview__actions, .consult-field-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.consult-examples button, .consult-choices > button, .consult-field, .team-steps button, .team-member { border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); cursor: pointer; }
+.consult-examples button, .consult-choices > button { padding: var(--space-2) var(--space-3); text-align: left; }
+.consult-examples button:hover, .consult-field:hover, .team-member:hover { background: var(--surface-sunken); }
+.consult-bubble { max-width: 90%; padding: var(--space-3); border-radius: var(--radius-card); background: var(--surface-sunken); overflow-wrap: anywhere; }
+.consult-bubble--user { justify-self: end; border: 1px solid var(--line); }
+.consult-bubble--ask { justify-self: start; color: var(--ink); }
+.consult-ask { min-width: 0; margin: 0; padding: 0; border: 0; display: grid; gap: var(--space-3); }
+.consult-time, .consult-edit { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-2); }
+.consult-time label, .consult-edit label { display: grid; gap: var(--space-1); color: var(--ink-2); font-size: var(--text-caption); }
+.consult-time input, .consult-edit input, .consult-compose textarea { min-width: 0; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font: inherit; }
+.consult-choice { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-button); }
+.consult-live { color: var(--ink-2); }
+.consult-compose { display: grid; gap: var(--space-2); margin-top: auto; }
+.consult-compose label { font-size: var(--text-sm); font-weight: 700; }
+.consult-compose textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.consult-compose__actions { display: flex; gap: var(--space-2); }
+.consult-muted { color: var(--ink-2); font-size: var(--text-sm); }
+.consult-field-list { margin-top: var(--space-4); }
+.consult-field { padding: var(--space-2) var(--space-3); font-size: var(--text-sm); }
+.consult-field--missing { border-style: dashed; }
+.consult-edit { margin-top: var(--space-4); }
+.consult-preview { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
+.consult-preview__numbers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+.consult-preview__actions { margin-top: var(--space-3); }
+.team-board { position: relative; }
+.team-groups { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-4); }
+.team-group { min-width: 0; }
+.team-group h3 { margin: 0 0 var(--space-1); font-size: var(--text-caption); color: var(--ink-2); }
+.team-members { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.team-member { position: relative; width: 48px; padding: var(--space-1); }
+.team-member .pet-avatar { margin: 0; }
+.team-member .pet-avatar__detail { display: none; }
+.team-member__note { display: none; position: absolute; z-index: var(--z-panel); top: 100%; left: 0; width: max-content; max-width: 190px; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font-size: var(--text-caption); box-shadow: var(--shadow-1); }
+.team-member:hover .team-member__note, .team-member:focus-visible .team-member__note { display: block; }
+.team-member__raised { position: absolute; inset: auto 0 0; background: var(--surface); color: var(--ink); font-size: var(--text-caption); }
+.team-gates { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); }
+.team-gates details { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); font-size: var(--text-caption); }
+.team-gates summary { cursor: pointer; }
+.team-gates ul { padding-left: var(--space-4); }
+.team-steps { position: relative; margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.team-steps__head { display: flex; justify-content: space-between; }
+.team-steps button { padding: var(--space-1) var(--space-2); }
+.team-steps ul { padding-left: var(--space-4); }
+.team-step-detail { display: block; color: var(--ink-2); font-size: var(--text-caption); }
+.consult-choices[aria-label="다음 할 일"] { margin: 0; padding: 0; border: 0; }
+@media (max-width: 900px) { .consult-layout { grid-template-columns: 1fr; } .consult-chat { min-height: 360px; } }
+@media (max-width: 640px) { .consult-preview__numbers { grid-template-columns: 1fr; } .consult-time { display: grid; } }
 
 /* 예보서는 문서 폭 880px과 근거 서랍 폭 360px을 유지한다. */
 .forecast-page { padding-block: var(--space-8) var(--space-14); }
