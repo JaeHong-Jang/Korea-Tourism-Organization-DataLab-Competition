@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import YAML from "yaml";
-import { masterSets, refProblems } from "../rules/integrity.mjs";
+import { masterSets, refProblems, sessionScope } from "../rules/integrity.mjs";
 import { cardDiff } from "../rules/card-projection.mjs";
 import { sequenceProblems } from "../rules/sse-sequence.mjs";
 
@@ -63,16 +63,25 @@ const readJson = (...p) => JSON.parse(readFileSync(join(ROOT, ...p), "utf8"));
 const modelRunIds = readdirSync(join(ROOT, "fixtures", "model-card")).filter((f) => f.startsWith("valid-")).map((f) => readJson("fixtures", "model-card", f).id);
 const master = masterSets(readJson("jsonld", "master-ids.json"), modelRunIds);
 const integrityDir = join(ROOT, "fixtures-integrity");
-for (const kind of existsSync(integrityDir) ? readdirSync(integrityDir) : []) {
+// 세션 범위: 종류 X를 검사할 때는 적재 순서에서 X보다 앞의 문서만 세션에 있다고 본다(예보서는 범위 없이)
+const scopeSpec = readJson("fixtures-integrity", "session-scope.json");
+const scopeFor = (kind) => {
+  if (kind === "forecast-report") return null;
+  const upto = scopeSpec.loadOrder.findIndex(([k]) => k === kind);
+  const before = scopeSpec.loadOrder.slice(0, upto < 0 ? undefined : upto).filter(([, file]) => file);
+  return sessionScope(scopeSpec.sessionId, before.map(([schema, file]) => ({ schema, doc: readJson(file) })));
+};
+for (const kind of existsSync(integrityDir) ? readdirSync(integrityDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name) : []) {
   const validate = ajv.getSchema(schemas[kind].$id);
+  const scope = scopeFor(kind);
   for (const f of readdirSync(join(integrityDir, kind)).sort()) {
     const doc = JSON.parse(readFileSync(join(integrityDir, kind, f), "utf8"));
     const schemaOk = validate(doc);
-    const problems = refProblems(doc, kind, master);
+    const problems = refProblems(doc, kind, master, scope);
     const expect = f.startsWith("valid-");
     const ok = schemaOk && (problems.length === 0) === expect;
     if (!ok) errors.push(`무결성 ${kind}/${f}: 스키마 ${schemaOk}, 끊긴 참조 ${problems.length}개(기대 ${expect ? "0" : "1개 이상"}) ${problems.join("; ")}`);
-    rows.push(`${ok ? "✓" : "✗"} 무결성 ${(kind + "/" + f).padEnd(40)} 끊긴 참조 ${problems.length}`);
+    rows.push(`${ok ? "✓" : "✗"} 무결성 ${(kind + "/" + f).padEnd(44)} 끊긴 참조 ${problems.length}${expect ? "" : ` (${problems[0] ?? "—"})`}`);
   }
 }
 

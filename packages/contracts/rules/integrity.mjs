@@ -1,5 +1,16 @@
-// 참조 무결성 규칙: 문서 안에서 가리키는 id가 같은 문서나 기준 그래프에 있는지 본다 — 계약 검사와 근거 그래프 적재(/facts)가 같은 판정을 쓴다
-import { cardDiff } from "./card-projection.mjs";
+// 참조 무결성 규칙: 문서 안의 모든 참조가 같은 문서·세션 그래프·기준 그래프에 있는지 본다 — 계약 검사와 근거 그래프 적재(/facts)가 같은 판정을 쓴다
+import { canonical, cardDiff } from "./card-projection.mjs";
+
+// 참조 칸 이름 → 찾을 곳(문서·세션에 정의된 것 또는 기준 그래프)
+const REF_KEYS = {
+  evidenceId: "evidence", evidenceIds: "evidence", quantityId: "quantities", quantityIds: "quantities",
+  observationIds: "observations", assumptionId: "assumptions", assumptionIds: "assumptions", caseEventId: "caseEvents", claimIds: "claims",
+  ruleId: "rules", ruleIds: "rules", clauseId: "clauses", datasetId: "datasets", modelRunId: "modelRuns",
+};
+const FROM_MASTER = new Set(["rules", "clauses", "datasets", "modelRuns"]);
+
+// 정의로 모을 id 접두사 → 종류(같은 id에 다른 내용이 오면 충돌)
+const DEF_PREFIX = { "q-": "quantities", "ev-": "evidence", "obs-": "observations", "as-": "assumptions", "c-": "claims" };
 
 // 기준 그래프 id 목록(master-ids.json)과 등록된 모델 실행 id로 조회용 집합을 만든다
 export function masterSets(masterIds, modelRunIds = []) {
@@ -7,115 +18,140 @@ export function masterSets(masterIds, modelRunIds = []) {
   return { datasets: set("datasets"), clauses: set("clauses"), rules: set("rules"), assumptions: set("assumptions"), agents: set("agents"), modelRuns: new Set(modelRunIds) };
 }
 
-// 문서 전체에서 수치 노드(id가 q-로 시작하는 객체)를 모은다 — 유사 행사 실측·주최측 예상도 자리표시자 대상이 된다
-function collectQuantities(node, out = new Map()) {
-  if (Array.isArray(node)) for (const x of node) collectQuantities(x, out);
+// 빈 정의 모음(세션 범위 하나)
+function emptyDefs(sessionId = null) {
+  const defs = { sessionId, forecasts: new Set(), events: new Set(), caseEvents: new Set(), conflicts: [] };
+  for (const kind of Object.values(DEF_PREFIX)) defs[kind] = new Map();
+  return defs;
+}
+
+// 정의 모음을 복사한다(세션 범위를 건드리지 않고 문서 하나를 더해 보기 위해)
+function copyDefs(d) {
+  const out = emptyDefs(d.sessionId);
+  for (const k of ["forecasts", "events", "caseEvents"]) out[k] = new Set(d[k]);
+  for (const kind of Object.values(DEF_PREFIX)) out[kind] = new Map(d[kind]);
+  return out;
+}
+
+// 문서를 훑어 정의(수치·근거·관측값·가정·문장 객체, 예보·행사·사례 id)를 모은다
+function addDefinitions(defs, schema, doc) {
+  const visit = (node) => {
+    if (Array.isArray(node)) return node.forEach(visit);
+    if (!node || typeof node !== "object") return;
+    const prefix = typeof node.id === "string" ? Object.keys(DEF_PREFIX).find((p) => node.id.startsWith(p)) : undefined;
+    if (prefix) {
+      const map = defs[DEF_PREFIX[prefix]];
+      const prev = map.get(node.id);
+      if (prev && canonical(prev) !== canonical(node)) defs.conflicts.push(`같은 id ${node.id}에 다른 내용`);
+      map.set(node.id, node);
+    }
+    if (typeof node.id === "string" && node.id.startsWith("f-")) defs.forecasts.add(node.id);
+    if (typeof node.id === "string" && node.id.startsWith("e-")) defs.events.add(node.id);
+    Object.values(node).forEach(visit);
+  };
+  visit(doc);
+  if (schema === "similar-event") defs.caseEvents.add(doc.eventId);
+  if (schema === "forecast-report") for (const s of doc.similar) defs.caseEvents.add(s.eventId);
+}
+
+// 세션 그래프에 이미 적재된 문서들로 세션 범위를 만든다(loaded = [{schema, doc}], 적재 순서대로)
+export function sessionScope(sessionId, loaded) {
+  const defs = emptyDefs(sessionId);
+  for (const { schema, doc } of loaded) addDefinitions(defs, schema, doc);
+  return defs;
+}
+
+// 문서 안의 모든 참조 칸을 {key, id, path}로 모은다
+function refsIn(node, path = "", out = []) {
+  if (Array.isArray(node)) node.forEach((x, i) => refsIn(x, `${path}[${i}]`, out));
   else if (node && typeof node === "object") {
-    if (typeof node.id === "string" && node.id.startsWith("q-")) out.set(node.id, node);
-    for (const v of Object.values(node)) collectQuantities(v, out);
+    for (const [k, v] of Object.entries(node)) {
+      if (REF_KEYS[k]) for (const id of [v].flat()) if (typeof id === "string") out.push({ key: k, id, path: `${path}.${k}` });
+      refsIn(v, `${path}.${k}`, out);
+    }
   }
   return out;
+}
+
+// 문서 안의 모든 자리표시자가 가리키는 수치 칸이 null이 아닌지 본다
+function placeholderProblems(node, quantities, out = []) {
+  if (Array.isArray(node)) node.forEach((x) => placeholderProblems(x, quantities, out));
+  else if (node && typeof node === "object") {
+    for (const ph of Array.isArray(node.placeholders) ? node.placeholders : []) {
+      const q = quantities.get(ph.quantityId);
+      if (q && (q[ph.field] === null || q[ph.field] === undefined)) out.push(`${node.id} 자리표시자 ${ph.name} → ${ph.quantityId}.${ph.field}이 비었다`);
+    }
+    Object.values(node).forEach((v) => placeholderProblems(v, quantities, out));
+  }
+  return out;
+}
+
+// 참조 하나를 푼다: 기준 그래프 종류는 master에서, 나머지는 문서+세션 정의에서(가정은 정의가 없으면 기준 그래프)
+function resolves(where, id, defs, master) {
+  if (FROM_MASTER.has(where)) return master[where].has(id);
+  if (where === "caseEvents") return defs.caseEvents.has(id);
+  if (where === "assumptions" && defs.assumptions.size === 0) return master.assumptions.has(id);
+  return defs[where].has(id);
 }
 
 // 목록의 id 집합
 const ids = (xs) => new Set((xs ?? []).map((x) => x.id));
 
-// 근거 조각의 참조: 수치·규칙·조항·가정·데이터셋·예보·사례
-function evidenceProblems(list, ctx) {
+// 종류별 문맥 규칙: 예보·문장·근거가 어느 세션·예보·행사에 속하는지
+function contextProblems(doc, kind, defs, master, scope) {
   const out = [];
-  for (const e of list ?? []) {
-    for (const q of e.quantityIds ?? []) if (!ctx.qty.has(q)) out.push(`evidence ${e.id} → 수치 ${q} 없음`);
-    if (e.ruleId && !ctx.master.rules.has(e.ruleId)) out.push(`evidence ${e.id} → 규칙 ${e.ruleId} 기준 그래프에 없음`);
-    if (e.clauseId && !ctx.master.clauses.has(e.clauseId)) out.push(`evidence ${e.id} → 조항 ${e.clauseId} 기준 그래프에 없음`);
-    if (e.assumptionId && !(ctx.asm ?? ctx.master.assumptions).has(e.assumptionId)) out.push(`evidence ${e.id} → 가정 ${e.assumptionId} 없음`);
-    if (e.source && !ctx.master.datasets.has(e.source.datasetId)) out.push(`evidence ${e.id} → 데이터셋 ${e.source.datasetId} 기준 그래프에 없음`);
-    if (e.forecastId && ctx.forecastId && e.forecastId !== ctx.forecastId) out.push(`evidence ${e.id} → 다른 예보 ${e.forecastId}`);
-    if (e.caseEventId && ctx.caseEvents && !ctx.caseEvents.has(e.caseEventId)) out.push(`evidence ${e.id} → 유사 행사 ${e.caseEventId} 없음`);
+  const forecastOf = (e) => (e.forecastId && !defs.forecasts.has(e.forecastId) ? [`evidence ${e.id} → 예보 ${e.forecastId} 없음`] : []);
+  if (kind === "forecast") {
+    if (scope && !scope.events.has(doc.eventId)) out.push(`forecast → 행사 ${doc.eventId}가 세션에 없음`);
+    for (const e of doc.evidence) if (e.forecastId && e.forecastId !== doc.id) out.push(`evidence ${e.id} → 다른 예보 ${e.forecastId}`);
   }
+  if (kind === "claim") {
+    if (doc.sessionId !== defs.sessionId) out.push(`claim ${doc.id} → 다른 세션 ${doc.sessionId}`);
+    if (!defs.forecasts.has(doc.forecastId)) out.push(`claim ${doc.id} → 예보 ${doc.forecastId} 없음`);
+    if (!master.agents.has(`agent-${doc.generatedBy.agentId}`)) out.push(`claim ${doc.id} → 에이전트 ${doc.generatedBy.agentId} 기준 그래프에 없음`);
+  }
+  if (kind === "evidence") out.push(...forecastOf(doc));
+  if (kind === "similar-event" || kind === "region-baseline") {
+    if (!ids(doc.evidence).has(doc.evidenceId)) out.push(`→ 근거 ${doc.evidenceId}가 자기 evidence에 없음`);
+    for (const e of doc.evidence) out.push(...forecastOf(e));
+  }
+  if (kind === "forecast-report") out.push(...reportProblems(doc));
   return out;
 }
 
-// 예보 한 건: 계보(관측값·모델 실행), 요인·판정·체크리스트 근거, 규칙·조항, 가정, 근거 조각
-function forecastProblems(f, master, qty, caseEvents) {
+// 발행된 예보서: 머리 일치, 카드 = 투영, 근거 묶음 = 합집합, 유사 행사·평시, 문장의 세션·예보
+function reportProblems(doc) {
   const out = [];
-  const ev = ids(f.evidence);
-  const obs = ids(f.observations);
-  const asm = ids(f.assumptions);
-  for (const o of f.predictionRun?.observationIds ?? []) if (!obs.has(o)) out.push(`predictionRun → 관측값 ${o} 없음`);
-  if (f.predictionRun && !master.modelRuns.has(f.predictionRun.modelRunId)) out.push(`predictionRun → 모델 실행 ${f.predictionRun.modelRunId} 등록 안 됨`);
-  for (const o of f.observations ?? []) if (!master.datasets.has(o.datasetId)) out.push(`observation ${o.id} → 데이터셋 ${o.datasetId} 기준 그래프에 없음`);
-  for (const fa of f.factors ?? []) for (const e of fa.evidenceIds) if (!ev.has(e)) out.push(`factor ${fa.id} → 근거 ${e} 없음`);
-  for (const r of f.judgment?.ruleIds ?? []) if (!master.rules.has(r)) out.push(`judgment → 규칙 ${r} 기준 그래프에 없음`);
-  for (const r of f.judgment?.reasons ?? []) {
-    if (!ev.has(r.evidenceId)) out.push(`reason ${r.ruleId} → 근거 ${r.evidenceId} 없음`);
-    if (!master.rules.has(r.ruleId)) out.push(`reason → 규칙 ${r.ruleId} 기준 그래프에 없음`);
-    if (r.clauseId && !master.clauses.has(r.clauseId)) out.push(`reason ${r.ruleId} → 조항 ${r.clauseId} 기준 그래프에 없음`);
-  }
-  for (const ck of f.judgment?.checklist ?? []) {
-    for (const e of ck.evidenceIds) if (!ev.has(e)) out.push(`checklist ${ck.id} → 근거 ${e} 없음`);
-    if (ck.ruleId && !master.rules.has(ck.ruleId)) out.push(`checklist ${ck.id} → 규칙 ${ck.ruleId} 기준 그래프에 없음`);
-  }
-  for (const a of f.assumptions ?? []) if (!master.assumptions.has(a.id)) out.push(`assumption ${a.id} 기준 그래프에 없음`);
-  for (const q of [f.dailyMean, f.peakConcurrent]) for (const a of q?.assumptionIds ?? []) if (!asm.has(a)) out.push(`${q.id} → 가정 ${a} 없음`);
-  out.push(...evidenceProblems(f.evidence, { qty, asm, master, forecastId: f.id, caseEvents }));
-  return out;
-}
-
-// 발행 문장: 세션·예보 일치, 근거, 자리표시자 대상(수치 노드의 그 칸이 null이 아니어야)
-function claimProblems(c, ctx) {
-  const out = [];
-  if (ctx.sessionId && c.sessionId !== ctx.sessionId) out.push(`claim ${c.id} → 다른 세션 ${c.sessionId}`);
-  if (ctx.forecastId && c.forecastId !== ctx.forecastId) out.push(`claim ${c.id} → 다른 예보 ${c.forecastId}`);
-  for (const e of c.evidenceIds) if (!ctx.ev.has(e)) out.push(`claim ${c.id} → 근거 ${e} 없음`);
-  for (const ph of c.placeholders) {
-    const target = ctx.qty.get(ph.quantityId);
-    if (!target || target[ph.field] === null || target[ph.field] === undefined) out.push(`claim ${c.id} 자리표시자 ${ph.name} → ${ph.quantityId}.${ph.field} 없음`);
-  }
-  return out;
-}
-
-// 발행된 예보서: 머리 일치, 카드 = 투영, 근거 묶음 = 합집합, 유사 행사·평시, 문장, 배치·요약
-function reportProblems(doc, master) {
   const f = doc.forecast;
-  const qty = collectQuantities(doc);
-  const caseEvents = new Set(doc.similar.map((s) => s.eventId));
-  const out = forecastProblems(f, master, qty, caseEvents);
   if (f.id !== doc.forecastId) out.push(`forecast.id ${f.id} ≠ forecastId ${doc.forecastId}`);
   if (f.eventId !== doc.event.id) out.push(`forecast.eventId ${f.eventId} ≠ event.id ${doc.event.id}`);
   const diff = cardDiff(doc.card, f);
   if (diff.length) out.push(`card가 forecast 투영과 다르다: ${diff.join("·")}`);
-  const parts = [...f.evidence, ...doc.similar.flatMap((s) => s.evidence), ...(doc.baseline?.evidence ?? [])];
-  const want = ids(parts);
-  const ev = ids(doc.evidence);
-  for (const e of want) if (!ev.has(e)) out.push(`evidence 묶음에 ${e} 빠짐`);
-  for (const e of ev) if (!want.has(e)) out.push(`evidence 묶음에 출처 없는 ${e}`);
-  out.push(...evidenceProblems(doc.evidence.filter((e) => !ids(f.evidence).has(e.id)), { qty, master, forecastId: f.id, caseEvents }));
+  const want = ids([...f.evidence, ...doc.similar.flatMap((s) => s.evidence), ...(doc.baseline?.evidence ?? [])]);
+  const have = ids(doc.evidence);
+  for (const e of want) if (!have.has(e)) out.push(`evidence 묶음에 ${e} 빠짐`);
+  for (const e of have) if (!want.has(e)) out.push(`evidence 묶음에 출처 없는 ${e}`);
+  for (const e of doc.evidence) if (e.forecastId && e.forecastId !== f.id) out.push(`evidence ${e.id} → 다른 예보 ${e.forecastId}`);
   for (const s of doc.similar) if (!ids(s.evidence).has(s.evidenceId)) out.push(`similar ${s.eventId} → 근거 ${s.evidenceId}가 자기 evidence에 없음`);
   if (doc.baseline) {
     if (!ids(doc.baseline.evidence).has(doc.baseline.evidenceId)) out.push(`baseline → 근거 ${doc.baseline.evidenceId}가 자기 evidence에 없음`);
     if (doc.baseline.sigunguCode !== doc.event.sigunguCode) out.push(`baseline 지역 ${doc.baseline.sigunguCode} ≠ 행사 지역 ${doc.event.sigunguCode}`);
   }
-  const claims = ids(doc.claims);
-  for (const c of doc.claims) out.push(...claimProblems(c, { sessionId: doc.sessionId, forecastId: doc.forecastId, ev, qty }));
-  for (const l of doc.layout) {
-    for (const c of l.claimIds) if (!claims.has(c)) out.push(`layout ${l.slot} → 문장 ${c} 없음`);
-    for (const e of l.evidenceIds) if (!ev.has(e)) out.push(`layout ${l.slot} → 근거 ${e} 없음`);
+  for (const c of doc.claims) {
+    if (c.sessionId !== doc.sessionId) out.push(`claim ${c.id} → 다른 세션 ${c.sessionId}`);
+    if (c.forecastId !== doc.forecastId) out.push(`claim ${c.id} → 다른 예보 ${c.forecastId}`);
   }
-  for (const c of doc.brief.claimIds) if (!claims.has(c)) out.push(`brief → 문장 ${c} 없음`);
   return out;
 }
 
-// 유사 행사·평시: 자기 근거 조각의 참조
-function partProblems(doc, master) {
-  const out = evidenceProblems(doc.evidence, { qty: collectQuantities(doc), master, caseEvents: doc.eventId ? new Set([doc.eventId]) : undefined });
-  if (!ids(doc.evidence).has(doc.evidenceId)) out.push(`→ 근거 ${doc.evidenceId}가 자기 evidence에 없음`);
+// 끊긴 참조 목록을 돌려준다(빈 배열 = 통과). scope = 세션에 이미 있는 정의(sessionScope), 예보서는 스냅샷이라 scope 없이 자기 안에서만 푼다
+export function refProblems(doc, kind, master, scope = null) {
+  const defs = kind === "forecast-report" || !scope ? emptyDefs(scope?.sessionId ?? null) : copyDefs(scope);
+  addDefinitions(defs, kind, doc);
+  const out = [...defs.conflicts];
+  for (const r of refsIn(doc)) if (!resolves(REF_KEYS[r.key], r.id, defs, master)) out.push(`${r.path} → ${r.id} 없음`);
+  for (const a of doc.assumptions ?? []) if (!master.assumptions.has(a.id)) out.push(`assumption ${a.id} 기준 그래프에 없음`);
+  out.push(...placeholderProblems(doc, defs.quantities));
+  out.push(...contextProblems(doc, kind, defs, master, scope));
   return out;
-}
-
-// 스키마 이름에 맞는 규칙으로 끊긴 참조 목록을 돌려준다(빈 배열 = 통과)
-export function refProblems(doc, kind, master) {
-  if (kind === "forecast") return forecastProblems(doc, master, collectQuantities(doc));
-  if (kind === "forecast-report") return reportProblems(doc, master);
-  if (kind === "similar-event" || kind === "region-baseline") return partProblems(doc, master);
-  return [];
 }

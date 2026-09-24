@@ -1,0 +1,36 @@
+{
+  "id": "c-yeongjong-4",
+  "sessionId": "s-demo-0001",
+  "forecastId": "f-yeongjong-2025",
+  "text": "순간 최대는 {{peak_p50}}명 안팎으로 예상돼요",
+  "rendered": "순간 최대는 21000명 안팎으로 예상돼요",
+  "claimType": "수치",
+  "status": "published",
+  "evidenceIds": [
+    "ev-model-f-yeongjong-2025",
+    "ev-as-concurrency-fireworks"
+  ],
+  "placeholders": [
+    {
+      "name": "peak_p50",
+      "quantityId": "q-f-yeongjong-2025-peak",
+      "field": "p50"
+    }
+  ],
+  "generatedBy": {
+    "agentId": "explainer",
+    "stepId": "st-explainer-01"
+  },
+  "checks": [
+    {
+      "checkKind": "evidence",
+      "passed": true,
+      "revision": 7
+    },
+    {
+      "checkKind": "number",
+      "passed": true,
+      "revision": 7
+    }
+  ]
+}

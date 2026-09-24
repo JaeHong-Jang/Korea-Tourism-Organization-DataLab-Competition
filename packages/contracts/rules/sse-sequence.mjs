@@ -6,7 +6,7 @@ const AFTER_FAIL_OK = new Set(["agent_status", "agent_step", "error", "done"]);
 // 이벤트 목록을 앞에서부터 읽으며 규칙 위반을 모은다(빈 배열 = 통과)
 export function sequenceProblems(events) {
   const out = [];
-  const st = { gateA: null, gateB: false, published: false, done: false, card: null, claimEvidence: new Set(), sentEvidence: new Set() };
+  const st = { gateA: null, gateB: false, gateBRuns: 0, publishChecked: false, published: false, done: false, card: null, claimEvidence: new Set(), sentEvidence: new Set() };
   events.forEach((e, i) => {
     const at = `#${i} ${e.event}`;
     // R1 seq는 0부터 1씩, R2 done 뒤에는 아무것도 없다
@@ -15,12 +15,26 @@ export function sequenceProblems(events) {
     // R3 게이트 A 실패 뒤에는 숫자·문장·근거·되묻기를 보내지 않는다
     if (st.gateA === false && !AFTER_FAIL_OK.has(e.event)) out.push(`${at}: 게이트 A 실패 뒤에 보냄`);
     if (e.event === "gate") {
-      // R4 게이트 순서: A → B → publish, 스트림에는 integrity를 보내지 않는다
+      // R4 게이트 전이: A(한 번) → B(실패하면 다시 B, 최대 3번) → publish(한 번). 발행 검사 뒤에는 어떤 게이트도 없고, 스트림에는 integrity를 보내지 않는다
       const g = e.data.gate;
-      if (g === "A") st.gateA = e.data.passed;
-      else if (g === "B") { if (st.gateA !== true) out.push(`${at}: 게이트 A 통과 전에 게이트 B`); st.gateB = e.data.passed; }
-      else if (g === "publish") { if (!st.gateB) out.push(`${at}: 게이트 B 통과 전에 발행 검사`); st.published = e.data.passed; }
-      else out.push(`${at}: 스트림에 보낼 수 없는 게이트 ${g}`);
+      if (st.publishChecked) out.push(`${at}: 발행 검사 뒤에 게이트 ${g}`);
+      if (g === "A") {
+        if (st.gateA !== null) out.push(`${at}: 게이트 A를 두 번`);
+        st.gateA = e.data.passed;
+      } else if (g === "B") {
+        if (st.gateA !== true) out.push(`${at}: 게이트 A 통과 전에 게이트 B`);
+        if (st.gateB) out.push(`${at}: 게이트 B 통과 뒤에 다시 게이트 B`);
+        if (++st.gateBRuns > 3) out.push(`${at}: 게이트 B를 3번 넘게`);
+        st.gateB = e.data.passed;
+      } else if (g === "publish") {
+        if (!st.gateB) out.push(`${at}: 게이트 B 통과 전에 발행 검사`);
+        if (!st.card) out.push(`${at}: 숫자 카드 없이 발행 검사`);
+        st.publishChecked = true;
+        st.published = e.data.passed;
+      } else out.push(`${at}: 스트림에 보낼 수 없는 게이트 ${g}`);
+    } else if (e.event === "event_card" || e.event === "ask") {
+      // R9 행사 카드·되묻기는 분석(게이트 A) 전에만
+      if (st.gateA !== null) out.push(`${at}: 게이트 A 뒤에 보냄`);
     } else if (e.event === "forecast") {
       // R5 숫자 카드는 게이트 A 통과 뒤 한 번만
       if (st.gateA !== true) out.push(`${at}: 게이트 A 통과 전에 숫자 카드`);

@@ -65,12 +65,12 @@
   },
   "T-001": {
    "status": "done",
-   "updated": "2026-09-24T12:12:16.877Z",
-   "evidence": "contracts v1.2: check 스키마29·픽스처79·오류0(세 언어 판정 일치, 무결성 22, 카드 투영 3, SSE 순서 6, JSON-LD 5종 기대·금지·형식 오류 0), R-01 r2 지적 반영"
+   "updated": "2026-09-24T12:24:03.471Z",
+   "evidence": "contracts v1.3: check 스키마29·픽스처101·오류0(무결성 45 — 세션 범위·충돌, SSE 순서 11 — 게이트 전이 R1~R9)"
   },
   "R-01": {
    "status": "stale",
-   "updated": "2026-09-24T11:59:40.254Z",
+   "updated": "2026-09-24T12:20:22.732Z",
    "note": "상위 T-001 되돌림"
   },
   "T-100": {
@@ -405,6 +405,35 @@
    "id": "T-001",
    "status": "done",
    "evidence": "contracts v1.2: check 스키마29·픽스처79·오류0(세 언어 판정 일치, 무결성 22, 카드 투영 3, SSE 순서 6, JSON-LD 5종 기대·금지·형식 오류 0), R-01 r2 지적 반영"
+  },
+  {
+   "at": "2026-09-24T12:12:41.161Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T12:20:22.732Z",
+   "id": "R-01",
+   "status": "failed",
+   "note": "→ T-001: r3 FAIL(astra): 개별 claim·evidence 적재의 참조 검사 없음(High), 예보서 중복 근거·수치 id 내용 충돌, SSE 게이트 역행, composition 근거 참조(Med 4)"
+  },
+  {
+   "at": "2026-09-24T12:20:22.732Z",
+   "id": "T-001",
+   "status": "todo",
+   "note": "되돌림: R-01 실패 — r3 FAIL(astra): 개별 claim·evidence 적재의 참조 검사 없음(High), 예보서 중복 근거·수치 id 내용 충돌, SSE 게이트 역행, composition 근거 참조(Med 4)"
+  },
+  {
+   "at": "2026-09-24T12:20:22.732Z",
+   "id": "R-01",
+   "status": "stale",
+   "note": "상위 T-001 되돌림"
+  },
+  {
+   "at": "2026-09-24T12:24:03.471Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "contracts v1.3: check 스키마29·픽스처101·오류0(무결성 45 — 세션 범위·충돌, SSE 순서 11 — 게이트 전이 R1~R9)"
   }
  ]
 }

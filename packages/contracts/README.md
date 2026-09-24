@@ -1,4 +1,4 @@
-# packages/contracts — 서비스 간 계약 v1.2 (오케스트레이터 소유, 워커는 읽기 전용)
+# packages/contracts — 서비스 간 계약 v1.3 (오케스트레이터 소유, 워커는 읽기 전용)
 
 | 경로 | 내용 |
 |---|---|
@@ -9,12 +9,12 @@
 | `jsonld/types.json` | 경로별 `@type` 규칙과 IRI 규칙(`idRules`). 근거 그래프 서비스가 그대로 읽는다 |
 | `jsonld/expected/*.json` | 픽스처를 변환했을 때 반드시 나와야 하는 트리플(`triples`)과 나오면 안 되는 트리플(`absent`) |
 | `jsonld/master-ids.json` | 기준 그래프가 반드시 정의하는 id(데이터셋·조항·규칙·가정·에이전트) |
-| `rules/integrity.mjs` | 참조 무결성 판정(`refProblems`) — 근거 그래프 적재(T-601)가 Python으로 같은 판정을 구현 |
+| `rules/integrity.mjs` | 참조 무결성 판정(`refProblems(doc, kind, master, scope)`, `sessionScope`) — 근거 그래프 적재(T-601)가 Python으로 같은 판정을 구현 |
 | `rules/card-projection.mjs` | 숫자 카드 = 예보의 투영(`projectCard`) |
 | `rules/sse-sequence.mjs` | SSE 순서 규칙(`sequenceProblems`) — 게이트웨이 스트림 테스트가 그대로 쓴다 |
 | `fixtures-sse/` | SSE 이벤트 순서 정상·위반 예시 |
 | `fixtures/<스키마>/{valid,invalid}-*.json` | 스키마 픽스처(이름이 기대 판정) |
-| `fixtures-integrity/<스키마>/` | 스키마는 통과하지만 참조가 끊긴 문서(적재 거부 대상) |
+| `fixtures-integrity/<스키마>/` | 스키마는 통과하지만 참조가 끊기거나 같은 id에 다른 내용이 온 문서(적재 거부 대상). `session-scope.json` = 검사할 때 세션에 이미 있다고 보는 문서와 적재 순서 |
 | `check/` | Python(jsonschema)·PHP(opis)·JSON-LD(pyld→rdflib) 검사 도구 |
 | `generated/` | TS 타입·pydantic 모델(생성물, 손으로 고치지 않는다) |
 | `design-tokens.css` | 낮·밤 디자인 토큰 |
