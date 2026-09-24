@@ -2,6 +2,7 @@
 import { Hono } from "hono";
 import { type GatewayConfig, readConfig } from "./config.js";
 import { createHealthRoute } from "./routes/health.js";
+import { createTeamSessionsRoute } from "./routes/team-sessions.js";
 
 // 실행 환경과 fetch를 주입해 가짜 서비스로 상태 확인을 테스트한다
 export function createApp(
@@ -10,5 +11,6 @@ export function createApp(
 ) {
   const app = new Hono();
   app.route("/api/health", createHealthRoute(config, fetcher));
+  app.route("/api/team/sessions", createTeamSessionsRoute(config, fetcher));
   return app;
 }
