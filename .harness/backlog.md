@@ -18,3 +18,6 @@
 
 ## 계약 결정 대기 (T-603 CONTRACT-CHANGE 제안) — T-406 전에 정한다
 - 세션 없이 조회하는 `GET /v1/claims/{id}/evidence`·`/v1/evidence/{id}`: 여러 세션에 같은 id가 있으면 모호하다(지금은 404). 후보: (a) 선택 쿼리 `?sessionId=` 추가 + 없으면 "유일하거나 내용이 같을 때만" 응답, (b) 문장 id 전역 유일 규칙(`c-<forecastId>-<n>`). 웹은 늘 세션 문맥이 있으므로 (a)를 기본으로 검토.
+
+## T-604 (근거 통계·계보·모델 카드 등록)
+- [T-603 리뷰 Med] `ontology/queries/datalab_usage.rq:6` — `COUNT(DISTINCT ?evidence)`는 같은 근거를 두 문장이 인용해도 1로 센다 → 메뉴별 '근거 사용 횟수'는 (문장, 근거) 쌍으로 센다. 통계 응답(`datalab-usage`)의 정의를 쿼리 주석과 스키마 설명에 맞춘다.

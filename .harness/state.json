@@ -158,8 +158,9 @@
    "evidence": "test 222·ruff, 교차 리뷰 sol 재리뷰 PASS(S09 발행 거부·응답 계약·위반 집합 확인), 300트리플 76ms"
   },
   "T-603": {
-   "status": "running",
-   "updated": "2026-09-24T15:06:19.368Z"
+   "status": "done",
+   "updated": "2026-09-24T15:37:38.607Z",
+   "evidence": "test 246·ruff·✓ knowledge, 교차 리뷰 sol PASS(Med → T-604)"
   },
   "T-604": {
    "status": "todo"
@@ -733,6 +734,12 @@
    "id": "T-302",
    "status": "done",
    "evidence": "게이트 1~4 통과, 교차 리뷰 PASS"
+  },
+  {
+   "at": "2026-09-24T15:37:38.607Z",
+   "id": "T-603",
+   "status": "done",
+   "evidence": "test 246·ruff·✓ knowledge, 교차 리뷰 sol PASS(Med → T-604)"
   }
  ]
 }
