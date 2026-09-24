@@ -25,3 +25,6 @@
 | T-302 | gpt-6-astra + 오케스트레이터(모델 결정) | done | 0·0 | G1 ✓(루트 lock) · G2 test 181·날짜·금액 경계 직접 재현 · G3 sol FAIL→PASS | gpt-6-sol PASS | a124d57 | 평가 MD 6efb0aa6 |
 | T-603 | gpt-6-astra | done | 0 | G1 ✓ · G2 test 246 · G3 sol PASS · G4 ✓ | gpt-6-sol PASS | aa349dc | — |
 | T-101 | gpt-6-astra + 오케스트레이터(벌크) | done | 0·0·0 | G1 ✓(픽스처 gitignore 예외) · G2 test 250·실호출·키 스캔 · G3 sol FAIL→PASS · G4 2026 코드 전환·반영 지연 발견·반영 | gpt-6-sol PASS | 895af8a | region_daily 861505행 3af83ecabebb |
+| T-402 | gpt-6-sol | done | 0·0·0 | G1 ✓(이월 파일 승인 범위) · G2 test 69 · G3 astra FAIL→PASS · G4 차트 좌표·정직한 표시 확인 | gpt-6-astra PASS | b397251 | 스크린샷 해시 reports/T-402.md |
+| T-431 | gpt-6-sol + 오케스트레이터(DPR) | done | 0·0·0 | G1 ✓ · G2 test 22·build·lint·e2e 7(새 DPR 테스트는 수정 전 실패 확인) · G3 astra PASS(Med 6)→FAIL(DPR 재적용)→직접 수정 PASS · G4 낮·노을·밤 스크린샷, 병합 때 S1 주요 버튼 복원 | gpt-6-astra PASS | e1889b6 | 성능 SwiftShader p95 53.7ms |
+| R-03 | 검토(gpt-6-astra) | failed → T-402 | — | 1차 FAIL: High 근거 오연결(순간 최대 → 평시 관측)·Med 3·Low 1 — 오케스트레이터가 픽스처로 확인 → T-402 되돌림(T-401 대비 1줄·T-430 간격은 같은 회차에 허용 경로 확대) | — | — | — |

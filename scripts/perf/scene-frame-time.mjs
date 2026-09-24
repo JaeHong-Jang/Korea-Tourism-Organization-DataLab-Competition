@@ -1,0 +1,177 @@
+// 3D 장면을 30초씩 재생해 단독 실행과 Ollama 동시 추론의 프레임 시간을 기록한다.
+import { spawn, execFileSync } from "node:child_process";
+import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parseEnv } from "node:util";
+import { chromium } from "@playwright/test";
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const output = join(root, "reports/figures/perf");
+const configured = existsSync(join(root, ".env")) ? parseEnv(readFileSync(join(root, ".env"), "utf8")) : {};
+const model = process.env.OLLAMA_MODEL_FAST ?? configured.OLLAMA_MODEL_FAST ?? "qwen3:4b-instruct-2507-q4_K_M";
+
+// 개발 서버와 같은 순서로 .env, WSL 게이트웨이, 로컬 주소를 시도한다.
+function ollamaCandidates() {
+  const hosts = [];
+  const configuredHost = process.env.OLLAMA_HOST ?? configured.OLLAMA_HOST;
+  if (configuredHost) hosts.push(configuredHost.startsWith("http") ? configuredHost : `http://${configuredHost}`);
+  try {
+    const gateway = execFileSync("ip", ["route", "show", "default"], { encoding: "utf8" }).split(" ")[2];
+    if (gateway) hosts.push(`http://${gateway}:11434`);
+  } catch { /* WSL 밖에서는 게이트웨이 후보를 생략한다. */ }
+  hosts.push("http://127.0.0.1:11434");
+  return [...new Set(hosts.map((host) => host.replace(/\/$/, "")))];
+}
+
+// 장면 전용 Vite 서버가 준비될 때까지 연결을 확인한다.
+async function startServer() {
+  const server = spawn(process.execPath, [join(root, "node_modules/vite/bin/vite.js"),
+    "--host", "127.0.0.1", "--port", "5185", "--strictPort"],
+  { cwd: join(root, "apps/web"), stdio: "ignore" });
+  for (let attempt = 0; attempt < 50; attempt++) {
+    try {
+      if ((await fetch("http://127.0.0.1:5185/")).ok) return server;
+    } catch { /* 서버 시작을 기다린다. */ }
+    await new Promise((done) => setTimeout(done, 100));
+  }
+  server.kill();
+  throw new Error("성능 측정 서버를 시작하지 못했습니다.");
+}
+
+// 프레임 배열의 중앙·상위 5%·최대 간격을 밀리초로 남긴다.
+function frameSummary(times) {
+  const sorted = [...times].sort((a, b) => a - b);
+  return {
+    frames: sorted.length,
+    p50_ms: sorted[Math.floor(sorted.length * 0.5)] ?? null,
+    p95_ms: sorted[Math.floor(sorted.length * 0.95)] ?? null,
+    max_ms: sorted.at(-1) ?? null,
+  };
+}
+
+// 로컬 Ollama에 설치된 받아쓰기 모델이 있는 경우에만 열 번 연속 호출한다.
+async function findOllama() {
+  for (const host of ollamaCandidates()) {
+    try {
+      const response = await fetch(`${host}/api/tags`, { signal: AbortSignal.timeout(2000) });
+      if (!response.ok) continue;
+      const tags = await response.json();
+      return { host, modelAvailable: tags.models?.some((item) => item.name === model) ?? false };
+    } catch { /* 다음 주소를 확인한다. */ }
+  }
+  return null;
+}
+
+// 추론 요청은 30초 계측과 함께 시작하고 응답 내용은 저장하지 않는다.
+async function runDictation(host) {
+  let completed = 0;
+  for (let index = 0; index < 10; index++) {
+    const response = await fetch(`${host}/api/generate`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model, stream: false, prompt: "2025 부산불꽃축제 행사명과 장소를 JSON으로 받아써 주세요.", options: { num_predict: 40 } }),
+      signal: AbortSignal.timeout(120000),
+    });
+    if (!response.ok) throw new Error(`Ollama ${response.status}`);
+    await response.arrayBuffer();
+    completed++;
+  }
+  return completed;
+}
+
+// 품질과 DPR을 높음·1로 고정한 R3F 프레임과 Chromium 메모리를 읽는다.
+async function measure(browser, ollamaHost) {
+  const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
+  const page = await context.newPage();
+  await page.goto("http://127.0.0.1:5185/?theme=day&at=2025-10-18T13:00+09:00&sceneMeasure=1");
+  await page.waitForFunction(() => document.documentElement.dataset.sceneReady === "true", { timeout: 30000 });
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const renderer = await page.evaluate(() => {
+    const canvas = document.querySelector("canvas");
+    const gl = canvas?.getContext("webgl2");
+    if (!gl) return "WebGL2 렌더러 확인 불가";
+    const extension = gl.getExtension("WEBGL_debug_renderer_info");
+    return gl.getParameter(extension?.UNMASKED_RENDERER_WEBGL ?? gl.RENDERER);
+  });
+  await page.evaluate(() => { window.__crowdcastSceneFrames = []; });
+  const started = Date.now();
+  const inference = ollamaHost ? runDictation(ollamaHost)
+    .then((requests) => ({ requests, elapsed_ms: Date.now() - started }))
+    .catch((error) => ({ error: String(error), elapsed_ms: Date.now() - started })) : null;
+  await new Promise((done) => setTimeout(done, 30000));
+  const metrics = await page.evaluate(() => ({
+    frames: window.__crowdcastSceneFrames ?? [],
+    heapUsed: performance.memory?.usedJSHeapSize ?? null,
+    heapTotal: performance.memory?.totalJSHeapSize ?? null,
+    quality: document.documentElement.dataset.sceneQuality ?? null,
+    actualDpr: (() => {
+      const canvas = document.querySelector("canvas");
+      return canvas && canvas.clientWidth ? canvas.width / canvas.clientWidth : null;
+    })(),
+  }));
+  const inferenceResult = inference ? await inference : null;
+  const result = {
+    duration_ms: 30000,
+    ...frameSummary(metrics.frames),
+    quality: metrics.quality,
+    actual_dpr: metrics.actualDpr,
+    renderer,
+    software_renderer: /swiftshader|llvmpipe|software/i.test(renderer),
+    js_heap_used_bytes: metrics.heapUsed,
+    js_heap_total_bytes: metrics.heapTotal,
+    gpu_memory_bytes: null,
+    gpu_memory_note: "측정 불가(WebGL 메모리 API 없음, WSL NVML 접근 차단)",
+    ollama_requests: inferenceResult?.requests ?? 0,
+    ollama_elapsed_ms: inferenceResult?.elapsed_ms ?? null,
+    ollama_error: inferenceResult?.error ?? null,
+  };
+  await context.close();
+  return result;
+}
+
+// 두 조건을 같은 크기의 Chromium 창에서 차례로 재고 요약 파일을 남긴다.
+const server = await startServer();
+let browser;
+try {
+  browser = await chromium.launch({ args: ["--enable-gpu", "--use-gl=egl", "--enable-precise-memory-info", "--enable-unsafe-swiftshader"] });
+  const standalone = await measure(browser, null);
+  const ollama = await findOllama();
+  const concurrent = !ollama ? "측정 불가(Ollama 없음)" : !ollama.modelAvailable
+    ? "측정 불가(받아쓰기 모델 없음)" : await measure(browser, ollama.host);
+  const report = {
+    task: "T-431",
+    viewport: "1366x768",
+    requested_dpr: 1,
+    quality: "high (고정)",
+    seconds_per_case: 30,
+    browser: browser.version(),
+    gpu_attempt: "Chromium --enable-gpu --use-gl=egl; WSL NVML 접근 차단",
+    boundary_source: "공용 시군구 TopoJSON 252개",
+    standalone,
+    with_ollama: concurrent,
+  };
+  mkdirSync(output, { recursive: true });
+  writeFileSync(join(output, "T-431-frame-time.json"), `${JSON.stringify(report, null, 2)}\n`);
+  writeFileSync(join(output, "T-431-frame-time.md"), [
+    "# T-431 3D 장면 프레임 시간",
+    "",
+    `- 조건: Chromium ${report.browser}, ${report.viewport}, 품질 ${report.quality}, 각 30초`,
+    `- 실제 캔버스 DPR: 단독 ${standalone.actual_dpr}, 동시 ${typeof concurrent === "string" ? concurrent : concurrent.actual_dpr}`,
+    `- GPU 가속 시도: ${report.gpu_attempt}`,
+    `- WebGL 렌더러: ${standalone.renderer}${standalone.software_renderer ? " (소프트웨어 렌더러; 실제 GPU 성능으로 해석할 수 없음)" : ""}`,
+    `- 단독: ${standalone.frames}프레임, p50 ${standalone.p50_ms?.toFixed(2)}ms, p95 ${standalone.p95_ms?.toFixed(2)}ms, 최대 ${standalone.max_ms?.toFixed(2)}ms`,
+    `- JS 힙: ${standalone.js_heap_used_bytes ?? "측정 불가"} bytes`,
+    `- GPU 메모리: ${standalone.gpu_memory_note}`,
+    typeof concurrent === "string" ? `- Ollama 동시: ${concurrent}` : `- Ollama 동시(연속 요청 ${concurrent.ollama_requests}회): p50 ${concurrent.p50_ms?.toFixed(2)}ms, p95 ${concurrent.p95_ms?.toFixed(2)}ms, 최대 ${concurrent.max_ms?.toFixed(2)}ms`,
+    typeof concurrent === "string" ? "" : `- Ollama 요청 소요: ${concurrent.ollama_elapsed_ms}ms${concurrent.ollama_error ? `, 오류: ${concurrent.ollama_error}` : ""}`,
+    typeof concurrent === "string" ? "" : `- 동시 JS 힙: ${concurrent.js_heap_used_bytes ?? "측정 불가"} bytes`,
+    typeof concurrent === "string" ? "" : `- 동시 측정 WebGL 렌더러: ${concurrent.renderer}`,
+    "- 공개 경계 링크를 일반 브라우저 요청으로 읽었다.",
+    "",
+  ].join("\n"));
+  console.log(`단독 p50 ${standalone.p50_ms?.toFixed(2)}ms / p95 ${standalone.p95_ms?.toFixed(2)}ms; Ollama: ${typeof concurrent === "string" ? concurrent : "측정 완료"}`);
+} finally {
+  await browser?.close();
+  server.kill();
+}

@@ -84,7 +84,9 @@
    "evidence": "test 250·키 누출 0, 2026 코드 대응·35일 공개일 산출물 확인, 교차 리뷰 sol PASS, region_daily 861505행"
   },
   "T-102": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T15:58:20.593Z",
+   "note": "1회차: 3건 해결·회차 분리 미해결 → 2회차(마지막): Med 5 + 수면 오탐·유형 매핑·timeOfDay 미상(계약 v1.6)"
   },
   "T-103": {
    "status": "todo"
@@ -180,7 +182,8 @@
   },
   "T-303": {
    "status": "running",
-   "updated": "2026-09-24T15:38:45.126Z"
+   "updated": "2026-09-24T15:38:45.126Z",
+   "note": "1회차 7건 해결(sol 확인) → 새 지적 3 + 게이트 4 hazard 확인 질문 → 피드백 2회차(마지막)"
   },
   "T-304": {
    "status": "todo"
@@ -214,7 +217,8 @@
    "evidence": "test 18·151·stan 0, 실서버 무결성 픽스처 13/13 계약과 같은 판정, 교차 리뷰 astra PASS(Med 2 직접 반영)"
   },
   "T-504": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T16:48:16.212Z"
   },
   "T-503": {
    "status": "done",
@@ -241,11 +245,14 @@
   },
   "T-402": {
    "status": "running",
-   "updated": "2026-09-24T15:02:48.576Z",
-   "note": "재리뷰 PASS(Med 3·Low 1 — 기준선 10px 어긋남·▲ 대표값·칩 번호) → 차트 정확성 피드백 2회차(마지막)"
+   "updated": "2026-09-24T16:20:54.393Z",
+   "evidence": "test 69·build·lint·색 0, 스크린샷 낮·밤·모바일 확인(기준선 정렬·단위 분리), 교차 리뷰 astra PASS",
+   "note": "R-03 되돌림 1회차: 5건 해결(astra PASS) → Med 2(번호 기본값·칩 세로 쌓임)·Low 1·증빙 → 2회차"
   },
   "R-03": {
-   "status": "todo"
+   "status": "stale",
+   "updated": "2026-09-24T16:20:54.315Z",
+   "note": "상위 T-402 되돌림"
   },
   "T-405": {
    "status": "todo"
@@ -263,9 +270,9 @@
    "status": "todo"
   },
   "T-431": {
-   "status": "running",
-   "updated": "2026-09-24T15:06:19.294Z",
-   "note": "피드백 1회차로 줄무늬·대비·노을 해결(스크린샷 확인), 교차 리뷰 PASS(Med 6·Low 1 — 그림자 범위·AdaptiveDpr·dispose 등) → 피드백 2회차(마지막)"
+   "status": "done",
+   "updated": "2026-09-24T16:34:41.612Z",
+   "evidence": "워커 sol 피드백 2회 + 오케스트레이터 DPR 직접 수정(astra 교차 리뷰 PASS). develop 병합 후 web 71·e2e 17·build·lint 통과, 낮 스크린샷 확인. 수정 전 코드에서 새 DPR 테스트 실패 확인"
   },
   "T-432": {
    "status": "todo"
@@ -752,6 +759,56 @@
    "id": "T-101",
    "status": "done",
    "evidence": "test 250·키 누출 0, 2026 코드 대응·35일 공개일 산출물 확인, 교차 리뷰 sol PASS, region_daily 861505행"
+  },
+  {
+   "at": "2026-09-24T15:58:20.593Z",
+   "id": "T-102",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:02:19.518Z",
+   "id": "T-402",
+   "status": "done",
+   "evidence": "test 69·build·lint·색 0, 스크린샷 낮·밤·모바일 확인(기준선 정렬·단위 분리), 교차 리뷰 astra PASS"
+  },
+  {
+   "at": "2026-09-24T16:04:03.737Z",
+   "id": "R-03",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:20:54.315Z",
+   "id": "R-03",
+   "status": "failed",
+   "note": "→ T-402: 사용성 검토 FAIL — High 근거 오연결(순간 최대 → 평시 관측), Med 로그축·범례, KPI 출처, 밤 선택 대비 2.11:1(T-401 파일 — T-402 회차에서 함께), Low 블록 간격 3곳. 지적 전부 오케스트레이터가 코드·픽스처로 확인"
+  },
+  {
+   "at": "2026-09-24T16:20:54.315Z",
+   "id": "T-402",
+   "status": "todo",
+   "note": "되돌림: R-03 실패 — 사용성 검토 FAIL — High 근거 오연결(순간 최대 → 평시 관측), Med 로그축·범례, KPI 출처, 밤 선택 대비 2.11:1(T-401 파일 — T-402 회차에서 함께), Low 블록 간격 3곳. 지적 전부 오케스트레이터가 코드·픽스처로 확인"
+  },
+  {
+   "at": "2026-09-24T16:20:54.315Z",
+   "id": "R-03",
+   "status": "stale",
+   "note": "상위 T-402 되돌림"
+  },
+  {
+   "at": "2026-09-24T16:20:54.393Z",
+   "id": "T-402",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:34:41.612Z",
+   "id": "T-431",
+   "status": "done",
+   "evidence": "워커 sol 피드백 2회 + 오케스트레이터 DPR 직접 수정(astra 교차 리뷰 PASS). develop 병합 후 web 71·e2e 17·build·lint 통과, 낮 스크린샷 확인. 수정 전 코드에서 새 DPR 테스트 실패 확인"
+  },
+  {
+   "at": "2026-09-24T16:48:16.212Z",
+   "id": "T-504",
+   "status": "running"
   }
  ]
 }
