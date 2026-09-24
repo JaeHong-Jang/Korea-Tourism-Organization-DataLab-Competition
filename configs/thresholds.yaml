@@ -1,0 +1,39 @@
+# 판정의 법정 기준과 자체 확률 기준을 docs/plan/06 §6 및 기준 그래프대로 구분한다.
+thresholds:
+  legal_crowd: 1000 # 법정: 시행령 제73조의9, 계획에 지정된 기준
+  recommend_probability: 0.1 # 자체: 수립 권고 경계
+  target_probability: 0.5 # 자체: 수립 대상 가능성 경계
+  large_crowd: 5000 # 자체: 교통·경찰·소방 사전 협의 권고 규모
+  large_probability: 0.5 # 자체: 대규모 판정 확률 경계
+legal_hazards: [불, 폭죽, 가연성가스, 석유류, 산, 수면] # 법정: 계약 hazard enum으로 표현
+labels: {1: 소규모, 2: 수립 권고, 3: 수립 대상, 4: 대규모} # judgment 계약 label
+rules:
+  rule-legal-1000:
+    kind: 법정 # 법정: 인원 기준 자체의 성격
+    clause_id: law-disaster-act-enf-73-9 # 기준 그래프 조항 식별자
+    title: 순간 최대 예상 인원 기준 # 기준 그래프 rules.ttl
+    text: 순간 최대 예상 인원 기준에 따라 안전관리계획 수립 대상입니다. 참고용 — 담당자 검토 필수
+  rule-legal-hazard:
+    kind: 법정 # 법정: 인원 무관 위험 요소
+    clause_id: law-disaster-act-enf-73-9 # 기준 그래프 조항 식별자
+    title: 인원 무관 위험 요소 기준 # 기준 그래프 rules.ttl
+    text: 불·폭죽·가연성 물질 사용 또는 산·수면 개최로 인원과 관계없이 안전관리계획 수립 대상입니다. 참고용 — 담당자 검토 필수
+  rule-internal-10pct:
+    kind: 자체 # 자체: 법정 인원 기준에 대한 초과 확률 해석
+    clause_id: null # 자체 규칙에 법정 조항을 연결하지 않는다
+    title: 경계선 수립 권고 기준 # 기준 그래프 rules.ttl
+    text: 경계선 — 자체 확률 기준에 따라 안전관리계획 수립을 권고합니다. 참고용 — 담당자 검토 필수
+    below_text: 계획 대상 아님(예상) · 규모 외 위험 점검 권장. 참고용 — 담당자 검토 필수
+  rule-internal-50pct:
+    kind: 자체 # 자체: 확률에서 수립 대상 가능성을 판단
+    clause_id: null # 자체 규칙에 법정 조항을 연결하지 않는다
+    title: 수립 대상 가능성 기준 # 기준 그래프 rules.ttl
+    text: 자체 확률 기준에 따라 순간 최대 예상 인원이 법정 인원 기준에 도달할 가능성이 높습니다. 참고용 — 담당자 검토 필수
+  rule-internal-5000:
+    kind: 자체 # 자체: 대규모 및 사전 협의 권고
+    clause_id: null # 자체 규칙에 법정 조항을 연결하지 않는다
+    title: 대규모 기준 # 기준 그래프 rules.ttl
+    text: 대상 + 교통·경찰·소방 사전 협의 권고. 자체 대규모 기준이며 참고용 — 담당자 검토 필수
+    checklist:
+      id: ck-traffic # 계약 fixtures/judgment/valid-yeongjong.json
+      text: 교통·주차 통제 계획과 경찰·소방 사전 협의 # 계약 픽스처의 대규모 자체 점검 문구
