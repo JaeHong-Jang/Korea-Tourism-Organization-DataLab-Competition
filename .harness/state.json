@@ -151,7 +151,8 @@
   },
   "T-602": {
    "status": "running",
-   "updated": "2026-09-24T13:59:40.710Z"
+   "updated": "2026-09-24T13:59:40.710Z",
+   "note": "게이트 2 test 198·ruff ✓, 게이트 3 FAIL(sol: 발행이 S12만 검사 High, 응답 계약 검증·위반 픽스처 격리 Med) → 피드백 1회차"
   },
   "T-603": {
    "status": "todo"
@@ -163,10 +164,9 @@
    "status": "todo"
   },
   "T-301": {
-   "status": "todo",
-   "updated": "2026-09-24T14:04:19.104Z",
-   "evidence": "게이트 1~4: test 42·tsc·biome·/api/health 200(분리)·404, 교차 리뷰 sol PASS(Med 1 → T-302), bbdab1f",
-   "note": "되돌림: R-02 실패 — R-02 FAIL(sol): 게이트웨이 요청 함수가 본문 유무로 메서드를 정해 /validate에 {} 전송(High), 오류 본문 폐기로 422 gate-report 전달 불가, knowledge 422 런타임 검증 없음, dev.mjs 포트 고정(Med 3)"
+   "status": "done",
+   "updated": "2026-09-24T14:22:49.426Z",
+   "evidence": "되돌림 1회차: 메서드 명시·계약 오류 응답·.env, test 79·build·lint, 교차 리뷰 sol PASS"
   },
   "T-302": {
    "status": "todo"
@@ -202,7 +202,8 @@
   },
   "T-502": {
    "status": "running",
-   "updated": "2026-09-24T13:59:40.795Z"
+   "updated": "2026-09-24T13:59:40.795Z",
+   "note": "PARTIAL(App.php 연결 — 오케스트레이터 처리, 실서버 확인), 게이트 3 FAIL(astra: 스냅샷 id 일치 High, tombstone 조회·INF Med) → 피드백 1회차"
   },
   "T-504": {
    "status": "todo"
@@ -619,6 +620,17 @@
    "id": "R-02",
    "status": "stale",
    "note": "상위 T-301 되돌림"
+  },
+  {
+   "at": "2026-09-24T14:06:10.480Z",
+   "id": "T-301",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T14:22:49.426Z",
+   "id": "T-301",
+   "status": "done",
+   "evidence": "되돌림 1회차: 메서드 명시·계약 오류 응답·.env, test 79·build·lint, 교차 리뷰 sol PASS"
   }
  ]
 }
