@@ -1,7 +1,7 @@
 // 테마 엔진의 시각과 서울 해 위치로 무광 장면 조명을 정한다.
 
 import { useThree } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo } from "react";
 import SunCalc from "suncalc";
 import { Object3D } from "three";
 import { useTheme } from "../../lib/theme/theme-provider";
@@ -11,11 +11,13 @@ import { sceneColor } from "./quality";
 // 고도와 방위를 광원 위치로 옮기고 밤에는 약한 달빛으로 유지한다.
 export function SunLight({
   quality,
+  revision,
   center,
   width,
   depth,
 }: {
   quality: SceneQuality;
+  revision: unknown;
   center: [number, number];
   width: number;
   depth: number;
@@ -43,6 +45,20 @@ export function SunLight({
       delete document.documentElement.dataset.sceneSky;
     };
   }, [gl, sky]);
+
+  // 정적 장면 그림자는 해·품질·행사 목록이 바뀔 때만 다시 만든다.
+  useLayoutEffect(() => {
+    gl.shadowMap.autoUpdate = false;
+    return () => {
+      gl.shadowMap.autoUpdate = true;
+    };
+  }, [gl]);
+
+  // 장면이나 조명 조건을 바꾼 다음 프레임에서 그림자맵을 한 번 갱신한다.
+  useLayoutEffect(() => {
+    if (quality === "high" && revision && sky && at && width > 0 && depth > 0)
+      gl.shadowMap.needsUpdate = true;
+  }, [gl, at, sky, quality, revision, width, depth]);
 
   // 광원 표적과 그림자 절두체를 전국 판 중심에 맞춘다.
   useEffect(() => {

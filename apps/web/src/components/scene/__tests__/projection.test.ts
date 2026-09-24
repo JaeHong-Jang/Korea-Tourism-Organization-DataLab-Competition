@@ -19,9 +19,14 @@ function boundaryPath(): string {
 
 // 테스트에서는 계약 토큰의 색만 흉내 내고 실제 원본 경계를 사용한다.
 beforeAll(() => {
+  const tokens = readFileSync(
+    join(process.cwd(), "../../packages/contracts/design-tokens.css"),
+    "utf8",
+  );
   vi.stubGlobal("document", { documentElement: {} });
   vi.stubGlobal("getComputedStyle", () => ({
-    getPropertyValue: () => "#e2e8c8",
+    getPropertyValue: (name: string) =>
+      tokens.match(new RegExp(`${name}:\\s*([^;]+);`))?.[1] ?? "",
   }));
 });
 

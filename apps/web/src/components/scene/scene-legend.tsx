@@ -1,0 +1,41 @@
+// 군중 축척과 등급, 접근 가능한 행사 목록을 항상 같은 자리에서 제공한다.
+import type { FestivalSummary } from "@crowdcast/contracts/types";
+import { FestivalList } from "./festival-list";
+import { GradeMark } from "./grade-mark";
+import { HonestNote } from "./honest-note";
+import "./scene-legend.css";
+
+// 참고 문구와 목록 진입점을 Canvas 성공 여부와 관계없이 유지한다.
+export function SceneLegend({
+  peoplePerDoll,
+  capExceeded,
+  festivals,
+}: {
+  peoplePerDoll: number;
+  capExceeded: boolean;
+  festivals: FestivalSummary[];
+}) {
+  return (
+    <div className="scene-stage__note scene-legend">
+      <div className="scene-legend__scale">
+        인형 1개 = {peoplePerDoll.toLocaleString("ko-KR")}명
+      </div>
+      {capExceeded && (
+        <div className="scene-legend__note">행사가 많아 일부는 1개로 표시</div>
+      )}
+      <div className="scene-legend__grades">
+        {[1, 2, 3, 4].map((level) => (
+          <span className="scene-legend__grade" key={level}>
+            <span
+              className="scene-legend__flag"
+              style={{ background: `var(--level-${level})` }}
+            />
+            <GradeMark level={level} />
+          </span>
+        ))}
+      </div>
+      <HonestNote />
+      <FestivalList festivals={festivals} />
+    </div>
+  );
+}

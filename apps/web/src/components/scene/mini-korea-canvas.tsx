@@ -1,12 +1,13 @@
 // 시군구 경계와 해 테마를 React Three Fiber 전국 장면으로 연결한다.
-import { PerformanceMonitor } from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+
+import type { FestivalSummary } from "@crowdcast/contracts/types";
+import { Canvas } from "@react-three/fiber";
+import { useEffect, useMemo, useState } from "react";
 import type { Topology } from "topojson-specification";
 import { useSelectionStore } from "../../lib/selection-store";
 import { Board } from "./board";
 import { CameraRig } from "./camera-rig";
-import { HonestNote } from "./honest-note";
+import { FestivalLayer } from "./festival-layer";
 import { buildLandModel, LandTiles } from "./land-tiles";
 import {
   qualityDpr,
@@ -14,7 +15,9 @@ import {
   sceneColor,
   shiftQuality,
 } from "./quality";
+import { FrameSignal, QualityControl } from "./scene-diagnostics";
 import { SunLight } from "./sun-light";
+import { type SceneScale, useScene } from "./use-scene";
 
 // WebGL2가 없으면 로딩을 시작하지 않고 같은 자리에 안내한다.
 function hasWebGl2(): boolean {
@@ -45,101 +48,14 @@ function useScenePreferences() {
   return { visible, reducedMotion };
 }
 
-// 프레임 저하를 품질 단계와 R3F 회귀 계수로 알리고, DPR은 Canvas prop 한 곳에서만 정한다.
-function QualityControl({
-  quality,
-  fixed,
-  diagnostic,
-  onQualityChange,
-  onRegressFactor,
-}: {
-  quality: SceneQuality;
-  fixed: boolean;
-  diagnostic: boolean;
-  onQualityChange: (change: -1 | 1) => void;
-  onRegressFactor: (factor: number) => void;
-}) {
-  const performance = useThree((state) => state.performance);
-  const current = useThree((state) => state.performance.current);
-
-  // R3F가 재렌더마다 Canvas dpr prop을 다시 적용하므로 회귀 계수는 prop 쪽으로 올려 보낸다.
-  useEffect(() => {
-    onRegressFactor(current);
-  }, [current, onRegressFactor]);
-
-  // 현재 품질 단계를 문서에 표시해 테스트·측정이 읽게 한다.
-  useEffect(() => {
-    document.documentElement.dataset.sceneQuality = quality;
-    return () => {
-      delete document.documentElement.dataset.sceneQuality;
-    };
-  }, [quality]);
-
-  // 진단 모드에서 회귀 신호가 실제 DPR까지 전달되는지 검사한다.
-  useEffect(() => {
-    if (!diagnostic) return;
-    window.__crowdcastRegress = () => performance.regress();
-    return () => {
-      delete window.__crowdcastRegress;
-    };
-  }, [diagnostic, performance]);
-
-  return (
-    <>
-      {!fixed && (
-        <PerformanceMonitor
-          onDecline={() => {
-            performance.regress();
-            onQualityChange(-1);
-          }}
-          onIncline={() => onQualityChange(1)}
-        />
-      )}
-    </>
-  );
-}
-
-// 첫 렌더를 표시하고 명시적인 측정 모드에서만 숫자 버퍼에 프레임을 쌓는다.
-function FrameSignal({
-  measure,
-  diagnostic,
-}: {
-  measure: boolean;
-  diagnostic: boolean;
-}) {
-  const ready = useRef(false);
-  const gl = useThree((state) => state.gl);
-  useEffect(() => {
-    if (measure) window.__crowdcastSceneFrames = [];
-    if (diagnostic)
-      window.__crowdcastSceneMemory = () => ({ ...gl.info.memory });
-    return () => {
-      delete document.documentElement.dataset.sceneReady;
-      delete window.__crowdcastSceneFrames;
-      delete window.__crowdcastSceneMemory;
-    };
-  }, [diagnostic, gl, measure]);
-  useFrame((_, delta) => {
-    if (!ready.current) {
-      document.documentElement.dataset.sceneReady = "true";
-      ready.current = true;
-    }
-    if (measure) window.__crowdcastSceneFrames?.push(delta * 1000);
-  });
-  return null;
-}
-
-declare global {
-  interface Window {
-    __crowdcastSceneFrames?: number[];
-    __crowdcastSceneMemory?: () => { geometries: number; textures: number };
-    __crowdcastToggleLand?: (visible: boolean) => void;
-    __crowdcastRegress?: () => void;
-  }
-}
-
 // 경계 로딩과 실패를 분리하고 선택 코드를 시도 필터에 연결한다.
-export function MiniKoreaCanvas() {
+export function MiniKoreaCanvas({
+  festivals = [],
+  onScaleChange,
+}: {
+  festivals?: FestivalSummary[];
+  onScaleChange?: (scale: SceneScale) => void;
+}) {
   const [topology, setTopology] = useState<Topology | null>(null);
   const [error, setError] = useState(false);
   const [quality, setQuality] = useState<SceneQuality>("high");
@@ -155,9 +71,11 @@ export function MiniKoreaCanvas() {
       : value === "high" || value === "medium" || value === "low"
         ? (value as SceneQuality)
         : null;
-    return { measure, debug, fixedQuality };
+    const focusCode = search.get("sceneFocus");
+    return { measure, debug, fixedQuality, focusCode };
   }, []);
   const activeQuality = diagnostics.fixedQuality ?? quality;
+  const scene = useScene(festivals, activeQuality, onScaleChange);
 
   // 명시적 진단 모드에서만 타일 재마운트를 허용해 GPU 해제량을 확인한다.
   useEffect(() => {
@@ -211,6 +129,15 @@ export function MiniKoreaCanvas() {
   const center: [number, number] = bounds
     ? [(bounds.minX + bounds.maxX) / 2, (bounds.minZ + bounds.maxZ) / 2]
     : [0, 0];
+  const focusPoint = useMemo(() => {
+    if (!diagnostics.focusCode) return null;
+    const event = scene.placed.find(
+      ({ festival }) => festival.sigunguCode === diagnostics.focusCode,
+    );
+    return event
+      ? ([event.x, event.z] as [number, number])
+      : (model?.centers.get(diagnostics.focusCode) ?? null);
+  }, [diagnostics.focusCode, scene.placed, model]);
   const width = bounds ? bounds.maxX - bounds.minX + 90 : 600;
   const depth = bounds ? bounds.maxZ - bounds.minZ + 90 : 900;
 
@@ -237,56 +164,58 @@ export function MiniKoreaCanvas() {
     );
 
   return (
-    <>
-      <section
-        style={{ position: "absolute", inset: 0 }}
-        aria-label="시군구를 선택할 수 있는 3D 미니 대한민국"
+    <section
+      style={{ position: "absolute", inset: 0 }}
+      aria-label="시군구를 선택할 수 있는 3D 미니 대한민국"
+    >
+      <Canvas
+        shadows={activeQuality === "high"}
+        dpr={qualityDpr(activeQuality) * regressFactor}
+        frameloop={visible ? "always" : "never"}
+        camera={{
+          position: [center[0] + 440, 650, center[1] + 920],
+          fov: 44,
+          near: 10,
+          far: 2600,
+        }}
+        gl={{
+          antialias: true,
+          powerPreference: "high-performance",
+        }}
+        onCreated={({ gl }) => gl.setClearColor(sceneColor("sky-day"))}
       >
-        <Canvas
-          shadows={activeQuality === "high"}
-          dpr={qualityDpr(activeQuality) * regressFactor}
-          frameloop={visible ? "always" : "never"}
-          camera={{
-            position: [center[0] + 440, 650, center[1] + 920],
-            fov: 44,
-            near: 10,
-            far: 2600,
-          }}
-          gl={{
-            antialias: true,
-            powerPreference: "high-performance",
-          }}
-          onCreated={({ gl }) => gl.setClearColor(sceneColor("sky-day"))}
-        >
-          <QualityControl
-            quality={activeQuality}
-            fixed={diagnostics.fixedQuality !== null}
-            diagnostic={diagnostics.debug}
-            onQualityChange={(change) =>
-              setQuality((current) => shiftQuality(current, change))
-            }
-            onRegressFactor={setRegressFactor}
-          />
-          <SunLight
-            quality={activeQuality}
-            center={center}
-            width={width}
-            depth={depth}
-          />
-          <Board center={center} width={width} depth={depth} />
-          {showLand && <LandTiles model={model} onPick={onPick} />}
-          <CameraRig
-            center={center}
-            selected={picked ? (model.centers.get(picked) ?? null) : null}
-            reducedMotion={reducedMotion}
-          />
-          <FrameSignal
-            measure={diagnostics.measure}
-            diagnostic={diagnostics.debug}
-          />
-        </Canvas>
-      </section>
-      <HonestNote />
-    </>
+        <QualityControl
+          quality={activeQuality}
+          fixed={diagnostics.fixedQuality !== null}
+          diagnostic={diagnostics.debug}
+          onQualityChange={(change) =>
+            setQuality((current) => shiftQuality(current, change))
+          }
+          onRegressFactor={setRegressFactor}
+        />
+        <SunLight
+          revision={scene.placed}
+          quality={activeQuality}
+          center={center}
+          width={width}
+          depth={depth}
+        />
+        <Board center={center} width={width} depth={depth} />
+        {showLand && <LandTiles model={model} onPick={onPick} />}
+        <FestivalLayer scene={scene} center={center} />
+        <CameraRig
+          center={center}
+          selected={
+            focusPoint ?? (picked ? (model.centers.get(picked) ?? null) : null)
+          }
+          reducedMotion={reducedMotion}
+          focus={Boolean(diagnostics.focusCode)}
+        />
+        <FrameSignal
+          measure={diagnostics.measure}
+          diagnostic={diagnostics.debug}
+        />
+      </Canvas>
+    </section>
   );
 }

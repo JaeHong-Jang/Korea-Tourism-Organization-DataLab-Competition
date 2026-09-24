@@ -9,10 +9,16 @@ type CameraRigProps = {
   center: [number, number];
   selected: [number, number] | null;
   reducedMotion: boolean;
+  focus?: boolean;
 };
 
 // 포인터 궤도는 고정 범위로 묶고 키보드 이동을 같은 표적으로 모은다.
-export function CameraRig({ center, selected, reducedMotion }: CameraRigProps) {
+export function CameraRig({
+  center,
+  selected,
+  reducedMotion,
+  focus = false,
+}: CameraRigProps) {
   const controls = useRef<OrbitControlsImpl>(null);
   const desired = useRef(new Vector3(center[0], 0, center[1]));
   const previous = useRef(new Vector3());
@@ -26,9 +32,16 @@ export function CameraRig({ center, selected, reducedMotion }: CameraRigProps) {
       return;
     }
     if (!selected || !controls.current) return;
+    if (focus) {
+      controls.current.target.set(selected[0], 0, selected[1]);
+      camera.position.set(selected[0] + 25, 45, selected[1] + 60);
+      controls.current.update();
+      moving.current = false;
+      return;
+    }
     desired.current.set(selected[0], 0, selected[1]);
     moving.current = true;
-  }, [selected, reducedMotion]);
+  }, [selected, reducedMotion, focus, camera]);
 
   // 방향키는 판 위를 이동하고 +/-는 현재 표적을 향해 확대한다.
   useEffect(() => {
@@ -87,7 +100,7 @@ export function CameraRig({ center, selected, reducedMotion }: CameraRigProps) {
       target={[center[0], 0, center[1]]}
       minPolarAngle={0.35}
       maxPolarAngle={1.25}
-      minDistance={350}
+      minDistance={focus ? 50 : 350}
       maxDistance={1800}
       enableDamping={!reducedMotion}
       dampingFactor={0.09}
