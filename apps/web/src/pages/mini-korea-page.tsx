@@ -1,11 +1,12 @@
 // 미니 대한민국 장면과 그 위에 놓일 필터·목록·타임라인 자리를 둔다.
 import { ArrowUpRight, MapPinned } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { Button } from "../components/ui/button";
 
 // 장면이 화면을 차지하고 부가 정보는 가장자리에 머물게 한다.
 export function MiniKoreaPage() {
+  const debug = new URLSearchParams(useLocation().search).get("debug") === "1";
   return (
     <div className="scene-page">
       <section className="scene-stage" aria-labelledby="scene-title">
@@ -52,8 +53,8 @@ export function MiniKoreaPage() {
         description="행사 흐름과 등급별 주간 변화를 살펴보세요."
         className="scene-timeline"
       />
-      <span className="scene-id" aria-hidden="true">
-        M1-F1 · 전국 판
+      <span className="scene-id" data-feature="M1-F1" aria-hidden="true">
+        {debug ? "M1-F1 · 전국 판" : null}
       </span>
     </div>
   );

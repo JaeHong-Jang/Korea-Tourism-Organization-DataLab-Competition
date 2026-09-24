@@ -36,7 +36,7 @@
 /* 공통 패널은 빈 상태에서도 제목·설명·콘텐츠 영역을 구분한다. */
 .feature-panel { display: flex; flex-direction: column; min-width: 0; padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-1); }
 .feature-panel__heading { display: flex; align-items: baseline; gap: var(--space-3); }
-.feature-panel__id { flex: none; color: var(--brand); font-size: var(--text-caption); font-weight: 700; letter-spacing: .03em; }
+.feature-panel__id { flex: none; color: var(--link); font-size: var(--text-caption); font-weight: 700; letter-spacing: .03em; }
 .feature-panel h2 { margin: 0; font-size: var(--text-subtitle); font-weight: 750; letter-spacing: -.025em; line-height: 1.4; }
 .feature-panel p { margin: var(--space-2) 0 0; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
 .feature-panel__empty { flex: 1; min-height: 40px; margin-top: var(--space-5); border-top: 1px solid var(--line); }

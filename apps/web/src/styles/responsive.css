@@ -46,7 +46,7 @@
   .scene-stage__center { left: 50%; top: 210px; width: calc(100% - 2 * var(--space-8)); }
   .scene-stage h1 { font-size: var(--text-title); }
   .scene-stage__contour { left: -35%; top: 8%; }
-  .scene-stage__note { left: var(--space-4); bottom: 116px; max-width: 230px; }
+  .scene-stage__note { left: var(--space-4); top: 360px; bottom: auto; max-width: calc(100% - 2 * var(--space-4)); }
   .scene-filter { top: 425px; left: var(--space-4); right: var(--space-4); width: auto; min-height: 110px; }
   .scene-filter .feature-panel__empty { display: none; }
   .scene-list { top: 570px; left: var(--space-4); right: var(--space-4); width: auto; min-height: 190px; }

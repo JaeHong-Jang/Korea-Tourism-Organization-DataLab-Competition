@@ -1,5 +1,6 @@
 // 데이터가 연결되기 전 기능의 위치와 역할을 알려 주는 빈 패널이다.
 import type { ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 
 type FeaturePanelProps = {
   id: string;
@@ -17,13 +18,15 @@ export function FeaturePanel({
   className = "",
   children,
 }: FeaturePanelProps) {
+  const debug = new URLSearchParams(useLocation().search).get("debug") === "1";
   return (
     <section
       className={`feature-panel ${className}`}
       aria-labelledby={`${id}-title`}
+      data-feature={id}
     >
       <div className="feature-panel__heading">
-        <span className="feature-panel__id">{id}</span>
+        {debug && <span className="feature-panel__id">{id}</span>}
         <h2 id={`${id}-title`}>{title}</h2>
       </div>
       <p>{description}</p>
