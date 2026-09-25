@@ -123,7 +123,7 @@ export function EventList({
                     key={event.id}
                     className={selectedId === event.id ? "is-selected" : ""}
                   >
-                    <th scope="row">
+                    <th scope="row" data-label="행사명">
                       <button
                         type="button"
                         aria-pressed={selectedId === event.id}
@@ -132,16 +132,18 @@ export function EventList({
                         {event.name}
                       </button>
                     </th>
-                    <td>{formatDate(event.startsAt)}</td>
-                    <td>
+                    <td data-label="일자">{formatDate(event.startsAt)}</td>
+                    <td data-label="등급">
                       {latest ? (
                         <LevelBadge judgment={latest.forecast.judgment} />
                       ) : (
                         "예보 없음"
                       )}
                     </td>
-                    <td>{eventStatus(event, saved.has(event.id))}</td>
-                    <td>
+                    <td data-label="상태">
+                      {eventStatus(event, saved.has(event.id))}
+                    </td>
+                    <td data-label="마지막 예보">
                       {latest ? formatDate(latest.publishedAt) : "예보 없음"}
                     </td>
                   </tr>

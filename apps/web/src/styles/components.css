@@ -19,6 +19,7 @@
 /* 날씨 연결 전 해·시간 견본은 실제 응답 칩이 들어오면 숨긴다. */
 .site-header__tools:has(.weather-chip--forecast) > .weather-chip:not(.weather-chip--forecast) { display: none; }
 .weather-chip--forecast { order: -1; }
+.weather-chip__compact { display: none; }
 /* 판 모서리 카메오는 키보드로도 상담 화면을 열 수 있게 한다. */
 .scene-office-link { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font-size: var(--text-caption); white-space: nowrap; cursor: pointer; }
 .scene-office-link:focus-visible { outline: 2px solid var(--focus); }

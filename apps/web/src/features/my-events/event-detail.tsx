@@ -71,11 +71,11 @@ export function EventDetail({
                   <span>{formatDate(snapshot.publishedAt)}</span>
                   <strong>
                     {formatSnapshotNumber(snapshot.forecast.peakConcurrent.p50)}{" "}
-                    명 · 순간 최대 p50
+                    명 · 순간 최대 중앙값
                   </strong>
                 </a>
                 <LevelBadge judgment={snapshot.forecast.judgment} />
-                <small>발행 스냅샷 · 수정 불가</small>
+                <small>발행 당시 기록 · 수정 불가</small>
               </li>
             ))}
           </ol>

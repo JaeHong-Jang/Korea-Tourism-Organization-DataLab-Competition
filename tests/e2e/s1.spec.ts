@@ -20,17 +20,35 @@ const card = JSON.parse(
 test("현재 비·밤 날씨 칩과 장면", async ({ page }) => {
 	await page.route("**/api/weather?**", (route) => {
 		const url = new URL(route.request().url());
-		return route.fulfill({ json: {
-			lat: Number(url.searchParams.get("lat")), lng: Number(url.searchParams.get("lng")),
-			at: url.searchParams.get("at"), sky: "흐림", pty: "비", temp: 18,
-			pop: 80, source: "초단기실황", fetchedAt: url.searchParams.get("at"),
-		} });
+		return route.fulfill({
+			json: {
+				lat: Number(url.searchParams.get("lat")),
+				lng: Number(url.searchParams.get("lng")),
+				at: url.searchParams.get("at"),
+				sky: "흐림",
+				pty: "비",
+				temp: 18,
+				pop: 80,
+				source: "초단기실황",
+				fetchedAt: url.searchParams.get("at"),
+			},
+		});
 	});
 	await page.setViewportSize({ width: 1366, height: 768 });
-	await page.goto(`/?sceneFixture=1&theme=night&sceneQuality=high&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`);
-	await expect(page.locator(".weather-chip--forecast")).toContainText("서울 18° 비 · 밤");
-	await expect(page.locator("html")).toHaveAttribute("data-scene-ready", "true", { timeout: 45_000 });
-	await expect(page.locator(".scene-legend")).toContainText("날씨 효과 = 기상청 예보 기반 연출");
+	await page.goto(
+		`/?sceneFixture=1&theme=night&sceneQuality=high&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`,
+	);
+	await expect(page.locator(".weather-chip--forecast")).toContainText(
+		"서울 18° 비 · 밤",
+	);
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-ready",
+		"true",
+		{ timeout: 45_000 },
+	);
+	await expect(page.locator(".scene-legend")).toContainText(
+		"날씨 효과 = 기상청 예보 기반 연출",
+	);
 	await page.screenshot({ path: resolve(output, "T-435-s1-rain-night.png") });
 });
 
@@ -335,7 +353,7 @@ test("실제 API와 SVG 선택 고지", async ({ page }) => {
 	await page.goto(`/?forceSvg=1&data=1&at=${time}`);
 	await expect(page.locator(".festival-list__pick")).toHaveCount(1);
 	await expect(page.locator(".scene-svg-notices")).not.toContainText(
-		"골든 사례 0건",
+		"비교 검증 사례가 아직 없어요",
 	);
 	await expect(page.locator(".scene-svg-notices")).toContainText(
 		"작은 행사는 크게 예보될 수 있어요",

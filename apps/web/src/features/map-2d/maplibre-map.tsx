@@ -269,7 +269,7 @@ export function MapLibreMap({
       <div ref={containerRef} className="map-2d__canvas" />
       {!ready && !error && (
         <p className="map-2d__status" role="status">
-          로컬 지도를 불러오는 중이에요.
+          지도를 불러오고 있어요.
         </p>
       )}
       {error && (
@@ -284,7 +284,9 @@ export function MapLibreMap({
         </p>
       )}
       {overzoom && (
-        <p className="map-2d__overzoom">로컬 타일은 13단계까지 제공해요.</p>
+        <p className="map-2d__overzoom">
+          더 확대할 수 없어요. 행사 목록에서 자세히 보세요.
+        </p>
       )}
     </section>
   );

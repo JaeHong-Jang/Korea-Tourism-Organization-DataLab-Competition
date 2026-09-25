@@ -86,7 +86,7 @@
 }
 
 /* 휴대전화·태블릿에서는 지도 영역을 먼저 끝내고 필터·KPI·목록을 문서 흐름에 놓는다(가운데 KPI 띠 폭이 무너지지 않게). */
-@media (max-width: 1024px) {
+@media (max-width: 1240px) {
   .scene-page:has(.festival-list) { display: flex; flex-direction: column; gap: var(--space-4); min-height: 0; padding-bottom: var(--space-4); overflow: visible; }
   .scene-page:has(.festival-list) > .scene-stage { position: relative; inset: auto; order: 0; width: 100%; height: 620px; flex: none; }
   .scene-page:has(.festival-list) .scene-stage__note { top: auto; bottom: 46px; }

@@ -53,11 +53,31 @@ export function HeaderWeatherChip() {
         : weather?.sky === "흐림" || weather?.sky === "구름많음"
           ? Cloud
           : SunMoon;
+  const shortTemperature =
+    weather?.source === "중기예보" &&
+    weather.tempMin != null &&
+    weather.tempMax != null
+      ? `${weather.tempMin}~${weather.tempMax}°`
+      : weather?.temp != null
+        ? `${weather.temp}°`
+        : "—";
+  const fullText = weatherChipText(
+    festival?.sigunguName ?? "서울",
+    skyText,
+    weather,
+  );
   if (!target) return null;
   return createPortal(
-    <span className="weather-chip weather-chip--forecast" role="status">
+    <span
+      className="weather-chip weather-chip--forecast"
+      role="status"
+      aria-label={fullText}
+    >
       <Icon size={15} aria-hidden="true" />
-      {weatherChipText(festival?.sigunguName ?? "서울", skyText, weather)}
+      <span className="weather-chip__full">{fullText}</span>
+      <span className="weather-chip__compact" aria-hidden="true">
+        {shortTemperature}
+      </span>
     </span>,
     target,
   );

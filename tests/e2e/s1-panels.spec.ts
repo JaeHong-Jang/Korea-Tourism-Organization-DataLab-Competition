@@ -246,6 +246,7 @@ test("모바일 패널 화면", async ({ page }) => {
 	const map = await page.locator(".scene-stage").boundingBox();
 	const filter = await page.locator(".scene-filter").boundingBox();
 	expect(map && filter && map.y + map.height <= filter.y).toBe(true);
+	await page.getByRole("button", { name: "행사 목록", exact: true }).click();
 	await page.getByRole("button", { name: "견본 행사 5, 1등급 선택" }).click();
 	expect(await selection(page)).toEqual({
 		festival: "e-scene-5",
