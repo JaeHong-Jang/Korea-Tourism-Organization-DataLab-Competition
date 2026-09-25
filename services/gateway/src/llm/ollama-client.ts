@@ -21,6 +21,8 @@ export type LlmRequest = {
   schema: Record<string, unknown>;
   messages: Message[];
   recordingKey: string;
+  // 짧은 답은 출력 상한을 낮춰 형식 제약 출력 뒤 공백이 이어질 때 시간을 버리지 않는다
+  maxTokens?: number;
 };
 export type LlmOptions = {
   env?: NodeJS.ProcessEnv;
@@ -77,21 +79,26 @@ export function createLlmClient(options: LlmOptions = {}) {
           options: {
             temperature: 0,
             seed: 42,
-            num_predict: settings.maxTokens,
+            num_predict: input.maxTokens ?? settings.maxTokens,
             num_ctx: 4096,
           },
         }),
       );
+      // 상한에서 끊겨도 앞부분이 완결된 JSON이면(뒤에 공백만 이어진 경우) 받아들인다
+      const complete =
+        response.done_reason !== "length" ||
+        (typeof response.message?.content === "string" &&
+          isCompleteJson(response.message.content));
       if (
         !response.done ||
-        response.done_reason === "length" ||
+        !complete ||
         response.message?.tool_calls?.length ||
         typeof response.message?.content !== "string"
       ) {
         throw new LlmSchemaError("LLM 응답이 완결된 필드 추출이 아닙니다");
       }
       return {
-        content: response.message.content,
+        content: response.message.content.trim(),
         metrics: {
           elapsedMs: performance.now() - start,
           loadMs: response.load_duration / 1e6,
@@ -113,4 +120,14 @@ export function createLlmClient(options: LlmOptions = {}) {
         throw new Error("모델 언로드 확인 실패");
     },
   };
+}
+
+// 형식 제약 출력 뒤에 공백만 붙은 경우를 가려내려고 앞뒤 공백을 뺀 본문이 JSON으로 읽히는지 본다
+function isCompleteJson(content: string) {
+  try {
+    JSON.parse(content.trim());
+    return true;
+  } catch {
+    return false;
+  }
 }

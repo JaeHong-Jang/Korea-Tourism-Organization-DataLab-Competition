@@ -6,7 +6,10 @@ import { expect, it } from "vitest";
 import { readConfig } from "../src/config.js";
 import { Deadline } from "../src/team/lead/deadline.js";
 import { emitReply } from "../src/team/lead/reply.js";
-import type { ReplyFacts } from "../src/team/lead/reply-facts.js";
+import {
+  type ReplyFacts,
+  speakableName,
+} from "../src/team/lead/reply-facts.js";
 import { checkedReply } from "../src/team/lead/reply-guard.js";
 import type { Agent } from "../src/team/runtime/agent.js";
 import { createExecutor } from "../src/team/runtime/executor.js";
@@ -92,6 +95,30 @@ it.each([
 ])("자연스러운 생성 답변: %s", (text) =>
   expect(checkedReply({ text }, facts)).toBe(text),
 );
+
+// 예보 결과 답에서 지어낸 행사 이름·다른 지역을 말하면 거절한다(9/26 "서울에서 열리는 코리아 인터내셔널 페스티벌" 회귀)
+it("예보한 행사의 이름과 지역만 말한다", () => {
+  const published: ReplyFacts = {
+    ...facts,
+    names: ["운정호수공원 불꽃축제"],
+    places: ["운정호수공원 불꽃축제 — 파주시"],
+  };
+  for (const text of [
+    "서울에서 열리는 코리아 인터내셔널 페스티벌 예보를 마쳤어요.",
+    "파주시 코리아 인터내셔널 페스티벌 예보를 마쳤어요.",
+    "서울에서 열리는 운정호수공원 불꽃축제 예보를 마쳤어요.",
+  ])
+    expect(checkedReply({ text }, published)).toBeNull();
+  const good = "파주시에서 열리는 운정호수공원 불꽃축제 예보를 마쳤어요.";
+  expect(checkedReply({ text: good }, published)).toBe(good);
+});
+
+// 회차·연도가 붙은 이름은 숫자를 떼고 부를 이름만 남긴다
+it.each([
+  ["제8회 운정호수공원 불꽃축제", "운정호수공원 불꽃축제"],
+  ["2026 진천농다리축제", "진천농다리축제"],
+  ["바우덕이축제 2026", "바우덕이축제"],
+])("부를 이름: %s", (name, spoken) => expect(speakableName(name)).toBe(spoken));
 
 // 매 응답의 reply는 하나이며 마지막 done 앞에만 있고 계약 순서를 지킨다
 function expectReply(events: SseEvent[], mode = "new", forecastId?: string) {

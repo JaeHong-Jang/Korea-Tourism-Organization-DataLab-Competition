@@ -18,6 +18,15 @@ function safeName(name: string) {
   return name.length <= 100 && /^[가-힣A-Za-z ·-]+$/.test(name);
 }
 
+// 답에는 숫자를 못 쓰므로 앞의 연도·회차(2026, 제8회)와 끝의 연도만 떼어 말할 수 있는 이름으로 만든다
+export function speakableName(name: string | null | undefined) {
+  const spoken = (name ?? "")
+    .replace(/^\s*(?:\d{4}\s*년?\s*)?(?:제\s*\d+\s*회\s*)?/u, "")
+    .replace(/\s*\d{4}\s*$/u, "")
+    .trim();
+  return spoken && safeName(spoken) ? spoken : null;
+}
+
 // 원본 요청·좌표·예측 수치·근거 문장은 보관하거나 LLM에 전달하지 않는다
 export function collectReplyFacts(output: EventWriter) {
   const facts: ReplyFacts = {
@@ -28,26 +37,29 @@ export function collectReplyFacts(output: EventWriter) {
     phrases: [],
   };
   let eventName: string | null = null;
+  let eventPlace: string | null = null;
   let grade: string | undefined;
   const writer: EventWriter = {
     // 계약을 통과해 전송한 이벤트만 최종 안내의 사실로 인정한다
     async emit(event, data) {
       await output.emit(event, data);
-      if (event === "event_card")
+      if (event === "event_card") {
         eventName = (data as EventData["event_card"]).name;
+        eventPlace = (data as EventData["event_card"]).sigunguName ?? null;
+      }
       if (event === "forecast")
         grade = gradeNames[(data as EventData["forecast"]).judgment.level - 1];
       if (event === "recommend") {
         const result = data as EventData["recommend"];
         facts.names = result.items
-          .map(({ summary }) => summary.name)
-          .filter(safeName);
-        facts.places = result.items
-          .filter(
-            ({ summary }) =>
-              safeName(summary.name) && safeName(summary.sigunguName),
-          )
-          .map(({ summary }) => `${summary.name} — ${summary.sigunguName}`);
+          .map(({ summary }) => speakableName(summary.name))
+          .filter((name): name is string => name !== null);
+        facts.places = result.items.flatMap(({ summary }) => {
+          const name = speakableName(summary.name);
+          return name && safeName(summary.sigunguName)
+            ? [`${name} — ${summary.sigunguName}`]
+            : [];
+        });
         facts.grades = [
           ...new Set(
             result.items
@@ -101,7 +113,12 @@ export function collectReplyFacts(output: EventWriter) {
         (data as EventData["gate"]).gate === "publish" &&
         (data as EventData["gate"]).passed
       ) {
-        facts.names = eventName && safeName(eventName) ? [eventName] : [];
+        const spoken = speakableName(eventName);
+        facts.names = spoken ? [spoken] : [];
+        facts.places =
+          spoken && eventPlace && safeName(eventPlace)
+            ? [`${spoken} — ${eventPlace}`]
+            : [];
         facts.grades = grade ? [grade] : [];
         facts.template = "예보서를 준비했어요. 결과와 근거를 함께 살펴보세요.";
         facts.phrases = ["예보서가 준비됐어요", "예보서를 확인해 주세요"];
