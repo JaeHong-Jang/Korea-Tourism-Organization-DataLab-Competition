@@ -114,7 +114,7 @@ describe("설명 발행", () => {
     });
     const id = await harness.create();
     const { answer } = await import("./team-fixture.js");
-    await harness.message(id, { text: "영종 불꽃축제" });
+    await harness.message(id, { text: "영종 불꽃축제를 열어요" });
     let events = await harness.message(id, { text: "행사 확인", answer });
     if (events.some((event) => event.event === "ask"))
       events = await harness.message(id);

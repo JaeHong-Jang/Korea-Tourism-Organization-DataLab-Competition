@@ -67,6 +67,9 @@ def test_batch_predict_identical_bytes(
     assert summary["runId"] == stored["runId"]
     assert f"runId: {stored['runId']}" in report
     assert "일정 공개일이 asOf 뒤인 행사 1건(입력으로 사용 — 06 §3)" in report
+    selected = client.get(f"/v1/festivals/upcoming/{upcoming_event['id']}/event")
+    assert selected.status_code == 200
+    assert selected.json() == upcoming_event
     listing = client.get("/v1/festivals/upcoming")
     assert listing.headers["x-run-id"] == stored["runId"]
     assert f"평시 근거 없음: {int(not complete_baseline)}" in report

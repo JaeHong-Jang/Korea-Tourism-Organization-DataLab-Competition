@@ -9,7 +9,7 @@ import type { ExtractedFields } from "../src/team/analysis/normalize/extraction.
 
 export type Scenario = {
   id: string;
-  category: "new" | "ask" | "followup" | "out_of_scope";
+  category: "new" | "ask" | "followup" | "out_of_scope" | "recommend";
   tags: string[];
   parent?: string;
   whatifMode?: "new" | "followup";

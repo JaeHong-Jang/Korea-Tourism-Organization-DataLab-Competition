@@ -32,13 +32,16 @@ export function readScenarios(contents: string): Scenario[] {
     .trim()
     .split(/\r?\n/)
     .map((line) => JSON.parse(line));
-  if (cases.length !== 23 || new Set(cases.map((item) => item.id)).size !== 23)
-    throw new Error("고유한 기본 시나리오 20개와 what-if 3개가 필요합니다");
+  if (cases.length !== 26 || new Set(cases.map((item) => item.id)).size !== 26)
+    throw new Error(
+      "고유한 기본 시나리오 20개와 what-if 3개·recommend 3개가 필요합니다",
+    );
   for (const [category, count] of Object.entries({
     new: 12,
     ask: 3,
     followup: 6,
     out_of_scope: 2,
+    recommend: 3,
   }))
     if (cases.filter((item) => item.category === category).length !== count)
       throw new Error(`사례 구성 오류: ${category}`);
@@ -68,6 +71,14 @@ export function readScenarios(contents: string): Scenario[] {
         item.text.includes("인천")
       )
         throw new Error(`일정·추출 픽스처 조건 오류: ${item.id}`);
+    } else if (item.category === "recommend") {
+      if (
+        item.parent ||
+        item.expected.intent !== "recommend" ||
+        item.expected.published ||
+        item.expected.askFields.length
+      )
+        throw new Error(`행사 찾기 조건 오류: ${item.id}`);
     } else if (!item.parent || !item.expected.intent)
       throw new Error(`후속 조건 오류: ${item.id}`);
     seen.set(item.id, item);

@@ -13,6 +13,7 @@ export type TeamSession = {
   id: string;
   steps: AgentStep[];
   draft?: EventDraft;
+  pendingPurpose?: string;
   askedFields: string[];
   hazardCandidates: EventDraft["hazards"];
   hazardsConfirmed: boolean;

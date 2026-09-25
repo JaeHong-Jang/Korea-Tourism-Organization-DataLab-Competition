@@ -168,7 +168,7 @@ describe("새 예보 스트림", () => {
   it("부분 답변 뒤 남은 필수값만 다시 묻는다", async () => {
     const harness = teamFixture();
     const id = await harness.create();
-    await harness.message(id, { text: "영종 불꽃축제" });
+    await harness.message(id, { text: "영종 불꽃축제를 열어요" });
     const events = await harness.message(id, {
       text: "",
       answer: { name: answer.name, type: answer.type },

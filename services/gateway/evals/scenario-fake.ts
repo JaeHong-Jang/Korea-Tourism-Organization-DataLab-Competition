@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import type {
   Event,
+  FestivalSummary,
   Forecast,
   ForecastReport,
   Plan,
@@ -14,6 +15,8 @@ import { readConfig } from "../src/config.js";
 import type { SessionFacts } from "../src/contract/session-facts.js";
 import { createForecastsRoute } from "../src/routes/forecasts.js";
 import { createTeamSessionsRoute } from "../src/routes/team-sessions.js";
+import { recommendationDates } from "../src/team/recommend/dates.js";
+import { evaluationDate } from "./scenario-cases.js";
 import { scenarioKnowledge } from "./scenario-fake-knowledge.js";
 import type { Scenario } from "./scenario-types.js";
 
@@ -78,6 +81,30 @@ export function createScenarioFake(cases: Scenario[]) {
     init?.signal?.throwIfAborted();
     const url = new URL(String(input));
     const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+    // 추천도 정본 festival-summary를 사용하며 날짜만 평가 주말로 이동한다
+    if (url.pathname === "/v1/festivals/upcoming") {
+      const summary: FestivalSummary = JSON.parse(
+        readFileSync(
+          new URL(
+            "../../../packages/contracts/fixtures/festival-summary/valid-card.json",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      );
+      const day = recommendationDates("이번 주말", evaluationDate()).from;
+      return Response.json([
+        {
+          ...summary,
+          name: "서울세계불꽃축제",
+          type: "불꽃",
+          sigunguCode: "11560",
+          sigunguName: "서울 영등포구",
+          startsAt: `${day}T18:00:00+09:00`,
+          endsAt: `${day}T21:00:00+09:00`,
+        },
+      ]);
+    }
     if (url.pathname === "/v1/geocode") {
       const location = cases.find(
         (item) => item.extraction?.venueText === body.venueText,

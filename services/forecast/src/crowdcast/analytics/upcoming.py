@@ -3,6 +3,7 @@
 import argparse
 import fcntl
 import io
+import json
 import os
 import re
 from collections import Counter
@@ -32,16 +33,14 @@ SUMMARY_SCHEMA = {
     **dict.fromkeys("eventId forecastId name type startsAt endsAt sigunguCode sigunguName".split(),
                    pl.String),
     "lat": pl.Float64, "lng": pl.Float64,
-    **dict.fromkeys(("level", "peakP10", "peakP50", "peakP90"), pl.Int64),
-    "pOver1000": pl.Float64,
+    **dict.fromkeys(("level", "peakP10", "peakP50", "peakP90"), pl.Int64), "pOver1000": pl.Float64,
     "ood": pl.Boolean,
 }
 AUDIT_SCHEMA = {
     **dict.fromkeys(("runId", "modelVersion", "modelVerdict", "date_source", "date_available_at"), pl.String),
-    "baselineAvailable": pl.Boolean,
+    "baselineAvailable": pl.Boolean, "eventInput": pl.String,
 }
 WINDOW_START, WINDOW_END = date(2026, 9, 29), date(2026, 11, 30)
-
 
 # 입력·기준일·모델과 실제 계산에 쓰는 캐시된 설정을 정렬 JSON의 SHA-256으로 식별한다.
 def run_identifier(frame: pl.DataFrame, start: date, end: date, pointer: dict[str, Any]) -> str:
@@ -56,7 +55,6 @@ def run_identifier(frame: pl.DataFrame, start: date, end: date, pointer: dict[st
     return identifier("batch", {"inputs": hashes, "from": str(start), "to": str(end), "asOf": cutoffs,
                                 "model": {key: pointer[key] for key in ("modelVersion", "runId", "verdict")},
                                 "settings": {"rules": evidence.rule_settings(), "peak": peak._profiles()}})
-
 
 # 세 임시 파일과 복구본을 먼저 준비하고 교체 도중 실패하면 직전 발행 상태로 되돌린다.
 def publish(outputs: dict[str, bytes]) -> None:
@@ -81,23 +79,18 @@ def publish(outputs: dict[str, bytes]) -> None:
                     (paths.PROCESSED / name).unlink()
             raise
 
-
 # 표시용 인원만 Python의 기존 표시 반올림을 적용하고 확률·등급은 조립 결과 그대로 둔다.
 def festival_summary(event: dict[str, Any], forecast: dict[str, Any]) -> dict[str, Any]:
     result = {
         **{key: event[key] for key in ("name", "type", "startsAt", "endsAt", "sigunguCode", "sigunguName")},
-        "eventId": event["id"],
-        "forecastId": forecast["id"],
-        "lat": event["venue"]["lat"],
-        "lng": event["venue"]["lng"],
-        "level": forecast["judgment"]["level"],
+        "eventId": event["id"], "forecastId": forecast["id"], "lat": event["venue"]["lat"],
+        "lng": event["venue"]["lng"], "level": forecast["judgment"]["level"],
         **{f"peakP{q}": round(forecast["peakConcurrent"][f"p{q}"]) for q in (10, 50, 90)},
         "pOver1000": next(p["probability"] for p in forecast["probabilities"] if p["threshold"] == 1000),
         "ood": forecast["ood"],
     }
     validate("festival-summary", result)
     return result
-
 
 # 원본 필수값의 결측 조합을 한 사유로 묶어 같은 행을 중복 제외하지 않는다.
 def missing_reason(row: dict[str, Any]) -> str | None:
@@ -107,15 +100,15 @@ def missing_reason(row: dict[str, Any]) -> str | None:
                if (fields := [key for key in keys if row.get(key) is None or row.get(key) == ""])]
     return "변환 불가: " + "; ".join(missing) if missing else None
 
-
 # 쿼리와 배치 모두 역전된 날짜 범위를 조용히 빈 결과로 처리하지 않는다.
 def check_range(start: date | None, end: date | None) -> None:
     if start is not None and end is not None and start > end:
         raise ValueError("from은 to보다 늦을 수 없습니다")
 
-
 # 저장된 요약만 조회하고 감사 열은 계약 밖으로 내보내지 않는다(모델 검증 상태는 선택 필드라 있으면 싣는다).
-def upcoming(start: date | None = None, end: date | None = None) -> tuple[str, list[dict[str, Any]]]:
+def upcoming(
+    start: date | None = None, end: date | None = None, event_id: str | None = None,
+) -> tuple[str, list[dict[str, Any]]]:
     check_range(start, end)
     try:
         content = (paths.PROCESSED / "upcoming.parquet").read_bytes()
@@ -125,16 +118,28 @@ def upcoming(start: date | None = None, end: date | None = None) -> tuple[str, l
     run_id = pl.read_parquet_metadata(content)["runId"]
     if not run_id or frame["runId"].null_count() or set(frame["runId"]) - {run_id}:
         raise ValueError("다가오는 행사 요약의 runId가 일치하지 않습니다")
+    # 입력도 요약과 같은 스냅샷에서 꺼내며 구형 배치는 재생성을 요구한다.
+    if event_id is not None:
+        rows = frame.filter(pl.col("eventId") == event_id)
+        if rows.is_empty():
+            raise FileNotFoundError(event_id)
+        if "eventInput" not in rows.columns:
+            raise Unavailable("입력 스냅샷이 없습니다. 일괄 예보를 다시 생성해 주세요")
+        inputs = rows["eventInput"].unique().to_list()
+        if len(inputs) != 1 or not inputs[0]:
+            raise ValueError("같은 행사의 입력이 일치하지 않습니다")
+        event = json.loads(inputs[0])
+        validate("event", event)
+        if event["id"] != event_id:
+            raise ValueError("요약과 행사 입력의 식별자가 다릅니다")
+        return run_id, [event]
+    # 기간은 양끝 포함이며 한쪽을 생략하면 해당 방향의 전체 기간을 포함한다.
     days = pl.col("startsAt").str.slice(0, 10).str.to_date()
-    if start is not None:
-        frame = frame.filter(days >= start)
-    if end is not None:
-        frame = frame.filter(days <= end)
+    frame = frame.filter(days.is_between(start or date.min, end or date.max))
     return run_id, frame.select([*SUMMARY_SCHEMA, *({"modelVerdict"} & set(frame.columns))]).sort(
         ["level", "pOver1000", "startsAt", "eventId", "forecastId"],
         descending=[True, True, False, False, False],
     ).to_dicts()
-
 
 # 이전 QC의 실행 식별자와 수를 함께 읽으며 식별자가 없던 구형 QC도 첫 전환에 허용한다.
 def previous_count() -> tuple[str | None, int] | None:
@@ -147,7 +152,6 @@ def previous_count() -> tuple[str | None, int] | None:
         raise ValueError("직전 upcoming QC에서 예보 수를 읽을 수 없습니다")
     run = re.search(r"^runId: (\S+)$", report.split("## ")[0], re.MULTILINE)
     return (run[1] if run else None), int(match[1])
-
 
 # 입력 범위·변환·관측 부재·예보 오류를 분리하고 경고를 문서 맨 위에 둔다.
 def quality_report(
@@ -191,7 +195,6 @@ def quality_report(
         "parquet·JSONL은 입력·기준일·모델이 같으면 같은 바이트; QC는 실행 시간·직전 수를 기록함.",
     ]
     return "\n".join(lines) + "\n"
-
 
 # 행 단위 실패는 집계하고 정상 예보는 단건 API와 같은 조립·계약 검증을 거쳐 저장한다.
 def run_batch(start: date = WINDOW_START, end: date = WINDOW_END) -> str:
@@ -246,7 +249,7 @@ def run_batch(start: date = WINDOW_START, end: date = WINDOW_END) -> str:
                 summaries[forecast_id] = {
                     **summary, "runId": run_id, "modelVersion": forecast["modelVersion"],
                     "date_source": row.get("date_source"), "date_available_at": row.get("date_available_at"),
-                    "modelVerdict": forecast["predictionRun"]["modelVerdict"],
+                    "modelVerdict": forecast["predictionRun"]["modelVerdict"], "eventInput": canonical(event),
                     "baselineAvailable": any(e["kind"] == "data" and e["title"] == "개최지 평시 방문"
                                              for e in forecast["evidence"]),
                 }
@@ -260,7 +263,6 @@ def run_batch(start: date = WINDOW_START, end: date = WINDOW_END) -> str:
                 if first_error is None:
                     detail = next(iter(str(error).splitlines()), "메시지 없음")
                     first_error = f"{event['id']}: {type(error).__name__}: {detail}"
-
         # 실행 중 모델·입력이 바뀌면 하나의 runId로 서로 다른 실행 자료를 발행하지 않는다.
         if promoted() != pointer or any(
             row["modelVersion"] != pointer["modelVersion"] or row["modelVerdict"] != pointer["verdict"]
@@ -280,7 +282,6 @@ def run_batch(start: date = WINDOW_START, end: date = WINDOW_END) -> str:
                  "upcoming.parquet": buffer.getvalue(), "upcoming_qc.md": report.encode()})
         return report
 
-
 # 파이프라인의 기존 모듈 진입점에서 기본 기간 또는 명시한 시작일 범위를 실행한다.
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -293,7 +294,6 @@ def main() -> int:
         parser.error(str(error))
     print(run_batch(args.start, args.end), end="")
     return 0
-
 
 # python -m 호출의 종료 코드를 파이프라인에 전달한다.
 if __name__ == "__main__":

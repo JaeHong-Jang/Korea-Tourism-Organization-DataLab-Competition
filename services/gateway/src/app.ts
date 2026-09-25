@@ -6,6 +6,7 @@ import { createEvidenceRoute } from "./routes/evidence.js";
 import { createFestivalsRoute } from "./routes/festivals.js";
 import { createForecastsRoute } from "./routes/forecasts.js";
 import { createHealthRoute } from "./routes/health.js";
+import { createImagesRoute } from "./routes/images.js";
 import { createInsightsRoute } from "./routes/insights.js";
 import { createOpsRoute } from "./routes/ops.js";
 import { createPlansRoute } from "./routes/plans.js";
@@ -25,6 +26,7 @@ export function createApp(
   app.route("/api/health", createHealthRoute(config, fetcher));
   app.route("/api/team/sessions", createTeamSessionsRoute(config, fetcher));
   app.route("/api/team/replay", createTeamReplayRoute());
+  app.route("/api/images", createImagesRoute(config, fetcher));
   app.route("/api/festivals", createFestivalsRoute(config, fetcher));
   app.route("/api/regions.topojson", createRegionsRoute(config, fetcher));
   app.route("/api/forecasts", createForecastsRoute(config, fetcher));

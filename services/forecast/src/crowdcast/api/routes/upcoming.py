@@ -40,3 +40,14 @@ async def upcoming(request: Request) -> JSONResponse:
     result = await response("/v1/festivals/upcoming", calculate)
     result.headers.update(headers)
     return result
+
+
+# 일괄 예보 입력을 그대로 반환하고 목록에 없는 식별자는 404로 구분한다.
+@router.get("/v1/festivals/upcoming/{event_id}/event")
+async def event(event_id: str) -> JSONResponse:
+    path = "/v1/festivals/upcoming/{eventId}/event"
+    try:
+        endpoint_validator(path, "query").validate({"eventId": event_id})
+    except ValidationError:
+        raise HTTPException(400, "행사 식별자 오류") from None
+    return await response(path, lambda: find_upcoming(event_id=event_id)[1][0])

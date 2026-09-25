@@ -1,7 +1,10 @@
 // 근거 통계와 근거 한 건을 knowledge의 조회 계약으로 중계한다
 import { createKnowledgeClient } from "../clients/knowledge-client.js";
 import { createKnowledgeQueries } from "../clients/knowledge-queries.js";
-import { datalabUsageSchema } from "../clients/query-schemas.js";
+import {
+  datalabUsageSchema,
+  knowledgeGraphSchema,
+} from "../clients/query-schemas.js";
 import type { GatewayConfig } from "../config.js";
 import { responseSchema } from "../contract/responses.js";
 import {
@@ -24,6 +27,13 @@ export function createEvidenceRoute(
       proxyOptions(config, "knowledge", fetcher, c.req.raw.signal),
     );
     return proxyJson(datalabUsageSchema, await queries.datalabUsage());
+  });
+  // 고정 그래프 경로를 근거 식별자보다 먼저 연결한다
+  route.get("/graph", async (c) => {
+    const queries = createKnowledgeQueries(
+      proxyOptions(config, "knowledge", fetcher, c.req.raw.signal),
+    );
+    return proxyJson(knowledgeGraphSchema, await queries.graph());
   });
   route.get("/:id", async (c) => {
     const id = c.req.param("id");

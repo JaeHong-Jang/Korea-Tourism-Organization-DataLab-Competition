@@ -3,10 +3,15 @@ import { RequestTimeoutError } from "../../clients/request-deadline.js";
 import { ServiceHttpError } from "../../clients/request-json.js";
 import { koreanToday } from "../analysis/as-of.js";
 import type { TeamMessage } from "../analysis/draft-answer.js";
+import { ruleIntents } from "../lead/classify.js";
 import type { Deadline } from "../lead/deadline.js";
 import { followup } from "../lead/followups.js";
 import { AnalysisGateError, ExplanationGateError } from "../lead/gates.js";
 import { newForecast } from "../lead/playbooks.js";
+import { rulePurpose } from "../lead/purpose.js";
+import { selectedEvent } from "../lead/selected-event.js";
+import { startConsultation } from "../lead/start.js";
+import { recommendFestivals } from "../recommend/run.js";
 import { isInitialWhatif } from "../whatif/intent.js";
 import type { EventWriter } from "./events.js";
 import { createExecutor } from "./executor.js";
@@ -50,8 +55,10 @@ export async function runRequest(
   deadline: Deadline,
 ) {
   const previousForecastId = session.forecastId;
+  const previousPublication = session.published;
   const isFollowup = session.completed;
   let newMode = !isFollowup;
+  let recommendation = false;
   const today = koreanToday();
   const cancel = () => deadline.abort(disconnected.reason);
   disconnected.addEventListener("abort", cancel, { once: true });
@@ -63,6 +70,40 @@ export async function runRequest(
       deadline,
       writer,
     );
+    // 행사 선택은 원문의 분류·추출보다 우선하며 기존 발행본이 있어도 새 예보다
+    if (message.eventId) {
+      newMode = true;
+      await selectedEvent(
+        session,
+        message.eventId,
+        writer,
+        deadline,
+        settings,
+        today,
+      );
+      return;
+    }
+    if (
+      !session.pendingPurpose &&
+      (!isFollowup ||
+        /추천|가고\s*싶|갈\s*만한|구경|놀러|데이트/.test(message.text) ||
+        !ruleIntents(message.text).some((intent) =>
+          ["why", "save", "draft", "whatif"].includes(intent),
+        )) &&
+      rulePurpose(message.text) === "recommend" &&
+      !message.answer
+    ) {
+      recommendation = true;
+      await recommendFestivals(
+        message.text,
+        today,
+        execute,
+        writer,
+        deadline,
+        settings,
+      );
+      return;
+    }
     if (isFollowup) {
       await followup(
         session,
@@ -106,9 +147,19 @@ export async function runRequest(
       });
       return;
     }
-    await newForecast(
+    const initial = await startConsultation(
       session,
       message,
+      execute,
+      writer,
+      deadline,
+      settings,
+      today,
+    );
+    if (!initial) return;
+    await newForecast(
+      session,
+      initial,
       execute,
       writer,
       deadline,
@@ -122,11 +173,13 @@ export async function runRequest(
     try {
       await writer.emit("done", {
         sessionId: session.id,
-        forecastId: !newMode
-          ? (previousForecastId ?? null)
-          : session.forecastId !== previousForecastId
-            ? (session.forecastId ?? null)
-            : null,
+        forecastId: recommendation
+          ? null
+          : !newMode
+            ? (previousForecastId ?? null)
+            : session.published !== previousPublication
+              ? (session.forecastId ?? null)
+              : null,
       });
     } finally {
       deadline.dispose();
