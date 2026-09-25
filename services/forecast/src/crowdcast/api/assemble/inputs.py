@@ -45,6 +45,15 @@ def feature_event(event: dict[str, Any]) -> dict[str, Any]:
         "edition": event["edition"],
         "hazard_flags": event["hazards"],
         "continuity_break": event["sigunguCode"] in BREAK_CODES,
+        **{
+            name: event[name]
+            for name in (
+                "visitors_announced",
+                "visitors_announced_meaning",
+                "visitors_announced_available_at",
+            )
+            if name in event
+        },
     }
 
 
