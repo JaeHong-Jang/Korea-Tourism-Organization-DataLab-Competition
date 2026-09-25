@@ -78,6 +78,12 @@ const allowedPaths: {
     path: /^snapshots\/f-[^/]*$/,
     responseSchema: responseSchema("forecast-report"),
   },
+  // 공유 링크(M5-F5)는 토큰으로 발행 스냅샷을 읽기 전용으로 연다
+  {
+    method: "GET",
+    path: /^shares\/sh-[A-Za-z0-9_-]{16,64}$/,
+    responseSchema: responseSchema("forecast-report"),
+  },
   {
     method: "POST",
     path: /^events$/,

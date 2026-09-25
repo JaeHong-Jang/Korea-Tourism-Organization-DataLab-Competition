@@ -5,6 +5,7 @@ import type {
   Forecast,
   ForecastReport,
   GateReport,
+  ReforecastResult,
   RegionBaseline,
   SimilarEvent,
   Weather,
@@ -19,6 +20,7 @@ type Responses = {
   forecast: Forecast;
   "forecast-report": ForecastReport;
   "gate-report": GateReport;
+  "reforecast-result": ReforecastResult;
   "region-baseline": RegionBaseline;
   "similar-event": SimilarEvent;
   weather: Weather;
