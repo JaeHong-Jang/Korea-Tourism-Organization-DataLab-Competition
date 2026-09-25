@@ -104,7 +104,8 @@
    "evidence": "develop 병합, forecast 899, 실제 실행 3종(데이터 미수집 → 종료 1 정상), sol PASS"
   },
   "T-105": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T04:54:09.646Z"
   },
   "T-106": {
    "status": "todo"
@@ -151,7 +152,8 @@
    "evidence": "develop 442924c · forecast 1294 · sol PASS · 선정 20건(등록은 9/29 오케스트레이터)"
   },
   "T-203b": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T04:54:09.564Z"
   },
   "T-210": {
    "status": "todo"
@@ -430,7 +432,8 @@
    "note": "9/25 13:30 사용자 요청으로 중단 — 워크트리에 부분 결과, 같은 명세로 재디스패치해 이어 감"
   },
   "T-430b": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T04:54:09.475Z"
   }
  },
  "history": [
@@ -1314,6 +1317,21 @@
    "id": "H3",
    "status": "done",
    "evidence": "취소 — 데이터랩 DIY는 문화관광축제만·데이터 없음(9/25 사용자 결정, T-203b 조치 1로 대체)"
+  },
+  {
+   "at": "2026-09-25T04:54:09.475Z",
+   "id": "T-430b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:54:09.564Z",
+   "id": "T-203b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:54:09.646Z",
+   "id": "T-105",
+   "status": "running"
   }
  ]
 }

@@ -1008,6 +1008,17 @@
    "accept": "13역할×5상태, 팀 색·표식 유지"
   },
   {
+   "id": "T-434a",
+   "type": "task",
+   "lane": "L4c",
+   "priority": "P0",
+   "deps": [
+    "T-433b"
+   ],
+   "title": "전국 판 움직임 — KTX·장난감 차·고래 봇(연출)",
+   "accept": "p95 ≤ 1.3배, reduced-motion 정지"
+  },
+  {
    "id": "R-07",
    "type": "review",
    "kinds": [
@@ -1097,7 +1108,8 @@
     "T-430b",
     "H3",
     "H8",
-    "H2"
+    "H2",
+    "T-434a"
    ],
    "title": "제출 전 종합 검토",
    "checklist": [
