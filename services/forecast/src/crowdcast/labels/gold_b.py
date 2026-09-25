@@ -134,6 +134,8 @@ def parse_row(
         f"확인일={raw['diy_checked_at']}; 메모={raw['diy_note']}",
         spatial_scope="행사장" if area_matches == "예" else "지정영역",
     )
+    if area_matches != "예":
+        flag(row, "영역 미확인 골드B")
     if not raw["diy_area"].strip():
         flag(row, "diy_area_missing")
     checked = date.fromisoformat(raw["diy_checked_at"])

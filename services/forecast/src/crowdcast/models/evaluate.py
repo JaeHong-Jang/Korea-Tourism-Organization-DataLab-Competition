@@ -84,6 +84,23 @@ def run_models(
     )
     if result["folds"] != result["sensitivity"]["folds"]:
         raise RuntimeError("조건부·민감도 백테스트 분할 불일치")
+    # 보정비율과 등급별 학습 쌍 수는 저장한 모델에서 읽어 보고서에도 그대로 공개한다.
+    result["announcement_calibration"] = []
+    for definition, directory in (("조건부", models_stage), ("파일명 민감도", sensitivity_directory)):
+        for fold in result["folds"]:
+            if fold["skipped"] is not None:
+                continue
+            state = json.loads((directory / str(fold["year"]) / "simple.json").read_text(encoding="utf-8"))
+            result["announcement_calibration"].append(
+                {
+                    "definition": definition,
+                    "year": fold["year"],
+                    "ratio": state["announced_ratio"],
+                    "pairs": state["announced_pairs"],
+                }
+            )
+
+    # 선택 후 표본 분모는 행사 유형·연도별로 따로 기록한다.
     selected_counts = Counter(
         (row["year"], index[row["event_id"]].get("type") or "미상") for row in labels.to_dicts()
     )

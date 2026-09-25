@@ -9,7 +9,7 @@ import polars as pl
 from crowdcast.features.availability import publication_date
 
 
-# 규모 구간은 정답을 모르는 예측 시점에는 전회차 또는 학습 유형 중앙값으로 선택한다.
+# 규모 구간은 정답 대신 전회차·보정한 발표치·학습 유형 중앙값으로 선택한다.
 def size_band(value: float) -> str:
     return "<1000" if value < 1000 else "1000~5000" if value <= 5000 else ">5000"
 
@@ -38,6 +38,8 @@ class SimpleModel:
         self.groups: dict[str, list[list[float]]] = {}
         self.residuals: dict[str, list[list[float]]] = {}
         self.global_median = 0.0
+        self.announced_ratio: float | None = None
+        self.announced_pairs: dict[str, int] = {}
 
     # 실버는 보조 정답이라 가중치를 낮춘다(06 §2 — LightGBM과 같은 설정). B0 유형 중앙값만 무가중이다.
     def fit(self, frame: pl.DataFrame, weights: dict[str, float] | None = None) -> "SimpleModel":
@@ -54,6 +56,18 @@ class SimpleModel:
         self.weighted_type_medians.clear()
         self.groups.clear()
         self.residuals.clear()
+        self.announced_pairs.clear()
+        # 전년 누적 발표치를 입력 기간으로 나눈 규모 대용치와 정답의 비율을 학습 표본에서만 맞춘다.
+        ratios = []
+        for row in rows:
+            daily = announced_daily(row)
+            if daily is not None and daily > 0 and row["daily_mean"] > 0:
+                ratios.append([daily / row["daily_mean"], weight(row)])
+                tier = row.get("label_tier", "미상")
+                self.announced_pairs[tier] = self.announced_pairs.get(tier, 0) + 1
+        self.announced_ratio = float(weighted_quantile(ratios, 0.5)) if ratios else None
+
+        # 유형 중앙값과 규모 계층은 보정·평가 정답을 보지 않고 같은 학습 표본으로 고정한다.
         self.global_median = float(weighted_quantile([[r["daily_mean"], weight(r)] for r in rows], 0.5))
         for kind in sorted({event_type(row) for row in rows}):
             same = [row for row in rows if event_type(row) == kind]
@@ -79,11 +93,18 @@ class SimpleModel:
         model.groups = state["groups"]
         model.residuals = state["residuals"]
         model.global_median = state["global_median"]
+        # v1 발행본에는 발표 보정이 없으므로 기존 유형 중앙값 동작을 유지한다.
+        model.announced_ratio = state.get("announced_ratio")
+        model.announced_pairs = state.get("announced_pairs", {})
         return model
 
-    # 이력 없는 신규 행사의 규모는 학습 유형 가중 중앙값에서만 결정한다.
+    # 전회차 골드를 우선하고 발표치·학습 보정 쌍이 없으면 기존 유형 중앙값으로 돌아간다.
     def group(self, row: dict[str, Any]) -> str:
         prior = row.get("previous_daily_mean")
+        if prior is None and self.announced_ratio is not None:
+            daily = announced_daily(row)
+            if daily is not None:
+                prior = daily / self.announced_ratio
         fallback = self.weighted_type_medians.get(event_type(row), self.global_median)
         return event_type(row) + ":" + size_band(prior if prior is not None else fallback)
 
@@ -111,6 +132,16 @@ class SimpleModel:
             center = np.log1p(self.center(row))
             predictions.append(np.expm1(np.maximum(0, [center + min(0, low), center, center + max(0, high)])))
         return np.asarray(predictions)
+
+
+# 누적 발표치를 일평균 실측으로 간주하지 않고 입력 기간으로 나눈 규모 대용치만 만든다.
+def announced_daily(row: dict[str, Any]) -> float | None:
+    announced, duration = row.get("visitors_announced"), row.get("duration")
+    if announced is None or duration is None:
+        return None
+    if not np.isfinite(announced) or announced < 0 or not np.isfinite(duration) or duration <= 0:
+        raise ValueError("발표 방문객수·행사 기간 오류")
+    return float(announced / duration)
 
 
 # B2는 사후 발표·누적 인원·공간 범위 불일치·미공개 수치를 모두 제외한다.

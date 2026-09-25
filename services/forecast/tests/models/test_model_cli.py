@@ -118,7 +118,7 @@ def test_model_execute_outputs_and_input_guard(model_workspace: Path) -> None:
     assert (snapshot(directory), snapshot(reports / first["runId"])) == published
     manifest = json.loads((paths.MODELS / rebuilt["modelVersion"] / "run.json").read_text())
     assert manifest["supersedes"] == {"modelVersion": first["modelVersion"], "changedInputs": ["labels_g0"]}
-    assert "행사 입력 피처 복원 전후" in (reports / rebuilt["runId"] / "backtest.md").read_text()
+    assert "모델·피처 수정 전후" in (reports / rebuilt["runId"] / "backtest.md").read_text()
 
     # 기본 명령으로 다시 실행해도 지정해 둔 비교 실행을 잊지 않고, 다른 비교로 발행본을 바꾸지 못한다.
     new_published = snapshot(reports / rebuilt["runId"])
