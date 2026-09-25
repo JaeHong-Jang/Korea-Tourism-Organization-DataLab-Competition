@@ -19,7 +19,7 @@
 - [R-03 2차 Low] 예보서 본문 ↔ 아래 패널 간격 24px < 본문 안 32px(`styles/pages.css:39`), 견본 핵심 카드 ↔ 다음 행 24 = 24(`kit-page.css:3`) → 바깥 간격을 한 단계 큰 토큰으로.
 - [T-402 R-03 2회차 리뷰 Med — 견본 페이지라 T-406으로 옮김] 근거 칩 → 근거 서랍(카드) 이동 시 **출발 칩 요소를 보관**하고, 서랍 닫기·Esc·"읽던 곳으로"로 스크롤·포커스를 그 칩으로 되돌린다(같은 근거 칩이 여러 곳에 있어 id만으로는 안 된다). 키보드로 확인하는 e2e.
 
-## 계약 결정 대기 (T-603 CONTRACT-CHANGE 제안) — T-406 전에 정한다
+## 계약 결정 (T-603 CONTRACT-CHANGE 제안) — 9/25 결정: S3는 records 예보서 스냅샷만으로 그린다(문장·근거가 다 있다 — knowledge 세션 없는 조회는 P0에 불필요, P1 근거 지도 T-413 때 (a) `?sessionId=`로). 조항·규칙 이름은 `packages/contracts/jsonld/master-labels.json`(knowledge TTL에서 `scripts/master_labels.py`로 생성, `--check`로 일치 확인 — TTL을 바꾸면 다시 생성)
 - 세션 없이 조회하는 `GET /v1/claims/{id}/evidence`·`/v1/evidence/{id}`: 여러 세션에 같은 id가 있으면 모호하다(지금은 404). 후보: (a) 선택 쿼리 `?sessionId=` 추가 + 없으면 "유일하거나 내용이 같을 때만" 응답, (b) 문장 id 전역 유일 규칙(`c-<forecastId>-<n>`). 웹은 늘 세션 문맥이 있으므로 (a)를 기본으로 검토.
 
 ## T-604 (근거 통계·계보·모델 카드 등록)
