@@ -3,19 +3,17 @@ import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { createRecordsClient } from "../../clients/records-client.js";
 import { ServiceHttpError } from "../../clients/request-json.js";
-import { archivist } from "../analysis/archivist.js";
 import { koreanToday } from "../analysis/as-of.js";
 import type { Deadline } from "../lead/deadline.js";
-import { forecastEvent } from "../lead/forecast-event.js";
 import { AnalysisGateError, ExplanationGateError } from "../lead/gates.js";
-import { knowledgeClient, publishForecastReport } from "../lead/publish.js";
+import { forecastKnownEvent } from "../lead/known-event.js";
+import { publishForecastReport } from "../lead/publish.js";
 import { createEventWriter } from "../runtime/events.js";
 import { createExecutor } from "../runtime/executor.js";
 import type { TeamSession } from "../runtime/sessions.js";
 import type { TeamSettings } from "../runtime/settings.js";
 import { ReforecastError } from "./error.js";
 import { previousSnapshot, reforecastResult } from "./result.js";
-import { savedBaseline } from "./saved-baseline.js";
 
 // records 읽기 오류 중 행사 자체의 404만 사용자에게 행사 부재로 돌려준다
 export async function runReforecast(
@@ -66,29 +64,14 @@ export async function runReforecast(
   const execute = createExecutor(session.id, settings, deadline, writer);
   let stage: "A" | "B" | "records" = "A";
   try {
-    await knowledgeClient(settings, deadline).addFacts(session.id, {
-      schema: "event",
-      items: [event],
-    });
-    // 상담처럼 평시·유사 행사 근거를 먼저 적재해야 예보 근거가 가리키는 노드가 그래프에 있다
-    const [{ baseline }, similar] = await Promise.all([
-      execute(
-        savedBaseline,
-        { event, today },
-        "장소와 평시 근거를 확인해요.",
-        3,
-      ),
-      execute(archivist, event, "유사 행사의 근거를 찾아요.", 3),
-    ]);
-    const { bundle, gate } = await forecastEvent(
+    const { bundle, gate } = await forecastKnownEvent(
       session.id,
       event,
-      { baseline, similar },
+      today,
       execute,
       writer,
       deadline,
       settings,
-      today,
     );
     // 예보 id는 입력·기준일·모델의 해시라, 같은 날 같은 조건이면 이미 발행한 예보와 같다 — 변화 없음으로 알린다
     if (snapshots.some((report) => report.forecastId === bundle.forecast.id))

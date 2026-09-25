@@ -71,12 +71,12 @@ export function validateTrace(text: string): ReplayEvent[] {
         (event.event === "gate" &&
           (event.data as { gate: string }).gate === "A"),
     );
-  const ctx = isNew
-    ? { mode: "new" }
-    : {
-        mode: "followup",
-        forecastId,
-      };
+  // 추천 기록에는 카드·게이트 혼입을 금지하는 별도 계약 문맥을 적용한다
+  const ctx = events.some((event) => event.event === "recommend")
+    ? { mode: "recommend" }
+    : isNew
+      ? { mode: "new" }
+      : { mode: "followup", forecastId };
   const problems: string[] = sequenceProblems(events, ctx);
   if (problems.length) return invalid(`SSE 순서 위반: ${problems[0]}`);
   return selected.map(({ envelope, at }) => ({ envelope, at }));

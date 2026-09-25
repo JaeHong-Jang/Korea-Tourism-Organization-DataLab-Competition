@@ -13,6 +13,7 @@ import type {
 import { withRequestDeadline } from "../../clients/request-deadline.js";
 import { contractRegistry } from "../../contract/registry.js";
 import type { Deadline } from "../lead/deadline.js";
+import type { Recommendation } from "../recommend/conditions.js";
 import type { TeamSession } from "./sessions.js";
 import type { TeamSettings } from "./settings.js";
 
@@ -29,6 +30,7 @@ type EventData = {
   forecast: ForecastCard;
   claim: Claim;
   evidence: { items: Evidence[] };
+  recommend: Recommendation;
   suggest: { actions: { id: string; label: string }[] };
   error: {
     code:

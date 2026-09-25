@@ -5,6 +5,7 @@ import type {
   DatalabUsage,
   FestivalSummary,
   Insight,
+  KnowledgeGraph,
   ModelCard,
   OpsStatus,
   PipelineRun,
@@ -57,3 +58,7 @@ export const evalSummarySchema = querySchema<NonNullable<OpsStatus["evals"]>>(
 export const regionsSchema = contractRegistry.compile<Record<string, unknown>>({
   type: "object",
 });
+
+// 전체 기준 그래프도 생성 타입과 원본 계약을 함께 검사한다
+export const knowledgeGraphSchema =
+  querySchema<KnowledgeGraph>("knowledge-graph");

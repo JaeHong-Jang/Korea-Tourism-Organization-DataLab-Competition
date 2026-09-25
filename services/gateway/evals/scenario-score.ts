@@ -35,9 +35,11 @@ export function scoreScenario(
     (
       sequenceProblems(
         turn.events.map((value) => value.envelope),
-        item.parent && item.whatifMode !== "new"
-          ? { mode: "followup", forecastId: sample.parentForecastId }
-          : { mode: "new" },
+        item.category === "recommend"
+          ? { mode: "recommend" }
+          : item.parent && item.whatifMode !== "new"
+            ? { mode: "followup", forecastId: sample.parentForecastId }
+            : { mode: "new" },
       ) as string[]
     ).map((problem) => `요청 ${index + 1}: ${problem}`),
   );

@@ -48,15 +48,15 @@ function publishedSample() {
 }
 
 describe("시나리오 평가", () => {
-  it("23개를 실제 게이트웨이 SSE로 실행하고 후속은 앞 발행 세션을 쓴다", () => {
+  it("26개를 실제 게이트웨이 SSE로 실행하고 후속은 앞 발행 세션을 쓴다", () => {
     const scores = cases.map((item, index) =>
       scoreScenario(item, samples[index]),
     );
     expect(scores.flatMap((score) => score.problems)).toEqual([]);
     const summary = summarizeScenarios(scores);
     expect(summary).toMatchObject({
-      total: 23,
-      passed: 23,
+      total: 26,
+      passed: 26,
       numberMismatches: 0,
       unlinkedClaims: 0,
       llmCalls: 0,
@@ -144,7 +144,7 @@ describe("시나리오 평가", () => {
       },
       "http://127.0.0.1",
     );
-    expect(failed).toHaveLength(23);
+    expect(failed).toHaveLength(26);
     expect(
       failed.every(
         (sample, index) => !scoreScenario(cases[index], sample).passed,
@@ -209,7 +209,7 @@ describe("시나리오 평가", () => {
 
   it("사례 중복·20개 구성과 자료 경계 날짜를 검증한다", async () => {
     const { contents, cases: definitions } = await loadScenarios();
-    expect(readScenarios(contents)).toHaveLength(23);
+    expect(readScenarios(contents)).toHaveLength(26);
     expect(() =>
       readScenarios(`${contents}${contents.split("\n")[0]}`),
     ).toThrow("20개");

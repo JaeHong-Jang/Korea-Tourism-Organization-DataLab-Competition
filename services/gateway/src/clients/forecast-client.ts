@@ -15,6 +15,15 @@ const eventSchema = responseSchema("event");
 // 예측 수치를 직접 만들지 않고 결정적 예측 서비스의 응답만 전달한다
 export function createForecastClient(options: ServiceClientOptions) {
   return {
+    // 일괄 예보가 보존한 입력을 받아 행사 추출과 장소 재질문을 생략한다
+    upcomingEvent(eventId: string) {
+      return requestJson(
+        options,
+        `/v1/festivals/upcoming/${encodeURIComponent(eventId)}/event`,
+        eventSchema,
+        { method: "GET" },
+      );
+    },
     // 좌표를 추측하지 않고 장소 후보를 서비스에 요청한다
     geocode(venueText: string, sidoHint?: string | null) {
       return requestJson(options, "/v1/geocode", geocodeResponseSchema, {

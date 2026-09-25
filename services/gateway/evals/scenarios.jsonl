@@ -21,3 +21,6 @@
 {"id":"W01","category":"followup","tags":["whatif"],"parent":"N02","whatifMode":"new","text":"유료면?","expected":{"askFields":[],"published":true,"intent":"whatif"}}
 {"id":"W02","category":"followup","tags":["whatif"],"parent":"N06","whatifMode":"new","text":"일요일이면?","expected":{"askFields":[],"published":true,"intent":"whatif"}}
 {"id":"W03","category":"followup","tags":["whatif"],"parent":"N07","whatifMode":"new","text":"밤이면?","expected":{"askFields":[],"published":true,"intent":"whatif"}}
+{"id":"R01","category":"recommend","tags":["방문객","행사찾기"],"text":"불꽃놀이 행사에 가고 싶어","expected":{"askFields":[],"published":false,"intent":"recommend"}}
+{"id":"R02","category":"recommend","tags":["방문객","행사찾기"],"text":"이번 주말 서울 축제 추천","expected":{"askFields":[],"published":false,"intent":"recommend"}}
+{"id":"R03","category":"recommend","tags":["방문객","행사찾기"],"text":"한적한 먹거리 축제 추천","expected":{"askFields":[],"published":false,"intent":"recommend"}}

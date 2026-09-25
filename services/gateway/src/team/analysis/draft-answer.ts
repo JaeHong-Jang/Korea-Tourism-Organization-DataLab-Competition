@@ -8,7 +8,11 @@ import { draftQuestions } from "./normalize/draft.js";
 import { normalizeVenue } from "./normalize/venue.js";
 
 export type DraftAnswer = Partial<Omit<EventDraft, "missing" | "ambiguities">>;
-export type TeamMessage = { text: string; answer?: DraftAnswer | null };
+export type TeamMessage = {
+  text: string;
+  answer?: DraftAnswer | null;
+  eventId?: string;
+};
 const {
   missing: _missing,
   ambiguities: _ambiguities,
@@ -22,6 +26,9 @@ export const validateMessage = contractRegistry.compile<TeamMessage>({
   required: ["text"],
   properties: {
     text: { type: "string", maxLength: 8_000 },
+    eventId: {
+      $ref: "https://crowdcast.local/schemas/common.schema.json#/$defs/eventId",
+    },
     answer: {
       type: ["object", "null"],
       additionalProperties: false,
