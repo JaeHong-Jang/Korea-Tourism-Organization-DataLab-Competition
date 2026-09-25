@@ -1,7 +1,9 @@
 /* 상담 서랍은 화면 끝에 붙이고 넓은 화면에서는 본문 옆 공간을 쓴다. */
 .assistant-shell { position: relative; z-index: var(--z-sheet); }
+.graph-menu-slot { display: contents; }
 .assistant-panel { position: fixed; z-index: var(--z-sheet); top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; width: min(420px, 100vw); padding: var(--space-4); border-left: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); overflow-y: auto; }
 .assistant-panel__header { display: flex; justify-content: space-between; align-items: start; gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--line); }
+.assistant-panel__header > div { flex: 1; }
 .assistant-panel__header p { margin: var(--space-1) 0 0; color: var(--ink-2); font-size: var(--text-sm); }
 .assistant-panel__header button, .assistant-recommendation__actions button, .assistant-recommendations > button, .consult-start button, .festival-list__consult { padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); cursor: pointer; }
 .assistant-panel__conversation { display: grid; align-content: start; gap: var(--space-3); min-height: 0; flex: 1; overflow-y: auto; padding-block: var(--space-4); }
@@ -22,17 +24,50 @@
 .assistant-recommendation__image img { width: 100%; height: 100%; object-fit: cover; }
 .assistant-recommendation__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .assistant-recommendation__actions button:last-child { font-size: var(--text-caption); }
-.assistant-whale { position: fixed; z-index: var(--z-popover); right: var(--space-5); bottom: var(--space-5); display: grid; justify-items: center; width: 104px; min-height: 104px; padding: var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); cursor: pointer; }
-.assistant-whale__figure { display: block; width: 92px; height: 76px; }
-.assistant-whale__figure canvas { width: 100%; height: 100%; }
-.assistant-whale__status { padding: var(--space-1) var(--space-2); border-radius: var(--radius-input); background: var(--surface-sunken); font-size: var(--text-caption); }
+.assistant-whale { position: fixed; z-index: var(--z-popover); display: grid; justify-items: center; width: 92px; height: 100px; padding: var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); cursor: grab; touch-action: none; user-select: none; }
+.assistant-whale--dragging { cursor: grabbing; }
+.assistant-whale__figure { display: grid; place-items: center; width: 78px; height: 70px; animation: assistant-float 4s ease-in-out infinite; }
+.assistant-whale__figure img { display: block; max-width: 100%; max-height: 100%; pointer-events: none; }
+.assistant-whale__status { padding: var(--space-1) var(--space-2); border-radius: var(--radius-input); background: var(--surface-sunken); font-size: var(--text-caption); white-space: nowrap; }
+.assistant-whale__dots, .consult-work__dots { display: inline-block; animation: assistant-pulse 1.2s ease-in-out infinite; }
 .assistant-shell--open .assistant-whale { display: none; }
+.assistant-invitation { position: fixed; z-index: var(--z-popover); right: 124px; bottom: var(--space-8); width: 215px; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); }
+.assistant-invitation::after { content: ""; position: absolute; right: -8px; bottom: var(--space-4); width: 14px; height: 14px; transform: rotate(45deg); border-top: 1px solid var(--line); border-right: 1px solid var(--line); background: var(--surface); }
+.assistant-invitation p { margin: 0 0 var(--space-2); }
+.assistant-invitation button, .assistant-guide button { padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--link); cursor: pointer; }
+.assistant-invitation button.assistant-invitation__close { position: absolute; top: var(--space-1); right: var(--space-1); padding: 0 var(--space-1); }
+.assistant-guide__target { position: fixed; z-index: var(--z-popover); pointer-events: none; outline: 3px solid var(--focus); outline-offset: 3px; border-radius: var(--radius-input); }
+.assistant-guide__card { position: fixed; z-index: var(--z-sheet); left: var(--space-5); bottom: var(--space-5); width: min(330px, calc(100vw - 2 * var(--space-5))); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); }
+.assistant-guide__card h2 { margin: var(--space-2) 0; font-size: var(--text-section); }
+.assistant-guide__card p { margin: var(--space-2) 0; }
+.assistant-guide__actions { display: flex; gap: var(--space-2); justify-content: flex-end; }
+@keyframes assistant-float { 50% { transform: translateY(-4px); } }
+@keyframes assistant-pulse { 50% { opacity: .3; } }
 .consult-start { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: var(--space-4) 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
 .consult-start p { margin: 0; }
-.consult-page .consult-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.consult-page .consult-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+.consult-page .consult-layout > .feature-panel { min-height: 0; }
+.consult-page .team-groups { display: grid; gap: var(--space-2); }
+.consult-page .team-group { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: var(--space-2); }
+.consult-page .team-group h3 { margin: 0; }
+.consult-page .team-members { display: flex; flex-wrap: nowrap; gap: var(--space-2); overflow-x: auto; }
+.consult-page .team-group:first-child .team-members { justify-content: center; }
+.consult-page .team-member { flex: 0 0 48px; height: 48px; }
+.consult-page .team-gates { margin-top: var(--space-3); }
+.consult-work { justify-self: start; max-width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); font-size: var(--text-sm); }
+.consult-work__current, .consult-work li { display: flex; align-items: center; gap: var(--space-2); }
+.consult-work details summary { cursor: pointer; }
+.consult-work ol { display: grid; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.consult-result { display: grid; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.assistant-panel .consult-result h3, .assistant-panel .consult-result p { margin: 0; }
+.consult-result__conclusion { font-weight: 700; }
+.assistant-panel .consult-result summary { cursor: pointer; color: var(--link); }
+.consult-result__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.consult-result__actions a { padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-button); color: var(--link); }
+.consult-result small { color: var(--ink-2); }
 .consult-page .event-summary { grid-column: 1 / -1; }
 .festival-list__consult { margin: var(--space-2); font-size: var(--text-caption); }
 @media (min-width: 768px) { .app-shell:has(.assistant-shell--open) main { margin-right: 420px; } }
 @media (max-width: 999px) { .consult-page .consult-layout { grid-template-columns: 1fr; } .consult-page .event-summary { grid-column: auto; } }
 @media (max-width: 767px) { .assistant-panel { width: 100vw; border-left: 0; } }
-@media (prefers-reduced-motion: reduce) { .assistant-whale, .assistant-whale * { animation: none; transition: none; } }
+@media (prefers-reduced-motion: reduce) { .assistant-whale, .assistant-whale *, .consult-work__dots { animation: none; transition: none; } }

@@ -1,5 +1,5 @@
 // 전역 상담 세션의 대화·되묻기·후속 질문을 오른쪽 서랍에 모은다.
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ErrorState } from "../../components/common/error-state";
 import { PetAvatar } from "../../components/pets";
 import { Button } from "../../components/ui/button";
@@ -18,7 +18,7 @@ import { RecommendationCards } from "./recommendation-cards";
 const examples = ["불꽃놀이 행사에 가고 싶어", "행사를 직접 설명할게요"];
 
 // 화면 밖에서 고른 행사는 입력을 채우지 않고 eventId를 넣어 바로 전송한다.
-export function AssistantPanel() {
+export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
   const session = useSharedConsultSession();
   const {
     text,
@@ -29,7 +29,11 @@ export function AssistantPanel() {
     forecastId,
     suggestions,
     claims,
-    evidence,
+    forecasts,
+    replies,
+    work,
+    gateReplies,
+    completed,
     error,
     replyError,
     busy,
@@ -45,11 +49,40 @@ export function AssistantPanel() {
   );
   const clearRequest = useAssistantStore((state) => state.clearRequest);
   const panelRef = useRef<HTMLElement>(null);
+  const [nearError, setNearError] = useState("");
   const pick = (festival: { name: string; eventId: string }) =>
     void send({
       text: `${festival.name} 예보해 줘`,
       eventId: festival.eventId,
     });
+
+  // 위치는 허락받은 한 번의 메시지에만 넣고 저장하지 않는다.
+  const findNear = () => {
+    if (!navigator.geolocation) {
+      setNearError("지역 이름을 말해 주세요.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        if (
+          coords.latitude < 33 ||
+          coords.latitude > 39 ||
+          coords.longitude < 124 ||
+          coords.longitude > 132
+        ) {
+          setNearError("지역 이름을 말해 주세요.");
+          return;
+        }
+        setNearError("");
+        void send({
+          text: "내 위치에서 가까운 축제 찾아줘",
+          near: { lat: coords.latitude, lng: coords.longitude },
+        });
+      },
+      () => setNearError("지역 이름을 말해 주세요."),
+      { enableHighAccuracy: false, timeout: 10000 },
+    );
+  };
 
   // 버튼으로 열린 서랍은 제목에 초점을 두고 대기 중 요청을 한 번만 소비한다.
   useEffect(() => {
@@ -79,6 +112,9 @@ export function AssistantPanel() {
         <button type="button" onClick={closePanel} aria-label="대화 닫기">
           닫기
         </button>
+        <button type="button" onClick={onGuide}>
+          사용법 +
+        </button>
       </header>
       <div className="assistant-panel__conversation">
         {!sent.length && (
@@ -106,7 +142,16 @@ export function AssistantPanel() {
             </div>
           </>
         )}
-        <ConsultMessages sent={sent} claims={claims} evidence={evidence} />
+        <ConsultMessages
+          sent={sent}
+          claims={claims}
+          forecasts={forecasts}
+          replies={replies}
+          work={work}
+          gateReplies={gateReplies}
+          completed={completed}
+          busy={busy}
+        />
         {recommendation && (
           <RecommendationCards
             recommendation={recommendation}
@@ -165,7 +210,7 @@ export function AssistantPanel() {
         )}
       </div>
       <p className="consult-live" aria-live="polite">
-        {summary}
+        {nearError || summary}
       </p>
       {asks.length ? (
         <AskReply
@@ -187,6 +232,7 @@ export function AssistantPanel() {
           answering={false}
           onSubmit={() => void send({ text })}
           onStop={() => controller.current?.abort()}
+          onNear={findNear}
         />
       )}
     </aside>

@@ -64,6 +64,50 @@ it("선택 행사와 추천 스트림을 계약대로 전달한다", async () =>
   expect(received).toEqual(fixtureDocument.events);
 });
 
+// 위치는 요청 본문에만 담고 팀장의 자연스러운 답은 계약 검사 뒤 받는다.
+it("위치 추천 요청과 reply 이벤트를 전달한다", async () => {
+  const done = fixtureDocument.events.at(-1);
+  if (!done) throw new Error("추천 픽스처에 완료 이벤트가 없어요.");
+  const events = [
+    ...fixtureDocument.events.slice(0, -1),
+    {
+      event: "reply",
+      seq: fixtureDocument.events.length - 1,
+      data: { text: "가까운 행사를 골라 봤어요.", source: "template" },
+    },
+    { ...done, seq: fixtureDocument.events.length },
+  ] as SseEvent[];
+  const fetcher = vi.fn(
+    async (_input: RequestInfo | URL, _init?: RequestInit) =>
+      new Response(
+        events
+          .map(
+            (event) =>
+              `event: ${event.event}\ndata: ${JSON.stringify(event)}\n\n`,
+          )
+          .join(""),
+        { headers: { "Content-Type": "text/event-stream" } },
+      ),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  const received: SseEvent[] = [];
+  await postConsultMessage(
+    "s-demo-0001",
+    {
+      text: "내 위치에서 가까운 축제 찾아줘",
+      near: { lat: 37.4563, lng: 126.7052 },
+    },
+    new AbortController().signal,
+    null,
+    (event) => received.push(event),
+  );
+  expect(JSON.parse(fetcher.mock.calls[0]?.[1]?.body as string).near).toEqual({
+    lat: 37.4563,
+    lng: 126.7052,
+  });
+  expect(received.some((event) => event.event === "reply")).toBe(true);
+});
+
 // 추천은 계약의 인원 구간·이유를 그대로 보여 주고 빈 목록이면 조건 변경을 제안한다.
 it("추천 카드가 근거 문구와 구간을 표시한다", () => {
   const markup = renderToStaticMarkup(
@@ -120,7 +164,7 @@ it("되묻기 자유 답을 공용 입력칸에서 보낸다", async () => {
 });
 
 // 정지 설정은 WebGL 캔버스를 만들지 않고 접근 가능한 버튼의 펫 그림을 남긴다.
-it("움직임 줄이기에서는 3D 캔버스를 쓰지 않는다", () => {
+it("움직임 줄이기에서도 사용자 고래 그림을 쓴다", () => {
   vi.stubGlobal("matchMedia", () => ({
     matches: true,
     addEventListener: () => {},
@@ -134,6 +178,6 @@ it("움직임 줄이기에서는 3D 캔버스를 쓰지 않는다", () => {
       onClick={() => {}}
     />,
   );
-  expect(markup).toContain("<svg");
+  expect(markup).toContain("/assistant/whale.png");
   expect(markup).not.toContain("<canvas");
 });

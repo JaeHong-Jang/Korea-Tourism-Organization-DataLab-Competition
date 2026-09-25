@@ -1,214 +1,165 @@
-// 앱 위에 작은 저폴리 고래를 띄우고 정지 설정에서는 펫 그림을 쓴다.
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { Group } from "three";
-import { PetAvatar } from "../../components/pets";
+// 사용자가 준 고래 그림을 상태가 보이는 이동식 상담 버튼으로 띄운다.
+import {
+  type KeyboardEvent,
+  type PointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  clampWhale,
+  dragWhale,
+  nudgeWhale,
+  rememberWhale,
+  restoreWhale,
+  type WhalePoint,
+} from "./whale-position";
 
-// 고래의 몸통·꼬리·지느러미·눈을 단순 형상으로 그린다.
-function WhaleMesh() {
-  const group = useRef<Group>(null);
-  const colors = getComputedStyle(document.documentElement);
-  const shell = colors.getPropertyValue("--team-lead").trim();
-  const face = colors.getPropertyValue("--on-brand").trim();
-  const eye = colors.getPropertyValue("--ink").trim();
-  useFrame((state) => {
-    if (group.current) {
-      group.current.position.y = Math.sin(state.clock.elapsedTime * 1.2) * 0.12;
-      group.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.6) * 0.15;
-    }
-  });
-  return (
-    <group ref={group} rotation={[0, -0.2, 0]}>
-      <mesh scale={[1.45, 0.86, 0.95]}>
-        <sphereGeometry args={[1, 10, 8]} />
-        <meshBasicMaterial color={shell} />
-      </mesh>
-      <mesh position={[0.25, -0.32, 0.62]} scale={[0.94, 0.42, 0.48]}>
-        <sphereGeometry args={[1, 10, 8]} />
-        <meshBasicMaterial color={face} />
-      </mesh>
-      <mesh position={[-1.55, 0.2, 0]} rotation={[0, 0, -0.5]}>
-        <coneGeometry args={[0.7, 1.25, 4]} />
-        <meshBasicMaterial color={shell} />
-      </mesh>
-      <mesh position={[0.35, 0.73, 0]} rotation={[0, 0, -0.2]}>
-        <coneGeometry args={[0.35, 0.7, 4]} />
-        <meshBasicMaterial color={shell} />
-      </mesh>
-      <mesh position={[-0.3, 0.12, 0.91]}>
-        <sphereGeometry args={[0.12, 6, 4]} />
-        <meshBasicMaterial color={eye} />
-      </mesh>
-    </group>
-  );
-}
+const size = { width: 92, height: 100 };
 
-// 탭과 화면에서 보이지 않을 때 캔버스 프레임을 멈춘다.
+// 끌기와 누르기를 구분하고 키보드 위치 변경도 저장한다.
 export function FloatingWhale({
   working,
   published,
   onClick,
+  onMoved,
   panelOpen,
 }: {
   working: boolean;
   published: boolean;
   onClick: () => void;
+  onMoved?: () => void;
   panelOpen: boolean;
 }) {
-  const target = useRef<HTMLButtonElement>(null);
-  const [inView, setInView] = useState(true);
-  const [tabVisible, setTabVisible] = useState(() => !document.hidden);
-  const [webglAvailable] = useState(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-      return false;
-    try {
-      return Boolean(document.createElement("canvas").getContext("webgl2"));
-    } catch {
-      return false;
-    }
-  });
-  const [reduced, setReduced] = useState(
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  const [position, setPosition] = useState<WhalePoint>(() =>
+    restoreWhale(size),
   );
-  const [placement, setPlacement] = useState<{
-    right: number;
-    bottom: number;
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{
+    id: number;
+    pointer: WhalePoint;
+    origin: WhalePoint;
+    moved: boolean;
   } | null>(null);
+  const suppressClick = useRef(false);
 
-  // 본문 버튼이 바뀌면 가장자리부터 빈 자리를 찾아 고래가 조작을 가리지 않게 한다.
-  useLayoutEffect(() => {
-    const whale = target.current;
-    const main = document.querySelector("main");
-    if (!whale || !main || panelOpen) return;
-    let frame = 0;
-    const place = () => {
-      frame = 0;
-      const size = whale.getBoundingClientRect();
-      const gap = Number.parseFloat(
-        getComputedStyle(document.documentElement).getPropertyValue(
-          "--space-5",
-        ),
-      );
-      const controls = Array.from(
-        main.querySelectorAll<HTMLElement>(
-          "button, a, input, select, textarea, summary, [role='button']",
-        ),
-      )
-        .filter(
-          (control) =>
-            !control.matches(".scene-name-tag") &&
-            control.getClientRects().length > 0 &&
-            getComputedStyle(control).visibility !== "hidden",
-        )
-        .map((control) => control.getBoundingClientRect());
-      const overlaps = (left: number, top: number) =>
-        controls.some(
-          (box) =>
-            left < box.right + gap &&
-            left + size.width > box.left - gap &&
-            top < box.bottom + gap &&
-            top + size.height > box.top - gap,
-        );
-      let next = { right: gap, bottom: gap };
-      let found = false;
-      for (
-        let right = gap;
-        right + size.width <= window.innerWidth - gap && !found;
-        right += size.width + gap
-      ) {
-        const left = window.innerWidth - right - size.width;
-        for (
-          let bottom = gap;
-          bottom + size.height <= window.innerHeight - gap;
-          bottom += gap
-        ) {
-          if (!overlaps(left, window.innerHeight - bottom - size.height)) {
-            next = { right, bottom };
-            found = true;
-            break;
-          }
-        }
-      }
-      setPlacement((current) =>
-        current?.right === next.right && current.bottom === next.bottom
-          ? current
-          : next,
-      );
-    };
-    const schedule = () => {
-      if (!frame) frame = window.requestAnimationFrame(place);
-    };
-    const resize = new ResizeObserver(schedule);
-    resize.observe(main);
-    resize.observe(whale);
-    const changes = new MutationObserver(schedule);
-    changes.observe(main, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class", "hidden", "aria-expanded"],
-    });
-    window.addEventListener("resize", schedule);
-    window.addEventListener("scroll", schedule, true);
-    place();
-    return () => {
-      window.cancelAnimationFrame(frame);
-      resize.disconnect();
-      changes.disconnect();
-      window.removeEventListener("resize", schedule);
-      window.removeEventListener("scroll", schedule, true);
-    };
-  }, [panelOpen]);
+  // 창 크기가 바뀌면 저장 위치도 새 화면 안으로 돌려놓는다.
   useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduced(media.matches);
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    const resize = () =>
+      setPosition((current) => {
+        const next = clampWhale(current, size);
+        rememberWhale(next);
+        return next;
+      });
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
   }, []);
-  useEffect(() => {
-    const update = () => setTabVisible(!document.hidden);
-    document.addEventListener("visibilitychange", update);
-    const observer = new IntersectionObserver((entries) =>
-      setInView(entries[0]?.isIntersecting ?? false),
+
+  // 포인터를 잡아 그림 바깥으로 나가도 이동이 이어지게 한다.
+  const start = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return;
+    drag.current = {
+      id: event.pointerId,
+      pointer: { x: event.clientX, y: event.clientY },
+      origin: position,
+      moved: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  // 짧은 손 떨림은 클릭으로 두고 실제 이동만 고래 위치에 반영한다.
+  const move = (event: PointerEvent<HTMLButtonElement>) => {
+    const current = drag.current;
+    if (!current || current.id !== event.pointerId) return;
+    const dx = event.clientX - current.pointer.x;
+    const dy = event.clientY - current.pointer.y;
+    if (!current.moved && Math.hypot(dx, dy) < 6) return;
+    current.moved = true;
+    setDragging(true);
+    setPosition(
+      dragWhale(
+        current.origin,
+        current.pointer,
+        { x: event.clientX, y: event.clientY },
+        size,
+      ),
     );
-    if (target.current) observer.observe(target.current);
-    return () => {
-      document.removeEventListener("visibilitychange", update);
-      observer.disconnect();
-    };
-  }, []);
+  };
+
+  // 놓을 때만 위치를 기록하고 이어지는 합성 클릭은 대화 열기로 보지 않는다.
+  const finish = (event: PointerEvent<HTMLButtonElement>) => {
+    const current = drag.current;
+    if (!current || current.id !== event.pointerId) return;
+    if (current.moved) {
+      const next = dragWhale(
+        current.origin,
+        current.pointer,
+        { x: event.clientX, y: event.clientY },
+        size,
+      );
+      setPosition(next);
+      rememberWhale(next);
+      onMoved?.();
+      suppressClick.current = true;
+    }
+    drag.current = null;
+    setDragging(false);
+  };
+
+  // Alt와 화살표를 함께 누르면 포인터 없이도 고래를 옮긴다.
+  const moveByKeyboard = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (!event.altKey || !event.key.startsWith("Arrow")) return;
+    if (
+      !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
+    )
+      return;
+    event.preventDefault();
+    setPosition((current) => {
+      const next = nudgeWhale(current, event.key, size);
+      rememberWhale(next);
+      return next;
+    });
+  };
+
   return (
     <button
-      ref={target}
       type="button"
-      className="assistant-whale"
+      className={`assistant-whale${dragging ? " assistant-whale--dragging" : ""}`}
       aria-label="고래 봇 대화 열기"
-      onClick={onClick}
-      style={placement ?? undefined}
+      aria-hidden={panelOpen}
+      tabIndex={panelOpen ? -1 : 0}
+      title="고래 봇 · 끌어서 옮기기, Alt와 방향키로 이동"
+      style={{ left: position.x, top: position.y }}
+      onPointerDown={start}
+      onPointerMove={move}
+      onPointerUp={finish}
+      onPointerCancel={finish}
+      onKeyDown={moveByKeyboard}
+      onClick={() => {
+        if (suppressClick.current) {
+          suppressClick.current = false;
+          return;
+        }
+        onClick();
+      }}
     >
-      <span className="assistant-whale__figure">
-        {reduced || !webglAvailable ? (
-          <PetAvatar
-            agentId="lead"
-            state={working ? "working" : published ? "done" : "idle"}
-            size={96}
-          />
+      <span className="assistant-whale__figure" aria-hidden="true">
+        <img src="/assistant/whale.png" alt="" draggable={false} />
+      </span>
+      <span className="assistant-whale__status" aria-live="polite">
+        {working ? (
+          <>
+            <span className="assistant-whale__dots" aria-hidden="true">
+              ···
+            </span>{" "}
+            작업 중
+          </>
+        ) : published ? (
+          "✓ 발행 완료"
         ) : (
-          <Canvas
-            aria-hidden="true"
-            dpr={1}
-            frameloop={inView && tabVisible ? "always" : "never"}
-            camera={{ position: [0, 0, 5], fov: 42 }}
-          >
-            <WhaleMesh />
-          </Canvas>
+          "대기 중"
         )}
       </span>
-      {(working || published) && (
-        <span className="assistant-whale__status">
-          {working ? "작업 중" : "발행됨"}
-        </span>
-      )}
     </button>
   );
 }

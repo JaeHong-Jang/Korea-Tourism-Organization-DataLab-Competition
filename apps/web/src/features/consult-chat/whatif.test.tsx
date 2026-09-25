@@ -97,7 +97,7 @@ it("두 번째 카드의 조건·수치·예보서 링크를 비교한다", () =
 });
 
 // 첫 예보와 후속 설명이 각각의 사용자 질문 바로 뒤에 나타난다.
-it("후속 문장을 질문 순서에 맞춰 근거와 함께 표시한다", () => {
+it("후속 문장을 질문 순서에 맞춰 근거 칩 없이 표시한다", () => {
   const first = original.find((event) => event.event === "claim")?.data;
   const followup = (
     JSON.parse(
@@ -121,7 +121,12 @@ it("후속 문장을 질문 순서에 맞춰 근거와 함께 표시한다", () 
           { messageId: "first", claim: first as Claim },
           { messageId: "second", claim: followup as Claim },
         ]}
-        evidence={[]}
+        forecasts={[]}
+        replies={[]}
+        work={[]}
+        gateReplies={[]}
+        completed={["first", "second"]}
+        busy={false}
       />
     </MemoryRouter>,
   );
@@ -131,7 +136,7 @@ it("후속 문장을 질문 순서에 맞춰 근거와 함께 표시한다", () 
   expect(markup.indexOf("왜 이렇게 많아?")).toBeLessThan(
     markup.indexOf("토요일 저녁에 열려서"),
   );
-  expect(markup).toContain("근거 ·");
+  expect(markup).not.toContain("근거 ·");
 });
 
 // 발행된 예보 뒤에는 새 예보 A→B와 설명 후속 B→발행을 모두 계약대로 통과시킨다.

@@ -9,6 +9,7 @@ export function ConsultInput({
   answering,
   onSubmit,
   onStop,
+  onNear,
   canSubmit,
 }: {
   text: string;
@@ -17,6 +18,7 @@ export function ConsultInput({
   answering: boolean;
   onSubmit: () => void;
   onStop: () => void;
+  onNear?: () => void;
   canSubmit?: boolean;
 }) {
   return (
@@ -52,6 +54,16 @@ export function ConsultInput({
         {busy && (
           <Button type="button" variant="outline" onClick={onStop}>
             중단
+          </Button>
+        )}
+        {onNear && (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={onNear}
+          >
+            내 위치로 가까운 축제
           </Button>
         )}
       </div>

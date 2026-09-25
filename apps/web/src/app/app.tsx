@@ -19,6 +19,8 @@ import { OpsPage } from "../pages/ops-page";
 import { PlanPage } from "../pages/plan-page";
 import { SharedPage } from "../pages/shared-page";
 import { ValidationPage } from "../pages/validation-page";
+import { ForecastMapAnchor } from "./forecast-map-anchor";
+import { GraphMenuLink } from "./graph-menu-link";
 import { HeaderWeatherChip } from "./header-weather-chip";
 
 // 이후 각 레인이 페이지 내부만 구현할 수 있게 라우트를 고정한다.
@@ -51,7 +53,9 @@ function AppLayout() {
   return (
     <div className="app-shell">
       <SiteHeader />
+      <GraphMenuLink />
       <HeaderWeatherChip />
+      <ForecastMapAnchor />
       <main id="main-content" onClickCapture={openSummaryForecast}>
         {location.pathname === "/validation" && (
           <nav className="validation-graph-nav" aria-label="검증 둘러보기">
