@@ -1,5 +1,6 @@
 // 서비스 응답 스키마와 계약에서 생성한 타입을 연결한다
 import type {
+  Concentration,
   Event,
   Evidence,
   Forecast,
@@ -15,6 +16,7 @@ import { contractRegistry } from "./registry.js";
 
 // 클라이언트가 다루는 도메인 응답만 생성 타입에 연결한다
 type Responses = {
+  concentration: Concentration;
   event: Event;
   evidence: Evidence;
   forecast: Forecast;

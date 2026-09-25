@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from crowdcast.api.routes import (
     backtest,
     baseline,
+    concentration,
     geocode,
     health,
     images,
@@ -38,4 +39,5 @@ app.include_router(regions.router)
 app.include_router(preregistration.router)
 app.include_router(ops.router)
 app.include_router(weather.router)
+app.include_router(concentration.router)
 app.include_router(insights.router)

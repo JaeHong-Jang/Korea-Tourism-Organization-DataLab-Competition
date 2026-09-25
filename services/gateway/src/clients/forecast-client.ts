@@ -11,6 +11,7 @@ const forecastSchema = responseSchema("forecast");
 const similarSchema = responseListSchema("similar-event");
 const baselineSchema = responseSchema("region-baseline");
 const weatherSchema = responseSchema("weather");
+const concentrationSchema = responseSchema("concentration");
 const eventSchema = responseSchema("event");
 // 503 본문(관측 없음 {code,message}·일시 장애 {detail})을 받아 호출자가 이유를 구분하게 한다
 const serviceErrorSchema = contractRegistry.compile({ type: "object" });
@@ -70,6 +71,16 @@ export function createForecastClient(options: ServiceClientOptions) {
       return requestJson(options, `/v1/weather?${query}`, weatherSchema, {
         method: "GET",
       });
+    },
+    // 행사 기간 시군구 관광지 집중률 예측 요약을 조회한다
+    concentration(sigunguCode: string, from: string, to: string) {
+      const query = new URLSearchParams({ sigunguCode, from, to });
+      return requestJson(
+        options,
+        `/v1/concentration?${query}`,
+        concentrationSchema,
+        { method: "GET" },
+      );
     },
   };
 }
