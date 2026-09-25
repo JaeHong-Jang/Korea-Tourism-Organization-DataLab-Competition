@@ -48,6 +48,7 @@ export class MyEventsApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    public code?: string,
   ) {
     super(message);
   }
@@ -62,13 +63,15 @@ async function request<T>(
   const response = await fetch(path, init);
   if (!response.ok) {
     let reason = "";
+    let code: string | undefined;
     try {
       const body: unknown = await response.json();
       if (body && typeof body === "object") {
         const value = body as Record<string, unknown>;
-        reason = [value.code, value.message]
-          .filter((part): part is string => typeof part === "string")
-          .join(" · ");
+        // 기계용 코드는 분기에만 쓰고 화면에는 사람이 읽는 문장만 넘긴다.
+        if (typeof value.code === "string") code = value.code;
+        reason =
+          typeof value.message === "string" ? value.message : (code ?? "");
       }
     } catch {
       /* 오류 본문이 비어 있어도 상태 코드는 유지한다. */
@@ -76,6 +79,7 @@ async function request<T>(
     throw new MyEventsApiError(
       response.status,
       reason || `API 요청 실패: ${response.status}`,
+      code,
     );
   }
   const data: unknown = await response.json();

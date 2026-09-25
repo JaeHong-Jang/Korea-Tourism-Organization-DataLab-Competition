@@ -52,8 +52,9 @@ export function WeeklyTimeline({
   const max = Math.max(1, ...weeks.map((week) => week.total));
   const labels = ["소규모", "수립 권고", "수립 대상", "대규모"];
   return (
-    <details className="weekly-timeline">
-      <summary>주간 타임라인 펼치기</summary>
+    // 오른쪽 "행사 현황" 탭에서는 자리가 넉넉해 처음부터 펼쳐 둔다.
+    <details className="weekly-timeline" open>
+      <summary>주간 타임라인</summary>
       <div className="weekly-timeline__legend">
         {labels.map((label, index) => (
           <span

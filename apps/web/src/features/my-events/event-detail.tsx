@@ -28,6 +28,13 @@ export function changedCondition(
   );
 }
 
+// 같은 날 같은 조건이면 예보 id가 같아 새로 발행하지 않는다 — 실패가 아니라 "바뀐 것 없음" 안내다.
+export function isUnchanged(reason: unknown): boolean {
+  return (
+    reason instanceof MyEventsApiError && reason.code === "reforecast_unchanged"
+  );
+}
+
 export function reforecastError(reason: unknown): string {
   if (reason instanceof MyEventsApiError) {
     if (reason.status === 409) return `발행하지 못했어요. ${reason.message}`;
@@ -56,6 +63,7 @@ export function EventDetail({
   const inFlight = useRef(false);
   const [busy, setBusy] = useState(false);
   const [forecastError, setForecastError] = useState("");
+  const [unchanged, setUnchanged] = useState(false);
   const [share, setShare] = useState("");
   const [shareError, setShareError] = useState("");
   const [sharing, setSharing] = useState(false);
@@ -111,13 +119,15 @@ export function EventDetail({
             inFlight.current = true;
             setBusy(true);
             setForecastError("");
+            setUnchanged(false);
             setResult(null);
             try {
               const next = await postReforecast(event.id);
               setResult(next);
               await onForecast();
             } catch (reason) {
-              setForecastError(reforecastError(reason));
+              if (isUnchanged(reason)) setUnchanged(true);
+              else setForecastError(reforecastError(reason));
             } finally {
               inFlight.current = false;
               setBusy(false);
@@ -128,6 +138,25 @@ export function EventDetail({
         </button>
         {busy && <p role="status">예보팀이 발행 결과를 확인하고 있어요.</p>}
         {forecastError && <p role="alert">{forecastError}</p>}
+        {unchanged && (
+          <div className="my-events-unchanged" role="status">
+            <strong>직전 예보와 달라진 게 없어요</strong>
+            <p>
+              예보는 방문자 자료나 날씨 예보가 새로 들어올 때 바뀌어요. 오늘은
+              같은 조건의 예보가 이미 발행돼 있어 새로 만들지 않았어요.
+            </p>
+            {latest && (
+              <p>
+                직전 예보: {formatDate(latest.publishedAt)} 발행 · 순간 최대
+                가운데{" "}
+                {formatSnapshotNumber(latest.forecast.peakConcurrent.p50)}명 ·{" "}
+                <a href={`/f/${encodeURIComponent(latest.forecastId)}`}>
+                  예보서 보기
+                </a>
+              </p>
+            )}
+          </div>
+        )}
         {result && (
           <ReforecastCard
             result={result}

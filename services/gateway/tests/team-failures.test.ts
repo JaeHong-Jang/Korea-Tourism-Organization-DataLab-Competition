@@ -118,6 +118,33 @@ describe("분석 실패 차단", () => {
     expect(events.some((event) => event.event === "forecast")).toBe(false);
   });
 
+  // 지역 관측이 없다는 503은 연결 오류 문구 대신 그 이유를 알린다(행정구역 개편 지역 등)
+  it("관측 없음 503은 이유를 담아 SERVICE_UNAVAILABLE로 끝난다", async () => {
+    const harness = teamFixture({
+      override: async ({ url }) => {
+        if (url.pathname === "/v1/predict")
+          return Response.json(
+            {
+              code: "NO_OBSERVATION",
+              message:
+                "공개된 지역 관측·전회차 실측이 없어 예보를 만들 수 없어요",
+            },
+            { status: 503 },
+          );
+        return undefined;
+      },
+    });
+    const events = await harness.message(await harness.prepare());
+    validSequence(events);
+    const error = withoutReplyEvents(events).at(-2);
+    expect(error).toMatchObject({
+      event: "error",
+      data: { code: "SERVICE_UNAVAILABLE" },
+    });
+    expect(JSON.stringify(error)).toContain("방문자 관측");
+    expect(JSON.stringify(error)).not.toContain("연결하지 못했어요");
+  });
+
   // 늦은 응답은 취소 이후의 facts 쓰기·단계 기록·SSE 이벤트를 만들지 못한다
   it("마감 초과가 병렬 요청을 취소하고 늦은 결과를 격리한다", async () => {
     let release: () => void = () => {};

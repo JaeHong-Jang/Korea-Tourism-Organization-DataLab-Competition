@@ -1,12 +1,17 @@
 // S1 필터·목록·KPI와 SVG 대체 지도의 선택 흐름 및 화면을 확인한다.
 import { type ChildProcess, spawn } from "node:child_process";
 import { resolve } from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 const origin = "http://127.0.0.1:5194";
 const screens = resolve(process.cwd(), "../../reports/figures/screens");
 const clock = "2026-10-18T12:00:00%2B09:00";
 let server: ChildProcess;
+
+// 오른쪽 "행사 둘러보기" 패널의 탭(행사 목록·필터·행사 현황)을 연다.
+async function openTab(page: Page, name: string | RegExp) {
+	await page.getByRole("tab", { name }).click();
+}
 
 // L4b의 전용 포트를 엄격하게 열어 다른 워크트리 서버를 재사용하지 않는다.
 test.beforeAll(async () => {
@@ -78,9 +83,13 @@ async function clickVisibleRegion(
 
 // 필터를 합치면 목록과 KPI가 같은 2건을 보여 주고 카드 선택이 스토어에 남는다.
 test("필터·목록·KPI와 선택", async ({ page }) => {
-	await page.goto(`${origin}/?sceneFixture=1&view=miniature&theme=day&at=${clock}`);
+	await page.goto(
+		`${origin}/?sceneFixture=1&view=miniature&theme=day&at=${clock}`,
+	);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
 	await expect(page.locator(".scene-kpis__tiles")).toContainText("30건");
+	// 필터는 오른쪽 패널의 "필터" 탭 안에 있다.
+	await openTab(page, "필터");
 	await page
 		.getByRole("combobox", { name: "기간", exact: true })
 		.selectOption("two-weeks");
@@ -92,6 +101,7 @@ test("필터·목록·KPI와 선택", async ({ page }) => {
 	await expect(page.locator(".festival-filters__actions")).toContainText(
 		"적용 3개",
 	);
+	await openTab(page, /^행사 목록/);
 	await page.locator(".festival-list__pick").first().click();
 	await expect(page.locator(".festival-list__items > li").first()).toHaveClass(
 		/is-selected/,
@@ -105,6 +115,7 @@ test("필터·목록·KPI와 선택", async ({ page }) => {
 		festival: "e-scene-1",
 		sigungu: "11110",
 	});
+	await openTab(page, "필터");
 	await page.getByRole("button", { name: "모두 초기화" }).click();
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
 	await expect(page.locator(".festival-filters__actions")).toContainText(
@@ -115,9 +126,12 @@ test("필터·목록·KPI와 선택", async ({ page }) => {
 // 브러시 드래그와 방향키는 같은 기간 필터를 바꾸고 판·목록·KPI에 함께 반영된다.
 test("주간 브러시 기간 선택과 키보드 핸들", async ({ page }) => {
 	await page.setViewportSize({ width: 1366, height: 768 });
-	await page.goto(`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`);
+	await page.goto(
+		`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`,
+	);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
-	await page.getByText("주간 타임라인 펼치기").click();
+	// 주간 타임라인은 "행사 현황" 탭 안에서 처음부터 펼쳐져 있다.
+	await openTab(page, "행사 현황");
 	const track = page.getByRole("button", { name: "주간 기간을 끌어 선택" });
 	const box = await track.boundingBox();
 	expect(box).not.toBeNull();
@@ -128,6 +142,7 @@ test("주간 브러시 기간 선택과 키보드 핸들", async ({ page }) => {
 		steps: 5,
 	});
 	await page.mouse.up();
+	await openTab(page, "필터");
 	await expect(
 		page.getByRole("combobox", { name: "기간", exact: true }),
 	).toHaveValue("custom");
@@ -136,17 +151,21 @@ test("주간 브러시 기간 선택과 키보드 핸들", async ({ page }) => {
 	);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(14);
 	await expect(page.locator(".scene-kpis__tiles")).toContainText("14건");
+	await openTab(page, "행사 현황");
 	await page.getByRole("slider", { name: "기간 시작 주" }).focus();
 	await page.keyboard.press("ArrowRight");
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(7);
 	await page.getByRole("slider", { name: "기간 끝 주" }).focus();
 	await page.keyboard.press("ArrowLeft");
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(7);
+	await openTab(page, "필터");
 	await page
 		.getByRole("combobox", { name: "기간", exact: true })
 		.selectOption("month");
+	await openTab(page, "행사 현황");
 	await expect(page.locator(".weekly-brush__heading")).toContainText("2026-10");
 	await page.getByRole("button", { name: "기간 선택 해제" }).click();
+	await openTab(page, "필터");
 	await expect(
 		page.getByRole("combobox", { name: "기간", exact: true }),
 	).toHaveValue("");
@@ -156,7 +175,9 @@ test("주간 브러시 기간 선택과 키보드 핸들", async ({ page }) => {
 
 // 강제 SVG 보기에서도 지도 점과 카드가 동일한 행사·지역을 선택한다.
 test("SVG 대체 지도에서 선택과 필터", async ({ page }) => {
-	await page.goto(`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`);
+	await page.goto(
+		`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`,
+	);
 	await expect(
 		page.getByRole("group", {
 			name: "행사와 시군구를 선택할 수 있는 SVG 전국 지도",
@@ -185,8 +206,10 @@ test("SVG 대체 지도에서 선택과 필터", async ({ page }) => {
 		.first()
 		.press("Enter");
 	expect((await selection(page)).festival).toBeNull();
+	await openTab(page, "필터");
 	await page.getByLabel("시도").selectOption("부산광역시");
 	await expect(page.locator(".svg-korea-map__event")).toHaveCount(5);
+	await openTab(page, /^행사 목록/);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(5);
 	await expect(
 		page.locator(".festival-list__items > li").first(),
@@ -203,7 +226,9 @@ test("SVG 대체 지도에서 선택과 필터", async ({ page }) => {
 // 접으면 목록 본문과 요약이 사라지고 패널 높이가 줄어든 채 새로고침 뒤에도 유지된다.
 test("행사 목록 접기와 기억", async ({ page }) => {
 	await page.setViewportSize({ width: 1366, height: 768 });
-	await page.goto(`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`);
+	await page.goto(
+		`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`,
+	);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
 	const panel = page.locator('[data-feature="M1-F3"]');
 	const before = await panel.boundingBox();
@@ -226,7 +251,9 @@ test("행사 목록 접기와 기억", async ({ page }) => {
 for (const theme of ["day", "night"] as const) {
 	test(`${theme} 패널 화면`, async ({ page }) => {
 		await page.setViewportSize({ width: 1366, height: 768 });
-		await page.goto(`${origin}/?sceneFixture=1&view=miniature&theme=${theme}&at=${clock}`);
+		await page.goto(
+			`${origin}/?sceneFixture=1&view=miniature&theme=${theme}&at=${clock}`,
+		);
 		await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
 		await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
 		await expect(page.locator("html")).toHaveAttribute(
@@ -241,12 +268,14 @@ for (const theme of ["day", "night"] as const) {
 
 test("모바일 패널 화면", async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
-	await page.goto(`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`);
+	await page.goto(
+		`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`,
+	);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
+	// 휴대폰에서는 지도 아래로 안내·도구·범례, 그 아래 탭 패널이 온다.
 	const map = await page.locator(".scene-stage").boundingBox();
-	const filter = await page.locator(".scene-filter").boundingBox();
-	expect(map && filter && map.y + map.height <= filter.y).toBe(true);
-	await page.getByRole("button", { name: "행사 목록", exact: true }).click();
+	const panel = await page.locator(".scene-list").boundingBox();
+	expect(map && panel && map.y + map.height <= panel.y).toBe(true);
 	await page.getByRole("button", { name: "견본 행사 5, 1등급 선택" }).click();
 	expect(await selection(page)).toEqual({
 		festival: "e-scene-5",

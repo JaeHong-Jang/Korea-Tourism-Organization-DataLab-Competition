@@ -5,7 +5,6 @@ import { useCssVar } from "../../lib/theme/use-css-var";
 import { DollCrowd } from "./crowd/doll-crowd";
 import { FestivalHitTargets } from "./festival-hit-targets";
 import { FestivalModels } from "./festival-models";
-import { NameTags } from "./name-tag";
 import { LAND_SURFACE_Y } from "./scene-height";
 import type { useScene } from "./use-scene";
 
@@ -44,12 +43,6 @@ export function FestivalLayer({
         counts={scene.scale.counts}
         center={center}
         reducedMotion={reducedMotion}
-      />
-      <NameTags
-        placed={scene.placed}
-        center={center}
-        selectedId={selectedId}
-        onPick={selectFestival}
       />
     </>
   );

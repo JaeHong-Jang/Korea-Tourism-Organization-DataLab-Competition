@@ -1,4 +1,4 @@
-// 연출용 역 연결선 위로 세 칸짜리 장난감 KTX를 인스턴싱한다.
+// 연출용 역 연결선 위로 세 칸짜리 장난감 열차(흰 차체·파란 띠·창)를 인스턴싱한다.
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   useCallback,
@@ -10,14 +10,16 @@ import {
 import {
   BoxGeometry,
   BufferGeometry,
+  Color,
   type InstancedMesh,
   Line,
   LineBasicMaterial,
   Matrix4,
-  MeshBasicMaterial,
-  Object3D,
+  MeshLambertMaterial,
   Vector3,
 } from "three";
+import type { Pose } from "../city/stamp";
+import { stampCart } from "../city/vehicle-kit";
 import { sceneColor } from "../quality";
 import { LAND_SURFACE_Y } from "../scene-height";
 import {
@@ -28,6 +30,9 @@ import {
 } from "./rail-lines";
 
 const TRAIN_COUNT = railLines.length * 2;
+// 한 칸 길이 약 8m(18.4m 칸의 0.45배)와 칸 사이 간격.
+const CART_SIZE = 0.45;
+const CART_GAP = 8.6;
 const BLOCK_COUNT = TRAIN_COUNT * 3;
 
 // 정지 상태와 실행 중 상태 모두 같은 위치 계산으로 행렬을 채운다.
@@ -39,12 +44,19 @@ export function Trains({
   diagnostic: boolean;
 }) {
   const clock = useThree((state) => state.clock);
+  // 칸마다 흰 차체·파란 띠·창 띠·회색 지붕(동네 3D와 같은 부품) — 차체 행렬이 진단 기준이다.
   const mesh = useRef<InstancedMesh>(null);
-  const block = useMemo(() => new Object3D(), []);
+  const stripe = useRef<InstancedMesh>(null);
+  const glass = useRef<InstancedMesh>(null);
+  const roof = useRef<InstancedMesh>(null);
   const point = useMemo<MotionPoint>(() => ({ x: 0, z: 0, heading: 0 }), []);
-  const geometry = useMemo(() => new BoxGeometry(2.6, 1.6, 4.6), []);
+  const pose = useMemo<Pose>(
+    () => ({ x: 0, y: LAND_SURFACE_Y, z: 0, heading: 0, size: CART_SIZE }),
+    [],
+  );
+  const geometry = useMemo(() => new BoxGeometry(1, 1, 1), []);
   const material = useMemo(
-    () => new MeshBasicMaterial({ color: sceneColor("model-banner") }),
+    () => new MeshLambertMaterial({ flatShading: true }),
     [],
   );
   const railMaterial = useMemo(
@@ -69,6 +81,12 @@ export function Trains({
   const place = useCallback(
     (seconds: number) => {
       if (!mesh.current) return;
+      const parts = {
+        body: mesh.current.instanceMatrix.array,
+        stripe: stripe.current?.instanceMatrix.array,
+        glass: glass.current?.instanceMatrix.array,
+        roof: roof.current?.instanceMatrix.array,
+      };
       let index = 0;
       for (let lineIndex = 0; lineIndex < railLines.length; lineIndex++) {
         const line = railLines[lineIndex];
@@ -78,22 +96,39 @@ export function Trains({
               line,
               seconds,
               3.5,
-              train * line.length - car * 5.1,
+              train * line.length - car * CART_GAP,
               point,
             );
-            block.position.set(point.x, LAND_SURFACE_Y + 1.4, point.z);
-            block.rotation.set(0, point.heading, 0);
-            block.updateMatrix();
-            mesh.current.setMatrixAt(index++, block.matrix);
+            pose.x = point.x;
+            pose.z = point.z;
+            pose.heading = point.heading;
+            stampCart(parts, index++, pose);
           }
         }
       }
-      mesh.current.instanceMatrix.needsUpdate = true;
+      for (const target of [mesh, stripe, glass, roof])
+        if (target.current) target.current.instanceMatrix.needsUpdate = true;
     },
-    [block, point],
+    [point, pose],
   );
 
   // 첫 프레임 전에도 열차가 보이고 설정 변경 시 고정 위치로 돌아간다.
+  // 부품 색은 처음 한 번만 칠한다(흰 차체·파란 띠·유리·회색 지붕).
+  useLayoutEffect(() => {
+    const colors = [
+      [mesh, "train-body"],
+      [stripe, "train-stripe"],
+      [glass, "glass"],
+      [roof, "train-roof"],
+    ] as const;
+    for (const [target, token] of colors) {
+      const color = new Color(sceneColor(token));
+      for (let index = 0; index < BLOCK_COUNT; index++)
+        target.current?.setColorAt(index, color);
+      if (target.current?.instanceColor)
+        target.current.instanceColor.needsUpdate = true;
+    }
+  }, []);
   useLayoutEffect(
     () => place(motionSeconds(clock.getElapsedTime(), reducedMotion)),
     [clock, place, reducedMotion],
@@ -136,11 +171,15 @@ export function Trains({
       {rails.map((line, index) => (
         <primitive key={railLines[index].name} object={line} />
       ))}
-      <instancedMesh
-        ref={mesh}
-        args={[geometry, material, BLOCK_COUNT]}
-        frustumCulled={false}
-      />
+      {[mesh, stripe, glass, roof].map((target, part) => (
+        <instancedMesh
+          // biome-ignore lint/suspicious/noArrayIndexKey: 부품 순서는 고정이다.
+          key={part}
+          ref={target}
+          args={[geometry, material, BLOCK_COUNT]}
+          frustumCulled={false}
+        />
+      ))}
     </group>
   );
 }

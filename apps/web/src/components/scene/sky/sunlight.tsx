@@ -34,9 +34,12 @@ void main() {
 export function Sunlight({
   color,
   reducedMotion,
+  strength = 1,
 }: {
   color: string;
   reducedMotion: boolean;
+  // 건물이 화면을 채우는 동네 3D에서는 번짐을 줄여 장면이 하얗게 뜨지 않게 한다.
+  strength?: number;
 }) {
   const size = useThree((state) => state.size);
   const material = useMemo(
@@ -62,7 +65,8 @@ export function Sunlight({
   useEffect(() => {
     material.uniforms.sun.value.set(color);
     material.uniforms.aspect.value = size.width / Math.max(1, size.height);
-  }, [material, color, size.width, size.height]);
+    material.uniforms.strength.value = strength;
+  }, [material, color, size.width, size.height, strength]);
 
   // 장면을 떠나면 셰이더를 해제한다.
   useEffect(() => () => material.dispose(), [material]);

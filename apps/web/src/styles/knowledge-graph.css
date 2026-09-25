@@ -2,7 +2,8 @@
 .validation-graph-nav { display: flex; gap: var(--space-3); align-items: center; width: min(100% - 2 * var(--space-8), 1320px); margin: var(--space-6) auto 0; }
 .validation-graph-nav span, .validation-graph-nav a, .knowledge-page__nav > * { padding: var(--space-2) var(--space-3); border-radius: var(--radius-button); font-size: var(--text-ui); }
 .validation-graph-nav span, .knowledge-page__nav span { background: var(--surface-sunken); color: var(--ink); font-weight: 700; }
-.validation-graph-nav a, .knowledge-page__nav a { color: var(--link); text-decoration: underline; }
+.validation-graph-nav a, .knowledge-page__nav a { color: var(--ink-2); text-decoration: none; font-weight: 600; cursor: pointer; }
+.validation-graph-nav a:hover, .knowledge-page__nav a:hover { background: var(--surface-sunken); color: var(--ink); }
 .knowledge-page__nav { display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-6); }
 .knowledge-graph { padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .knowledge-graph__toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); }

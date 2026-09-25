@@ -32,7 +32,8 @@ function kindAnchors(kinds: GraphKind[], radius: number) {
 export function layoutGraph3d(data: GraphData, iterations = 320) {
   const random = seeded(183303);
   const kinds = [...new Set(data.nodes.map((node) => node.kind))];
-  const anchors = kindAnchors(kinds, 110);
+  // 종류 무리 사이를 넓게 떨어뜨려(반지름 230) 무리끼리 섞이지 않게 한다.
+  const anchors = kindAnchors(kinds, 230);
   const index = new Map(data.nodes.map((node, i) => [node.id, i]));
   const count = data.nodes.length;
   const position = new Float64Array(count * 3);
@@ -49,6 +50,13 @@ export function layoutGraph3d(data: GraphData, iterations = 320) {
         pair[0] !== undefined && pair[1] !== undefined,
     );
   const force = new Float64Array(count * 3);
+  // 연결이 많은 중심 노드끼리는 더 세게 밀어 이름표가 겹치지 않게 한다(최대 2배 질량).
+  const mass = new Float64Array(count).fill(1);
+  for (const [a, b] of links) {
+    mass[a] += 1 / 20;
+    mass[b] += 1 / 20;
+  }
+  for (let i = 0; i < count; i++) mass[i] = Math.min(2, mass[i]);
   for (let step = 0; step < iterations; step++) {
     const cooling = 1 - step / iterations;
     force.fill(0);
@@ -59,7 +67,8 @@ export function layoutGraph3d(data: GraphData, iterations = 320) {
         const dy = position[a * 3 + 1] - position[b * 3 + 1];
         const dz = position[a * 3 + 2] - position[b * 3 + 2];
         const distance2 = dx * dx + dy * dy + dz * dz + 1;
-        const push = 700 / distance2 / Math.sqrt(distance2);
+        const push =
+          (1500 * mass[a] * mass[b]) / distance2 / Math.sqrt(distance2);
         force[a * 3] += dx * push;
         force[a * 3 + 1] += dy * push;
         force[a * 3 + 2] += dz * push;
@@ -67,13 +76,13 @@ export function layoutGraph3d(data: GraphData, iterations = 320) {
         force[b * 3 + 1] -= dy * push;
         force[b * 3 + 2] -= dz * push;
       }
-    // 관계는 기본 길이 26의 끈처럼 당긴다.
+    // 관계는 기본 길이 34의 끈처럼 당긴다.
     for (const [a, b] of links) {
       const dx = position[b * 3] - position[a * 3];
       const dy = position[b * 3 + 1] - position[a * 3 + 1];
       const dz = position[b * 3 + 2] - position[a * 3 + 2];
       const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.01;
-      const pull = ((distance - 26) / distance) * 0.06;
+      const pull = ((distance - 34) / distance) * 0.05;
       force[a * 3] += dx * pull;
       force[a * 3 + 1] += dy * pull;
       force[a * 3 + 2] += dz * pull;
@@ -86,19 +95,25 @@ export function layoutGraph3d(data: GraphData, iterations = 320) {
       const anchor = anchors.get(node.kind) ?? [0, 0, 0];
       for (let axis = 0; axis < 3; axis++) {
         const k = i * 3 + axis;
-        force[k] += (anchor[axis] - position[k]) * 0.012;
+        force[k] += (anchor[axis] - position[k]) * 0.02;
         velocity[k] = (velocity[k] + force[k]) * 0.82;
         const limit = 9 * cooling + 0.5;
         position[k] += Math.max(-limit, Math.min(limit, velocity[k]));
       }
     });
   }
+  // 전체 무게중심을 원점에 맞춰 카메라가 그래프 한가운데를 보게 한다.
+  const center = [0, 1, 2].map((axis) => {
+    let sum = 0;
+    for (let i = 0; i < count; i++) sum += position[i * 3 + axis];
+    return count ? sum / count : 0;
+  });
   const result = new Map<string, Point3>();
   data.nodes.forEach((node, i) => {
     result.set(node.id, [
-      position[i * 3],
-      position[i * 3 + 1],
-      position[i * 3 + 2],
+      position[i * 3] - center[0],
+      position[i * 3 + 1] - center[1],
+      position[i * 3 + 2] - center[2],
     ]);
   });
   return result;

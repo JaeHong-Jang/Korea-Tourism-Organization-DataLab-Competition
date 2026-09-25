@@ -3,6 +3,11 @@ import type { FestivalSummary, Weather } from "@crowdcast/contracts/types";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
+import { CityBuildings, cityBuildingCap } from "../city/city-buildings";
+import { CityGround } from "../city/city-ground";
+import { CityPeople } from "../city/city-people";
+import { CityTraffic } from "../city/city-traffic";
+import { CityTrees } from "../city/city-trees";
 import { Fireworks } from "../effects/fireworks";
 import { FestivalModels } from "../festival-models";
 import type { PlacedFestival } from "../festival-models/placement";
@@ -12,12 +17,8 @@ import { readSceneOptions } from "../scene-options";
 import { weatherEffects } from "../weather/state";
 import { WeatherScene } from "../weather/weather-scene";
 import { WetHighlights } from "../weather/wet-highlights";
-import { VenueActors } from "./actors";
-import { buildingCap, VenueBuildings } from "./buildings";
-import { VenueDolls } from "./dolls";
-import { VenueGround } from "./ground";
 import { VenueNightLights } from "./night-lights";
-import { graphRoutes, routeGraph } from "./routes";
+import { graphRoutes, routeGraph, towardShare } from "./routes";
 import type { VenueEvent, VenueKey } from "./sites";
 import type { VenueTiles } from "./tiles";
 import { dollCount, venueDate, venueSun } from "./time";
@@ -68,7 +69,7 @@ export function VenueScene({
 }: {
   tiles: VenueTiles;
   event: VenueEvent;
-  siteKey: VenueKey;
+  siteKey: VenueKey | "korea";
   peak: number;
   profile: { hour: number; share: number }[];
   level: number;
@@ -85,10 +86,23 @@ export function VenueScene({
   const measure = options.measure;
   const t435 = options.t435;
   const roads = useMemo(
-    () => graphRoutes(routeGraph(tiles.roads), 20),
+    () =>
+      graphRoutes(
+        routeGraph(tiles.roads.filter((line) => line.kind !== "path")),
+        20,
+      ),
     [tiles],
   );
   const rails = useMemo(() => graphRoutes(routeGraph(tiles.rails), 8), [tiles]);
+  // 사람은 골목·보행로를 걷는다(동네 3D와 같은 규칙).
+  const walks = useMemo(
+    () =>
+      graphRoutes(
+        routeGraph(tiles.roads.filter((line) => line.kind !== "major_road")),
+        20,
+      ),
+    [tiles],
+  );
   const placed = useMemo(
     () => festivalPlacement(event, level, peak),
     [event, level, peak],
@@ -126,8 +140,13 @@ export function VenueScene({
       shadows={activeQuality === "high"}
       frameloop="always"
     >
-      <VenueLight event={event} hour={hour} quality={activeQuality} />
-      <VenueGround tiles={tiles} wet={effects.wetGround} />
+      <VenueLight
+        event={event}
+        hour={hour}
+        quality={activeQuality}
+        revision={tiles}
+      />
+      <CityGround tiles={tiles} wet={effects.wetGround} />
       {t435 && (
         <WeatherScene
           weather={weather}
@@ -143,19 +162,21 @@ export function VenueScene({
       {t435 && effects.wetGround && (
         <WetHighlights center={[0, 0]} y={1.35} radius={180} />
       )}
-      <VenueBuildings
+      <CityBuildings
         buildings={tiles.buildings}
-        stations={tiles.stations}
         quality={activeQuality}
         night={sky === "night"}
       />
+      <CityTrees tiles={tiles} quality={activeQuality} />
       <group position={[0, -7, 0]}>
         <FestivalModels placed={placed} />
       </group>
-      <VenueDolls
-        count={dolls.count}
+      <CityPeople
+        routes={walks.length ? walks : roads}
+        gather={dolls.count}
+        towardShare={towardShare(hour, eventHour)}
+        quality={activeQuality}
         reducedMotion={reducedMotion || !t435}
-        rain={effects.precipitation === "rain"}
       />
       {t435 && sky !== "day" && <VenueNightLights quality={activeQuality} />}
       {t435 && sky === "night" && event.type.includes("불꽃") && (
@@ -165,7 +186,7 @@ export function VenueScene({
           reducedMotion={reducedMotion}
         />
       )}
-      <VenueActors
+      <CityTraffic
         roadRoutes={roads}
         railRoutes={rails}
         quality={activeQuality}
@@ -189,7 +210,10 @@ export function VenueScene({
         onRegressFactor={setRegress}
       />
       <VenueSignal
-        buildings={Math.min(tiles.buildings.length, buildingCap(activeQuality))}
+        buildings={Math.min(
+          tiles.buildings.length,
+          cityBuildingCap(activeQuality),
+        )}
         cars={cars}
         sky={sky}
         measure={measure}

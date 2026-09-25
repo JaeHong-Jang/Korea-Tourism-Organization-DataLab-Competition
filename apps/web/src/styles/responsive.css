@@ -4,8 +4,6 @@
   .main-nav { order: 3; width: 100%; height: 46px; overflow-x: auto; }
   .site-header__tools { margin-left: auto; }
   .scene-page { min-height: calc(100vh - 162px); }
-  .scene-filter { width: 210px; }
-  .scene-timeline { left: calc(210px + 2 * var(--space-8) + var(--space-4)); right: calc(300px + 2 * var(--space-8) + var(--space-4)); }
   .scene-list { width: 300px; }
 }
 
@@ -17,9 +15,7 @@
   .consult-right { grid-template-rows: 120px minmax(240px, auto) auto; }
   .document-layout { grid-template-columns: 1fr; }
   .evidence-drawer { min-height: 230px; }
-  .scene-filter { width: 190px; }
   .scene-list { width: 270px; }
-  .scene-timeline { left: var(--space-8); right: calc(270px + 2 * var(--space-8)); }
   .validation-layout > .feature-panel, .insights-layout > .feature-panel, .table-layout > .feature-panel, .ops-layout > .feature-panel { grid-column: span 12; }
   .validation-chart, .validation-evidence, .insights-main, .insights-spec { min-height: 230px; }
 }

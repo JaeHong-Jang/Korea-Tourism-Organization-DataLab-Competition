@@ -13,7 +13,7 @@ from crowdcast.data.weather import service
 from crowdcast.features.weather_history import weather_samples
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-NO_ADJUSTMENT = "날씨 보정 없음 — 과거 강수일 표본 부족(ASOS 일자료 미보유)"
+NO_ADJUSTMENT = "날씨 보정 없음 — 유형별 과거 우천·건조 행사 표본 부족"
 
 
 # 기간 역전과 출처 누락을 막아 설정에 숫자만 적은 계수가 적용되지 않게 한다.

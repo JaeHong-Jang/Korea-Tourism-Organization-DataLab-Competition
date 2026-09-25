@@ -42,6 +42,7 @@ it.each([
   "가".repeat(401),
   "",
   "무료로 예약해 드릴게요.",
+  "청주시에서 열리는 행사를 골라 봤어요.",
 ])("부적합 생성 답변: %s", (text) =>
   expect(checkedReply({ text }, facts)).toBeNull(),
 );
@@ -59,6 +60,38 @@ it("정상 문장과 행사 이름만 허용한다", () => {
     checkedReply({ text: facts.template, extra: "정보" }, facts),
   ).toBeNull();
 });
+
+// 출발지를 행사 장소처럼 말하면(진천군에서 열리는 안성 축제) 틀린 사실이라 거절한다
+it("출발지를 행사 장소로 바꿔 말하지 않는다", () => {
+  const near: ReplyFacts = {
+    ...facts,
+    names: ["바우덕이축제"],
+    places: ["바우덕이축제 — 안성시"],
+    origin: "진천군",
+  };
+  expect(
+    checkedReply(
+      { text: "진천군에서 열리는 바우덕이축제를 골라 봤어요." },
+      near,
+    ),
+  ).toBeNull();
+  expect(
+    checkedReply(
+      { text: "진천군에서 가까운 안성시의 바우덕이축제를 골라 봤어요." },
+      near,
+    ),
+  ).not.toBeNull();
+});
+
+// 완화 뒤에는 사실을 바꾸지 않는 자연스러운 말투를 막지 않는다(9/25 사용자 요청)
+it.each([
+  "가까운 순으로 추천해 드릴게요. 마음에 드는 행사가 있을 거예요.",
+  "가까운 순으로 보았어요. 마음에 드는 축제를 골라보세요.",
+  "원하시는 축제를 가까운 곳부터 모아 봤어요. 지도에서 한번 살펴보세요.",
+  "진천농다리축제부터 둘러보시면 좋겠어요.",
+])("자연스러운 생성 답변: %s", (text) =>
+  expect(checkedReply({ text }, facts)).toBe(text),
+);
 
 // 매 응답의 reply는 하나이며 마지막 done 앞에만 있고 계약 순서를 지킨다
 function expectReply(events: SseEvent[], mode = "new", forecastId?: string) {

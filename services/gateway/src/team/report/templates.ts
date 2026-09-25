@@ -67,10 +67,27 @@ export function peakText(forecast: Forecast): DraftText {
   };
 }
 
+// 요인 라벨 중 숫자·확률 조각(강수확률 10%, 최저기온 9℃ 등)은 문장 검사가 자리표시자 밖 숫자와
+// 구간 판정의 % 표기를 막으므로 빼고, 말로 된 조각만 문장에 쓴다(숫자는 근거 카드에 남는다).
+export function claimLabel(factor: Forecast["factors"][number]) {
+  const kept = factor.label
+    .split("·")
+    .map((part) => part.trim())
+    .filter((part) => part && !/[\p{N}%％]/u.test(part));
+  if (!kept.length) return null;
+  return factor.feature === "event_weather"
+    ? `행사일 날씨 예보 — ${kept.join("·")}`
+    : kept.join("·");
+}
+
 // 요인은 기여도 순으로 상위 세 개만 고르고 크기나 새로운 설명을 계산하지 않는다
 export function topFactors(forecast: Forecast) {
   return [...forecast.factors]
     .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+    .flatMap((factor) => {
+      const label = claimLabel(factor);
+      return label ? [{ ...factor, label }] : [];
+    })
     .slice(0, 3);
 }
 

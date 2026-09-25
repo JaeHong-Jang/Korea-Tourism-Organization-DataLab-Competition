@@ -14,6 +14,8 @@ export type VenueBuilding = {
   depth: number;
   height: number;
   minHeight: number;
+  // 실제 건물 외곽선(동·남 미터) — 동네 3D가 상자 대신 이 모양으로 세운다.
+  footprint?: Point[];
 };
 export type VenueLine = { from: Point; to: Point; kind: string; width: number };
 export type VenueArea = { points: Point[]; kind: "water" | "park" };
@@ -26,7 +28,7 @@ export type VenueTiles = {
   stations: VenueStation[];
 };
 
-const archives = new Map<VenueKey, PMTiles>();
+const archives = new Map<string, PMTiles>();
 
 // 역 이름만 있는 POI와 출입구·승강기 이름은 철도역 목록에서 제외한다.
 export function isStationName(name: string): boolean {
@@ -118,6 +120,7 @@ export function readVenueTile(
         depth: maxZ - minZ,
         height,
         minHeight,
+        footprint: points,
       });
     }
 
@@ -228,6 +231,38 @@ export async function loadVenueTiles(
     const tile = await archive.getZxy(15, x, y, signal);
     if (tile) readVenueTile(tile.data, x, y, center, result);
   }
+  result.buildings.sort(
+    (a, b) => a.x * a.x + a.z * a.z - b.x * b.x - b.z * b.z,
+  );
+  return result;
+}
+
+// 전국 z15 타일에서 아무 좌표나 반경 약 1.2km의 건물·길·녹지·역을 읽는다(동네 3D).
+export async function loadCityTiles(
+  center: Point,
+  signal?: AbortSignal,
+): Promise<VenueTiles> {
+  const key = "korea";
+  let archive = archives.get(key);
+  if (!archive) {
+    archive = new PMTiles("/tiles/korea-z15.pmtiles");
+    archives.set(key, archive);
+  }
+  const result: VenueTiles = {
+    buildings: [],
+    roads: [],
+    rails: [],
+    areas: [],
+    stations: [],
+  };
+  const tiles = await Promise.all(
+    nearbyTiles(center[0], center[1]).map(async ([x, y]) => {
+      signal?.throwIfAborted();
+      return [x, y, await archive.getZxy(15, x, y, signal)] as const;
+    }),
+  );
+  for (const [x, y, tile] of tiles)
+    if (tile) readVenueTile(tile.data, x, y, center, result);
   result.buildings.sort(
     (a, b) => a.x * a.x + a.z * a.z - b.x * b.x - b.z * b.z,
   );

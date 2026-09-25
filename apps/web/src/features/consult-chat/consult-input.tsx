@@ -1,4 +1,4 @@
-// 상담 메시지 입력과 중단 버튼을 별도 입력 영역에 둔다.
+// 상담 메시지 입력과 버튼(오른쪽 정렬, 보내기가 맨 끝)을 별도 입력 영역에 둔다.
 import { Button } from "../../components/ui/button";
 
 // 질문에 답하는 동안에는 본문 입력을 잠시 잠근다.
@@ -29,7 +29,8 @@ export function ConsultInput({
         onSubmit();
       }}
     >
-      <label htmlFor="consult-text">
+      {/* 같은 말이 두 번 보이지 않게 이름표는 화면 읽기 도구에만 남기고 안내는 입력칸 안에 둔다. */}
+      <label htmlFor="consult-text" className="sr-only">
         {answering ? "답을 입력해 주세요" : "행사를 설명해 주세요"}
       </label>
       <textarea
@@ -45,17 +46,6 @@ export function ConsultInput({
         disabled={busy}
       />
       <div className="consult-compose__actions">
-        <Button
-          type="submit"
-          disabled={busy || !(canSubmit ?? Boolean(text.trim()))}
-        >
-          보내기
-        </Button>
-        {busy && (
-          <Button type="button" variant="outline" onClick={onStop}>
-            중단
-          </Button>
-        )}
         {onNear && (
           <Button
             type="button"
@@ -66,6 +56,17 @@ export function ConsultInput({
             내 위치로 가까운 축제
           </Button>
         )}
+        {busy && (
+          <Button type="button" variant="outline" onClick={onStop}>
+            중단
+          </Button>
+        )}
+        <Button
+          type="submit"
+          disabled={busy || !(canSubmit ?? Boolean(text.trim()))}
+        >
+          보내기
+        </Button>
       </div>
     </form>
   );

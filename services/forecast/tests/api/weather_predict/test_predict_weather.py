@@ -45,7 +45,7 @@ def test_rain_without_adjustment(
     assert "강수확률 70%·비·흐림·기온 18.5℃" in factor["label"]
     assert data["id"] in factor["evidenceIds"]
     assumption = next(item for item in result["evidence"] if item["assumptionId"] == "as-weather-adjustment")
-    assert "날씨 보정 없음" in assumption["summary"] and "ASOS 일자료 미보유" in assumption["summary"]
+    assert "날씨 보정 없음" in assumption["summary"] and "표본 부족" in assumption["summary"]
     rain = next(item for item in result["evidence"] if item["ruleId"] == "rule-check-rain-shelter")
     assert '"pop":70' in rain["summary"] and '"pty":"비"' in rain["summary"]
     assert response.content == client.post("/v1/predict", json=event).content

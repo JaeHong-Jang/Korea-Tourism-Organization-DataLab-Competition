@@ -56,8 +56,9 @@ test("현재 비·밤 날씨 칩과 장면", async ({ page }) => {
 test("연출 열차와 고른 행사 위 고래 봇", async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	await page.setViewportSize({ width: 1440, height: 900 });
+	// 행사를 골라도 전국 판에 머물게 동네 3D 진입을 끈다(sceneCity=0).
 	await page.goto(
-		`/?sceneFixture=1&view=miniature&theme=day&sceneDiagnostic=1&at=${time}`,
+		`/?sceneFixture=1&view=miniature&theme=day&sceneDiagnostic=1&sceneCity=0&at=${time}`,
 	);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
@@ -111,7 +112,7 @@ async function visibleTagsAreSafe(
 				?.getBoundingClientRect();
 			const panels = Array.from(
 				document.querySelectorAll(
-					".scene-left-rail, .scene-page > .scene-list, .scene-page > .scene-timeline, .scene-cta, .assistant-panel, .assistant-whale",
+					".scene-left-rail, .scene-page > .scene-list, .assistant-panel, .assistant-whale, .assistant-invitation",
 				),
 				(panel) =>
 					panel.getClientRects().length > 0
@@ -166,7 +167,7 @@ async function boardCornersAreSafe(page: Page): Promise<boolean> {
 		const corners = window.__crowdcastBoardCorners?.();
 		const panels = Array.from(
 			document.querySelectorAll(
-				".scene-left-rail, .scene-page > .scene-list, .scene-page > .scene-timeline, .scene-cta, .scene-overview",
+				".scene-left-rail, .scene-page > .scene-list, .scene-overview",
 			),
 			(panel) => panel.getBoundingClientRect(),
 		);
@@ -201,8 +202,9 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 	test.setTimeout(90_000);
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	await page.setViewportSize({ width: 1440, height: 900 });
+	// 전국 판의 카메라·이름표를 확인하므로 선택해도 동네 3D로 넘어가지 않게 한다.
 	await page.goto(
-		`/?sceneFixture=1&view=miniature&theme=day&sceneDiagnostic=1&at=${time}`,
+		`/?sceneFixture=1&view=miniature&theme=day&sceneDiagnostic=1&sceneCity=0&at=${time}`,
 	);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
@@ -244,10 +246,10 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 	await page.getByRole("button", { name: "전국 보기" }).click();
 	await expect.poll(() => boardCornersAreSafe(page)).toBe(true);
 
-	// 타임라인이 커져도 이름표가 새 패널 경계 안에 남지 않게 한다.
-	await page.getByText("주간 타임라인 펼치기").click();
+	// "행사 현황" 탭(주간 타임라인)을 열어도 이름표가 패널 경계 안에 남지 않게 한다.
+	await page.getByRole("tab", { name: "행사 현황" }).click();
 	await expect.poll(() => visibleTagsAreSafe(page, false)).toBe(true);
-	await page.getByText("주간 타임라인 펼치기").click();
+	await page.getByRole("tab", { name: /^행사 목록/ }).click();
 
 	// 목록 선택은 장면 포커스와 요약 구간을 함께 갱신한다.
 	await page
@@ -289,7 +291,10 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 	await expect(
 		page.locator(".scene-stage section[data-focus-id]"),
 	).toHaveAttribute("data-focus-id", "");
-	await expect(page.locator(".festival-summary__empty")).toBeVisible();
+	// 선택을 풀면 고래 말풍선의 행사 카드도 내려간다.
+	await expect(
+		page.getByRole("region", { name: "선택 행사 요약" }),
+	).toHaveCount(0);
 
 	// 상담 링크는 문장을 채우고 서버 전송은 시작하지 않는다.
 	await page
@@ -359,6 +364,8 @@ test("밤과 노트북 장면 캡처", async ({ page }) => {
 	await expect(
 		page.getByRole("button", { name: "데이터 모드" }),
 	).toHaveAttribute("aria-pressed", "false");
+	// 필터는 오른쪽 패널의 "필터" 탭에서 적용 개수·초기화까지 한 화면에 보인다.
+	await page.getByRole("tab", { name: "필터" }).click();
 	await expect(
 		page.locator(".scene-filter .festival-filters__actions"),
 	).toBeInViewport();
@@ -397,8 +404,12 @@ test("실제 API와 SVG 선택 고지", async ({ page }) => {
 		"true",
 	);
 	await page.locator(".svg-korea-map svg").click({ position: { x: 5, y: 5 } });
-	await expect(page.locator(".festival-summary__empty")).toBeVisible();
+	await expect(
+		page.getByRole("region", { name: "선택 행사 요약" }),
+	).toHaveCount(0);
 	await page.locator(".svg-korea-map__event").click();
 	await page.keyboard.press("Escape");
-	await expect(page.locator(".festival-summary__empty")).toBeVisible();
+	await expect(
+		page.getByRole("region", { name: "선택 행사 요약" }),
+	).toHaveCount(0);
 });

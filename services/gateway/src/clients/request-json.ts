@@ -18,6 +18,8 @@ type ServiceRequest = {
   body?: unknown;
   bodySchema?: ValidateFunction;
   errorSchemas?: Partial<Record<number, ValidateFunction<unknown>>>;
+  // 오류 본문이 없거나 JSON이 아닐 수도 있는 호출(예보 503)
+  optionalErrorBody?: boolean;
 };
 
 // HTTP 상태와 검증된 오류 본문을 보존해 게이트 거부와 서비스 장애를 구분한다
@@ -76,7 +78,15 @@ export async function requestJson<T>(
         }
 
         // 계약에 본문이 있는 오류만 읽고 검증을 통과해야 호출자에게 노출한다
-        const errorBody: unknown = await response.json();
+        let errorBody: unknown;
+        try {
+          errorBody = await response.json();
+        } catch (error) {
+          // 본문이 선택인 오류(예보 503)만 JSON이 아니어도 상태 코드로 전달한다
+          if (request.optionalErrorBody)
+            throw new ServiceHttpError(response.status);
+          throw error;
+        }
         if (!validateError(errorBody)) {
           throw new Error(
             `서비스 오류 응답 계약 위반: ${contractRegistry.errorsText(validateError.errors)}`,

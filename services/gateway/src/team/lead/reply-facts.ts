@@ -7,6 +7,9 @@ export type ReplyFacts = {
   conditions: string[];
   template: string;
   phrases: string[];
+  // 행사마다 실제 열리는 시군구("이름 — 지역")와, 행사 장소가 아닌 사용자의 출발지.
+  places?: string[];
+  origin?: string;
 };
 const gradeNames = ["소규모", "수립 권고", "수립 대상", "대규모"];
 
@@ -39,6 +42,12 @@ export function collectReplyFacts(output: EventWriter) {
         facts.names = result.items
           .map(({ summary }) => summary.name)
           .filter(safeName);
+        facts.places = result.items
+          .filter(
+            ({ summary }) =>
+              safeName(summary.name) && safeName(summary.sigunguName),
+          )
+          .map(({ summary }) => `${summary.name} — ${summary.sigunguName}`);
         facts.grades = [
           ...new Set(
             result.items
@@ -51,10 +60,15 @@ export function collectReplyFacts(output: EventWriter) {
         const nearby = result.items.some(({ reason }) =>
           reason.includes("가까운 거리순"),
         );
+        // 가까운 순이면 출발지 이름(예: 진천군)만 사실에 넣어 "진천군에서"라고 말할 수 있게 한다(거리 숫자는 넣지 않는다).
+        const origin = result.items
+          .map(({ reason }) => /^(.+?)에서 약/.exec(reason)?.[1])
+          .find((label) => label && safeName(label));
         facts.conditions = [
           ...(result.query.type ? [result.query.type] : []),
           ...(nearby ? ["가까운 순"] : []),
         ];
+        facts.origin = origin;
         facts.template = result.note.startsWith("출발 위치")
           ? "어디서 출발하시는지 확인하고 싶어요. 시도와 시군구를 함께 알려 주세요."
           : result.items.length

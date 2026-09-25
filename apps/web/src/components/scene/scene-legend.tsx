@@ -12,6 +12,7 @@ export function SceneLegend({
   dataMode = false,
   totals,
   notices,
+  city = false,
 }: {
   peoplePerDoll: number;
   capExceeded: boolean;
@@ -19,10 +20,16 @@ export function SceneLegend({
   dataMode?: boolean;
   totals?: Map<string, number>;
   notices?: ReactNode;
+  city?: boolean;
 }) {
   const maximum = totals ? Math.max(0, ...totals.values()) : 0;
   return (
     <div className="scene-stage__note scene-legend">
+      {city && (
+        <div className="scene-legend__note">
+          동네 3D · 건물·도로·공원 = OpenStreetMap · 사람·차·기차·나무 자리 = 연출(보이게 키움)
+        </div>
+      )}
       <div className="scene-legend__scale">
         {dataMode && <>타일 색·높이 = 기간 안 예보 순간 최대 중앙값 합 · </>}
         인형 1개 = {peoplePerDoll.toLocaleString("ko-KR")}명

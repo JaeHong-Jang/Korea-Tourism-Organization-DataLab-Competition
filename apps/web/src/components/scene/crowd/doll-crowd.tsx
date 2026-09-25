@@ -72,7 +72,7 @@ export function DollCrowd({
     () =>
       Array.from(
         { length: 8 },
-        (_, index) => new Color(sceneColor(`doll-${index + 1}`)),
+        (_, index) => new Color(sceneColor(`person-${index + 1}`)),
       ),
     [],
   );

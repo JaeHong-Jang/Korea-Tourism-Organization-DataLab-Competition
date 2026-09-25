@@ -1,4 +1,4 @@
-// 예측 구간을 로그 축에 그리고 같은 집계 단위의 주최측 예상만 축에 올린다.
+// 예상 인원을 0부터 시작하는 보통 눈금에 그려 법정 기준(1,000명)과 몇 배 차이인지 바로 읽히게 한다.
 import type {
   Event,
   FestivalSummary,
@@ -17,9 +17,42 @@ import {
 
 type Range = FestivalSummary | ForecastCard["peakConcurrent"];
 type HostQuantity = NonNullable<Event["expectedByHost"]>;
-const axisTicks = [100, 1000, 10_000, 100_000];
+const THRESHOLD = 1000;
 
-// 좌표에만 로그 계산을 적용하고 표시값은 계약 수치 그대로 둔다.
+// 눈금 끝값을 1·2·2.5·5×10ⁿ 중 가장 가까운 큰 수로 올린다.
+export function niceCeil(value: number): number {
+  const power = 10 ** Math.floor(Math.log10(Math.max(1, value)));
+  const step = [1, 2, 2.5, 5, 10].find((item) => item * power >= value) ?? 10;
+  return step * power;
+}
+
+// 기준 대비 배수는 10배 미만만 소수 한 자리로 적는다.
+export function thresholdRatio(value: number): string {
+  const ratio = value / THRESHOLD;
+  return ratio >= 10
+    ? Math.round(ratio).toLocaleString("ko-KR")
+    : ratio.toFixed(1);
+}
+
+// 구간이 기준 위·걸침·아래 중 어디인지 한 문장으로 말한다.
+function headline(low: number, middle: number, high: number) {
+  if (low >= THRESHOLD)
+    return {
+      strong: `법정 기준의 약 ${thresholdRatio(middle)}배`,
+      rest: "안전관리계획 수립 대상이에요",
+    };
+  if (high >= THRESHOLD)
+    return {
+      strong: "법정 기준을 넘을 수도 있어요",
+      rest: "예상 범위가 1,000명을 걸쳐요",
+    };
+  return {
+    strong: "법정 기준보다 적어요",
+    rest: "예상 범위가 1,000명 아래예요",
+  };
+}
+
+// 막대·가운데 선·기준선은 넓은 호버 영역과 표를 함께 두어 키보드와 작은 화면에서도 읽힌다.
 export function RangeBar({
   range,
   hostExpected,
@@ -57,7 +90,7 @@ export function RangeBar({
   )
     return <ComponentState name="예측 구간" status="error" />;
 
-  // 기간 누적 예상은 순간 최대 예보와 직접 비교할 수 없으므로 축 밖에 둔다.
+  // 기간 누적 예상은 순간 최대 예보와 직접 비교할 수 없으므로 눈금 밖에 둔다.
   const expectedValue = hostExpected ? representativeValue(hostExpected) : null;
   const comparable =
     hostExpected != null &&
@@ -66,33 +99,40 @@ export function RangeBar({
     hostExpected.spatialScope === spatialScope &&
     hostExpected.unit === unit;
   const hostValue = comparable ? expectedValue : null;
-  const maxValue =
-    10 ** Math.ceil(Math.log10(Math.max(high, hostValue ?? 0, 100_000)));
+  const axisMax = niceCeil(Math.max(high, hostValue ?? 0, THRESHOLD) * 1.08);
   const position = (value: number) =>
-    `${(Math.log10(Math.max(1, value)) / Math.log10(maxValue)) * 100}%`;
+    `${Math.round((Math.min(value, axisMax) / axisMax) * 1000) / 10}%`;
   const directRange = `예상 ${formatSnapshotNumber(low)}~${formatSnapshotNumber(high)}명 (가운데 ${formatPeople(middle)})`;
   const rangeText = `${directRange} · ${timeUnit} · ${spatialScope} · 추정 산식 기반`;
-  const ratio = Math.round(middle / 1000);
-  const conclusion =
-    low >= 1000
-      ? `기준보다 약 ${ratio}배 — 수립 대상 구간이에요`
-      : high >= 1000
-        ? "법정 기준을 걸치는 구간이에요"
-        : "법정 기준 아래 구간이에요";
+  const lead = headline(low, middle, high);
   const hostText =
     hostExpected == null || expectedValue == null
       ? null
       : `주최측 예상 ${formatQuantity(hostExpected)}`;
 
-  // 선과 점은 넓은 호버 영역과 표를 함께 제공해 키보드와 작은 화면에서도 읽히게 한다.
   return (
     <figure
       className={`range-bar${mini ? " range-bar--mini" : ""}`}
-      aria-label={rangeText}
+      aria-label={`${rangeText} · ${lead.strong}`}
     >
       {!mini && <h4>순간 최대 예상 인원과 법정 기준</h4>}
-      {!mini && <p className="range-bar__direct-label">{directRange}</p>}
+      {!mini && (
+        <p className="range-bar__conclusion">
+          <strong>{lead.strong}</strong> — {lead.rest}
+        </p>
+      )}
       <div className="range-bar__track">
+        <button
+          type="button"
+          className="range-bar__threshold range-bar__target"
+          style={{ left: position(THRESHOLD) }}
+          title="법정 기준 1,000명(안전관리계획 수립)"
+          aria-label="법정 기준 1,000명(안전관리계획 수립)"
+        >
+          <span className="range-bar__threshold-tag">
+            {mini ? "기준" : "기준 1,000명"}
+          </span>
+        </button>
         <button
           type="button"
           className="range-bar__band"
@@ -107,15 +147,8 @@ export function RangeBar({
           type="button"
           className="range-bar__median range-bar__target"
           style={{ left: position(middle) }}
-          title={`중앙 ${formatPeople(middle)}`}
-          aria-label={`중앙 ${formatPeople(middle)}`}
-        />
-        <button
-          type="button"
-          className="range-bar__threshold range-bar__target"
-          style={{ left: position(1000) }}
-          title="법정 기준 1,000명(안전관리계획 수립)"
-          aria-label="법정 기준 1,000명(안전관리계획 수립)"
+          title={`가운데 ${formatPeople(middle)}`}
+          aria-label={`가운데 ${formatPeople(middle)}`}
         />
         {hostValue != null && (
           <button
@@ -129,28 +162,26 @@ export function RangeBar({
           </button>
         )}
       </div>
-      <div className="range-bar__ticks" aria-hidden="true">
-        {axisTicks
-          .filter((tick) => tick !== 1000)
-          .map((tick) => (
+      {!mini && (
+        <div className="range-bar__ticks" aria-hidden="true">
+          {[0, axisMax / 2, axisMax].map((tick) => (
             <span key={tick} style={{ left: position(tick) }}>
-              {formatPeople(tick)}
+              {tick === 0 ? "0" : formatPeople(tick)}
             </span>
           ))}
-      </div>
-      <p className="range-bar__threshold-label">
-        점선: 법정 기준 1,000명{mini ? "" : "(안전관리계획 수립)"}
-      </p>
-      {!mini && <p className="range-bar__conclusion">{conclusion}</p>}
+        </div>
+      )}
+      {!mini && <p className="range-bar__direct-label">{directRange}</p>}
       {!mini && (
-        <p className="range-bar__axis-label">
-          로그 축 · 막대는 예상 구간, 세로선은 가운데 값
+        <p className="range-bar__legend">
+          파란 막대 = 예상 범위(10번 중 8번은 이 안) · 막대 속 굵은 선 = 가운데
+          값 · 회색 줄 = 법정 기준 1,000명
           {hostValue != null ? " · ▲ 주최측 예상" : ""}
         </p>
       )}
       <figcaption>
         {mini
-          ? `${directRange} · 추정 산식 기반`
+          ? `${directRange} · 법정 기준 1,000명의 약 ${thresholdRatio(middle)}배`
           : "순간 최대 · 행사장 · 추정 산식 기반"}
       </figcaption>
       {hostText && !comparable && (
@@ -168,7 +199,7 @@ export function RangeBar({
               <td>{formatQuantity(low, unit)}</td>
             </tr>
             <tr>
-              <th scope="row">중앙</th>
+              <th scope="row">가운데</th>
               <td>{formatQuantity(middle, unit)}</td>
             </tr>
             <tr>
@@ -176,7 +207,7 @@ export function RangeBar({
               <td>{formatQuantity(high, unit)}</td>
             </tr>
             <tr>
-              <th scope="row">기준선</th>
+              <th scope="row">법정 기준</th>
               <td>1,000명</td>
             </tr>
             {hostText && (

@@ -193,29 +193,24 @@ for (const [name, query] of [
 		).toBeVisible();
 		await checkAxe(page);
 		await page.setViewportSize({ width: 390, height: 844 });
-		const tabs = page.getByRole("navigation", { name: "미니 대한민국 정보" });
-		const listTab = tabs.getByRole("button", { name: "행사 목록" });
+		// 오른쪽 패널의 탭(행사 목록·필터·행사 현황)을 키보드로 연다.
+		const listTab = page.getByRole("tab", { name: /^행사 목록/ });
+		await page.getByRole("tab", { name: "행사 현황" }).click();
 		await listTab.focus();
 		await page.keyboard.press("Enter");
-		await expect(listTab).toHaveAttribute("aria-pressed", "true");
+		await expect(listTab).toHaveAttribute("aria-selected", "true");
 		await expect(page.locator(".scene-list")).toBeVisible();
-		await tabs.getByRole("button", { name: "행사 현황" }).click();
-		await page.getByText("주간 타임라인 펼치기").click();
+		await page.getByRole("tab", { name: "행사 현황" }).click();
 		const startWeek = page.getByRole("slider", { name: "기간 시작 주" });
 		if (await startWeek.count()) {
 			await startWeek.focus();
 			await page.keyboard.press("ArrowRight");
 			await expect(startWeek).toBeFocused();
 		}
-		await tabs.getByRole("button", { name: "범례" }).click();
 		await expect(page.locator(".scene-legend-panel")).toBeVisible();
 		await checkAxe(page);
-		if (name !== "s1-svg") {
-			await tabs.getByRole("button", { name: "필터" }).click();
-			await checkWidths(page, name, "T-411b");
-		} else {
-			await checkWidths(page, name, "T-411b");
-		}
+		await page.getByRole("tab", { name: "필터" }).click();
+		await checkWidths(page, name, "T-411b");
 	});
 }
 

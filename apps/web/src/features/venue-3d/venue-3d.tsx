@@ -1,12 +1,12 @@
 // 예보서와 개발 견본의 행사장 디오라마를 로딩·빈 값·오류 상태와 함께 제공한다.
 import type { ForecastReport } from "@crowdcast/contracts/types";
 import { useEffect, useMemo, useState } from "react";
+import { cityBuildingCap } from "../../components/scene/city/city-buildings";
 import { venueDescription } from "../../components/scene/scene-description";
 import {
   readSceneOptions,
   useSceneQuality,
 } from "../../components/scene/scene-options";
-import { buildingCap } from "../../components/scene/venue/buildings";
 import {
   sampleEvent,
   type VenueEvent,
@@ -15,6 +15,7 @@ import {
   venueSites,
 } from "../../components/scene/venue/sites";
 import {
+  loadCityTiles,
   loadVenueTiles,
   type VenueTiles,
 } from "../../components/scene/venue/tiles";
@@ -96,11 +97,16 @@ export function Venue3D({
 
   // 행사 좌표가 바뀌면 주변 z15 타일만 새로 읽고 이전 요청 결과는 버린다.
   useEffect(() => {
-    if (!key || !event || !webgl) return;
+    if (!event || !webgl) return;
     const controller = new AbortController();
     setTiles(null);
     setError("");
-    loadVenueTiles(key, [event.venue.lng, event.venue.lat], controller.signal)
+    // 시범 행사장 3곳은 작은 전용 타일을, 그 밖은 전국 z15 타일을 읽는다.
+    const center: [number, number] = [event.venue.lng, event.venue.lat];
+    (key
+      ? loadVenueTiles(key, center, controller.signal)
+      : loadCityTiles(center, controller.signal)
+    )
       .then((loaded) => {
         if (!controller.signal.aborted) setTiles(loaded);
       })
@@ -113,7 +119,7 @@ export function Venue3D({
     return () => controller.abort();
   }, [key, event, webgl]);
 
-  if (!event || !key)
+  if (!event)
     return (
       <section className="venue-3d" aria-label="행사장 3D">
         <p>행사장 3D는 시범 행사장 3곳에서만 볼 수 있어요.</p>
@@ -158,7 +164,7 @@ export function Venue3D({
         <div className="venue-3d__frame">
           <p className="sr-only" aria-live="polite">
             {venueDescription(
-              Math.min(tiles.buildings.length, buildingCap(quality)),
+              Math.min(tiles.buildings.length, cityBuildingCap(quality)),
               hour,
               weather,
             )}
@@ -166,7 +172,7 @@ export function Venue3D({
           <VenueScene
             tiles={tiles}
             event={event}
-            siteKey={key}
+            siteKey={key ?? "korea"}
             peak={peak}
             profile={profile}
             level={level}

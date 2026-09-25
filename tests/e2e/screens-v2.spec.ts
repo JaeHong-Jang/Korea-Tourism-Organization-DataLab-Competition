@@ -74,13 +74,10 @@ function captureUrl(scene: Scene, theme: "day" | "night"): string {
   return `${pathname}?${search.toString()}`;
 }
 
-// 모바일 목록은 접힌 패널을 열어 선택 카드가 화면에 드러나게 한다.
+// 목록 탭(기본으로 열림)에서 첫 행사를 골라 고래 말풍선의 행사 카드가 드러나게 한다.
 async function selectFestival(page: Page, mobile: boolean) {
   if (mobile)
-    await page
-      .getByRole("navigation", { name: "미니 대한민국 정보" })
-      .getByRole("button", { name: "행사 목록" })
-      .click();
+    await page.locator(".festival-list__pick").first().scrollIntoViewIfNeeded();
   await page.locator(".festival-list__pick").first().click();
   await expect(
     page.getByRole("region", { name: "선택 행사 요약" }),
@@ -101,11 +98,9 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
       await expect(page.locator(".svg-korea-map")).toBeVisible();
     if (scene.state === "selected") await selectFestival(page, mobile);
     if (scene.state === "data") {
+      // 범례는 휴대폰에서도 지도 아래 왼쪽 칸에 늘 보인다.
       if (mobile)
-        await page
-          .getByRole("navigation", { name: "미니 대한민국 정보" })
-          .getByRole("button", { name: "범례" })
-          .click();
+        await page.locator(".scene-legend-panel").scrollIntoViewIfNeeded();
       await expect(
         page.getByRole("button", { name: "데이터 모드" }),
       ).toHaveAttribute("aria-pressed", "true");

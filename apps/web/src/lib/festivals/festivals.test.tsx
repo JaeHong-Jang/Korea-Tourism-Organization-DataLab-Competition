@@ -145,7 +145,7 @@ describe("S1 행사 패널", () => {
     expect(node.querySelector(".festival-list__items li")?.className).toBe(
       "is-selected",
     );
-    expect(node.textContent).toContain("p10–p90");
+    expect(node.textContent).toContain("법정 기준 1,000명의 약");
     expect(node.querySelector(".range-bar__table summary")?.textContent).toBe(
       "값 표 보기",
     );

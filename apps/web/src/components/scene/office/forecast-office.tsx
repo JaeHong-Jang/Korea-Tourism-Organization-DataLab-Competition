@@ -4,10 +4,19 @@ import { useNavigate } from "react-router-dom";
 import { sceneColor } from "../quality";
 
 // 건물 전체의 클릭 영역을 키워 카메라 거리에서도 카메오를 열 수 있게 한다.
-export function ForecastOffice({ x, z }: { x: number; z: number }) {
+// hidden이면 그리지 않고 이름표만 숨긴다 — 동네 모드에서 Html을 떼면 React 19 DOM 제거 오류가 난다.
+export function ForecastOffice({
+  x,
+  z,
+  hidden = false,
+}: {
+  x: number;
+  z: number;
+  hidden?: boolean;
+}) {
   const navigate = useNavigate();
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} visible={!hidden}>
       <mesh position={[0, 5, 0]}>
         <boxGeometry args={[22, 10, 17]} />
         <meshStandardMaterial color={sceneColor("model-canvas")} />
@@ -32,7 +41,11 @@ export function ForecastOffice({ x, z }: { x: number; z: number }) {
           </mesh>
         </group>
       ))}
-      <Html position={[0, 19, 0]} center>
+      <Html
+        position={[0, 19, 0]}
+        center
+        style={{ display: hidden ? "none" : undefined }}
+      >
         <button
           className="scene-office-link"
           type="button"

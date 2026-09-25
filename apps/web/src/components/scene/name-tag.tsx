@@ -16,6 +16,9 @@ const FAR_WIDTH = 106;
 const FAR_HEIGHT = 30;
 const FAR_DISTANCE = 850;
 
+// 한 화면에 띄우는 이름표 칸 수(겹침 검사 뒤 이 수까지만 보인다).
+const TAG_SLOTS = 24;
+
 // 높은 등급부터 보면서 같은 등급은 행사 ID 순서로 고정한다.
 export function visibleTagIds(boxes: TagBox[], far = false): string[] {
   const picked: TagBox[] = [];
@@ -50,11 +53,13 @@ export function NameTags({
   center,
   selectedId,
   onPick,
+  hidden = false,
 }: {
   placed: PlacedFestival[];
   center: [number, number];
   selectedId: string | null;
   onPick: (id: string) => void;
+  hidden?: boolean;
 }) {
   const { camera, size, gl } = useThree();
   const [display, setDisplay] = useState<{ ids: string[]; far: boolean }>({
@@ -102,6 +107,7 @@ export function NameTags({
 
   // 실제 이름표 크기와 같은 경계로 가리고 먼 시점에는 여섯 개까지만 남긴다.
   useFrame(() => {
+    if (hidden) return;
     const distance = Math.hypot(
       camera.position.x - center[0],
       camera.position.y,
@@ -182,14 +188,33 @@ export function NameTags({
   });
 
   // 표시는 DOM 크기로 유지하되 패널·헤더보다 낮은 층에 둔다.
-  const selected = useMemo(() => new Set(display.ids), [display.ids]);
+  // 이름표는 고정 칸을 늘 붙여 두고 내용만 바꾼다 — Html을 떼면 React 19에서 DOM 제거 오류가 난다.
+  const byId = useMemo(
+    () => new Map(placed.map((item) => [item.festival.eventId, item])),
+    [placed],
+  );
+  const slots = Array.from({ length: TAG_SLOTS }, (_, slot) =>
+    hidden ? undefined : byId.get(display.ids[slot] ?? ""),
+  );
   return (
     <group>
-      {placed
-        .filter(({ festival }) => selected.has(festival.eventId))
-        .map(({ festival, x, y, z }) => (
+      {slots.map((item, slot) => {
+        if (!item)
+          return (
+            <Html
+              // biome-ignore lint/suspicious/noArrayIndexKey: 칸 번호 자체가 고정 식별자다.
+              key={slot}
+              position={[0, -9999, 0]}
+              style={{ display: "none" }}
+            >
+              <span />
+            </Html>
+          );
+        const { festival, x, y, z } = item;
+        return (
           <Html
-            key={festival.eventId}
+            // biome-ignore lint/suspicious/noArrayIndexKey: 칸 번호 자체가 고정 식별자다.
+            key={slot}
             position={[x, LAND_SURFACE_Y + y + 9, z]}
             center
             zIndexRange={[9, 1]}
@@ -212,7 +237,8 @@ export function NameTags({
               <GradeMark level={festival.level} />
             </button>
           </Html>
-        ))}
+        );
+      })}
     </group>
   );
 }

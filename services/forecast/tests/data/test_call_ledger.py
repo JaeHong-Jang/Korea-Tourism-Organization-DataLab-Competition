@@ -62,3 +62,17 @@ def test_corrupt_ledger_fails_closed(tmp_path: Path, content: str) -> None:
     with pytest.raises(RuntimeError, match="장부 형식"):
         CallLedger(path).reserve("visitors")
     assert path.read_text() == content
+
+
+# 기상청 ASOS는 공유 한도가 찼어도 별도 900건 안에서 호출하고 공유 한도에는 더하지 않는다.
+def test_asos_uses_separate_pool(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(call_ledger, "korea_today", lambda: date(2026, 9, 26))
+    path = tmp_path / "ledger.csv"
+    path.write_text("date,api,calls\n2026-09-26,asos,899\n2026-09-26,visitors,900\n")
+    CallLedger(path).reserve("asos")
+    with pytest.raises(CallLimitReached, match="asos 별도"):
+        CallLedger(path).reserve("asos")
+    with pytest.raises(CallLimitReached, match="공유"):
+        CallLedger(path).reserve("holidays")
+    path.write_text("date,api,calls\n2026-09-26,asos,900\n2026-09-26,visitors,10\n")
+    CallLedger(path).reserve("holidays")

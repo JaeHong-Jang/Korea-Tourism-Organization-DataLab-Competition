@@ -176,6 +176,66 @@
   --scene-moonlight: #cfdcff;
   /* 낮 햇빛 번짐(장식, 더하기 합성) */
   --scene-sunlight: #ffe2a8;
+  /* 동네 3D(성남식 미니어처): 크림 건물·회색 아스팔트·연녹 공원·청록 물 — 재질 색, 낮밤은 조명으로 */
+  --scene-city-land: #e2d8bf;
+  --scene-city-road: #a7abab;
+  --scene-city-road-major: #858b8e;
+  --scene-city-road-line: #f6f2e6;
+  --scene-city-path: #d6c7a6;
+  --scene-city-rail: #9aa0a8;
+  --scene-city-park: #bcd597;
+  --scene-city-water: #9fd0d3;
+  --scene-city-wall: #f3ead7;
+  --scene-city-roof: #fbf6ec;
+  --scene-city-wall-tall: #e8dcc4;
+  --scene-city-wall-cool: #e3e3de;
+  --scene-glass-window: #9fb2c2;
+  --scene-city-window: #ffd27a;
+  /* 동네 사람 옷(장식 — 크림 바탕에서 보이게 진하되 등급 4색과 겹치지 않는 차분한 색) */
+  --scene-person-1: #4f68a8;
+  --scene-person-2: #9a4f74;
+  --scene-person-3: #2f8a86;
+  --scene-person-4: #7c5f35;
+  --scene-person-5: #6452a0;
+  --scene-person-6: #2f4a6e;
+  --scene-person-7: #6f8034;
+  --scene-person-8: #5a5f66;
+  /* 동네 사람 살색·머리·바지(장식) */
+  --scene-skin-1: #f3d2b3;
+  --scene-skin-2: #dcaf88;
+  --scene-skin-3: #b88363;
+  --scene-skin-4: #8e5d43;
+  --scene-hair-1: #2b2525;
+  --scene-hair-2: #4f3524;
+  --scene-hair-3: #23262f;
+  --scene-hair-4: #7c5a3a;
+  --scene-trouser-1: #2d3b52;
+  --scene-trouser-2: #3b3a42;
+  --scene-trouser-3: #555c6c;
+  --scene-trouser-4: #d9ccb0;
+  /* 동네 차·택시·버스·기차 재료(장식) */
+  --scene-car-1: #f7f5ee;
+  --scene-car-2: #c9473d;
+  --scene-car-3: #3f6fb5;
+  --scene-car-4: #7fbeb5;
+  --scene-car-5: #d8b453;
+  --scene-car-6: #5a5e6e;
+  --scene-car-7: #b7bac2;
+  --scene-taxi: #f2a93b;
+  --scene-bus-blue: #2d6fb7;
+  --scene-bus-green: #3a9a5c;
+  --scene-glass: #2b4257;
+  --scene-tire: #262c33;
+  --scene-headlamp: #fff3c4;
+  --scene-taillamp: #e04040;
+  --scene-train-body: #eef1f4;
+  --scene-train-stripe: #2f68b0;
+  --scene-train-roof: #8d949c;
+  /* 동네 나무 잎·줄기 */
+  --scene-tree-1: #6f9a6c;
+  --scene-tree-2: #86ad78;
+  --scene-tree-3: #5c8a64;
+  --scene-trunk: #9a7b55;
   --scene-window-glow: #ffd98a;
   --scene-shadow: rgba(40, 30, 20, 0.28);
   /* 블록 인형 옷(데이터 의미 없음 — 등급·팀 색과 겹치지 않게 채도를 낮춘 파스텔 8색)과 칠하지 않은 나무 머리 */

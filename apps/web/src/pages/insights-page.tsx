@@ -19,7 +19,7 @@ export function InsightsPage() {
       <PageHeading
         eyebrow="S7 · 데이터에서 찾은 단서"
         title="인사이트"
-        description="표본과 기간, 근거를 확인한 결과만 소개해요."
+        description="데이터랩 자료로 확인한 사실 두 가지예요 — 지자체 발표와 실측의 차이(I1), 법정 기준 근처 행사의 비중(I2). 표본·기간·근거가 확인된 값만 보여 주고, 서식4에 옮길 문장을 복사할 수 있어요."
       />
       <div className="insights-layout">
         <FeaturePanel

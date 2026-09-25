@@ -68,7 +68,8 @@ export function useConsultSession() {
   const [error, setError] = useState("");
   const [replyError, setReplyError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [summary, setSummary] = useState("행사를 적어 주세요.");
+  // 처음에는 입력칸 안내와 겹치지 않게 비워 두고 진행 상황만 알린다.
+  const [summary, setSummary] = useState("");
   const [recommendation, setRecommendation] = useState<Recommendation | null>(
     null,
   );

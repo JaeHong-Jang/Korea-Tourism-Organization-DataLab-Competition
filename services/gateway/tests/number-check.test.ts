@@ -156,3 +156,42 @@ describe("숫자와 단위 대조", () => {
     ]);
   });
 });
+
+// 날씨 요인 라벨의 숫자·확률 조각은 문장에서 빼고 말로 된 조각만 남겨 숫자·구간 검사를 통과한다(9/26 D-10 회귀)
+describe("날씨 요인 문장", () => {
+  it("강수확률·기온 숫자를 빼고 날씨 말만 요인 문장으로 쓴다", async () => {
+    const forecast = reportForecast();
+    const evidenceIds = forecast.evidence.slice(0, 1).map((item) => item.id);
+    forecast.factors = [
+      {
+        feature: "event_weather",
+        label: "행사일 강수확률 10%·강수 없음·맑음·최저기온 9℃·최고기온 21℃",
+        contribution: 0,
+        direction: "neutral",
+        evidenceIds,
+      },
+      {
+        feature: "rain_only",
+        label: "강수확률 80%",
+        contribution: 0,
+        direction: "neutral",
+        evidenceIds,
+      },
+    ] as unknown as typeof forecast.factors;
+    const claims = templateClaims(forecast, "s-weather");
+    const factorClaims = claims.filter((claim) => claim.claimType === "요인");
+    expect(factorClaims.map((claim) => claim.text)).toEqual([
+      "행사일 날씨 예보 — 강수 없음·맑음",
+    ]);
+    for (const claim of factorClaims)
+      expect(checkNumbers(claim, forecast).passed).toBe(true);
+    const { skeptic } = await import("../src/team/verification/skeptic.js");
+    const result = await skeptic.run({
+      input: { claims, forecast, revision: 1 },
+    } as never);
+    const index = claims.indexOf(factorClaims[0]);
+    expect(result.value[index].passed).toBe(true);
+    // 규칙 검사도 숫자만 뺀 라벨을 서비스 라벨과 같은 것으로 본다
+    expect(matchesRule(factorClaims[0], forecast)).toBe(true);
+  });
+});

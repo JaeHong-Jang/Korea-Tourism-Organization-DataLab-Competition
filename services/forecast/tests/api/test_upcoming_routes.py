@@ -108,7 +108,8 @@ def test_upcoming_snapshot_header(client: TestClient, monkeypatch: pytest.Monkey
     monkeypatch.setattr(Path, "read_bytes", replace_after_read)
     response = client.get("/v1/festivals/upcoming")
     assert response.status_code == 200
-    assert response.json() == [row]
+    # 행사 마스터가 없는 테스트 자료라 좌표 출처는 시군구 중심점으로 붙는다.
+    assert response.json() == [{**row, "coordSource": "centroid"}]
     assert response.headers["x-run-id"] == "batch-jinju"
 
 

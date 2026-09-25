@@ -1,4 +1,4 @@
-// 미니 대한민국 장면과 그 위에 놓일 필터·목록·타임라인 자리를 둔다.
+// 미니 대한민국 장면 위에 왼쪽 안내·지도 도구·범례와 오른쪽 탭 패널(목록·필터·현황)을 둔다.
 import { ArrowUpRight, Layers, Maximize } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -10,12 +10,12 @@ import { Button } from "../components/ui/button";
 import { FestivalFiltersPanel } from "../features/festival-filters/festival-filters";
 import { FestivalList } from "../features/festival-list/festival-list";
 import { sigunguPeaks } from "../features/mini-korea/data-mode";
-import { FestivalSummaryPanel } from "../features/mini-korea/festival-summary";
 import { HonestNotices } from "../features/mini-korea/honest-notices";
 import "../features/mini-korea/mini-korea.css";
 import { KpiStrip } from "../features/kpi-timeline/kpi-strip";
 import { WeeklyTimeline } from "../features/kpi-timeline/weekly-timeline";
 import { SvgKoreaMap } from "../features/map-2d/svg-korea-map";
+import { useAssistantStore } from "../lib/consult-store";
 import { useUpcomingFestivals } from "../lib/festivals/use-upcoming-festivals";
 import { useSelectionStore } from "../lib/selection-store";
 // 장면이 화면을 차지하고 부가 정보는 가장자리에 머물게 한다(필터 결과를 판·목록·KPI가 함께 쓴다).
@@ -32,9 +32,8 @@ export function MiniKoreaPage() {
     useUpcomingFestivals(filters);
   const [scale, setScale] = useState(() => crowdScale([], "high"));
   const [overviewRevision, setOverviewRevision] = useState(0);
-  const [mobilePanel, setMobilePanel] = useState<
-    "filter" | "list" | "timeline" | "legend"
-  >("filter");
+  const [tab, setTab] = useState<"list" | "filter" | "status">("list");
+  const showSpotlight = useAssistantStore((state) => state.showSpotlight);
   const selected =
     festivals.find((festival) => festival.eventId === selectedId) ?? null;
   const totals = useMemo(() => sigunguPeaks(festivals), [festivals]);
@@ -50,6 +49,12 @@ export function MiniKoreaPage() {
       selectSigungu(null);
     }
   }, [status, selectedId, festivals, selectFestival, selectSigungu]);
+
+  // 고른 행사는 목록 아래 요약 대신 고래 말풍선 카드로 띄우고, 화면을 떠나면 내린다.
+  useEffect(() => {
+    showSpotlight(selected);
+  }, [selected, showSpotlight]);
+  useEffect(() => () => showSpotlight(null), [showSpotlight]);
 
   // Escape는 장면·목록·SVG에서 공유하는 행사 선택을 해제한다.
   useEffect(() => {
@@ -83,7 +88,7 @@ export function MiniKoreaPage() {
     new URLSearchParams(location.search).get("forceSvg") === "1";
 
   return (
-    <div className="scene-page" data-mobile-panel={mobilePanel}>
+    <div className="scene-page">
       <section
         className="scene-stage"
         aria-labelledby="scene-title"
@@ -132,75 +137,61 @@ export function MiniKoreaPage() {
           />
         )}
         {!svgMode && (
-          <div
-            className="scene-map-tools"
-            role="toolbar"
-            aria-label="지도 도구"
-          >
-            <button
-              type="button"
-              onClick={() => {
-                selectFestival(null);
-                selectSigungu(null);
-                setOverviewRevision((value) => value + 1);
-              }}
-            >
-              <Maximize size={16} aria-hidden="true" />
-              전국 보기
-            </button>
-            <button
-              type="button"
-              className="data-mode-toggle"
-              aria-pressed={dataMode}
-              onClick={() => changeDataMode(!dataMode)}
-            >
-              <Layers size={16} aria-hidden="true" />
-              데이터 모드
-            </button>
-          </div>
-        )}
-        {!svgMode && (
           <p className="scene-mobile-scale">
             인형 1개 = {scale.peoplePerDoll.toLocaleString("ko-KR")}명 ·
             움직임은 연출
           </p>
         )}
       </section>
-      <nav className="scene-mobile-tabs" aria-label="미니 대한민국 정보">
-        {(
-          [
-            ["filter", "필터"],
-            ["list", "행사 목록"],
-            ["timeline", "행사 현황"],
-            ["legend", "범례"],
-          ] as const
-        ).map(([panel, label]) => (
-          <button
-            key={panel}
-            type="button"
-            aria-pressed={mobilePanel === panel}
-            onClick={() => setMobilePanel(panel)}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
-      <div className="scene-cta">
-        <Button asChild size="sm">
-          <Link to="/consult">
-            예보 상담 열기 <ArrowUpRight size={15} aria-hidden="true" />
-          </Link>
-        </Button>
-      </div>
       <div className="scene-left-rail">
-        <FeaturePanel
-          id="M1-F2"
-          title="필터"
-          description="기간·지역·유형·등급으로 행사를 좁혀 보세요."
-          className="scene-filter"
-        >
-          <FestivalFiltersPanel all={all} />
-        </FeaturePanel>
+        <div className="scene-left-rail__top">
+          <section className="scene-intro" aria-labelledby="scene-intro-title">
+            <p className="scene-intro__eyebrow">전국 행사 인파예보</p>
+            <h2 id="scene-intro-title">미니 대한민국</h2>
+            <p>
+              다가오는 행사 {festivals.length.toLocaleString("ko-KR")}건의 순간
+              최대 인파를 미리 봐요.
+            </p>
+            <div className="scene-cta">
+              <Button asChild size="sm">
+                <Link to="/consult">
+                  예보 상담 열기 <ArrowUpRight size={15} aria-hidden="true" />
+                </Link>
+              </Button>
+            </div>
+          </section>
+          {!svgMode && (
+            <div
+              className="scene-map-tools"
+              role="toolbar"
+              aria-label="지도 도구"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  selectFestival(null);
+                  selectSigungu(null);
+                  setOverviewRevision((value) => value + 1);
+                }}
+              >
+                <Maximize size={16} aria-hidden="true" />
+                전국 보기
+              </button>
+              <button
+                type="button"
+                className="data-mode-toggle"
+                aria-pressed={dataMode}
+                onClick={() => changeDataMode(!dataMode)}
+              >
+                <Layers size={16} aria-hidden="true" />
+                데이터 모드
+              </button>
+              <p className="scene-map-tools__hint">
+                왼쪽 끌기 이동 · 휠 끌기 회전 · 휠 굴려 확대
+              </p>
+            </div>
+          )}
+        </div>
         <div className="scene-legend-panel">
           {svgMode && (
             <p className="scene-svg-notices">
@@ -215,31 +206,75 @@ export function MiniKoreaPage() {
             dataMode={dataMode && !svgMode}
             totals={totals}
             notices={<HonestNotices festivals={festivals} fixture={fixture} />}
+            city={
+              Boolean(selected) &&
+              !svgMode &&
+              new URLSearchParams(location.search).get("sceneCity") !== "0"
+            }
           />
         </div>
       </div>
       <FeaturePanel
         id="M1-F3"
-        title="행사 목록"
-        description="선택한 조건의 행사가 위험 순으로 나타나요."
+        title="행사 둘러보기"
+        description="위험 순 목록에서 고르고, 조건을 좁히거나 주간 흐름을 살펴요."
         className="scene-list"
       >
-        <FestivalList festivals={festivals} status={status} />
-        <FestivalSummaryPanel festival={selected} status={status} />
-      </FeaturePanel>
-      <FeaturePanel
-        id="M1-F4"
-        title="행사 현황"
-        description="행사 흐름과 등급별 주간 변화를 살펴보세요."
-        className="scene-timeline"
-      >
-        <KpiStrip
-          festivals={festivals}
-          receivedAt={receivedAt}
-          fixture={fixture}
-          status={status}
-        />
-        <WeeklyTimeline festivals={festivals} status={status} />
+        <div className="scene-tabs" role="tablist" aria-label="행사 둘러보기">
+          {(
+            [
+              ["list", `행사 목록 ${festivals.length.toLocaleString("ko-KR")}`],
+              ["filter", "필터"],
+              ["status", "행사 현황"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              id={`scene-tab-${key}`}
+              aria-selected={tab === key}
+              aria-controls={`scene-tabpanel-${key}`}
+              onClick={() => setTab(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div
+          role="tabpanel"
+          id="scene-tabpanel-list"
+          aria-labelledby="scene-tab-list"
+          hidden={tab !== "list"}
+        >
+          <FestivalList festivals={festivals} status={status} />
+        </div>
+        <div
+          role="tabpanel"
+          id="scene-tabpanel-filter"
+          aria-labelledby="scene-tab-filter"
+          className="scene-filter"
+          data-feature="M1-F2"
+          hidden={tab !== "filter"}
+        >
+          <FestivalFiltersPanel all={all} />
+        </div>
+        <div
+          role="tabpanel"
+          id="scene-tabpanel-status"
+          aria-labelledby="scene-tab-status"
+          className="scene-timeline"
+          data-feature="M1-F4"
+          hidden={tab !== "status"}
+        >
+          <KpiStrip
+            festivals={festivals}
+            receivedAt={receivedAt}
+            fixture={fixture}
+            status={status}
+          />
+          <WeeklyTimeline festivals={festivals} status={status} />
+        </div>
       </FeaturePanel>
       <span className="scene-id" data-feature="M1-F1" aria-hidden="true">
         {debug ? "M1-F1 · 전국 판" : null}

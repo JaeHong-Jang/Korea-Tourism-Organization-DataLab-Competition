@@ -18,6 +18,10 @@ export function ReportNumbers({
   const daily = report.forecast.dailyMean;
   const interval = report.forecast.judgment.basis === "구간";
   const quantities = [peak, daily];
+  // 피크 시각 대신 쓴 동시체류 가정(운영·체류 시간)을 이유와 함께 보여 준다.
+  const concurrency = report.forecast.assumptions.find((item) =>
+    item.id.startsWith("as-concurrency-"),
+  );
   return (
     <section className="report-section" aria-labelledby="report-numbers-title">
       <h3 id="report-numbers-title">핵심 수치</h3>
@@ -75,8 +79,17 @@ export function ReportNumbers({
           <strong>
             {report.forecast.peakHours
               ? `${report.forecast.peakHours.from} ~ ${report.forecast.peakHours.to}`
-              : "자료 없음"}
+              : "계산하지 않았어요"}
           </strong>
+          {!report.forecast.peakHours && (
+            <p>
+              행사 시간표와 시간대별 방문 자료가 없어 몇 시에 가장 붐비는지는
+              지어내지 않아요.
+              {concurrency
+                ? ` 순간 최대 인원은 ${concurrency.note.match(/운영 \d+시간, 체류 [\d.]+시간/)?.[0] ?? "운영·체류 시간"} 가정으로 계산했어요.`
+                : ""}
+            </p>
+          )}
         </div>
       </div>
       {!interval &&

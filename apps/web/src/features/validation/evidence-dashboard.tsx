@@ -1,5 +1,6 @@
 // 발행 문장의 근거 연결과 데이터랩 도달을 각각 계산해 보여 준다.
 import type { DatalabUsage } from "@crowdcast/contracts/types";
+import { formatDate } from "../../lib/format";
 import type { ContractState } from "../../lib/validation/use-contract";
 import { ContractMessage } from "./contract-state";
 
@@ -17,7 +18,10 @@ export function EvidenceDashboard({
       Number(right.datalabMenu != null) - Number(left.datalabMenu != null) ||
       right.count - left.count,
   );
-  const max = Math.max(1, ...sorted.map((item) => item.count));
+  // 인용된 자료만 막대로 비교하고 아직 인용 0건인 자료는 이름만 따로 모은다.
+  const cited = sorted.filter((item) => item.count > 0);
+  const uncited = sorted.filter((item) => item.count === 0);
+  const max = Math.max(1, ...cited.map((item) => item.count));
   return (
     <div className="validation-content">
       {usage.publishedClaims === 0 ? (
@@ -59,12 +63,12 @@ export function EvidenceDashboard({
           : `${(usage.shaclPassRate * 100).toFixed(1)}%`}
       </p>
       <h3>데이터셋별 근거 인용</h3>
-      {sorted.length ? (
+      {cited.length ? (
         <ul className="validation-datasets">
-          {sorted.map((item) => (
+          {cited.map((item) => (
             <li key={item.datasetId}>
               <span className="validation-dataset-label">
-                {item.title}
+                <span>{item.title}</span>
                 {item.datalabMenu && (
                   <small className="validation-datalab-menu">
                     {item.datalabMenu}
@@ -81,7 +85,19 @@ export function EvidenceDashboard({
       ) : (
         <p>인용된 데이터셋이 아직 없어요.</p>
       )}
-      <small>집계 {usage.generatedAt}</small>
+      {uncited.length > 0 && (
+        <div className="validation-uncited">
+          <h4>
+            인용 0건 — 아직 예보 문장에 쓰이지 않은 자료 {uncited.length}개
+          </h4>
+          <ul>
+            {uncited.map((item) => (
+              <li key={item.datasetId}>{item.title}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <small>집계 {formatDate(usage.generatedAt)} (한국 시각)</small>
     </div>
   );
 }

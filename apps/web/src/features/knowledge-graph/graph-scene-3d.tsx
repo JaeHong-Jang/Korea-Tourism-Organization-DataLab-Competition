@@ -74,13 +74,13 @@ export function GraphScene3d(props: SceneProps) {
   const background = colors["--surface-sunken"];
   return (
     <Canvas
-      camera={{ position: [0, 90, 400], fov: 45, near: 1, far: 3000 }}
+      camera={{ position: [0, 160, 720], fov: 45, near: 1, far: 4000 }}
       dpr={[1, 1.5]}
       onPointerMissed={props.onClear}
       gl={{ antialias: true }}
     >
       <color attach="background" args={[background]} />
-      <fog attach="fog" args={[background, 380, 980]} />
+      <fog attach="fog" args={[background, 680, 1600]} />
       <ambientLight intensity={0.75} />
       <directionalLight position={[120, 220, 160]} intensity={1.15} />
       <GraphContent {...props} colors={colors} />
@@ -303,7 +303,7 @@ function GraphContent({
         autoRotate={!selectedId && !hovered && !reducedMotion}
         autoRotateSpeed={0.35}
         minDistance={40}
-        maxDistance={900}
+        maxDistance={1500}
         zoomToCursor
         mouseButtons={{
           LEFT: MOUSE.PAN,
