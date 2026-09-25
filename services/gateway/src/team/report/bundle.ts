@@ -12,6 +12,7 @@ export type ReportBundle = {
   forecast: Forecast;
   baseline: RegionBaseline | null;
   similar: SimilarEvent[];
+  conditionLabel?: string;
 };
 export type DraftText = Pick<
   Claim,

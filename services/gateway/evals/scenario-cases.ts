@@ -32,18 +32,23 @@ export function readScenarios(contents: string): Scenario[] {
     .trim()
     .split(/\r?\n/)
     .map((line) => JSON.parse(line));
-  if (cases.length !== 20 || new Set(cases.map((item) => item.id)).size !== 20)
-    throw new Error("고유한 시나리오 20개가 필요합니다");
+  if (cases.length !== 23 || new Set(cases.map((item) => item.id)).size !== 23)
+    throw new Error("고유한 기본 시나리오 20개와 what-if 3개가 필요합니다");
   for (const [category, count] of Object.entries({
     new: 12,
     ask: 3,
-    followup: 3,
+    followup: 6,
     out_of_scope: 2,
   }))
     if (cases.filter((item) => item.category === category).length !== count)
       throw new Error(`사례 구성 오류: ${category}`);
   const seen = new Map<string, Scenario>();
   for (const item of cases) {
+    if (
+      item.whatifMode &&
+      (item.category !== "followup" || item.expected.intent !== "whatif")
+    )
+      throw new Error(`what-if 조건 오류: ${item.id}`);
     if (
       !item.text ||
       !Array.isArray(item.tags) ||
@@ -67,6 +72,8 @@ export function readScenarios(contents: string): Scenario[] {
       throw new Error(`후속 조건 오류: ${item.id}`);
     seen.set(item.id, item);
   }
+  if (cases.filter((item) => item.whatifMode).length !== 3)
+    throw new Error("what-if 시나리오 3개가 필요합니다");
   if (
     new Set(
       cases

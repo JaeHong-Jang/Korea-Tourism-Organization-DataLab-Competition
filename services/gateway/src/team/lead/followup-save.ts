@@ -24,6 +24,7 @@ export async function savePublished(
     async run({ signal }) {
       const report = session.published?.report;
       if (!report) throw new Error("발행 묶음이 없습니다");
+      const storedEvent = session.storedEvent ?? report.event;
       const records = createRecordsClient({
         baseUrl: settings.config.services.records,
         fetch: settings.fetcher,
@@ -45,12 +46,12 @@ export async function savePublished(
         // 행사만 저장된 이전 시도는 내용까지 확인해 중복 생성 없이 이어 간다
         try {
           const event = await records.getEvent(report.event.id);
-          if (!isDeepStrictEqual(event, report.event))
+          if (!isDeepStrictEqual(event, storedEvent))
             throw new Error("저장된 행사 내용이 다릅니다");
         } catch (error) {
           if (!(error instanceof ServiceHttpError) || error.status !== 404)
             throw error;
-          await records.saveEvent(report.event);
+          await records.saveEvent(storedEvent);
         }
         await records.saveSnapshot(report.event.id, report);
       }

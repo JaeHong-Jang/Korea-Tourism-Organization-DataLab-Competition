@@ -3,9 +3,11 @@ import { randomUUID } from "node:crypto";
 import type {
   AgentStep,
   Claim,
+  Event,
   EventDraft,
   ForecastReport,
 } from "@crowdcast/contracts/types";
+import type { WhatifKind } from "../whatif/intent.js";
 
 export type TeamSession = {
   id: string;
@@ -18,6 +20,9 @@ export type TeamSession = {
   analyzed: boolean;
   completed: boolean;
   forecastId?: string;
+  previousForecastIds?: string[];
+  storedEvent?: Event;
+  pendingWhatif?: { kind?: WhatifKind; forecastId: string };
   published?: {
     report: ForecastReport;
     revision: number;

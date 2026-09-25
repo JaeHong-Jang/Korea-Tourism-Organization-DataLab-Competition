@@ -1,4 +1,6 @@
 // 실제 상담 라우트에 계약 수치 픽스처와 메모리 서비스만 연결해 가짜 평가를 실행한다
+
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import type {
   Event,
@@ -37,8 +39,10 @@ function fixture<T>(name: string): T {
 }
 
 // 기존 영종 계약 수치를 사례 지역에 대응시키되 식별자와 기준일만 바꾼다
-function exampleForecast(event: Event): Forecast {
-  const id = `f-${event.id.slice(2)}`;
+function exampleForecast(
+  event: Event,
+  id = `f-${event.id.slice(2)}`,
+): Forecast {
   const forecast: Forecast = JSON.parse(
     JSON.stringify(fixture<Forecast>("forecast")).replaceAll(
       "f-yeongjong-2025",
@@ -104,6 +108,14 @@ export function createScenarioFake(cases: Scenario[]) {
     if (url.pathname === "/v1/similar") return Response.json([]);
     if (url.pathname === "/v1/predict")
       return Response.json(exampleForecast(body));
+    // 조건만 병합하고 수치는 계약 픽스처 그대로 반환한다
+    if (url.pathname === "/v1/whatif")
+      return Response.json(
+        exampleForecast(
+          { ...body.event, ...body.changes },
+          `f-whatif-${randomUUID()}`,
+        ),
+      );
     if (url.pathname === "/v1/events" && body) {
       if (events.has(body.id)) return new Response(null, { status: 409 });
       events.set(body.id, structuredClone(body));

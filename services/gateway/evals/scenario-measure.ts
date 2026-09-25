@@ -100,7 +100,7 @@ export async function measureScenarios(
       const id = eventData<{ forecastId: string | null }>(last, "done").at(
         -1,
       )?.forecastId;
-      if (id && !item.parent) {
+      if (id && (!item.parent || item.whatifMode === "new")) {
         const report = await requestJson(
           fetcher,
           `${base}/api/forecasts/${encodeURIComponent(id)}`,

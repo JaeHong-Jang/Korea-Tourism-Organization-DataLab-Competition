@@ -35,7 +35,7 @@ export function scoreScenario(
     (
       sequenceProblems(
         turn.events.map((value) => value.envelope),
-        item.parent
+        item.parent && item.whatifMode !== "new"
           ? { mode: "followup", forecastId: sample.parentForecastId }
           : { mode: "new" },
       ) as string[]
@@ -85,7 +85,9 @@ export function scoreScenario(
   if (sample.report && card) {
     if (
       sample.report.forecastId !== card.id ||
-      sample.report.sessionId !== sample.sessionId
+      (item.whatifMode !== "new" &&
+        sample.report.sessionId !== sample.sessionId) ||
+      claims.some((claim) => claim.sessionId !== sample.report?.sessionId)
     )
       execution.push("예보서와 스트림의 예보·세션 식별자 불일치");
     if (
@@ -127,6 +129,11 @@ export function scoreScenario(
   const actualIntent = intents.at(-1) ?? null;
   const intent = actualIntent === item.expected.intent;
   const errors = eventData<{ code: string }>(events, "error");
+  // 조건 변경 평가는 새 식별자와 호출 상한까지 확인해 이전 카드 재전송을 통과시키지 않는다
+  if (item.whatifMode === "new" && card?.id === sample.parentForecastId)
+    execution.push("what-if 예보 식별자가 기존 예보와 같습니다");
+  if (item.whatifMode && steps.filter((step) => step.usedLlm).length > 3)
+    execution.push("what-if LLM 호출 상한 초과");
   for (const error of errors)
     if (!(item.category === "out_of_scope" && error.code === "OUT_OF_SCOPE"))
       execution.push(`스트림 오류: ${error.code}`);

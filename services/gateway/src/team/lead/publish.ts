@@ -12,7 +12,11 @@ import { createRecordsClient } from "../../clients/records-client.js";
 import { responseSchema } from "../../contract/responses.js";
 import { explanationFailure } from "../../llm/explanation-failure.js";
 import { briefer } from "../report/briefer.js";
-import { type ReportBundle, reportEvidence } from "../report/bundle.js";
+import {
+  draftClaims,
+  type ReportBundle,
+  reportEvidence,
+} from "../report/bundle.js";
 import { cardMaker } from "../report/card-maker.js";
 import { type Explanation, explainer } from "../report/explainer.js";
 import type { EventWriter } from "../runtime/events.js";
@@ -67,6 +71,36 @@ async function explain(
     .reverse()
     .find((item) => item.agentId === "explainer");
   if (!step) throw new ExplanationGateError("해설 작성 단계가 없습니다");
+  // 조건 변경 안내도 근거를 붙여 같은 숫자 검사·게이트 B를 거친다
+  if (bundle.conditionLabel) {
+    if (/\p{N}/u.test(bundle.conditionLabel))
+      throw new ExplanationGateError("조건 안내에 숫자를 쓸 수 없습니다");
+    const final =
+      (bundle.conditionLabel.charCodeAt(bundle.conditionLabel.length - 1) -
+        0xac00) %
+      28;
+    const particle = final > 0 && final !== 8 ? "으로" : "로";
+    explanation.claims.unshift(
+      ...draftClaims(
+        [
+          {
+            text: `${bundle.conditionLabel}${particle} 바꾼 조건의 예보예요`,
+            claimType: "설명",
+            evidenceIds: bundle.forecast.evidence
+              .filter(
+                (item) =>
+                  item.kind === "model" &&
+                  item.forecastId === bundle.forecast.id,
+              )
+              .map((item) => item.id),
+            placeholders: [],
+          },
+        ],
+        session.id,
+        bundle.forecast.id,
+      ),
+    );
+  }
   return {
     ...explanation,
     claims: explanation.claims.map((claim) => ({
@@ -219,6 +253,7 @@ export async function publishForecast(
   writer: EventWriter,
   deadline: Deadline,
   settings: TeamSettings,
+  saveEvent = true,
 ) {
   const report = await publishForecastReport(
     session,
@@ -241,7 +276,7 @@ export async function publishForecast(
         signal,
         timeoutMs,
       });
-      await records.saveEvent(event);
+      if (saveEvent) await records.saveEvent(event);
       await records.saveSnapshot(event.id, report as ForecastReport);
     });
   } catch {
