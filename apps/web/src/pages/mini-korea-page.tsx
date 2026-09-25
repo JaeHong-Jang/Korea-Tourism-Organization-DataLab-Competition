@@ -32,6 +32,8 @@ export function MiniKoreaPage() {
     useUpcomingFestivals(filters);
   const [scale, setScale] = useState(() => crowdScale([], "high"));
   const [overviewRevision, setOverviewRevision] = useState(0);
+  // 동네 3D 귀가 인파 보기(범례 단추로 켜고 끈다).
+  const [homeward, setHomeward] = useState(false);
   const [tab, setTab] = useState<"list" | "filter" | "status">("list");
   const showSpotlight = useAssistantStore((state) => state.showSpotlight);
   const selected =
@@ -138,6 +140,7 @@ export function MiniKoreaPage() {
             dataMode={dataMode}
             totals={totals}
             overviewRevision={overviewRevision}
+            homeward={homeward}
           />
         )}
         {!svgMode && (
@@ -230,6 +233,8 @@ export function MiniKoreaPage() {
               !svgMode &&
               new URLSearchParams(location.search).get("sceneCity") !== "0"
             }
+            homeward={homeward}
+            onHomeward={() => setHomeward((value) => !value)}
           />
         </div>
       </div>

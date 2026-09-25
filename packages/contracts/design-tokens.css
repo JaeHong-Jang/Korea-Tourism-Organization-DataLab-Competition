@@ -236,6 +236,8 @@
   --scene-bldg-roof-grey: #d6d3cc;
   --scene-bldg-roof-dark: #9aa1a6;
   --scene-bldg-roof-metal: #7e94a7;
+  /* 동네 3D 귀가 길 띠 */
+  --scene-homeward: #f0a23a;
   /* 전국 판 배·비행기 부품 색 */
   --scene-ship-hull: #2f5f8f;
   --scene-ship-cabin: #f6f4ee;

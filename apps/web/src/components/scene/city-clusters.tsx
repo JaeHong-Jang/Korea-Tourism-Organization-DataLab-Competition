@@ -141,9 +141,7 @@ export function CityClusters({
     const next = camera.position.y > FAR_HEIGHT;
     if (!target || next === far.current) return;
     far.current = next;
-    target.count = next
-      ? Math.min(towers.length, anchors.size)
-      : towers.length;
+    target.count = next ? Math.min(towers.length, anchors.size) : towers.length;
   });
   // 바닥이 땅 윗면에 닿도록 상자 원점을 아랫면으로 옮긴다.
   const box = useMemo(() => new BoxGeometry(1, 1, 1).translate(0, 0.5, 0), []);

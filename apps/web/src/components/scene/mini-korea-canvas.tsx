@@ -42,12 +42,15 @@ export function MiniKoreaCanvas({
   dataMode = false,
   totals = EMPTY_TOTALS,
   overviewRevision = 0,
+  homeward = false,
 }: {
   festivals?: FestivalSummary[];
   onScaleChange?: (scale: SceneScale) => void;
   dataMode?: boolean;
   totals?: Map<string, number>;
   overviewRevision?: number;
+  // 동네 3D에서 귀가 인파(가장 가까운 역까지 걷는 길) 보기.
+  homeward?: boolean;
 }) {
   const [regressFactor, setRegressFactor] = useState(1);
   const [showLand, setShowLand] = useState(true);
@@ -195,6 +198,7 @@ export function MiniKoreaCanvas({
               selectSigungu(null);
             }}
             onStatus={setCityStatus}
+            homeward={homeward}
           />
         ) : (
           <>

@@ -11,7 +11,7 @@ import { trafficCaps } from "../city/city-traffic";
 import { motionSeconds } from "../motion/rail-lines";
 import { clipPolygon, clipSegment } from "./clip";
 import { tileAt, tilePointToVenue } from "./coordinates";
-import { graphRoutes, routeGraph, vehicleAt } from "./routes";
+import { graphRoutes, pathRoute, routeGraph, vehicleAt } from "./routes";
 import { sampleEvent } from "./sites";
 import { isStationName } from "./tile-tags";
 import { readVenueTile, type VenueTiles } from "./tiles";
@@ -162,6 +162,36 @@ describe("행사장 연출", () => {
       Math.max(...routes.map((route) => Math.hypot(...route.points[0]))),
     ).toBeGreaterThan(1200);
     expect(routes.every((route) => route.length >= 300)).toBe(true);
+  });
+
+  // 귀가 길은 격자 길에서 길이 가중 최단 경로이며, 이어지지 않으면 만들지 않는다
+  it("두 점 사이 최단 걸음 경로를 찾는다", () => {
+    const lines = [];
+    for (let at = 0; at <= 400; at += 100)
+      for (let step = 0; step < 400; step += 100) {
+        lines.push({
+          from: [at, step] as [number, number],
+          to: [at, step + 100] as [number, number],
+          kind: "road",
+          width: 5,
+        });
+        lines.push({
+          from: [step, at] as [number, number],
+          to: [step + 100, at] as [number, number],
+          kind: "road",
+          width: 5,
+        });
+      }
+    const graph = routeGraph(lines);
+    const route = pathRoute(graph, [0, 0], [300, 200], "역 가는 길");
+    expect(route?.length).toBeCloseTo(500, 5);
+    expect(route?.points[0]).toEqual([0, 0]);
+    expect(route?.points.at(-1)).toEqual([300, 200]);
+    const apart = routeGraph([
+      ...lines,
+      { from: [900, 900], to: [950, 900], kind: "road", width: 5 },
+    ]);
+    expect(pathRoute(apart, [0, 0], [940, 900], "끊긴 길")).toBeNull();
   });
 
   it("품질 상한과 모션 감소 정지를 지킨다", () => {

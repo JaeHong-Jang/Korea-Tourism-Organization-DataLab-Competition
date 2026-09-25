@@ -176,3 +176,93 @@ export function vehicleAt(
 export function towardShare(hour: number, eventHour: number): number {
   return Math.max(0.15, Math.min(0.8, 0.8 - Math.abs(hour - eventHour) * 0.2));
 }
+
+// 두 점에 가장 가까운 연결점 사이를 길이 가중 최단 경로(다익스트라·이진 힙)로 이어 한 방향 경로를 만든다.
+export function pathRoute(
+  graph: RouteGraph,
+  from: Point,
+  to: Point,
+  name: string,
+): MotionRoute | null {
+  const nearest = (point: Point) => {
+    let best = -1;
+    let gap = Infinity;
+    graph.nodes.forEach((node, id) => {
+      const distance = Math.hypot(node[0] - point[0], node[1] - point[1]);
+      if (graph.edges[id].length && distance < gap) {
+        gap = distance;
+        best = id;
+      }
+    });
+    return best;
+  };
+  const start = nearest(from);
+  const goal = nearest(to);
+  if (start < 0 || goal < 0 || start === goal) return null;
+  const cost = new Float64Array(graph.nodes.length).fill(Infinity);
+  const previous = new Int32Array(graph.nodes.length).fill(-1);
+  const heap: [number, number][] = [[0, start]];
+  cost[start] = 0;
+  // 힙에서 가장 싼 점을 꺼내 이웃 비용을 줄인다(이미 더 싼 값으로 방문한 점은 건너뜀).
+  while (heap.length) {
+    const [spent, id] = pop(heap);
+    if (id === goal) break;
+    if (spent > cost[id]) continue;
+    for (const next of graph.edges[id]) {
+      const step =
+        spent +
+        Math.hypot(
+          graph.nodes[next][0] - graph.nodes[id][0],
+          graph.nodes[next][1] - graph.nodes[id][1],
+        );
+      if (step < cost[next]) {
+        cost[next] = step;
+        previous[next] = id;
+        push(heap, [step, next]);
+      }
+    }
+  }
+  if (!Number.isFinite(cost[goal])) return null;
+  const path: number[] = [];
+  for (let id = goal; id !== -1; id = previous[id]) path.unshift(id);
+  const points = path.map((id) => graph.nodes[id]);
+  const lengths = [0];
+  for (let step = 1; step < points.length; step++)
+    lengths.push(
+      lengths[step - 1] +
+        Math.hypot(
+          points[step][0] - points[step - 1][0],
+          points[step][1] - points[step - 1][1],
+        ),
+    );
+  return { name, points, lengths, length: lengths.at(-1) ?? 0 };
+}
+
+// 비용이 작은 항목이 맨 앞에 오는 이진 힙의 넣기·꺼내기.
+function push(heap: [number, number][], item: [number, number]) {
+  heap.push(item);
+  for (let at = heap.length - 1; at > 0; ) {
+    const parent = (at - 1) >> 1;
+    if (heap[parent][0] <= heap[at][0]) break;
+    [heap[parent], heap[at]] = [heap[at], heap[parent]];
+    at = parent;
+  }
+}
+function pop(heap: [number, number][]): [number, number] {
+  const top = heap[0];
+  const last = heap.pop() as [number, number];
+  if (heap.length) {
+    heap[0] = last;
+    for (let at = 0; ; ) {
+      const left = at * 2 + 1;
+      const right = left + 1;
+      let small = at;
+      if (left < heap.length && heap[left][0] < heap[small][0]) small = left;
+      if (right < heap.length && heap[right][0] < heap[small][0]) small = right;
+      if (small === at) break;
+      [heap[small], heap[at]] = [heap[at], heap[small]];
+      at = small;
+    }
+  }
+  return top;
+}

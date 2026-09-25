@@ -5,7 +5,12 @@ import { useTheme } from "../../../lib/theme/theme-provider";
 import { FestivalModels } from "../festival-models";
 import type { SceneQuality } from "../quality";
 import { SkyScene } from "../sky/sky-scene";
-import { graphRoutes, routeGraph, towardShare } from "../venue/routes";
+import {
+  graphRoutes,
+  pathRoute,
+  routeGraph,
+  towardShare,
+} from "../venue/routes";
 import { loadCityTiles, type VenueTiles } from "../venue/tiles";
 import { CityBuildings, cityBuildingCap } from "./city-buildings";
 import { CityControls } from "./city-controls";
@@ -17,6 +22,7 @@ import { CityTraffic } from "./city-traffic";
 import { CityTrees } from "./city-trees";
 import { fillBuildings } from "./fill-buildings";
 import { buildingIndex } from "./free-space";
+import { HomewardPath } from "./homeward-path";
 import "./city.css";
 
 export type CityStatus = "loading" | "ready" | "error";
@@ -35,12 +41,15 @@ export function CityScene({
   reducedMotion,
   onLeave,
   onStatus,
+  homeward = false,
 }: {
   festival: FestivalSummary;
   quality: SceneQuality;
   reducedMotion: boolean;
   onLeave: () => void;
   onStatus?: (status: CityStatus) => void;
+  // 귀가 인파 보기 — 행사장에서 가장 가까운 역까지 걷는 길과 행렬을 켠다.
+  homeward?: boolean;
 }) {
   const [tiles, setTiles] = useState<VenueTiles | null>(null);
   const { sky, at } = useTheme();
@@ -105,6 +114,30 @@ export function CityScene({
     () => (tiles ? graphRoutes(routeGraph(tiles.rails), 8) : []),
     [tiles],
   );
+  // 1.2km 안 가까운 역부터 차례로, 큰길 인도까지 포함한 모든 길을 따라 걷는 최단 경로(이어지는 역이 없으면 그리지 않는다).
+  const homeRoute = useMemo(() => {
+    if (!tiles) return null;
+    const graph = routeGraph(tiles.roads);
+    const stations = [...tiles.stations]
+      .filter(({ point }) => Math.hypot(...point) < 1200)
+      .sort((a, b) => Math.hypot(...a.point) - Math.hypot(...b.point));
+    for (const station of stations.slice(0, 4)) {
+      const route = pathRoute(
+        graph,
+        [0, 0],
+        station.point,
+        `${station.name} 가는 길`,
+      );
+      if (route && route.length > 50) return route;
+    }
+    return null;
+  }, [tiles]);
+  useEffect(() => {
+    document.documentElement.dataset.cityHomeward = homeRoute?.name ?? "none";
+    return () => {
+      delete document.documentElement.dataset.cityHomeward;
+    };
+  }, [homeRoute]);
   // 행사 무대 자리(원점 12m 안)를 덮는 건물만 빼 무대·모인 사람이 건물 속에 묻히지 않게 한다.
   // OSM 건물이 없는 길가는 품질 상한까지 연출 건물로 채우고, 가까운 건물부터 세우도록 거리순으로 둔다.
   const buildings = useMemo(() => {
@@ -181,6 +214,19 @@ export function CityScene({
           reducedMotion={reducedMotion}
           blocked={blocked}
         />
+      )}
+      {homeward && homeRoute && (
+        <>
+          <HomewardPath route={homeRoute} />
+          <CityPeople
+            routes={[homeRoute]}
+            walkers={quality === "high" ? 120 : quality === "medium" ? 70 : 30}
+            gather={0}
+            towardShare={0}
+            quality={quality}
+            reducedMotion={reducedMotion}
+          />
+        </>
       )}
       {tiles && (
         <CityTraffic

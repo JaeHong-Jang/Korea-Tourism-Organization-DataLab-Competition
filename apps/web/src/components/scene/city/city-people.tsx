@@ -61,6 +61,7 @@ export function CityPeople({
   routes,
   nearby = [],
   wide = false,
+  walkers,
   gather,
   towardShare,
   quality,
@@ -72,6 +73,8 @@ export function CityPeople({
   nearby?: MotionRoute[];
   // 동네 3D처럼 동네 전체 길에 흩을 때 true(사람 수를 늘린다).
   wide?: boolean;
+  // 걷는 사람 수를 따로 정할 때(귀가 행렬) — 없으면 품질 상한.
+  walkers?: number;
   gather: number;
   towardShare: number;
   quality: "high" | "medium" | "low";
@@ -80,7 +83,7 @@ export function CityPeople({
   blocked?: (x: number, z: number, margin?: number) => boolean;
 }) {
   const caps = walkerCaps(quality, wide);
-  const walkCount = routes.length ? caps.walk : 0;
+  const walkCount = routes.length ? (walkers ?? caps.walk) : 0;
   const gatherCount = Math.min(caps.gather, Math.max(0, Math.round(gather)));
   const total = walkCount + gatherCount;
   const bodies = useRef<InstancedMesh>(null);
