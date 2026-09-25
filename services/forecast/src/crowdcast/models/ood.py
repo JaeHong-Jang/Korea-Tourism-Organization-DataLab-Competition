@@ -22,7 +22,8 @@ def detect_ood(row: dict[str, Any], p50: float, fitted: dict[str, Any]) -> dict[
     outside = []
     for name, (low, high) in fitted["ranges"].items():
         value = row.get(name)
-        if value is not None and (low is None or value < low or value > high):
+        # 학습에서 전부 결측인 피처는 배운 적 없어 반영되지 않을 뿐 외삽이 아니므로 범위 검사에서 뺀다.
+        if value is not None and low is not None and (value < low or value > high):
             outside.append(name)
     return {
         "ood": count < 5 or bool(outside),
