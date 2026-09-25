@@ -7,7 +7,7 @@
 .assistant-panel__header p { margin: var(--space-1) 0 0; color: var(--ink-2); font-size: var(--text-sm); }
 .assistant-panel__header button, .assistant-recommendation__actions button, .assistant-recommendations > button, .consult-start button, .festival-list__consult { padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); cursor: pointer; }
 .assistant-panel__conversation { display: grid; align-content: start; gap: var(--space-3); min-height: 0; flex: 1; overflow-y: auto; padding-block: var(--space-4); }
-.assistant-panel .consult-compose { margin-top: var(--space-2); }
+.assistant-panel .consult-compose { position: sticky; bottom: calc(-1 * var(--space-4)); z-index: 1; margin-top: var(--space-2); padding-block: var(--space-2) var(--space-4); background: var(--surface); } /* 되묻기가 길어져도 입력칸·보내기는 늘 패널 아래에 보인다 */
 .assistant-panel .consult-ask { max-height: 52%; overflow-y: auto; }
 .assistant-panel .consult-live { margin: var(--space-2) 0; font-size: var(--text-caption); }
 .assistant-picker { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }

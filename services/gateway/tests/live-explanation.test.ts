@@ -98,14 +98,21 @@ describe("실예보 설명 회귀", () => {
   it("요인은 상위 세 개로 압축한다", () => {
     const forecast = reportForecast();
     const factor = forecast.factors[0];
+    // 라벨의 숫자 조각은 문장에서 빠지므로 이름은 숫자 없는 글자로 둔다
+    const names: Record<number, string> = {
+      1: "가",
+      4: "라",
+      2: "나",
+      [-3]: "다",
+    };
     forecast.factors = [1, 4, 2, -3].map((contribution) => ({
       ...factor,
       contribution,
-      label: `요인 ${contribution}`,
+      label: `요인 ${names[contribution]}`,
     }));
     expect(JSON.parse(explanationInput(forecast, [])).factors).toEqual(
       [4, -3, 2].map((value) => ({
-        name: `요인 ${value}`,
+        name: `요인 ${names[value]}`,
         direction: factor.direction,
         evidenceIds: factor.evidenceIds,
       })),

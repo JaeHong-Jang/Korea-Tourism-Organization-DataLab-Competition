@@ -1,6 +1,7 @@
 // 판정·권고 문구와 인용 규칙의 법정·자체 구분을 정본 응답에 대조한다
 import type { Claim, Forecast } from "@crowdcast/contracts/types";
 import type { CheckInput, CheckResult } from "../report/bundle.js";
+import { claimLabel } from "../report/templates.js";
 import type { Agent } from "../runtime/agent.js";
 import { isWeatherRecommendation } from "../whatif/weather-evidence.js";
 import { type AnalysisCheckInput, analysisCheck } from "./analysis-check.js";
@@ -43,11 +44,12 @@ export function matchesRule(claim: Claim, forecast: Forecast) {
           item.evidenceIds.every((id) => claim.evidenceIds.includes(id)),
       )
     );
-  // 요인은 예측 서비스가 만든 라벨 그대로만 허용한다(풀어 쓴 문장은 뜻·부정·한글 수사를 검증할 수 없다)
+  // 요인은 예측 서비스가 만든 라벨 그대로(또는 그 라벨에서 숫자 조각만 뺀 결정적 형태)만 허용한다
+  // (풀어 쓴 문장은 뜻·부정·한글 수사를 검증할 수 없다)
   if (claim.claimType === "요인")
     return forecast.factors.some(
       (item) =>
-        rendered === item.label &&
+        (rendered === item.label || rendered === claimLabel(item)) &&
         item.evidenceIds.every((id) => claim.evidenceIds.includes(id)),
     );
   return true;

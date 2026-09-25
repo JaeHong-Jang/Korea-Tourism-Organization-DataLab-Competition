@@ -10,7 +10,8 @@ const replyAgent: Agent<ReplyFacts, EventData["reply"]> = {
   id: "lead",
   team: "lead",
   usesLlm: true,
-  budgetMs: 3_000,
+  // 발행 뒤 안내라 결과를 늦추지 않는다 — 3초는 4B 모델 두 문장에 빠듯해 자주 템플릿으로 떨어졌다(9/26 측정 3.0초 초과)
+  budgetMs: 6_000,
   // 원문·수치는 주지 않고 검증 가능한 결과 목록과 대화 어휘만 제공한다
   async run(ctx) {
     let value: EventData["reply"] = {

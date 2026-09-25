@@ -41,6 +41,17 @@ function errorCard(error: unknown) {
       message:
         "분석 근거를 검증하지 못했어요. 행사 정보와 근거를 확인해 주세요.",
     };
+  // 서비스는 살아 있지만 그 지역 방문자 관측이 없는 경우 — 연결 오류로 뭉뚱그리지 않고 이유를 말한다
+  if (
+    error instanceof ServiceHttpError &&
+    error.status === 503 &&
+    (error.body as { code?: unknown } | undefined)?.code === "NO_OBSERVATION"
+  )
+    return {
+      code: "SERVICE_UNAVAILABLE" as const,
+      message:
+        "이 지역의 공개된 방문자 관측(데이터랩)이 아직 없어 예보를 만들 수 없어요. 행정구역이 바뀐 지역이면 새 구 이름으로 다시 알려 주세요.",
+    };
   return {
     code: "SERVICE_UNAVAILABLE" as const,
     message: "분석 서비스를 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
