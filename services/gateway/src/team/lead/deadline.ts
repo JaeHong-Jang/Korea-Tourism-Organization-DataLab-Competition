@@ -9,6 +9,20 @@ export class Deadline {
   readonly controller = new AbortController();
   private readonly expiresAt: number;
   private readonly timer: ReturnType<typeof setTimeout>;
+  private llmCalls = 0;
+
+  // 요청에서 만든 모든 실행기가 재작성·최종 답변을 포함해 세 번의 상한을 공유한다
+  consumeLlmCall() {
+    this.check();
+    if (this.llmCalls >= 3)
+      throw new Error("요청 LLM 호출 상한에 도달했습니다");
+    this.llmCalls++;
+  }
+
+  // 남은 호출이 없으면 최종 안내는 생성 작업 없이 템플릿으로 끝낸다
+  get canCallLlm() {
+    return this.llmCalls < 3 && !this.controller.signal.aborted;
+  }
 
   // 단조 시계를 써 시스템 시각 변경에도 요청 예산을 유지한다
   constructor(readonly timeoutMs = 20_000) {

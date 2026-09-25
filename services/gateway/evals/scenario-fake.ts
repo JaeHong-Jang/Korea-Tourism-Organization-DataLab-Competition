@@ -99,6 +99,8 @@ export function createScenarioFake(cases: Scenario[]) {
           name: "서울세계불꽃축제",
           type: "불꽃",
           sigunguCode: "11560",
+          lat: 37.528,
+          lng: 126.934,
           sigunguName: "서울 영등포구",
           startsAt: `${day}T18:00:00+09:00`,
           endsAt: `${day}T21:00:00+09:00`,
@@ -107,7 +109,9 @@ export function createScenarioFake(cases: Scenario[]) {
     }
     if (url.pathname === "/v1/geocode") {
       const location = cases.find(
-        (item) => item.extraction?.venueText === body.venueText,
+        (item) =>
+          item.extraction?.venueText === body.venueText ||
+          (item.category === "recommend" && item.text.includes(body.venueText)),
       )?.location;
       return Response.json({
         candidates: location

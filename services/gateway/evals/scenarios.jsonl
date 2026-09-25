@@ -24,3 +24,5 @@
 {"id":"R01","category":"recommend","tags":["방문객","행사찾기"],"text":"불꽃놀이 행사에 가고 싶어","expected":{"askFields":[],"published":false,"intent":"recommend"}}
 {"id":"R02","category":"recommend","tags":["방문객","행사찾기"],"text":"이번 주말 서울 축제 추천","expected":{"askFields":[],"published":false,"intent":"recommend"}}
 {"id":"R03","category":"recommend","tags":["방문객","행사찾기"],"text":"한적한 먹거리 축제 추천","expected":{"askFields":[],"published":false,"intent":"recommend"}}
+{"id":"R04","category":"recommend","tags":["방문객","위치추천","지명"],"text":"그냥 축제 진천에서 가까운 곳 가고 싶은데","location":{"code":"43750","name":"진천군","lat":36.8554,"lng":127.4356},"expected":{"askFields":[],"published":false,"intent":"recommend"}}
+{"id":"R05","category":"recommend","tags":["방문객","위치추천","near"],"text":"여기서 가까운 축제 추천","near":{"lat":37.528,"lng":126.934},"expected":{"askFields":[],"published":false,"intent":"recommend"}}

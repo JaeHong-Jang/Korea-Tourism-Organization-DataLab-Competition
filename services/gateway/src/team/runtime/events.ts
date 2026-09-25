@@ -17,7 +17,7 @@ import type { Recommendation } from "../recommend/conditions.js";
 import type { TeamSession } from "./sessions.js";
 import type { TeamSettings } from "./settings.js";
 
-type EventData = {
+export type EventData = {
   agent_status: AgentStatus;
   agent_step: AgentStep;
   event_card: EventDraft;
@@ -31,6 +31,7 @@ type EventData = {
   claim: Claim;
   evidence: { items: Evidence[] };
   recommend: Recommendation;
+  reply: { text: string; source: "llm" | "template" };
   suggest: { actions: { id: string; label: string }[] };
   error: {
     code:
@@ -71,6 +72,7 @@ export function createEventWriter(
       const operation = pending.then(async () => {
         if (disconnected.aborted) return;
         const finishing =
+          event === "reply" ||
           event === "error" ||
           event === "done" ||
           event === "agent_step" ||

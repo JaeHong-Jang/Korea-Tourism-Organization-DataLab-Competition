@@ -1,4 +1,5 @@
 // 새 예보와 날씨 답변의 실패가 기존 발행본을 훼손하거나 검증을 우회하지 않는지 검사한다
+
 import type { Forecast, ForecastCard } from "@crowdcast/contracts/types";
 import { expect, it } from "vitest";
 import { eventData } from "../evals/scenario-score.js";
@@ -9,6 +10,7 @@ import {
   validFollowup,
 } from "./followup-fixture.js";
 import { failedGate } from "./reforecast-fixture.js";
+import { isReplyCall } from "./reply-fixture.js";
 import { oodForecast } from "./report-fixture.js";
 import { validSequence } from "./team-fixture.js";
 import { whatifFixture, withWeatherAssumption } from "./whatif-fixture.js";
@@ -30,7 +32,7 @@ it.each(["A", "B"] as const)(
       },
     });
     const { id, forecastId, report } = await harness.publish();
-    const before = harness.calls.length;
+    const before = harness.calls.filter((call) => !isReplyCall(call)).length;
     const events = await harness.message(id, { text: "유료면?" });
     validSequence(events);
     expect(claimsIn(events)).toHaveLength(0);
@@ -40,6 +42,7 @@ it.each(["A", "B"] as const)(
     expect(events.at(-1)?.data).toMatchObject({ forecastId: null });
     expect(
       harness.calls
+        .filter((call) => !isReplyCall(call))
         .slice(before)
         .filter((call) => call.url.pathname === "/api/chat").length,
     ).toBeLessThanOrEqual(2);
@@ -100,8 +103,10 @@ it("연속 변경은 최신 발행본에 누적한다", async () => {
   expect(harness.snapshots.has(forecastId)).toBe(true);
   expect(harness.snapshots.has(card.id)).toBe(true);
   expect(
-    harness.calls.filter((call) => call.url.pathname === "/v1/whatif").at(-1)
-      ?.body,
+    harness.calls
+      .filter((call) => !isReplyCall(call))
+      .filter((call) => call.url.pathname === "/v1/whatif")
+      .at(-1)?.body,
   ).toMatchObject({ event: { fee: "유료" }, changes: { timeOfDay: "주간" } });
 });
 
@@ -131,12 +136,13 @@ it("모호한 분류와 게이트 B 재작성은 LLM 세 번 안에 발행한다
     },
   });
   const { id } = await harness.publish();
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text: "전통 행사로 해 보면?" });
   validSequence(events);
   expect(claimsIn(events).length).toBeGreaterThan(0);
   expect(
     harness.calls
+      .filter((call) => !isReplyCall(call))
       .slice(before)
       .filter((call) => call.url.pathname === "/api/chat"),
   ).toHaveLength(3);
@@ -146,7 +152,7 @@ it("모호한 분류와 게이트 B 재작성은 LLM 세 번 안에 발행한다
 it("날씨 가정이 없는 기존 예보는 명시적으로 발행을 보류한다", async () => {
   const harness = whatifFixture();
   const { id, forecastId } = await harness.publish();
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text: "비 오면?" });
   validFollowup(events, forecastId);
   expect(claimsIn(events)).toHaveLength(0);
@@ -156,7 +162,9 @@ it("날씨 가정이 없는 기존 예보는 명시적으로 발행을 보류한
       message: expect.stringContaining("이 예보에는 날씨 근거가 없어요"),
     },
   ]);
-  expect(harness.calls.slice(before)).toHaveLength(0);
+  expect(
+    harness.calls.filter((call) => !isReplyCall(call)).slice(before),
+  ).toHaveLength(0);
 });
 
 // 반복 날씨 답변도 후보 정리를 유지하고 OOD 권고에는 참고용 근거를 붙인다

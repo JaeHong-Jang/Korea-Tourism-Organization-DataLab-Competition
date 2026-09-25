@@ -81,7 +81,10 @@ export async function measureScenarios(
         sample.sessionId = response.sessionId;
       }
       const url = `${base}/api/team/sessions/${encodeURIComponent(sample.sessionId)}/messages`;
-      const first = await readScenarioStream(fetcher, url, { text: item.text });
+      const first = await readScenarioStream(fetcher, url, {
+        text: item.text,
+        ...(item.near ? { near: item.near } : {}),
+      });
       sample.turns.push(first);
       const asking = first.events.some(
         (value) => value.envelope.event === "ask",

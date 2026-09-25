@@ -61,6 +61,22 @@ export function scoreScenario(
   // 근거는 각 요청이 실제로 보낸 묶음만 사용해 다른 턴의 누락을 감추지 않는다
   for (const turn of sample.turns) {
     const stream = turn.events.map((value) => value.envelope);
+    const replies = eventData<{ text: string }>(stream, "reply");
+    if (replies.length !== 1)
+      sequence.push("요청마다 reply가 한 번 필요합니다");
+    if (replies.some((reply) => /\p{N}/u.test(reply.text)))
+      numberProblems.push("reply에 숫자가 있습니다");
+    if (item.tags.includes("위치추천")) {
+      const result = eventData<{ items: { reason: string }[] }>(
+        stream,
+        "recommend",
+      )[0];
+      if (
+        !result?.items.length ||
+        result.items.some((row) => !/에서 약 \d+ km/.test(row.reason))
+      )
+        execution.push("위치 추천 결과·거리 안내가 없습니다");
+    }
     const evidence = eventData<{ items: Evidence[] }>(
       stream,
       "evidence",

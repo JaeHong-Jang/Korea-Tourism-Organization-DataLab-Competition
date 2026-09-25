@@ -4,7 +4,10 @@ import type {
   ForecastReport,
   SseEvent,
 } from "@crowdcast/contracts/types";
-import type { DraftAnswer } from "../src/team/analysis/draft-answer.js";
+import type {
+  DraftAnswer,
+  NearLocation,
+} from "../src/team/analysis/draft-answer.js";
 import type { ExtractedFields } from "../src/team/analysis/normalize/extraction.js";
 
 export type Scenario = {
@@ -18,12 +21,13 @@ export type Scenario = {
   extraction?: ExtractedFields;
   location?: { code: string; name: string; lat: number; lng: number };
   answer?: DraftAnswer;
+  near?: NearLocation;
   expected: { askFields: string[]; published: boolean; intent: string | null };
 };
 
 export type TimedEvent = { elapsedMs: number; envelope: SseEvent };
 export type ScenarioTurn = {
-  message: { text: string; answer?: DraftAnswer };
+  message: { text: string; answer?: DraftAnswer; near?: NearLocation };
   events: TimedEvent[];
   elapsedMs: number;
   problems: string[];

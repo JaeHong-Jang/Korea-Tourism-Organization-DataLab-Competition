@@ -8,10 +8,12 @@ import { draftQuestions } from "./normalize/draft.js";
 import { normalizeVenue } from "./normalize/venue.js";
 
 export type DraftAnswer = Partial<Omit<EventDraft, "missing" | "ambiguities">>;
+export type NearLocation = { lat: number; lng: number; label?: string };
 export type TeamMessage = {
   text: string;
   answer?: DraftAnswer | null;
   eventId?: string;
+  near?: NearLocation;
 };
 const {
   missing: _missing,
@@ -28,6 +30,16 @@ export const validateMessage = contractRegistry.compile<TeamMessage>({
     text: { type: "string", maxLength: 8_000 },
     eventId: {
       $ref: "https://crowdcast.local/schemas/common.schema.json#/$defs/eventId",
+    },
+    near: {
+      type: "object",
+      additionalProperties: false,
+      required: ["lat", "lng"],
+      properties: {
+        lat: { type: "number", minimum: -90, maximum: 90 },
+        lng: { type: "number", minimum: -180, maximum: 180 },
+        label: { type: "string", minLength: 1, maxLength: 100 },
+      },
     },
     answer: {
       type: ["object", "null"],

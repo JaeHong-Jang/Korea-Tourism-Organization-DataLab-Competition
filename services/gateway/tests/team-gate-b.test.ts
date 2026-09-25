@@ -1,9 +1,11 @@
 // 위반 초안·재작성·템플릿과 발행 범위 충돌이 실제 스트림을 우회하지 못하게 한다
+
 import { writeFileSync } from "node:fs";
 import type { Claim, GateReport } from "@crowdcast/contracts/types";
 import { describe, expect, it, vi } from "vitest";
 import type { DraftText } from "../src/team/report/bundle.js";
 import { explainer } from "../src/team/report/explainer.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { explanationFixture, oodForecast } from "./report-fixture.js";
 import { validSequence } from "./team-fixture.js";
 
@@ -59,6 +61,7 @@ describe("게이트 B 재작성", () => {
           JSON.stringify({
             sessionId,
             facts: harness.calls
+              .filter((call) => !isReplyCall(call))
               .filter((call) => call.url.pathname.endsWith("/facts"))
               .map((call) => call.body),
           }),
@@ -150,14 +153,16 @@ describe("게이트 B 재작성", () => {
       ),
     ).toHaveLength(2);
     expect(
-      harness.calls.filter((call) => call.url.pathname.endsWith("/validate")),
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .filter((call) => call.url.pathname.endsWith("/validate")),
     ).toHaveLength(4);
     expect(
       events.filter((event) =>
         ["claim", "evidence", "suggest"].includes(event.event),
       ),
     ).toEqual([]);
-    expect(events.slice(-2)).toMatchObject([
+    expect(withoutReplyEvents(events).slice(-2)).toMatchObject([
       {
         event: "error",
         data: {
@@ -168,7 +173,9 @@ describe("게이트 B 재작성", () => {
       { event: "done", data: { forecastId: null } },
     ]);
     expect(
-      harness.calls.some((call) => call.url.pathname.endsWith("/publish")),
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .some((call) => call.url.pathname.endsWith("/publish")),
     ).toBe(false);
   });
 
@@ -181,14 +188,18 @@ describe("게이트 B 재작성", () => {
     validSequence(events);
     expect(events.at(-1)).toMatchObject({ data: { forecastId: null } });
     expect(
-      harness.calls.some((call) => call.url.pathname.endsWith("/publish")),
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .some((call) => call.url.pathname.endsWith("/publish")),
     ).toBe(false);
     expect(
-      harness.calls.filter(
-        (call) =>
-          call.url.pathname.endsWith("/facts") &&
-          (call.body as { schema: string }).schema === "claim",
-      ),
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .filter(
+          (call) =>
+            call.url.pathname.endsWith("/facts") &&
+            (call.body as { schema: string }).schema === "claim",
+        ),
     ).toEqual([]);
   });
 

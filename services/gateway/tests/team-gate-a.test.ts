@@ -1,4 +1,5 @@
 // 게이트 A의 병렬 검증팀 기록과 모양별 차단을 실제 SSE 스트림으로 검증한다
+
 import type {
   AgentStatus,
   AgentStep,
@@ -11,6 +12,7 @@ import { ANALYSIS_SHAPES } from "../src/team/lead/gates.js";
 import { analysisRuleCheck } from "../src/team/verification/rule-check.js";
 import { analysisSkeptic } from "../src/team/verification/skeptic.js";
 import { analysisSourceCheck } from "../src/team/verification/source-check.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { teamFixture, validSequence } from "./team-fixture.js";
 
 // 게이트 B의 같은 팀원 기록과 섞이지 않도록 게이트 A 앞의 검증 작업만 고른다
@@ -63,11 +65,13 @@ describe("게이트 A 검증팀", () => {
     expect(events.find((event) => event.event === "gate")?.data).toEqual(
       started[0],
     );
-    const validations = harness.calls.filter(
-      ({ url }) =>
-        url.pathname.endsWith("/validate") &&
-        url.searchParams.get("shapes") === ANALYSIS_SHAPES,
-    );
+    const validations = harness.calls
+      .filter((call) => !isReplyCall(call))
+      .filter(
+        ({ url }) =>
+          url.pathname.endsWith("/validate") &&
+          url.searchParams.get("shapes") === ANALYSIS_SHAPES,
+      );
     expect(validations).toHaveLength(1);
     expect(validations[0].url.searchParams.get("revision")).toBe("4");
     expect(validations[0].url.searchParams.get("masterVersion")).toBe("7");
@@ -201,7 +205,7 @@ describe("게이트 A 검증팀", () => {
       );
 
       // 원래 게이트·오류 응답은 유지하고 작업 말풍선에는 서비스 위반 원문을 복사하지 않는다
-      expect(events.slice(-3)).toMatchObject([
+      expect(withoutReplyEvents(events).slice(-3)).toMatchObject([
         { event: "gate", data: gate },
         { event: "error", data: { code: "ANALYSIS_GATE_FAILED" } },
         { event: "done", data: { forecastId: null } },
@@ -219,7 +223,9 @@ describe("게이트 A 검증팀", () => {
         ),
       ).not.toContain("민감한 위반 원문과 내부 경로");
       expect(
-        harness.calls.filter(({ url }) => url.pathname.endsWith("/validate")),
+        harness.calls
+          .filter((call) => !isReplyCall(call))
+          .filter(({ url }) => url.pathname.endsWith("/validate")),
       ).toHaveLength(1);
     },
   );
