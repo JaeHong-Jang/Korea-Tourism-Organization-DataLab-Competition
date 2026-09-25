@@ -1,5 +1,6 @@
 // 계약의 열세 팀원과 여섯 상태가 이름표와 접근성 설명을 유지하는지 검증한다.
 
+import { readFileSync } from "node:fs";
 import statusSchema from "@crowdcast/contracts/schemas/agent-status.schema.json";
 import commonSchema from "@crowdcast/contracts/schemas/common.schema.json";
 import type { AgentStatus } from "@crowdcast/contracts/types";
@@ -22,6 +23,27 @@ const NAMES: Record<AgentStatus["agentId"], string> = {
   "plan-writer": "계획서",
   briefer: "브리핑",
 };
+
+const CHARACTER_DETAILS: Record<
+  AgentStatus["agentId"],
+  { team: AgentStatus["team"]; mark: string }
+> = {
+  lead: { team: "lead", mark: "↗" },
+  dictation: { team: "analysis", mark: "✎" },
+  "local-guide": { team: "analysis", mark: "⌂" },
+  archivist: { team: "analysis", mark: "▤" },
+  forecaster: { team: "analysis", mark: "∿" },
+  "source-check": { team: "verification", mark: "⌕" },
+  "number-check": { team: "verification", mark: "#" },
+  "rule-check": { team: "verification", mark: "§" },
+  skeptic: { team: "verification", mark: "?" },
+  explainer: { team: "report", mark: "“" },
+  "card-maker": { team: "report", mark: "▦" },
+  "plan-writer": { team: "report", mark: "☰" },
+  briefer: { team: "report", mark: "≡" },
+};
+
+const DISPLAY_STATES = ["idle", "working", "done", "waiting", "error"] as const;
 
 describe("PetAvatar", () => {
   // 그림 수와 식별자가 계약을 빠짐없이 따라가게 한다.
@@ -51,6 +73,57 @@ describe("PetAvatar", () => {
       }
     },
   );
+
+  // 열세 역할의 다섯 화면 상태에서 팀 색 연결과 가슴 표식이 유지되는지 확인한다.
+  it.each(commonSchema.$defs.agentId.enum)(
+    "%s의 고래 색과 표식이 다섯 상태에서 유지된다",
+    (agentId) => {
+      const { team, mark } =
+        CHARACTER_DETAILS[agentId as AgentStatus["agentId"]];
+      for (const state of DISPLAY_STATES) {
+        const markup = renderToStaticMarkup(
+          <PetAvatar
+            agentId={agentId as AgentStatus["agentId"]}
+            state={state}
+            size={32}
+          />,
+        );
+        expect(markup).toContain(`pet-body--${team} pet-body--${state}`);
+        expect(markup).toContain('viewBox="0 0 96 96"');
+        expect(markup).toContain('class="pet-body__tail"');
+        expect(markup).toContain('class="pet-body__spout"');
+        expect(markup).toContain('class="pet-body__wave pet-body__wave--teal"');
+        expect(markup).toContain(
+          `class="pet-body__mark" x="51" y="75" text-anchor="middle">${mark}</text>`,
+        );
+        expect(markup.includes('class="pet-body__flag"')).toBe(
+          agentId === "lead",
+        );
+      }
+    },
+  );
+
+  // 팀별 몸통과 세 물결은 계약의 색 토큰만 참조한다.
+  it("팀 색과 물결 색에 기존 토큰을 쓴다", () => {
+    const styles = readFileSync(
+      new URL("../pets.css", import.meta.url),
+      "utf8",
+    );
+    for (const team of ["lead", "analysis", "verification", "report"]) {
+      expect(styles).toContain(
+        `.pet-body--${team} { --pet-shell: var(--team-${team}); }`,
+      );
+    }
+    expect(styles).toContain(
+      ".pet-body__wave--teal { fill: var(--scene-sea); }",
+    );
+    expect(styles).toContain(
+      ".pet-body__wave--yellow { fill: var(--scene-window-glow); }",
+    );
+    expect(styles).toContain(
+      ".pet-body__wave--orange { fill: var(--scene-doll-8); }",
+    );
+  });
 
   // 추가 설명을 붙여도 본래의 한국어 이름표는 사라지지 않는다.
   it("추가 문구와 세 크기를 지원한다", () => {
