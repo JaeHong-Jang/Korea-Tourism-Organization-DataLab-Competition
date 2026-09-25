@@ -2,6 +2,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const port = Number(process.env.WEB_PORT ?? 5184);
+// 테스트는 가짜 API만 쓴다 — 실제 서비스가 떠 있어도 프록시가 닫힌 포트로 가게 한다(스펙이 직접 띄우는 Vite도 물려받는다)
+process.env.CROWDCAST_GATEWAY_URL ??= "http://127.0.0.1:9";
 
 export default defineConfig({
   testDir: "../../tests/e2e",

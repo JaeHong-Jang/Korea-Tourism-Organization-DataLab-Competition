@@ -220,7 +220,7 @@ it("API 실패는 빈 상태, 계약 위반은 오류로 남긴다", async () =>
     "백테스트 결과가 아직 공개되지 않았어요",
   );
   expect(html(<PerformanceMetrics state={{ status: "error" }} />)).toContain(
-    "자료를 확인하지 못했어요",
+    "자료 형식을 확인할 수 없어요",
   );
 });
 

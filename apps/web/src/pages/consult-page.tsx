@@ -11,6 +11,7 @@ import { ConsultMessages } from "../features/consult-chat/consult-messages";
 import { EventDraftCard } from "../features/consult-chat/event-draft-card";
 import { whatIfChips } from "../features/consult-chat/followup-chips";
 import { ForecastComparison } from "../features/consult-chat/forecast-comparison";
+import { consultErrorMessage } from "../features/consult-chat/error-message";
 import { ForecastPreview } from "../features/consult-chat/forecast-preview";
 import { useConsultSession } from "../features/consult-chat/use-consult-session";
 import { TeamBoard } from "../features/team-board/team-board";
@@ -126,7 +127,7 @@ export function ConsultPage() {
             )}
             {error && (
               <ErrorState
-                message="상담을 이어가지 못했어요. 같은 내용을 다시 보내 주세요."
+                message={consultErrorMessage(error)}
                 action={
                   <Button
                     type="button"
