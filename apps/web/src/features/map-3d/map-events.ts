@@ -17,6 +17,7 @@ import {
   mapStyle,
 } from "../map-2d/map-style";
 import { festivalColumns, festivalRings } from "./festival-geometry";
+import { MapLabels } from "./map-labels";
 import { TrafficLayer } from "./traffic-layer";
 import { trafficRoutes } from "./traffic-routes";
 
@@ -72,6 +73,18 @@ export function installMapEvents(options: Options): () => void {
   } = options;
   let renderedTheme =
     document.documentElement.dataset.theme === "night" ? "night" : "day";
+  const labels = new MapLabels(map, (id) => {
+    const festival = festivals.current.find((item) => item.eventId === id);
+    if (!festival) return;
+    selectFestival(id);
+    selectSigungu(festival.sigunguCode);
+  });
+  let routeTimer: ReturnType<typeof setTimeout> | undefined;
+  map.setMaxBounds(KOREA_BOUNDS);
+  const honest = stage.querySelector<HTMLElement>(".map-2d__honest");
+  const notice =
+    "건물·도로 = OpenStreetMap · 사람·차량 움직임은 연출 · 인원 규모는 예보값 비례";
+  if (honest) honest.textContent = notice;
 
   // 스타일 교체 뒤 하늘·차량·행사 소스를 현재 선택으로 복원한다.
   map.on("style.load", () => {
@@ -84,6 +97,7 @@ export function installMapEvents(options: Options): () => void {
     });
     if (mode.current === "3d" && quality !== "low")
       traffic.current = addTraffic(map, quality);
+    labels.clear();
     (map.getSource(FESTIVAL_SOURCE) as GeoJSONSource | undefined)?.setData(
       festivalGeoJson(festivals.current),
     );
@@ -103,6 +117,7 @@ export function installMapEvents(options: Options): () => void {
 
   // 첫 전국 카메라와 로딩·오류 상태를 화면에 전달한다.
   map.on("load", () => {
+    if (mode.current === "3d") map.setPitch(28);
     onReady(true);
     onError(false);
     if (bounds.current)
@@ -119,21 +134,60 @@ export function installMapEvents(options: Options): () => void {
 
   // 보이는 로컬 타일의 주요 도로·철도만 차량 경로로 유지한다.
   const refreshTraffic = () => {
+    labels.update(festivals.current, mode.current);
     if (!traffic.current) return;
-    if (map.getZoom() < 13) {
+    if (map.getZoom() < 14 || !map.isSourceLoaded("protomaps")) {
       traffic.current.setRoutes([]);
+      if (honest) honest.textContent = notice;
       return;
     }
     const visible = map.getBounds();
-    traffic.current.setRoutes(
-      trafficRoutes(
-        map.querySourceFeatures("protomaps", { sourceLayer: "roads" }),
-        (lng, lat) => visible.contains([lng, lat]),
-      ),
+    const routes = trafficRoutes(
+      map.querySourceFeatures("protomaps", { sourceLayer: "roads" }),
+      (lng, lat) => visible.contains([lng, lat]),
     );
+    traffic.current.setRoutes(routes);
+    const nearby = festivals.current.filter((festival) =>
+      visible.contains([festival.lng, festival.lat]),
+    );
+    const center = map.getCenter();
+    const focused =
+      nearby.find((festival) => festival.eventId === selected.current) ??
+      nearby.sort(
+        (a, b) =>
+          Math.hypot(a.lng - center.lng, a.lat - center.lat) -
+          Math.hypot(b.lng - center.lng, b.lat - center.lat),
+      )[0];
+    traffic.current.setFestival(
+      focused
+        ? {
+            lng: focused.lng,
+            lat: focused.lat,
+            peakP50: focused.peakP50,
+            selected: focused.eventId === selected.current,
+          }
+        : null,
+    );
+    const dolls = Number(document.documentElement.dataset.mapGathering ?? 0);
+    if (honest)
+      honest.textContent =
+        focused && dolls > 0
+          ? `${notice} · 행사장 인형 1명 = ${Math.ceil(focused.peakP50 / dolls).toLocaleString("ko-KR")}명(추정)`
+          : notice;
   };
-  map.on("idle", refreshTraffic);
-  map.on("moveend", refreshTraffic);
+  const scheduleTraffic = () => {
+    clearTimeout(routeTimer);
+    routeTimer = setTimeout(refreshTraffic, 120);
+  };
+  map.on("moveend", scheduleTraffic);
+  map.on("moveend", () => {
+    if (mode.current === "3d" && map.getZoom() < 8 && map.getPitch() > 30)
+      map.setPitch(28);
+  });
+  map.on("sourcedata", (event) => {
+    if (event.sourceId === "protomaps" && event.isSourceLoaded)
+      scheduleTraffic();
+  });
   const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   const onVisibility = () =>
     traffic.current?.setMotion(motionQuery.matches, !document.hidden);
@@ -208,6 +262,8 @@ export function installMapEvents(options: Options): () => void {
     attributeFilter: ["data-theme"],
   });
   return () => {
+    clearTimeout(routeTimer);
+    labels.clear();
     themeObserver.disconnect();
     unobserve();
     document.removeEventListener("visibilitychange", onVisibility);
