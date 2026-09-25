@@ -81,7 +81,9 @@ test("필터·목록·KPI와 선택", async ({ page }) => {
 	await page.goto(`${origin}/?sceneFixture=1&theme=day&at=${clock}`);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
 	await expect(page.locator(".scene-kpis__tiles")).toContainText("30건");
-	await page.getByLabel("기간").selectOption("two-weeks");
+	await page
+		.getByRole("combobox", { name: "기간", exact: true })
+		.selectOption("two-weeks");
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(14);
 	await page.getByLabel("시도").selectOption("서울특별시");
 	await page.getByRole("combobox", { name: "등급" }).selectOption("1");
@@ -108,6 +110,48 @@ test("필터·목록·KPI와 선택", async ({ page }) => {
 	await expect(page.locator(".festival-filters__actions")).toContainText(
 		"적용 0개",
 	);
+});
+
+// 브러시 드래그와 방향키는 같은 기간 필터를 바꾸고 판·목록·KPI에 함께 반영된다.
+test("주간 브러시 기간 선택과 키보드 핸들", async ({ page }) => {
+	await page.setViewportSize({ width: 1366, height: 768 });
+	await page.goto(`${origin}/?sceneFixture=1&forceSvg=1&theme=day&at=${clock}`);
+	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
+	await page.getByText("주간 타임라인 펼치기").click();
+	const track = page.getByRole("button", { name: "주간 기간을 끌어 선택" });
+	const box = await track.boundingBox();
+	expect(box).not.toBeNull();
+	if (!box) return;
+	await page.mouse.move(box.x + box.width * 0.3, box.y + box.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(box.x + box.width * 0.48, box.y + box.height / 2, {
+		steps: 5,
+	});
+	await page.mouse.up();
+	await expect(
+		page.getByRole("combobox", { name: "기간", exact: true }),
+	).toHaveValue("custom");
+	await expect(page.locator(".festival-filters__actions")).toContainText(
+		"적용 1개",
+	);
+	await expect(page.locator(".festival-list__items > li")).toHaveCount(14);
+	await expect(page.locator(".scene-kpis__tiles")).toContainText("14건");
+	await page.getByRole("slider", { name: "기간 시작 주" }).focus();
+	await page.keyboard.press("ArrowRight");
+	await expect(page.locator(".festival-list__items > li")).toHaveCount(7);
+	await page.getByRole("slider", { name: "기간 끝 주" }).focus();
+	await page.keyboard.press("ArrowLeft");
+	await expect(page.locator(".festival-list__items > li")).toHaveCount(7);
+	await page
+		.getByRole("combobox", { name: "기간", exact: true })
+		.selectOption("month");
+	await expect(page.locator(".weekly-brush__heading")).toContainText("2026-10");
+	await page.getByRole("button", { name: "기간 선택 해제" }).click();
+	await expect(
+		page.getByRole("combobox", { name: "기간", exact: true }),
+	).toHaveValue("");
+	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
+	await page.screenshot({ path: resolve(screens, "T-410-brush.png") });
 });
 
 // 강제 SVG 보기에서도 지도 점과 카드가 동일한 행사·지역을 선택한다.
