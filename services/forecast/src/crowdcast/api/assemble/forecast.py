@@ -5,6 +5,7 @@ from typing import Any
 from crowdcast.analytics.baseline import baseline
 from crowdcast.analytics.similar import related_cases
 from crowdcast.api.assemble.artifacts import Unavailable
+from crowdcast.api.assemble.evidence import fragment
 from crowdcast.api.assemble.feature_evidence import model_evidence, observation_evidence
 from crowdcast.api.assemble.history import previous_case_id
 from crowdcast.api.assemble.identity import identifier
@@ -127,4 +128,16 @@ def predict(event: dict[str, Any]) -> dict[str, Any]:
     if broken:
         reasons.append("행정구역 개편 — 2026-06-30까지 자료만")
     result.update(ood=ood["ood"] or broken, oodReasons=reasons)
+
+    # OOD 예보는 판정·권고 문장이 인용할 참고용 확인 근거를 함께 싣는다(S10 — 구조화된 검사 종류로 식별).
+    if result["ood"]:
+        result["evidence"].append(
+            fragment(
+                "check",
+                "참고용 — 담당자 검토 필수",
+                {"reasons": reasons},
+                forecastId=result["id"],
+                checkResult={"checkKind": "ood", "passed": True, "revision": 0},
+            )
+        )
     return result

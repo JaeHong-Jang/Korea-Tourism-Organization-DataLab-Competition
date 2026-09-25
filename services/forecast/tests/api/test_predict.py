@@ -22,7 +22,13 @@ def test_yeongjong_snapshot(client: TestClient, forecast_data: Path, event: dict
     assert result["asOf"] == "2025-10-04"
     assert result["eventId"] == event["id"]
     assert result["predictionRun"]["modelVerdict"] == "미검증"
-    assert {row["kind"] for row in result["evidence"]} == {"data", "model", "case", "assumption", "rule"}
+    # OOD 예보만 참고용 확인 근거(check)를 더 싣는다(S10).
+    expected = {"data", "model", "case", "assumption", "rule"} | ({"check"} if result["ood"] else set())
+    assert {row["kind"] for row in result["evidence"]} == expected
+    checks = [row for row in result["evidence"] if row["kind"] == "check"]
+    assert all(
+        row["checkResult"]["checkKind"] == "ood" and row["forecastId"] == result["id"] for row in checks
+    )
     reason = next(row for row in result["judgment"]["reasons"] if row["ruleId"] == "rule-legal-hazard")
     assert reason["kind"] == "법정"
     assert reason["clauseId"] == "law-disaster-act-enf-73-9"
