@@ -23,6 +23,7 @@ import {
   useScenePreferences,
   useSceneQuality,
 } from "./scene-options";
+import { SkyScene } from "./sky/sky-scene";
 import { SunLight } from "./sun-light";
 import { useLandModel } from "./use-land-model";
 import { type SceneScale, useScene } from "./use-scene";
@@ -174,6 +175,11 @@ export function MiniKoreaCanvas({
           center={center}
           width={width}
           depth={depth}
+        />
+        <SkyScene
+          center={center}
+          quality={activeQuality}
+          reducedMotion={reducedMotion}
         />
         <Board center={center} width={width} depth={depth} />
         {t435 && (

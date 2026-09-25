@@ -1,8 +1,10 @@
 // 여섯 메뉴와 서울 해 상태, 사용자 테마 선택을 제공한다.
+
 import { Menu, SunMoon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import type { ThemeChoice } from "../../lib/theme/sun-state";
 import { useTheme } from "../../lib/theme/theme-provider";
+import { BrandMark } from "./brand-mark";
 
 const menus = [
   { label: "미니 대한민국", to: "/", end: true },
@@ -33,11 +35,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="site-header__row">
         <NavLink to="/" className="brand" aria-label="인파예보 홈">
-          <span className="brand__mark" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
+          <BrandMark />
           <span>인파예보</span>
         </NavLink>
         <nav className="main-nav" aria-label="주 메뉴">

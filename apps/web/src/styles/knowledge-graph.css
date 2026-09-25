@@ -30,14 +30,14 @@
 .knowledge-node span { color: var(--link); font-size: var(--text-caption); }
 .knowledge-node strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-ui); }
 .knowledge-node--class { border-radius: var(--radius-button); border-color: var(--team-lead); }
-.knowledge-node--rule { border-left-width: 6px; border-color: var(--brand); }
+.knowledge-node--rule { border-color: var(--brand); }
 .knowledge-node--clause { border-right-width: 6px; border-color: var(--cat-7); }
 .knowledge-node--dataset { border-top-width: 6px; border-color: var(--cat-3); }
 .knowledge-node--assumption { border-style: dashed; border-color: var(--cat-4); }
 .knowledge-node--model { border-style: double; border-width: 5px; border-color: var(--cat-2); }
 .knowledge-node--stage { border-bottom-width: 6px; border-color: var(--cat-5); }
 .knowledge-node--file { border-radius: var(--radius-input); border-color: var(--cat-6); }
-.knowledge-node--agent { border-left-width: 6px; border-right-width: 6px; border-color: var(--team-verification); }
+.knowledge-node--agent { border-color: var(--team-verification); }
 .knowledge-node--other { border-style: dotted; border-color: var(--ink-2); }
 .knowledge-node.is-dimmed { opacity: .24; }
 .knowledge-node.is-selected { outline: 3px solid var(--focus); outline-offset: 2px; }

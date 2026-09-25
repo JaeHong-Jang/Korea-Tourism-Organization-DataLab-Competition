@@ -16,7 +16,7 @@
 .evidence-map__filters legend { margin-bottom: var(--space-2); color: var(--ink-2); font-size: var(--text-caption); }
 .evidence-map__filters button { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); color: var(--ink-2); background: var(--surface); font: inherit; cursor: pointer; }
 .evidence-map__filters button[aria-pressed="true"] { border-color: var(--select); color: var(--select-ink); background: var(--select-soft); }
-.evidence-map__selection { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); padding: var(--space-3); border-left: 3px solid var(--brand); background: var(--surface-sunken); }
+.evidence-map__selection { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
 .evidence-map__selection p { margin: 0; }
 .evidence-map__canvas { position: relative; height: min(68vh, 620px); min-height: 420px; border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; background: var(--surface-sunken); }
 .evidence-map__canvas > p { padding: var(--space-5); }
@@ -25,16 +25,16 @@
 .evidence-map__canvas .react-flow__node { width: 220px; height: 100px; }
 .evidence-map__canvas .react-flow__edge.is-dimmed { opacity: .14; }
 .evidence-map-node { position: relative; width: 100%; height: 100%; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-1); }
-.evidence-map-node--claim { border-left: 4px solid var(--brand); }
+.evidence-map-node--claim { border-color: var(--brand); }
 .evidence-map-node--evidence { border-style: solid; border-top: 3px solid var(--brand); }
-.evidence-map-node--data { border-left: 4px solid var(--brand); border-top-width: 1px; }
+.evidence-map-node--data { border-style: dashed; }
 .evidence-map-node--model { border-top: 4px double var(--brand); }
 .evidence-map-node--rule { border-right: 4px solid var(--brand); border-radius: var(--radius-input); }
 .evidence-map-node--case { border-radius: var(--radius-panel); }
 .evidence-map-node--assumption { border-style: dashed; }
 .evidence-map-node--check { border-bottom: 4px double var(--brand); }
 .evidence-map-node--source { border-radius: var(--radius-button); background: var(--surface-sunken); }
-.evidence-map-node--document { border-left: 4px double var(--brand); }
+.evidence-map-node--document { border-style: double; border-width: 3px; }
 .evidence-map-node.is-dimmed { opacity: .28; }
 .evidence-map-node.is-selected { outline: 3px solid var(--focus); }
 .evidence-map-node__button { display: grid; align-content: start; gap: var(--space-1); width: 100%; height: 100%; padding: var(--space-3); border: 0; border-radius: inherit; color: var(--ink); background: transparent; text-align: left; cursor: pointer; }

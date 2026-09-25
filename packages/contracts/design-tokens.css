@@ -162,6 +162,20 @@
   --scene-sky-day: #dde9f1;
   --scene-sky-dusk: #f0c7a6;
   --scene-sky-night: #1a2335;
+  /* 하늘 공 그라데이션: 위(천정)·지평선(위 3색)·아래(판 둘레 빈 공간) */
+  --scene-sky-day-top: #a9cdea;
+  --scene-sky-day-low: #cfe2ee;
+  --scene-sky-dusk-top: #6f86b3;
+  --scene-sky-dusk-low: #3b3552;
+  --scene-sky-night-top: #0e1830;
+  --scene-sky-night-low: #070c19;
+  /* 달(장식): 번짐·원판·무늬 */
+  --scene-moon-glow: rgba(255, 236, 196, 0.42);
+  --scene-moon-face: #fffaf0;
+  --scene-moon-shade: #e8d7ad;
+  --scene-moonlight: #cfdcff;
+  /* 낮 햇빛 번짐(장식, 더하기 합성) */
+  --scene-sunlight: #ffe2a8;
   --scene-window-glow: #ffd98a;
   --scene-shadow: rgba(40, 30, 20, 0.28);
   /* 블록 인형 옷(데이터 의미 없음 — 등급·팀 색과 겹치지 않게 채도를 낮춘 파스텔 8색)과 칠하지 않은 나무 머리 */

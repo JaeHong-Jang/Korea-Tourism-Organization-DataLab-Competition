@@ -24,11 +24,11 @@
 .assistant-recommendation__image img { width: 100%; height: 100%; object-fit: cover; }
 .assistant-recommendation__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .assistant-recommendation__actions button:last-child { font-size: var(--text-caption); }
-.assistant-whale { position: fixed; z-index: var(--z-popover); display: grid; justify-items: center; width: 92px; height: 100px; padding: var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); cursor: grab; touch-action: none; user-select: none; }
+.assistant-whale { position: fixed; z-index: var(--z-popover); display: grid; justify-items: center; gap: 2px; width: 96px; height: 104px; padding: 0; border: 0; border-radius: var(--radius-panel); background: transparent; color: var(--ink); cursor: grab; touch-action: none; user-select: none; } /* 그림 뒤에 상자를 두지 않는다 — 고래만 떠 있게 */
 .assistant-whale--dragging { cursor: grabbing; }
 .assistant-whale__figure { display: grid; place-items: center; width: 78px; height: 70px; animation: assistant-float 4s ease-in-out infinite; }
-.assistant-whale__figure img { display: block; max-width: 100%; max-height: 100%; pointer-events: none; }
-.assistant-whale__status { padding: var(--space-1) var(--space-2); border-radius: var(--radius-input); background: var(--surface-sunken); font-size: var(--text-caption); white-space: nowrap; }
+.assistant-whale__figure img { display: block; max-width: 100%; max-height: 100%; filter: drop-shadow(0 6px 10px rgba(10, 20, 40, 0.28)); pointer-events: none; }
+.assistant-whale__status { padding: 2px var(--space-2); border: 1px solid var(--line); border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-1); font-size: var(--text-caption); white-space: nowrap; }
 .assistant-whale__dots, .consult-work__dots { display: inline-block; animation: assistant-pulse 1.2s ease-in-out infinite; }
 .assistant-shell--open .assistant-whale { display: none; }
 .assistant-invitation { position: fixed; z-index: var(--z-popover); right: 124px; bottom: var(--space-8); width: 215px; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); }
@@ -71,3 +71,4 @@
 @media (max-width: 999px) { .consult-page .consult-layout { grid-template-columns: 1fr; } .consult-page .event-summary { grid-column: auto; } }
 @media (max-width: 767px) { .assistant-panel { width: 100vw; border-left: 0; } }
 @media (prefers-reduced-motion: reduce) { .assistant-whale, .assistant-whale *, .consult-work__dots { animation: none; transition: none; } }
+.assistant-whale:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
