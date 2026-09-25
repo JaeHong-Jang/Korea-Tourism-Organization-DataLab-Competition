@@ -154,7 +154,7 @@ export function renderReport(
     `- 사례 SHA256: \`${digest}\``,
     `- 원문 응답·정규화 결과·측정값: \`${rawFile}\``,
     `- 측정 출처: ${provenance}`,
-    `- 설정: temperature=0, seed=42, num_ctx=4096, num_predict=${MAX_OUTPUT_TOKENS}, timeout=60000ms, keep_alive=5m`,
+    `- 설정: temperature=0, seed=42, num_ctx=4096, num_predict=${MAX_OUTPUT_TOKENS}, timeout=60000ms, keep_alive=30m`,
     "- 날짜 기준: 사례별 2026-09-24를 사용자 메시지에 전달. 둘째 주 토요일은 월의 두 번째 토요일, 다음 주는 월요일 시작이다.",
     "- 시각 미지정 시 시작·종료 일시는 null. 시군구 코드는 동네지기 범위라 생성하지 않는다. 주최 누락은 질문에만 추가한다.",
     "- 첫 로딩: 해당 모델 언로드와 /api/ps 부재 확인 후 첫 사례 1회. 로딩됨: 같은 모델로 30건을 순차 측정한다. 첫 로딩은 n=1이라 p50=p95이며 안정적 분포 추정이 아니다.",

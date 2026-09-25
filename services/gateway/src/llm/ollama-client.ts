@@ -72,7 +72,8 @@ export function createLlmClient(options: LlmOptions = {}) {
           messages: input.messages,
           format: input.schema,
           stream: false,
-          keep_alive: "5m",
+          // 5분이면 쉬는 사이 내려가 다음 첫 호출이 로딩(약 6초)만으로 3초 예산을 넘긴다
+          keep_alive: "30m",
           options: {
             temperature: 0,
             seed: 42,

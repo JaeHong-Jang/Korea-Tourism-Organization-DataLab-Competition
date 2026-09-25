@@ -121,6 +121,12 @@ const hosts = ollamaCandidates(env);
 let ollama = null;
 for (const h of hosts) if (await probe(`${h}/api/version`)) { ollama = h; break; }
 if (ollama) env.OLLAMA_HOST = ollama;
+// 빈 프롬프트로 모델만 미리 올린다 — 첫 대화가 로딩 시간 때문에 규칙 문장으로 떨어지지 않게(기다리지 않음)
+if (ollama)
+  fetch(`${ollama}/api/generate`, {
+    method: "POST",
+    body: JSON.stringify({ model: env.OLLAMA_MODEL_FAST || "qwen3:4b-instruct-2507-q4_K_M", prompt: "", keep_alive: "30m" }),
+  }).catch(() => {});
 
 // --only forecast,knowledge: 그 서비스만 띄운다(병렬 워커가 같은 포트를 두고 부딪히지 않게)
 const onlyAt = process.argv.indexOf("--only");
