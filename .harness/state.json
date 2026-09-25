@@ -397,8 +397,9 @@
    "evidence": "develop 7b8adca·27d7f1d · forecast 1206 · sol PASS · OOD 211→65·등급 불변"
   },
   "T-304b": {
-   "status": "running",
-   "updated": "2026-09-25T03:26:44.419Z"
+   "status": "done",
+   "updated": "2026-09-25T03:39:16.820Z",
+   "evidence": "develop b71906d · gateway 862 · sol PASS · 실사용 게이트 A 앞 세 단계"
   }
  },
  "history": [
@@ -1161,6 +1162,12 @@
    "id": "T-433",
    "status": "done",
    "evidence": "develop 0bfe5d4 · web 142·e2e 3/3 · astra PASS · 211건 p95 1.26배"
+  },
+  {
+   "at": "2026-09-25T03:39:16.820Z",
+   "id": "T-304b",
+   "status": "done",
+   "evidence": "develop b71906d · gateway 862 · sol PASS · 실사용 게이트 A 앞 세 단계"
   }
  ]
 }
