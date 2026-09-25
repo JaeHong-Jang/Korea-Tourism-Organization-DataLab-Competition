@@ -9,11 +9,13 @@ export function VenueSignal({
   cars,
   sky,
   measure,
+  diagnostic,
 }: {
   buildings: number;
   cars: number;
   sky: string;
   measure: boolean;
+  diagnostic: boolean;
 }) {
   const ready = useRef(false);
   const gl = useThree((state) => state.gl);
@@ -44,7 +46,7 @@ export function VenueSignal({
       ready.current = true;
     }
   });
-  return <FrameSignal measure={measure} diagnostic={measure} />;
+  return <FrameSignal measure={measure} diagnostic={diagnostic} />;
 }
 
 declare global {

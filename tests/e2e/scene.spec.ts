@@ -1,5 +1,6 @@
 // 고정 시각의 낮·노을·밤 장면을 첫 렌더 뒤 같은 해상도로 저장한다.
 import { type ChildProcess, spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 
@@ -215,4 +216,76 @@ test("타일 재마운트 후 GPU 형상 수가 유지된다", async ({ page }) 
   const final = await page.evaluate(() => window.__crowdcastSceneMemory?.());
   expect(final?.geometries).toBeLessThanOrEqual(initial?.geometries ?? 0);
   expect(final?.textures).toBeLessThanOrEqual(initial?.textures ?? 0);
+});
+
+// 느린 프레임을 연속 주입하면 자동 품질이 낮음으로 내려가고 후처리와 DPR을 함께 낮춘다.
+test("자동 품질 강등은 후처리와 DPR을 줄인다", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 8 });
+    Object.defineProperty(navigator, "deviceMemory", { get: () => 8 });
+  });
+  await page.goto("http://127.0.0.1:5184/?sceneFixture=1&sceneDiagnostic=1");
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-ready",
+		"true",
+		{ timeout: 30_000 },
+	);
+	await page.evaluate(() => window.__crowdcastFeedFrame?.(45, 360));
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-quality",
+		"low",
+	);
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-effects",
+		"off",
+	);
+	const dpr = await page
+		.locator("canvas")
+		.evaluate((canvas) => canvas.width / canvas.clientWidth);
+	expect(dpr).toBeLessThanOrEqual(0.66);
+});
+
+// 후처리와 타일을 열 번씩 교체한 뒤 형상·텍스처가 원래 개수로 돌아온다.
+test("장면 전환 10회 뒤 GPU 리소스 수가 늘지 않는다", async ({ page }) => {
+	await page.goto(
+		"http://127.0.0.1:5184/?sceneFixture=1&sceneQuality=high&sceneDiagnostic=1",
+	);
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-ready",
+		"true",
+		{ timeout: 30_000 },
+	);
+	const memory = () => page.evaluate(() => window.__crowdcastSceneMemory?.());
+	const initial = await memory();
+	const picker = page.getByLabel("장면 품질");
+	for (let index = 0; index < 10; index++) {
+		await picker.selectOption("low");
+		await picker.selectOption("high");
+	}
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-quality",
+		"high",
+	);
+	const final = await memory();
+	expect(final?.geometries).toBeLessThanOrEqual(initial?.geometries ?? 0);
+	expect(final?.textures).toBeLessThanOrEqual(initial?.textures ?? 0);
+});
+
+// 현재 장면을 내려받을 때 PNG 데이터와 현지 시각 이름이 함께 남는다.
+test("장면 저장은 내용이 있는 PNG를 내려받는다", async ({ page }) => {
+	await page.goto("http://127.0.0.1:5184/?sceneFixture=1&sceneQuality=high");
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-ready",
+		"true",
+		{ timeout: 30_000 },
+	);
+	const download = page.waitForEvent("download");
+	await page.getByRole("button", { name: "장면 저장" }).click();
+	const saved = await download;
+	expect(saved.suggestedFilename()).toMatch(
+		/^crowdcast-national-\d{8}-\d{4}\.png$/,
+	);
+	const bytes = readFileSync((await saved.path()) ?? "");
+	expect(bytes.length).toBeGreaterThan(1000);
+	expect(bytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
 });

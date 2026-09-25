@@ -1,6 +1,11 @@
 // WebGL 가능 여부와 진단 URL·모션 선호를 장면 밖에서 읽는다.
-import { useEffect, useState } from "react";
-import type { SceneQuality } from "./quality";
+import { useCallback, useEffect, useState } from "react";
+import {
+  type QualityMode,
+  recommendedQuality,
+  type SceneQuality,
+  shiftQuality,
+} from "./quality";
 
 // WebGL2가 없으면 로딩을 시작하지 않고 같은 자리에 안내한다.
 export function hasWebGl2(): boolean {
@@ -36,11 +41,12 @@ export function readSceneOptions() {
   const search = new URLSearchParams(window.location.search);
   const measure = search.get("sceneMeasure") === "1";
   const value = search.get("sceneQuality");
-  const fixedQuality: SceneQuality | null = measure
-    ? "high"
-    : value === "high" || value === "medium" || value === "low"
+  const fixedQuality: SceneQuality | null =
+    value === "high" || value === "medium" || value === "low"
       ? value
-      : null;
+      : measure
+        ? "high"
+        : null;
   return {
     measure,
     debug: search.get("sceneDiagnostic") === "1",
@@ -49,4 +55,27 @@ export function readSceneOptions() {
     motion: search.get("sceneMotion") !== "0",
     t435: search.get("sceneT435") !== "0",
   };
+}
+
+// URL 고정값 또는 사용자 선택을 우선하고 자동 모드만 프레임 신호로 바꾼다.
+export function useSceneQuality(options: ReturnType<typeof readSceneOptions>) {
+  const [mode, setMode] = useState<QualityMode>(options.fixedQuality ?? "auto");
+  const [hardwarePreset] = useState<SceneQuality>(() =>
+    recommendedQuality(
+      navigator.hardwareConcurrency,
+      (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
+    ),
+  );
+  const [automatic, setAutomatic] = useState<SceneQuality>(hardwarePreset);
+  const quality = mode === "auto" ? automatic : mode;
+  const change = useCallback(
+    (step: -1 | 1) =>
+      setAutomatic((current) =>
+        hardwarePreset === "low" && step === 1
+          ? current
+          : shiftQuality(current, step),
+      ),
+    [hardwarePreset],
+  );
+  return { mode, setMode, quality, change };
 }

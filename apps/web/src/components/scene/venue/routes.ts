@@ -91,9 +91,10 @@ export function vehicleAt(
   out: MotionPoint,
 ): MotionPoint {
   const phase = (seconds * 2.2 + index * 137.17) % (route.length * 2);
+  const last = route.points[route.points.length - 1];
+  const first = route.points[0];
   const forwardInward =
-    Math.hypot(...route.points[route.points.length - 1]) <
-    Math.hypot(...route.points[0]);
+    Math.hypot(last[0], last[1]) < Math.hypot(first[0], first[1]);
   const backwards = towardVenue ? !forwardInward : forwardInward;
   const distance = backwards
     ? route.length - (phase % route.length)
