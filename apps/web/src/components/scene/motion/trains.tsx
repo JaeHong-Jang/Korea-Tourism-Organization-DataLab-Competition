@@ -12,8 +12,8 @@ import {
   BufferGeometry,
   Color,
   type InstancedMesh,
-  Line,
   LineBasicMaterial,
+  LineSegments,
   Matrix4,
   MeshLambertMaterial,
   Vector3,
@@ -29,7 +29,9 @@ import {
   routePosition,
 } from "./rail-lines";
 
-const TRAIN_COUNT = railLines.length * 2;
+// 앞의 KTX 세 선은 두 편, 나머지 선은 한 편씩 왕복한다.
+const trainsOn = (line: number) => (line < 3 ? 2 : 1);
+const TRAIN_COUNT = railLines.reduce((sum, _, line) => sum + trainsOn(line), 0);
 // 한 칸 길이 약 8m(18.4m 칸의 0.45배)와 칸 사이 간격.
 const CART_SIZE = 0.45;
 const CART_GAP = 8.6;
@@ -63,17 +65,27 @@ export function Trains({
     () => new LineBasicMaterial({ color: sceneColor("model-metal") }),
     [],
   );
+  // 모든 선로를 선분 묶음 하나로 그린다(선마다 그리면 그리기 호출이 선 수만큼 는다).
   const railGeometry = useMemo(
     () =>
-      railLines.map((line) =>
-        new BufferGeometry().setFromPoints(
-          line.points.map(([x, z]) => new Vector3(x, LAND_SURFACE_Y + 0.5, z)),
+      new BufferGeometry().setFromPoints(
+        railLines.flatMap((line) =>
+          line.points
+            .slice(1)
+            .flatMap(([x, z], index) => [
+              new Vector3(
+                line.points[index][0],
+                LAND_SURFACE_Y + 0.5,
+                line.points[index][1],
+              ),
+              new Vector3(x, LAND_SURFACE_Y + 0.5, z),
+            ]),
         ),
       ),
     [],
   );
   const rails = useMemo(
-    () => railGeometry.map((line) => new Line(line, railMaterial)),
+    () => new LineSegments(railGeometry, railMaterial),
     [railGeometry, railMaterial],
   );
 
@@ -90,7 +102,7 @@ export function Trains({
       let index = 0;
       for (let lineIndex = 0; lineIndex < railLines.length; lineIndex++) {
         const line = railLines[lineIndex];
-        for (let train = 0; train < 2; train++) {
+        for (let train = 0; train < trainsOn(lineIndex); train++) {
           for (let car = 0; car < 3; car++) {
             routePosition(
               line,
@@ -159,18 +171,14 @@ export function Trains({
       geometry.dispose();
       material.dispose();
       railMaterial.dispose();
-      railGeometry.forEach((line) => {
-        line.dispose();
-      });
+      railGeometry.dispose();
     },
     [geometry, material, railMaterial, railGeometry],
   );
 
   return (
     <group>
-      {rails.map((line, index) => (
-        <primitive key={railLines[index].name} object={line} />
-      ))}
+      <primitive object={rails} />
       {[mesh, stripe, glass, roof].map((target, part) => (
         <instancedMesh
           // biome-ignore lint/suspicious/noArrayIndexKey: 부품 순서는 고정이다.

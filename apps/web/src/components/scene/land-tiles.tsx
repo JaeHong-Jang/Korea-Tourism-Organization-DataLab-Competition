@@ -15,6 +15,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import { tileStep } from "../../features/mini-korea/data-mode";
+import { type LandAnchor, landAnchor } from "./land-anchor";
 import { projectKorea } from "./projection";
 import { sceneColor } from "./quality";
 
@@ -34,6 +35,8 @@ export type LandModel = {
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
   centers: Map<string, [number, number]>;
   sidoByCode: Map<string, string>;
+  // 가장 큰 땅 조각 안쪽 대표점(도시 건물 무리 자리) — 경계 상자 가운데는 바다일 수 있다.
+  anchors: Map<string, LandAnchor>;
 };
 
 // 외곽과 구멍의 모든 경계점에 같은 투영을 적용한다.
@@ -108,6 +111,7 @@ export function buildLandModelForData(
       bounds: { minX: 0, maxX: 0, minZ: 0, maxZ: 0 },
       centers: new Map(),
       sidoByCode: new Map(),
+      anchors: new Map(),
     };
   }
   const regions = feature(topology, collection) as SigunguFeature;
@@ -117,6 +121,7 @@ export function buildLandModelForData(
   >();
   const centers = new Map<string, [number, number]>();
   const sidoByCode = new Map<string, string>();
+  const anchors = new Map<string, LandAnchor>();
   const bounds = {
     minX: Infinity,
     maxX: -Infinity,
@@ -132,7 +137,9 @@ export function buildLandModelForData(
 
   // 피처별 중심점과 버텍스 색을 기록한 뒤 시도별 병합 목록에 넣는다.
   regions.features.forEach((region, index) => {
-    const { sgg: code, sidonm: sido } = region.properties;
+    const { sgg: code, sidonm: sido, sggnm } = region.properties;
+    const anchor = landAnchor(region.geometry, sggnm);
+    if (anchor) anchors.set(code, anchor);
     const geometry = regionGeometry(region);
     const step = tileStep(totals?.get(code) ?? null, maximum);
     if (totals) geometry.scale(1, 1, Math.max(1, step));
@@ -197,7 +204,7 @@ export function buildLandModelForData(
     if (!geometry) throw new Error(`${sido} 타일을 병합할 수 없습니다.`);
     return { sido, geometry, faces };
   });
-  return { tiles, bounds, centers, sidoByCode };
+  return { tiles, bounds, centers, sidoByCode, anchors };
 }
 
 // 클릭한 삼각형을 시군구 코드로 바꿔 화면의 선택 동작에 넘긴다.
