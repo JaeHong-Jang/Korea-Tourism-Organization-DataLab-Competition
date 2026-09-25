@@ -32,6 +32,7 @@
 .my-events-change-row dd { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; font-variant-numeric: tabular-nums; }
 .my-events-evidence-links { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .my-events-evidence-links a { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); }
+.my-events-report-link { justify-self: start; padding: var(--space-2) var(--space-4); border: 1px solid var(--brand); border-radius: var(--radius-button); background: var(--brand); color: var(--on-brand); font-weight: 700; }
 
 /* 입력·공유 행동은 한 패널 안에서 로딩과 오류 문장까지 유지한다. */
 .my-events-actual-form { display: grid; gap: var(--space-3); margin-top: var(--space-4); }

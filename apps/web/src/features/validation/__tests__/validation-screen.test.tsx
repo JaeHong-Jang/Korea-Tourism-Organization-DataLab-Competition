@@ -54,6 +54,9 @@ it("산점도의 점 수·로그 축·표 보기를 보존한다", async () => {
   expect(node.textContent).toContain(
     "실측 대상 미만 0건이라 경계 구분은 아직 볼 수 없어요",
   );
+  expect(node.querySelector(".validation-whisker")).toBeNull();
+  expect(node.querySelector('[data-coverage="outside"]')).not.toBeNull();
+  expect(node.textContent).toContain("예측 = 실측");
   await act(async () => node.querySelector("button")?.click());
   expect(node.querySelector("table")?.textContent).toContain(
     "부산국제록페스티벌",
@@ -77,9 +80,21 @@ it("p10이 0이면 수염을 화살표로 표시하고 표에는 0을 남긴다"
   );
   expect(node.querySelectorAll("[data-point]")).toHaveLength(1);
   expect(node.textContent).toContain("0 이하 — 표 참고");
+  expect(node.querySelector(".validation-whisker")).toBeNull();
+  await act(async () =>
+    node
+      .querySelector("[data-point]")
+      ?.dispatchEvent(new MouseEvent("mouseover", { bubbles: true })),
+  );
   expect(node.querySelector(".validation-whisker")?.getAttribute("x1")).toBe(
     "100",
   );
+  await act(async () =>
+    node
+      .querySelector("[data-point]")
+      ?.dispatchEvent(new MouseEvent("mouseout", { bubbles: true })),
+  );
+  expect(node.querySelector(".validation-whisker")).toBeNull();
   await act(async () => node.querySelector("button")?.click());
   const table = node.querySelector(
     '[role="region"][aria-label="예측·실측 표, 좌우로 스크롤"]',
@@ -194,8 +209,37 @@ it("모델 카드의 한계 원문을 보존한다", () => {
     notes,
   } as ModelCard;
   const output = html(<ModelDetails state={ready(card)} goldenEmpty />);
+  expect(output).toContain("원문 보기");
   expect(output).toContain(notes);
+  expect(output).toContain("평가 표본·골드/실버 구성: 카드에 기록 없음");
   expect(output).toContain("골든 사례 0건 — 사례 재현 검증 전 임시 사용");
+});
+
+// 모델 카드 notes의 수치와 한계 문장만 요약에 들어간다.
+it("모델 카드 공개 필드의 분모·포함률·제외 사유를 요약한다", () => {
+  const card = {
+    id: "mr-v1-064e60073a7411037212",
+    target: "일평균 방문객",
+    createdAt: "2026-09-25T12:00:00+09:00",
+    modelVersion: "v1-064e60073a7411037212",
+    trainRange: { from: "2022", to: "2024" },
+    evalYears: [2025],
+    backtestRunId: backtest.runId,
+    features: ["행사 유형"],
+    notes:
+      '공개 분모(주 모델): 평가 86건(골드 1·실버 85), 80% 구간 포함 49/86; 코로나(2020·2021) 제외=True. 순간 최대 및 실측 환산 판정은 추정 산식 기반이며 실제 순간 인원 정답이 아니다. 작은 행사는 크게 예보될 수 있다. labels SHA-256=abc; 피처별 결측 수={"fee": 0}.',
+  } as ModelCard;
+  const output = html(<ModelDetails state={ready(card)} goldenEmpty />);
+  expect(output).toContain("평가 86건 · 골드 1건 · 실버 85건");
+  expect(output).toContain("80% 구간 포함률 57.0% (49/86)");
+  expect(output).toContain("코로나 연도(2020·2021)는 제외했어요");
+  expect(output).toContain(
+    "순간 최대는 추정 산식 기반이며 실측 정답이 아니에요",
+  );
+  expect(output).toContain("작은 행사는 크게 예보될 수 있어요");
+  expect(output.indexOf("원문 보기")).toBeLessThan(
+    output.indexOf("labels SHA-256"),
+  );
 });
 
 // API 미구현과 계약 오류는 견본 숫자를 대신 보여 주지 않는다.

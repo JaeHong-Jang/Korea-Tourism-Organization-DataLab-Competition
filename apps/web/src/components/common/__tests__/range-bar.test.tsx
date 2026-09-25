@@ -62,12 +62,25 @@ describe("구간 차트", () => {
     expect(range).toContain(
       'class="range-bar__threshold range-bar__target" style="left:60%"',
     );
-    expect(range).toContain('<span style="left:60%">기준 1,000명');
+    expect(range).toContain("점선: 법정 기준 1,000명");
     expect(range).toContain("값 표 보기");
-    expect(range).toContain("로그 눈금");
-    expect(range).toContain("구간 p10–p90 · 중앙 p50 · 기준선");
+    expect(range).not.toContain("순간 최대 예상 인원과 법정 기준");
     expect(range).not.toContain("▲ 주최측 예상");
     expect(range).toContain("aria-label=");
+  });
+
+  // 큰 구간은 막대 바로 위 값과 법정 기준, 배수 결론으로 읽힌다.
+  it("순간 최대의 직접 라벨과 기준 배수를 카드 값으로 만든다", () => {
+    const markup = renderToStaticMarkup(
+      <RangeBar
+        range={{ ...festival, peakP10: 7857, peakP50: 14000, peakP90: 26000 }}
+      />,
+    );
+    expect(markup).toContain("순간 최대 예상 인원과 법정 기준");
+    expect(markup).toContain("예상 7,857~26,000명 (가운데 1.4만 명)");
+    expect(markup).toContain("법정 기준 1,000명(안전관리계획 수립)");
+    expect(markup).toContain("기준보다 약 14배 — 수립 대상 구간이에요");
+    expect(markup).toContain("로그 축");
   });
 
   // 주최측 수치에 value와 p50이 함께 있으면 ▲ 좌표와 읽는 값이 일치한다.

@@ -128,7 +128,16 @@ export function EventDetail({
         </button>
         {busy && <p role="status">예보팀이 발행 결과를 확인하고 있어요.</p>}
         {forecastError && <p role="alert">{forecastError}</p>}
-        {result && <ReforecastCard result={result} />}
+        {result && (
+          <ReforecastCard
+            result={result}
+            evidence={
+              snapshots.find(
+                (snapshot) => snapshot.forecastId === result.forecastId,
+              )?.evidence
+            }
+          />
+        )}
       </FeaturePanel>
       {past && (
         <FeaturePanel
