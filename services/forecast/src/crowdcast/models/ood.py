@@ -3,6 +3,7 @@
 from typing import Any
 
 import polars as pl
+from crowdcast.features.event_features import CATEGORIES
 from crowdcast.models.baselines import event_type, size_band
 
 
@@ -22,6 +23,10 @@ def detect_ood(row: dict[str, Any], p50: float, fitted: dict[str, Any]) -> dict[
     outside = []
     for name, (low, high) in fitted["ranges"].items():
         value = row.get(name)
+        # 미상 범주만 배운 피처도 전부 결측인 경우와 같으며 위험 요소의 0은 결측이 아니다.
+        categories = CATEGORIES.get(name, [])
+        if "미상" in categories and low == high == categories.index("미상"):
+            continue
         # 학습에서 전부 결측인 피처는 배운 적 없어 반영되지 않을 뿐 외삽이 아니므로 범위 검사에서 뺀다.
         if value is not None and low is not None and (value < low or value > high):
             outside.append(name)

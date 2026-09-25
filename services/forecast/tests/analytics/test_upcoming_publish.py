@@ -8,8 +8,11 @@ from pathlib import Path
 
 import polars as pl
 import pytest
+import yaml
+from crowdcast import paths
 from crowdcast.analytics import upcoming
 from crowdcast.data.events import EVENT_DTYPES
+from crowdcast.rules import evidence, peak
 
 FILES = ("upcoming_forecasts.jsonl", "upcoming.parquet", "upcoming_qc.md")
 
@@ -153,6 +156,56 @@ def test_run_id_tracks_inputs(
     else:
         monkeypatch.setattr(upcoming, "cutoff", lambda event: date(2026, 9, 1))
     assert upcoming.run_identifier(frame, start, end, pointer) != before
+
+
+# 파일 변경은 캐시가 다시 읽혀 실제 계산 설정이 바뀐 시점에만 실행 식별자에 반영한다.
+@pytest.mark.parametrize("name,old,new", [
+    ("thresholds", "가능성이 높아", "가능성이 있어"),
+    ("peak_profiles", "stay_hours: 2 #", "stay_hours: 2.2 #"),
+    ("checklist", "text: 차량 진입·보행 동선 분리", "text: 차량 진입·보행 동선 분리 확인"),
+])
+def test_run_id_tracks_forecast_settings(
+    batch_data: Path, master_row: dict, monkeypatch: pytest.MonkeyPatch,
+    name: str, old: str, new: str,
+) -> None:
+    config_root = batch_data / "configs"
+    config_root.mkdir()
+    for filename in ("thresholds", "peak_profiles", "checklist"):
+        (config_root / f"{filename}.yaml").write_bytes(
+            (paths.REPO_ROOT / f"configs/{filename}.yaml").read_bytes()
+        )
+    monkeypatch.setattr(evidence, "REPO_ROOT", batch_data)
+    monkeypatch.setattr(peak, "REPO_ROOT", batch_data)
+    frame = pl.from_dicts([master_row], schema=EVENT_DTYPES)
+    args = (frame, upcoming.WINDOW_START, upcoming.WINDOW_END, upcoming.promoted())
+    config = config_root / f"{name}.yaml"
+    original = config.read_text(encoding="utf-8")
+    evidence.rule_settings.cache_clear()
+    peak._profiles.cache_clear()
+    try:
+        before = upcoming.run_identifier(*args)
+        settings = upcoming.canonical([evidence.rule_settings(), peak._profiles()])
+        assert old in original
+        config.write_text(original.replace(old, new, 1), encoding="utf-8")
+        assert upcoming.canonical([evidence.rule_settings(), peak._profiles()]) == settings
+        assert upcoming.run_identifier(*args) == before
+
+        # 재로딩 뒤에는 판정 문구·환산 가정·체크리스트의 변경이 각각 새 해시에 반영된다.
+        evidence.rule_settings.cache_clear()
+        peak._profiles.cache_clear()
+        assert upcoming.canonical([evidence.rule_settings(), peak._profiles()]) != settings
+        assert upcoming.run_identifier(*args) != before
+
+        # 내용이 같은 설정은 파일 서식과 키 순서가 달라도 같은 실행으로 식별한다.
+        config.write_text(yaml.safe_dump(yaml.safe_load(original), allow_unicode=True), encoding="utf-8")
+        evidence.rule_settings.cache_clear()
+        peak._profiles.cache_clear()
+        assert upcoming.canonical([evidence.rule_settings(), peak._profiles()]) == settings
+        assert upcoming.run_identifier(*args) == before
+    finally:
+        # 임시 설정을 이후 테스트나 실제 예보에서 재사용하지 않도록 캐시를 비운다.
+        evidence.rule_settings.cache_clear()
+        peak._profiles.cache_clear()
 
 
 # 같은 모델을 다시 승격해 시각만 달라져도 실행 식별자와 예보 산출물 바이트를 유지한다.
