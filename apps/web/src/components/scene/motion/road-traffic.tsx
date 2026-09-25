@@ -34,7 +34,7 @@ export function roadTrafficCap(quality: SceneQuality): number {
   return quality === "high" ? 120 : quality === "medium" ? 60 : 0;
 }
 
-// 승용차·택시·버스를 동네 3D와 같은 부품(차체·유리·지붕·바퀴)으로 그린다 — 연출이며 실제 교통량이 아니다.
+// 승용차·택시·버스를 동네 3D와 같은 부품(차체·유리·지붕 — 전국 판에서는 바퀴가 점보다 작아 뺀다)으로 그린다 — 연출이며 실제 교통량이 아니다.
 const NATIONAL_VEHICLE_SIZE = 0.8;
 
 export function RoadTraffic({
@@ -50,7 +50,6 @@ export function RoadTraffic({
     body: useRef<InstancedMesh>(null),
     glass: useRef<InstancedMesh>(null),
     roof: useRef<InstancedMesh>(null),
-    wheel: useRef<InstancedMesh>(null),
   };
   const point = useMemo<MotionPoint>(() => ({ x: 0, z: 0, heading: 0 }), []);
   const pose = useMemo<Pose>(
@@ -108,7 +107,6 @@ export function RoadTraffic({
         body: refs.body.current?.instanceMatrix.array,
         glass: refs.glass.current?.instanceMatrix.array,
         roof: refs.roof.current?.instanceMatrix.array,
-        wheel: refs.wheel.current?.instanceMatrix.array,
       };
       const slots = Math.ceil(cars / roadRoutes.length);
       for (let index = 0; index < cars; index++) {
@@ -125,7 +123,7 @@ export function RoadTraffic({
         pose.x = point.x + Math.cos(point.heading) * 5;
         pose.z = point.z - Math.sin(point.heading) * 5;
         pose.heading = point.heading;
-        stampCar(parts, index, pose, 1);
+        stampCar(parts, index, pose, 0);
       }
       for (const ref of Object.values(refs))
         if (ref.current) ref.current.instanceMatrix.needsUpdate = true;
@@ -146,7 +144,6 @@ export function RoadTraffic({
       new Color(sceneColor("bus-green")),
     ];
     const glass = new Color(sceneColor("glass"));
-    const tire = new Color(sceneColor("tire"));
     for (let index = 0; index < cars; index++) {
       const kind = kindOf(index);
       const color =
@@ -158,8 +155,6 @@ export function RoadTraffic({
       refs.body.current?.setColorAt(index, color);
       refs.roof.current?.setColorAt(index, color);
       refs.glass.current?.setColorAt(index, glass);
-      for (let wheel = 0; wheel < 4; wheel++)
-        refs.wheel.current?.setColorAt(index * 4 + wheel, tire);
     }
     for (const ref of Object.values(refs))
       if (ref.current?.instanceColor)
@@ -194,11 +189,6 @@ export function RoadTraffic({
           frustumCulled={false}
         />
       ))}
-      <instancedMesh
-        ref={refs.wheel}
-        args={[box, material, cars * 4]}
-        frustumCulled={false}
-      />
     </group>
   );
 }

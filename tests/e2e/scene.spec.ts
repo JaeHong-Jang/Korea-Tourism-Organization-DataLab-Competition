@@ -147,6 +147,8 @@ test("WebGL2 대체 안내", async ({ page }) => {
 
 // 진단 모드에서 품질 단계마다 실제 캔버스 픽셀 비율이 달라지는지 확인한다.
 test("품질 단계의 DPR을 캔버스에 적용한다", async ({ page }) => {
+  // 장면을 네 번 새로 여는 테스트라 전체 실행 부하(소프트웨어 렌더러)에서는 30초를 넘길 수 있다.
+  test.setTimeout(60_000);
   for (const [quality, expected] of [
     ["high", 1],
     ["medium", 0.85],
