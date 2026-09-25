@@ -34,7 +34,7 @@ async function routeAssistant(
   page: Page,
   events: (request: number) => SseEvent[],
 ) {
-  const messages: { text: string; eventId?: string; answer?: object }[] = [];
+  const messages: { text: string; eventId?: string; answer?: object; near?: { lat: number; lng: number } }[] = [];
   await page.route("**/api/festivals", (route) =>
     route.fulfill({
       status: 200,
@@ -106,6 +106,17 @@ test("방문객 추천 카드", async ({ page }) => {
   await page.screenshot({ path: resolve(screenshots, "T-442-recommend.png") });
 });
 
+// 브라우저가 허락한 위치는 추천 메시지에만 넣고 추천 화면에는 행사 카드가 나온다.
+test("내 위치로 가까운 축제를 찾는다", async ({ page, context }) => {
+  const messages = await routeAssistant(page, () => document("valid-recommend"));
+  await context.grantPermissions(["geolocation"]);
+  await context.setGeolocation({ latitude: 37.4563, longitude: 126.7052 });
+  await page.goto("/consult");
+  await page.getByRole("button", { name: "내 위치로 가까운 축제" }).click();
+  await expect.poll(() => messages[0]?.near).toEqual({ lat: 37.4563, lng: 126.7052 });
+  await expect(page.getByRole("region", { name: "추천 행사" })).toBeVisible();
+});
+
 // 선택지가 없는 되묻기에는 별도 칸 없이 공용 입력칸으로 자유 답을 보낸다.
 test("되묻기 자유 답", async ({ page }) => {
   const asking = document("valid-new-forecast").slice(0, 4);
@@ -135,11 +146,11 @@ test("되묻기 자유 답", async ({ page }) => {
     .toEqual({ venueText: "영종 씨사이드파크" });
 });
 
-// 사용자가 움직임을 줄이면 3D 캔버스 대신 정지 펫을 보여 준다.
-test("움직임 줄이기에서는 고래가 정지 그림", async ({ page }) => {
+// 움직임 줄이기에서도 사용자 고래 그림만 보여 준다.
+test("움직임 줄이기에서는 사용자 고래 그림", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   // 예보 상담 화면은 패널이 열려 봇 버튼을 숨기므로 첫 화면에서 본다
   await page.goto("/?sceneFixture=1");
-  await expect(page.locator(".assistant-whale svg")).toBeVisible();
+  await expect(page.locator('.assistant-whale img[src="/assistant/whale.png"]')).toBeVisible();
   await expect(page.locator(".assistant-whale canvas")).toHaveCount(0);
 });

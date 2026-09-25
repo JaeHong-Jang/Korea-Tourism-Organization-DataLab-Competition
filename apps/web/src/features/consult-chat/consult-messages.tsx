@@ -1,45 +1,84 @@
-// 보낸 질문과 발행된 근거 문장을 요청 순서대로 대화에 놓는다.
-import type { Evidence } from "@crowdcast/contracts/types";
+// 요청마다 사용자 질문, 실제 작업 상태, 팀장 답과 예보 요약을 묶는다.
 import { Fragment } from "react";
-import { Link } from "react-router-dom";
 import { renderClaim } from "../../lib/render-claim";
-import type { ClaimReply } from "./use-consult-session";
+import { AgentWorkLine } from "./agent-work-line";
+import { ForecastResultCard } from "./forecast-result-card";
+import type {
+  ClaimReply,
+  ForecastSnapshot,
+  GateReply,
+  StatusReply,
+  TextReply,
+} from "./use-consult-session";
 
-// 뒤이어 온 근거 이벤트는 이미 보이는 문장의 링크 제목을 채운다.
+// 발행 문장의 근거는 예보서와 그래프에 남겨 대화의 읽는 흐름을 지킨다.
 export function ConsultMessages({
   sent,
   claims,
-  evidence,
+  forecasts,
+  replies,
+  work,
+  gateReplies,
+  completed,
+  busy,
 }: {
   sent: { id: string; text: string }[];
   claims: ClaimReply[];
-  evidence: Evidence[];
+  forecasts: ForecastSnapshot[];
+  replies: TextReply[];
+  work: StatusReply[];
+  gateReplies: GateReply[];
+  completed: string[];
+  busy: boolean;
 }) {
-  return sent.map((message) => (
-    <Fragment key={message.id}>
-      <p className="consult-bubble consult-bubble--user">{message.text}</p>
-      {claims
-        .filter(
-          ({ messageId, claim }) =>
-            messageId === message.id &&
-            claim.status === "published" &&
-            claim.rendered,
-        )
-        .map(({ claim }) => (
-          <div className="consult-bubble consult-bubble--reply" key={claim.id}>
-            <p className="consult-bubble__text">{renderClaim(claim)}</p>
-            <div className="consult-bubble__evidence">
-              {claim.evidenceIds.map((id) => (
-                <Link
-                  key={id}
-                  to={`/f/${encodeURIComponent(claim.forecastId)}#evidence-${encodeURIComponent(id)}`}
-                >
-                  근거 · {evidence.find((item) => item.id === id)?.title ?? id}
-                </Link>
-              ))}
-            </div>
-          </div>
+  return sent.map((message, index) => {
+    const complete = completed.includes(message.id);
+    const card = forecasts.find((item) => item.messageId === message.id);
+    const messageClaims = claims
+      .filter((item) => item.messageId === message.id)
+      .map((item) => item.claim);
+    const messageWork = work.filter((item) => item.messageId === message.id);
+    const messageGates = gateReplies
+      .filter((item) => item.messageId === message.id)
+      .map((item) => item.gate);
+    const messageReplies = replies.filter(
+      (item) => item.messageId === message.id,
+    );
+    const fallback =
+      complete && !card && !messageReplies.length
+        ? messageClaims.find(
+            (claim) =>
+              claim.status === "published" &&
+              claim.rendered &&
+              claim.claimType !== "수치",
+          )
+        : null;
+    return (
+      <Fragment key={message.id}>
+        <p className="consult-bubble consult-bubble--user">{message.text}</p>
+        <AgentWorkLine
+          statuses={messageWork}
+          gates={messageGates}
+          busy={busy && index === sent.length - 1}
+          completed={complete}
+        />
+        {complete && card && (
+          <ForecastResultCard forecast={card} claims={messageClaims} />
+        )}
+        {fallback && (
+          <p className="consult-bubble consult-bubble--reply">
+            {renderClaim(fallback)}
+          </p>
+        )}
+        {messageReplies.map((item) => (
+          <p
+            className="consult-bubble consult-bubble--reply"
+            key={`${message.id}-reply-${item.seq}`}
+          >
+            {item.text}
+          </p>
         ))}
-    </Fragment>
-  ));
+      </Fragment>
+    );
+  });
 }

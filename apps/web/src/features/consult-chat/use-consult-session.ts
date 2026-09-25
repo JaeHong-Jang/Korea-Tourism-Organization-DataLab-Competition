@@ -16,13 +16,25 @@ import { createTeamSession } from "../../lib/api-client";
 import type { Ask } from "./answers";
 import { postConsultMessage } from "./post-consult-message";
 
-export type Message = { text: string; answer?: object; eventId?: string };
+export type Message = {
+  text: string;
+  answer?: object;
+  eventId?: string;
+  near?: { lat: number; lng: number; label?: string };
+};
 export type Recommendation = {
   items: { summary: FestivalSummary; reason: string }[];
   total: number;
   note: string;
 };
 export type ClaimReply = { messageId: string; claim: Claim };
+export type StatusReply = {
+  messageId: string;
+  seq: number;
+  status: AgentStatus;
+};
+export type TextReply = { messageId: string; seq: number; text: string };
+export type GateReply = { messageId: string; gate: GateReport };
 export type ForecastSnapshot = {
   card: ForecastCard;
   draft: EventDraft | null;
@@ -40,8 +52,12 @@ export function useConsultSession() {
   const [asks, setAsks] = useState<Ask[]>([]);
   const [draft, setDraft] = useState<EventDraft | null>(null);
   const [statuses, setStatuses] = useState<AgentStatus[]>([]);
+  const [work, setWork] = useState<StatusReply[]>([]);
+  const [replies, setReplies] = useState<TextReply[]>([]);
+  const [completed, setCompleted] = useState<string[]>([]);
   const [stepCounts, setStepCounts] = useState<Record<string, number>>({});
   const [gates, setGates] = useState<GateReport[]>([]);
+  const [gateReplies, setGateReplies] = useState<GateReply[]>([]);
   const [forecasts, setForecasts] = useState<ForecastSnapshot[]>([]);
   const [forecastId, setForecastId] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<
@@ -72,6 +88,14 @@ export function useConsultSession() {
     switch (event.event) {
       case "agent_status":
         setStatuses((current) => [...current, event.data as AgentStatus]);
+        setWork((current) => [
+          ...current,
+          {
+            messageId: requestId.current ?? "",
+            seq: event.seq,
+            status: event.data as AgentStatus,
+          },
+        ]);
         break;
       case "agent_step": {
         const step = event.data as AgentStep;
@@ -93,6 +117,10 @@ export function useConsultSession() {
       case "gate": {
         const gate = event.data as GateReport;
         setGates((current) => [...current, gate]);
+        setGateReplies((current) => [
+          ...current,
+          { messageId: requestId.current ?? "", gate },
+        ]);
         setSummary(
           gate.passed
             ? `${gate.gate === "A" ? "분석 검증" : gate.gate === "B" ? "문장 검증" : "발행"}을 통과했어요.`
@@ -143,7 +171,18 @@ export function useConsultSession() {
         setRecommendation(event.data as Recommendation);
         setSummary("조건에 맞는 행사를 골랐어요.");
         break;
+      case "reply":
+        setReplies((current) => [
+          ...current,
+          {
+            messageId: requestId.current ?? "",
+            seq: event.seq,
+            text: (event.data as { text: string }).text,
+          },
+        ]);
+        break;
       case "done":
+        setCompleted((current) => [...current, requestId.current ?? ""]);
         setForecastId(
           (current) =>
             (event.data as { forecastId: string | null }).forecastId ?? current,
@@ -160,7 +199,7 @@ export function useConsultSession() {
     if (!message.text.trim() || busy) return;
     const abort = new AbortController();
     controller.current = abort;
-    lastMessage.current = message;
+    lastMessage.current = { ...message, near: undefined };
     setBusy(true);
     setError("");
     setReplyError("");
@@ -218,8 +257,12 @@ export function useConsultSession() {
     asks,
     draft,
     statuses,
+    work,
+    replies,
+    completed,
     stepCounts,
     gates,
+    gateReplies,
     forecasts,
     forecastId,
     suggestions,

@@ -27,8 +27,8 @@ const groups = [
   },
 ] as const;
 type AgentId = AgentStatus["agentId"];
-const names: Record<AgentId, string> = {
-  lead: "지휘",
+export const agentNames: Record<AgentId, string> = {
+  lead: "팀장",
   dictation: "받아쓰기",
   "local-guide": "동네지기",
   archivist: "기록관",
@@ -159,12 +159,12 @@ export function TeamBoard({
                       setSelected(id);
                       if (selected === id) setReload((current) => current + 1);
                     }}
-                    aria-label={`${names[id]} 작업 기록 열기`}
+                    aria-label={`${agentNames[id]} 작업 기록 열기`}
                   >
                     <PetAvatar
                       agentId={id}
                       state={agentState(statuses, id)}
-                      size={32}
+                      size={48}
                       label={status?.note || undefined}
                     />
                     {failed.some(
@@ -216,7 +216,7 @@ export function TeamBoard({
           aria-label="팀원 작업 기록"
         >
           <div className="team-steps__head">
-            <strong>{names[selected]} 작업 기록</strong>
+            <strong>{agentNames[selected]} 작업 기록</strong>
             <button type="button" onClick={close}>
               닫기
             </button>
