@@ -87,9 +87,13 @@ paths:
                   type:
                     - object
                     - "null"
+                eventId:
+                  type: string
+                  pattern: ^e-[a-z0-9][a-z0-9_.:-]{1,120}$
+                  description: 목록에서 고른 다가오는 행사(일괄 예보의 eventId) — 게이트웨이가 그 행사 입력으로 추출·장소 되묻기 없이 새 예보를 시작한다(빠진 필수값만 되묻기). text는 화면에 보일 문장
       responses:
         "200":
-          description: SSE
+          description: "SSE — 모드: new(새 예보) · followup(발행 예보 후속) · recommend(방문객 행사 찾기: 게이트·숫자 카드·문장 없이 recommend 한 번 → done, forecastId null)"
           content:
             text/event-stream:
               schema:
@@ -302,6 +306,35 @@ paths:
           description: 게이트 실패로 발행하지 않음(code·message에 이유)
         "503":
           description: 하위 서비스 연결 실패
+  /api/images/{eventId}:
+    get:
+      summary: 행사 대표 이미지(로컬 캐시 — forecast 프록시, 바이트·Content-Type 그대로)
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^e-[a-z0-9][a-z0-9_.:-]{1,120}$
+      responses:
+        "200":
+          description: 이미지
+          content:
+            image/jpeg: {}
+            image/png: {}
+            image/webp: {}
+        "404":
+          description: 이미지 없음
+  /api/evidence/graph:
+    get:
+      summary: 전체 근거 그래프(온톨로지 시각화 — knowledge /v1/master/graph 프록시)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/knowledge-graph.schema.json
   /api/plans/{id}:
     get:
       summary: 계획 초안(records 프록시, T-306)

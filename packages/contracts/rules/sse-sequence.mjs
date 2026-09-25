@@ -6,6 +6,7 @@ const AFTER_FAIL_OK = new Set(["agent_status", "agent_step", "error", "done"]);
 // 이벤트 목록을 앞에서부터 읽으며 규칙 위반을 모은다(빈 배열 = 통과).
 // ctx.mode = "new"(새 예보·what-if: A → B → 발행) | "followup"(발행된 예보 ctx.forecastId에 대한 설명·초안: B → 발행, 10 §3 다른 플레이북)
 export function sequenceProblems(events, ctx = { mode: "new" }) {
+  if (ctx.mode === "recommend") return recommendProblems(events);
   const out = [];
   const followup = ctx.mode === "followup";
   if (followup && !ctx.forecastId) out.push("후속 요청에는 기존 예보 id가 필요하다");
@@ -82,5 +83,28 @@ export function sequenceProblems(events, ctx = { mode: "new" }) {
   if (!st.done) out.push("done으로 끝나지 않는다");
   if (st.gateA === false && !events.some((e) => e.event === "error" && e.data.code === "ANALYSIS_GATE_FAILED")) out.push("게이트 A 실패인데 ANALYSIS_GATE_FAILED 오류가 없다");
   for (const id of st.claimEvidence) if (!st.sentEvidence.has(id)) out.push(`문장이 가리킨 근거 ${id}를 evidence로 보내지 않았다`);
+  return out;
+}
+
+// 방문객 행사 찾기(recommend 모드): 새 숫자·문장이 없으므로 게이트·카드·문장·근거·되묻기를 보내지 않고, 추천 목록 한 번 뒤 done(forecastId null)으로 끝낸다
+const RECOMMEND_OK = new Set(["agent_status", "agent_step", "recommend", "suggest", "error", "done"]);
+function recommendProblems(events) {
+  const out = [];
+  let recommends = 0;
+  let done = false;
+  events.forEach((e, i) => {
+    const at = `#${i} ${e.event}`;
+    if (e.seq !== i) out.push(`${at}: seq ${e.seq}(기대 ${i})`);
+    if (done) out.push(`${at}: done 뒤에 이벤트`);
+    if (!RECOMMEND_OK.has(e.event)) out.push(`${at}: 행사 찾기 응답에는 보낼 수 없다`);
+    if (e.event === "recommend" && ++recommends > 1) out.push(`${at}: 추천 목록을 두 번`);
+    if (e.event === "suggest" && recommends === 0) out.push(`${at}: 추천 목록 전에 다음 할 일`);
+    if (e.event === "done") {
+      done = true;
+      if (e.data.forecastId !== null) out.push(`${at}: 행사 찾기는 새 예보를 만들지 않는다(forecastId null)`);
+    }
+  });
+  if (!done) out.push("done으로 끝나지 않는다");
+  if (recommends === 0 && !events.some((e) => e.event === "error")) out.push("추천 목록도 오류도 없다");
   return out;
 }

@@ -15,6 +15,7 @@ export type SseEvent = {
     | "gate"
     | "claim"
     | "evidence"
+    | "recommend"
     | "suggest"
     | "done"
     | "error";

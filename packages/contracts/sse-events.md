@@ -46,3 +46,9 @@ agent_status(lead) → agent_status/agent_step(dictation) → event_card → [as
 - R9 `event_card`·`ask`는 게이트 A 전에만 보낸다(분석이 시작된 뒤 행사 정보를 바꾸지 않는다).
 - R10 발행 검사의 `revision`·`masterVersion`은 마지막으로 통과한 게이트 B의 값과 같고, 발행 문장의 검사(`checks[].revision`)도 그 값이다(게이트 B 뒤 새 사실이 들어오면 다시 검사). revision은 **내용 revision**이다 — 문장 상태 전이·발행·같은 내용 재적재로는 올라가지 않는다(`docs/plan/09` §1).
 - R11 게이트의 `revision`·`masterVersion`은 스트림 안에서 줄지 않는다.
+
+## 방문객 행사 찾기 — `recommend` 모드 (9/25 추가)
+- "불꽃놀이 행사에 가고 싶어", "이번 주말 서울 축제" 같은 **방문객 질문**은 팀장이 행사 찾기로 분류한다. 새 예보를 만들지 않으므로 게이트·`forecast`·`claim`·`evidence`·`event_card`·`ask`를 보내지 않는다.
+- 순서: `agent_status`/`agent_step` → `recommend` 한 번(`query`·최대 10개 `items`·`total`·`note`) → (`suggest`) → `done`(`forecastId: null`). 오류면 `error` → `done`.
+- `items[].summary`는 일괄 예보의 festival-summary 그대로(숫자를 새로 계산하지 않는다), `reason`에는 조건 일치만 적는다.
+- 검사: `rules/sse-sequence.mjs`의 `mode: "recommend"`, 픽스처 `fixtures-sse/valid-recommend.json`·`invalid-recommend-with-gate.json`.

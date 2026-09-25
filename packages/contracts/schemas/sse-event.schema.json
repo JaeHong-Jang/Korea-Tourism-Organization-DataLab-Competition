@@ -21,6 +21,7 @@
         "gate",
         "claim",
         "evidence",
+        "recommend",
         "suggest",
         "done",
         "error"
@@ -333,6 +334,115 @@
               },
               "message": {
                 "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "recommend"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "query",
+              "items",
+              "total",
+              "note"
+            ],
+            "description": "방문객 행사 찾기(recommend 모드): 다가오는 일괄 예보에서 조건에 맞는 행사. 숫자는 festival-summary 값 그대로(새로 계산하지 않음)",
+            "properties": {
+              "query": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "text",
+                  "type",
+                  "sido",
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "anyOf": [
+                      {
+                        "$ref": "common.schema.json#/$defs/eventType"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "sido": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "from": {
+                    "anyOf": [
+                      {
+                        "$ref": "common.schema.json#/$defs/date"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "to": {
+                    "anyOf": [
+                      {
+                        "$ref": "common.schema.json#/$defs/date"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              },
+              "items": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "summary",
+                    "reason"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "$ref": "festival-summary.schema.json"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "description": "고른 이유(조건 일치 — 유형·지역·기간, 덜 붐비는 순 등). 숫자는 summary 값만"
+                    }
+                  }
+                }
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "조건에 맞는 행사 수(목록은 최대 10)"
+              },
+              "note": {
+                "type": "string",
+                "description": "고지(혼잡 예보는 참고용·추정 산식 기반 등)"
               }
             }
           }

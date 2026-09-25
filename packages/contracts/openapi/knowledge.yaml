@@ -220,6 +220,16 @@ paths:
                 properties:
                   masterVersion:
                     type: integer
+  /v1/master/graph:
+    get:
+      summary: 전체 근거 그래프(TBox 클래스·관계 + 기준 그래프 — 규칙·조항·데이터셋·가정·모델 실행·파이프라인 계보·에이전트), 온톨로지 시각화용
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/knowledge-graph.schema.json
   /v1/master/version:
     get:
       summary: 현재 기준 그래프 버전

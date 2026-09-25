@@ -16,6 +16,7 @@ export type { Forecast } from "./forecast";
 export type { GateReport } from "./gate-report";
 export type { Insight } from "./insight";
 export type { Judgment } from "./judgment";
+export type { KnowledgeGraph } from "./knowledge-graph";
 export type { LedgerEntry } from "./ledger-entry";
 export type { ModelCard } from "./model-card";
 export type { OpsStatus } from "./ops-status";

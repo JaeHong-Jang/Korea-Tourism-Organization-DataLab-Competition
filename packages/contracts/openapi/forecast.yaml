@@ -158,6 +158,25 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/region-baseline.schema.json
+  /v1/images/{eventId}:
+    get:
+      summary: 행사 대표 이미지(TourAPI firstimage를 받아 둔 로컬 캐시만 — 요청마다 외부 호출 없음)
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^e-[a-z0-9][a-z0-9_.:-]{1,120}$
+      responses:
+        "200":
+          description: 이미지
+          content:
+            image/jpeg: {}
+            image/png: {}
+            image/webp: {}
+        "404":
+          description: 캐시에 없음
   /v1/weather:
     get:
       summary: 날씨(실황·단기·중기)

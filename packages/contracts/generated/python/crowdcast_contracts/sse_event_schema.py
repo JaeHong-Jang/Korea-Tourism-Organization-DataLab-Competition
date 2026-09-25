@@ -18,6 +18,7 @@ class Event(Enum):
     gate = 'gate'
     claim = 'claim'
     evidence = 'evidence'
+    recommend = 'recommend'
     suggest = 'suggest'
     done = 'done'
     error = 'error'
