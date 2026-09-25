@@ -5,6 +5,7 @@ import type {
   Claim,
   EventDraft,
   Evidence,
+  FestivalSummary,
   ForecastCard,
   GateReport,
   SseEvent,
@@ -15,7 +16,12 @@ import { createTeamSession } from "../../lib/api-client";
 import type { Ask } from "./answers";
 import { postConsultMessage } from "./post-consult-message";
 
-export type Message = { text: string; answer?: object };
+export type Message = { text: string; answer?: object; eventId?: string };
+export type Recommendation = {
+  items: { summary: FestivalSummary; reason: string }[];
+  total: number;
+  note: string;
+};
 export type ClaimReply = { messageId: string; claim: Claim };
 export type ForecastSnapshot = {
   card: ForecastCard;
@@ -28,6 +34,7 @@ export type ForecastSnapshot = {
 // 검증된 스트림 이벤트만 상담 상태에 반영한다.
 export function useConsultSession() {
   const [searchParams] = useSearchParams();
+  const linkedText = searchParams.get("text");
   const [text, setText] = useState(() => searchParams.get("text") ?? "");
   const [sent, setSent] = useState<{ id: string; text: string }[]>([]);
   const [asks, setAsks] = useState<Ask[]>([]);
@@ -46,11 +53,18 @@ export function useConsultSession() {
   const [replyError, setReplyError] = useState("");
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState("행사를 적어 주세요.");
+  const [recommendation, setRecommendation] = useState<Recommendation | null>(
+    null,
+  );
   const session = useRef<string | null>(null);
   const controller = useRef<AbortController | null>(null);
   const lastMessage = useRef<Message | null>(null);
   const requestId = useRef<string | null>(null);
   const draftRef = useRef<EventDraft | null>(null);
+  // 페이지를 옮기며 들어온 기존 상담 링크의 문장을 공용 입력칸에 반영한다.
+  useEffect(() => {
+    if (linkedText !== null) setText(linkedText);
+  }, [linkedText]);
   useEffect(() => () => controller.current?.abort(), []);
 
   // 검증된 이벤트의 카드·문장·근거를 요청 순서에 맞게 누적한다.
@@ -125,6 +139,10 @@ export function useConsultSession() {
           ).actions,
         );
         break;
+      case "recommend":
+        setRecommendation(event.data as Recommendation);
+        setSummary("조건에 맞는 행사를 골랐어요.");
+        break;
       case "done":
         setForecastId(
           (current) =>
@@ -146,6 +164,7 @@ export function useConsultSession() {
     setBusy(true);
     setError("");
     setReplyError("");
+    setRecommendation(null);
     const messageId = crypto.randomUUID();
     requestId.current = messageId;
     setSent((current) => [...current, { id: messageId, text: message.text }]);
@@ -182,6 +201,7 @@ export function useConsultSession() {
         setForecasts((current) =>
           current.filter((item) => item.messageId !== messageId),
         );
+        setRecommendation(null);
         setError(
           cause instanceof Error ? cause.message : "상담 연결을 확인해 주세요.",
         );
@@ -209,6 +229,7 @@ export function useConsultSession() {
     replyError,
     busy,
     summary,
+    recommendation,
     session,
     controller,
     lastMessage,

@@ -1,0 +1,38 @@
+/* 상담 서랍은 화면 끝에 붙이고 넓은 화면에서는 본문 옆 공간을 쓴다. */
+.assistant-shell { position: relative; z-index: var(--z-sheet); }
+.assistant-panel { position: fixed; z-index: var(--z-sheet); top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; width: min(420px, 100vw); padding: var(--space-4); border-left: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); overflow-y: auto; }
+.assistant-panel__header { display: flex; justify-content: space-between; align-items: start; gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--line); }
+.assistant-panel__header p { margin: var(--space-1) 0 0; color: var(--ink-2); font-size: var(--text-sm); }
+.assistant-panel__header button, .assistant-recommendation__actions button, .assistant-recommendations > button, .consult-start button, .festival-list__consult { padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); cursor: pointer; }
+.assistant-panel__conversation { display: grid; align-content: start; gap: var(--space-3); min-height: 0; flex: 1; overflow-y: auto; padding-block: var(--space-4); }
+.assistant-panel .consult-compose { margin-top: var(--space-2); }
+.assistant-panel .consult-ask { max-height: 52%; overflow-y: auto; }
+.assistant-panel .consult-live { margin: var(--space-2) 0; font-size: var(--text-caption); }
+.assistant-picker { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.assistant-picker label { font-weight: 700; }
+.assistant-picker input { width: 100%; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font: inherit; }
+.assistant-picker__results, .assistant-recommendations ol { display: grid; gap: var(--space-2); padding: 0; margin: 0; list-style: none; }
+.assistant-picker__results button { display: grid; width: 100%; gap: var(--space-1); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; }
+.assistant-picker__results span { color: var(--ink-2); font-size: var(--text-caption); }
+.assistant-recommendations { display: grid; gap: var(--space-3); }
+.assistant-recommendations h3 { margin: 0; }
+.assistant-recommendation { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); }
+.assistant-recommendation p { margin: var(--space-2) 0; font-size: var(--text-sm); }
+.assistant-recommendation__image { display: grid; place-items: center; height: 88px; overflow: hidden; border-radius: var(--radius-input); background: var(--surface-sunken); color: var(--brand); font-size: var(--text-section); }
+.assistant-recommendation__image img { width: 100%; height: 100%; object-fit: cover; }
+.assistant-recommendation__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.assistant-recommendation__actions button:last-child { font-size: var(--text-caption); }
+.assistant-whale { position: fixed; z-index: var(--z-popover); right: var(--space-5); bottom: var(--space-5); display: grid; justify-items: center; width: 104px; min-height: 104px; padding: var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); cursor: pointer; }
+.assistant-whale__figure { display: block; width: 92px; height: 76px; }
+.assistant-whale__figure canvas { width: 100%; height: 100%; }
+.assistant-whale__status { padding: var(--space-1) var(--space-2); border-radius: var(--radius-input); background: var(--surface-sunken); font-size: var(--text-caption); }
+.assistant-shell--open .assistant-whale { right: calc(min(420px, 100vw) + var(--space-5)); }
+.consult-start { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: var(--space-4) 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.consult-start p { margin: 0; }
+.consult-page .consult-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.consult-page .event-summary { grid-column: 1 / -1; }
+.festival-list__consult { margin: var(--space-2); font-size: var(--text-caption); }
+@media (min-width: 1000px) { .app-shell:has(.assistant-shell--open) main { margin-right: 420px; } }
+@media (max-width: 999px) { .assistant-shell--open .assistant-whale { display: none; } }
+@media (max-width: 640px) { .assistant-panel { width: 100vw; border-left: 0; } .consult-page .consult-layout { grid-template-columns: 1fr; } .consult-page .event-summary { grid-column: auto; } }
+@media (prefers-reduced-motion: reduce) { .assistant-whale, .assistant-whale * { animation: none; transition: none; } }
