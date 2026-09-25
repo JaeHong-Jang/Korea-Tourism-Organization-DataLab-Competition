@@ -9,6 +9,7 @@ from crowdcast.api.routes import (
     health,
     model_card,
     predict,
+    preregistration,
     regions,
     similar,
     upcoming,
@@ -29,3 +30,4 @@ app.include_router(predict.router)
 app.include_router(whatif.router)
 app.include_router(upcoming.router)
 app.include_router(regions.router)
+app.include_router(preregistration.router)
