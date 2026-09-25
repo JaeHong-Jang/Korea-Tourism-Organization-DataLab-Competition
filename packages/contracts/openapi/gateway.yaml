@@ -248,6 +248,76 @@ paths:
                 $ref: ../schemas/forecast-report.schema.json
         "404":
           description: 발행 전이거나 없음
+  /api/forecasts/{id}/plan:
+    post:
+      summary: 세션 없이 발행 예보서 스냅샷으로 계획 초안 만들기(이미 있으면 그대로 — 새 문장 없음, T-306c)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^f-
+      responses:
+        "200":
+          description: 계획과 docx 경로
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - plan
+                  - docxHref
+                properties:
+                  plan:
+                    $ref: ../schemas/plan.schema.json
+                  docxHref:
+                    type: string
+                    pattern: ^/api/plans/plan-[a-z0-9][a-z0-9_.:-]{1,120}/export\.docx$
+        "404":
+          description: 발행 예보서 스냅샷 없음
+        "502":
+          description: records가 계획을 거부(plan_rejected)
+  /api/plans/{id}:
+    get:
+      summary: 계획 초안(records 프록시, T-306)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^plan-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/plan.schema.json
+        "404":
+          description: 없음
+  /api/plans/{id}/export.docx:
+    get:
+      summary: 계획 초안 docx(records 프록시 — 바이트·헤더 그대로)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^plan-
+      responses:
+        "200":
+          description: docx
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: 없음
   /api/evidence/{id}:
     get:
       summary: 근거 하나(knowledge 프록시)
