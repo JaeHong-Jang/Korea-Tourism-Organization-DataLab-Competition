@@ -244,13 +244,13 @@ export function MiniKoreaCanvas({
         />
         <Board center={center} width={width} depth={depth} />
         {showLand && <LandTiles model={model} onPick={onPick} />}
-        {diagnostics.motion && (
+        {diagnostics.motion && !dataMode && (
           <Trains
             reducedMotion={reducedMotion}
             diagnostic={diagnostics.debug}
           />
         )}
-        {diagnostics.motion && (
+        {diagnostics.motion && !dataMode && (
           <RoadTraffic quality={activeQuality} reducedMotion={reducedMotion} />
         )}
         <FestivalLayer scene={scene} center={center} />

@@ -29,11 +29,19 @@ export function ReportNumbers({
       )}
       <div className="report-number-grid">
         {quantities.map((quantity) => {
-          const source = evidenceForQuantity(
+          const cited = evidenceForQuantity(
             report.claims,
             report.evidence,
             quantity.id,
           );
+          const source = [
+            ...cited,
+            ...report.evidence.filter(
+              (item) =>
+                item.quantityIds.includes(quantity.id) &&
+                !cited.some((entry) => entry.id === item.id),
+            ),
+          ];
           return (
             <div className="report-number" key={quantity.id}>
               <span>{quantity.name}</span>

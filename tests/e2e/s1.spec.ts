@@ -21,20 +21,42 @@ test("연출 열차와 고른 행사 위 고래 봇", async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto(`/?sceneFixture=1&theme=day&sceneDiagnostic=1&at=${time}`);
-	await expect(page.locator("html")).toHaveAttribute("data-scene-ready", "true", { timeout: 30_000 });
-	await expect.poll(async () => Number(await page.locator("html").getAttribute("data-scene-trains"))).toBeGreaterThan(0);
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-ready",
+		"true",
+		{ timeout: 30_000 },
+	);
+	await expect
+		.poll(async () =>
+			Number(await page.locator("html").getAttribute("data-scene-trains")),
+		)
+		.toBeGreaterThan(0);
 	const first = await page.evaluate(() => window.__crowdcastTrainPosition?.());
 	await page.waitForTimeout(150);
-	expect(await page.evaluate(() => window.__crowdcastTrainPosition?.())).toEqual(first);
-	await expect(page.locator(".scene-legend")).toContainText("열차·차량·봇 움직임은 연출 — 실제 운행·교통량이 아님");
+	expect(
+		await page.evaluate(() => window.__crowdcastTrainPosition?.()),
+	).toEqual(first);
+	await expect(page.locator(".scene-legend")).toContainText(
+		"열차·차량·봇 움직임은 연출 — 실제 운행·교통량이 아님",
+	);
 	await page.screenshot({ path: resolve(output, "T-434a-s1-day.png") });
 	await page.locator(".festival-list__pick").first().click();
-	await expect.poll(async () => Number(await page.locator("html").getAttribute("data-scene-bots"))).toBeGreaterThan(0);
+	await expect
+		.poll(async () =>
+			Number(await page.locator("html").getAttribute("data-scene-bots")),
+		)
+		.toBeGreaterThan(0);
 	await page.screenshot({ path: resolve(output, "T-434a-s1-selected.png") });
 	await page.keyboard.press("Escape");
 	await expect(page.locator("html")).toHaveAttribute("data-scene-bots", "0");
-	await page.goto(`/?sceneFixture=1&theme=night&sceneDiagnostic=1&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`);
-	await expect(page.locator("html")).toHaveAttribute("data-scene-ready", "true", { timeout: 30_000 });
+	await page.goto(
+		`/?sceneFixture=1&theme=night&sceneDiagnostic=1&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`,
+	);
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-ready",
+		"true",
+		{ timeout: 30_000 },
+	);
 	await page.screenshot({ path: resolve(output, "T-434a-s1-night.png") });
 });
 
@@ -153,11 +175,19 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 	await expect.poll(() => boardCornersAreSafe(page)).toBe(true);
 	await page.screenshot({ path: resolve(output, "T-433b-s1-day.png") });
 
-	// 목록의 방향키는 카메라를 밀지 않고 장면에 포커스할 때만 이동한다.
+	// 목록의 방향키는 다음 행사를 고를 뿐 카메라를 따로 밀지 않는다 — 클릭으로 고른 구도와 같아야 한다.
 	await page.locator(".festival-list__pick").first().focus();
-	const beforeListKey = await cameraTarget(page);
 	await page.keyboard.press("ArrowDown");
-	expect(await cameraTarget(page)).toEqual(beforeListKey);
+	const listPick = page.locator(".festival-list__pick").nth(1);
+	await expect(listPick).toBeFocused();
+	await expect(listPick).toHaveAttribute("aria-pressed", "true");
+	const afterListKey = await cameraTarget(page);
+	await page.keyboard.press("Escape");
+	await expect(listPick).toHaveAttribute("aria-pressed", "false");
+	await listPick.click();
+	await expect.poll(() => cameraTarget(page)).toEqual(afterListKey);
+	await page.keyboard.press("Escape");
+	// 방향키 카메라 이동은 장면에 포커스할 때만 한다.
 	await page.locator(".scene-stage").focus();
 	const beforeSceneKey = await cameraTarget(page);
 	await page.keyboard.press("ArrowRight");
@@ -239,6 +269,7 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 	await expect(page.locator(".scene-legend__data")).toContainText(
 		"지금 필터 기준으로 다시 나눔",
 	);
+	await expect(page.locator("html")).not.toHaveAttribute("data-scene-trains");
 	await expect(page).toHaveURL(/data=1/);
 	await page.screenshot({ path: resolve(output, "T-433b-s1-data.png") });
 });

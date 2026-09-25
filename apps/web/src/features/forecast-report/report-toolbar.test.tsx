@@ -16,7 +16,7 @@ afterEach(() => vi.restoreAllMocks());
 it.each([
   [200, { docxHref: "/api/plans/plan-yeongjong/export.docx" }, ""],
   [404, {}, "계획 초안 경로가 아직 없어요."],
-  [500, {}, "계획 초안을 받지 못했어요."],
+  [502, {}, "계획 초안을 받지 못했어요."],
 ] as const)("docx 응답 %i의 버튼 상태", async (status, body, reason) => {
   vi.stubGlobal(
     "fetch",
@@ -34,7 +34,14 @@ it.each([
   const root = createRoot(node);
   await act(async () =>
     root.render(
-      <ReportToolbar report={fixture as unknown as ForecastReport} />,
+      <ReportToolbar
+        report={
+          {
+            ...fixture,
+            brief: { ...fixture.brief, actions: [] },
+          } as unknown as ForecastReport
+        }
+      />,
     ),
   );
   const button = [...node.querySelectorAll("button")].find((item) =>

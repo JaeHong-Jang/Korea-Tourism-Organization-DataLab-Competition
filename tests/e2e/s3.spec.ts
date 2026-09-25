@@ -18,6 +18,8 @@ const screens = resolve(process.cwd(), "../../reports/figures/screens");
 test("S3 예보서와 근거 서랍, 인쇄, 링크, docx", async ({ page, context }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  let planRequests = 0;
+  let exportRequests = 0;
   await page.route("**/api/forecasts/f-yeongjong-2025", (route) =>
     route.fulfill({
       status: 200,
@@ -25,26 +27,32 @@ test("S3 예보서와 근거 서랍, 인쇄, 링크, docx", async ({ page, conte
       body: JSON.stringify(report),
     }),
   );
-  await page.route("**/api/forecasts/f-yeongjong-2025/plan", (route) =>
-    route.fulfill({
+  await page.route("**/api/forecasts/f-yeongjong-2025/plan", (route) => {
+    expect(route.request().method()).toBe("POST");
+    planRequests++;
+    return route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
         docxHref: "/api/plans/plan-yeongjong/export.docx",
       }),
-    }),
-  );
-  await page.route("**/api/plans/plan-yeongjong/export.docx", (route) =>
-    route.fulfill({
+    });
+  });
+  await page.route("**/api/plans/**", (route) => {
+    expect(new URL(route.request().url()).pathname).toBe(
+      "/api/plans/plan-yeongjong/export.docx",
+    );
+    exportRequests++;
+    return route.fulfill({
       status: 200,
       headers: {
         "content-type":
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "content-disposition": 'attachment; filename="plan-yeongjong.docx"',
+        "Content-Disposition": 'attachment; filename="plan-yeongjong.docx"',
       },
       body: "fixture-docx",
-    }),
-  );
+    });
+  });
   await page.goto("/f/f-yeongjong-2025");
   await expect(page.getByText("영종 씨사이드파크 불꽃축제")).toBeVisible();
   await expect(
@@ -85,4 +93,6 @@ test("S3 예보서와 근거 서랍, 인쇄, 링크, docx", async ({ page, conte
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "계획 초안 docx 받기" }).click();
   expect((await download).suggestedFilename()).toBe("plan-yeongjong.docx");
+  expect(planRequests).toBe(1);
+  expect(exportRequests).toBe(1);
 });

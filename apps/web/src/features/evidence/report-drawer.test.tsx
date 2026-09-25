@@ -7,12 +7,44 @@ import { MemoryRouter } from "react-router-dom";
 import { expect, it, vi } from "vitest";
 import fixture from "../../../../../packages/contracts/fixtures/forecast-report/valid-yeongjong.json";
 import { EvidenceChip } from "../../components/common/evidence-chip";
-import { ReportDrawer, useEvidenceDrawer } from "./report-drawer";
+import {
+  observationForEvidence,
+  ReportDrawer,
+  useEvidenceDrawer,
+} from "./report-drawer";
 
 const report = fixture as unknown as ForecastReport;
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
+
+// 같은 데이터셋의 관측 셋 중 근거 요약의 ID가 가리키는 수치만 고른다.
+it("데이터 근거와 관측 ID가 맞지 않으면 다른 지표 수치를 숨긴다", () => {
+  const daily = report.forecast.observations[0];
+  const share = {
+    ...daily,
+    id: "obs-28110-nonlocal-share",
+    featureName: "nonlocal_share",
+    value: 0.39,
+    unit: "비율" as const,
+  };
+  const evidence = report.evidence.find((item) => item.kind === "data");
+  if (!evidence) throw new Error("데이터 근거 픽스처 없음");
+  const observations = [daily, share];
+  expect(observationForEvidence(evidence, observations)).toBeNull();
+  expect(
+    observationForEvidence(
+      { ...evidence, summary: JSON.stringify({ id: share.id }) },
+      observations,
+    ),
+  ).toEqual(share);
+  expect(
+    observationForEvidence(
+      { ...evidence, quantityIds: [daily.id, share.id] },
+      observations,
+    ),
+  ).toBeNull();
+});
 
 // 두 번째 칩에서 열고 Escape를 눌렀을 때 첫 번째 칩으로 잘못 돌아가지 않는다.
 it("Escape와 읽던 곳으로가 출발 칩에 포커스를 돌린다", async () => {
