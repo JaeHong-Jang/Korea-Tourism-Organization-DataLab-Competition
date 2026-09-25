@@ -58,3 +58,5 @@
   .my-events-detail { gap: var(--space-4); }
   .my-events-share input { width: 100%; }
 }
+/* what-if로 바꾼 조건의 이력은 저장 행사와 다르다는 것을 글자로 밝힌다 */
+.my-events-whatif { color: var(--ink-2); font-weight: 600; }

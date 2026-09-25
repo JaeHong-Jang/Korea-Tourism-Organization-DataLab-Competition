@@ -1,6 +1,6 @@
 // 선택 행사 오른쪽에 불변 예보 이력과 재예보·실측·공유 행동을 묶는다.
 
-import type { ReforecastResult } from "@crowdcast/contracts/types";
+import type { Event, ReforecastResult } from "@crowdcast/contracts/types";
 import { useRef, useState } from "react";
 import { FeaturePanel } from "../../components/common/feature-panel";
 import { LevelBadge } from "../../components/common/level-badge";
@@ -15,6 +15,19 @@ import type { SavedEvent } from "./event-list";
 import { ReforecastCard } from "./reforecast-card";
 
 // 게이트 실패·행사 없음·서비스 실패를 다른 안내로 보여 준다.
+// what-if로 바꾼 조건(일시·시간대·요금·유형)의 예보가 저장 행사의 이력에 붙었는지 본다
+export function changedCondition(
+  snapshotEvent: Pick<
+    Event,
+    "startsAt" | "endsAt" | "timeOfDay" | "fee" | "type"
+  >,
+  saved: Pick<Event, "startsAt" | "endsAt" | "timeOfDay" | "fee" | "type">,
+): boolean {
+  return (["startsAt", "endsAt", "timeOfDay", "fee", "type"] as const).some(
+    (key) => snapshotEvent[key] !== saved[key],
+  );
+}
+
 export function reforecastError(reason: unknown): string {
   if (reason instanceof MyEventsApiError) {
     if (reason.status === 409) return `발행하지 못했어요. ${reason.message}`;
@@ -75,6 +88,9 @@ export function EventDetail({
                   </strong>
                 </a>
                 <LevelBadge judgment={snapshot.forecast.judgment} />
+                {changedCondition(snapshot.event, event) && (
+                  <small className="my-events-whatif">조건 바꿈(what-if)</small>
+                )}
                 <small>발행 당시 기록 · 수정 불가</small>
               </li>
             ))}
