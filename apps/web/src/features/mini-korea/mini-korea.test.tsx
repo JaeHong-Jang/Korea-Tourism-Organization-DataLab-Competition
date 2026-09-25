@@ -6,7 +6,8 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import card from "../../../../../packages/contracts/fixtures/festival-summary/valid-card.json";
 import { placeFestivals } from "../../components/scene/festival-models/placement";
-import { sigunguPeaks, tileStep } from "./data-mode";
+import { SceneLegend } from "../../components/scene/scene-legend";
+import { sigunguPeaks, tileRanges, tileStep } from "./data-mode";
 import { DataModeToggle } from "./data-mode-toggle";
 import { consultationText, FestivalSummaryPanel } from "./festival-summary";
 import { HonestNotices } from "./honest-notices";
@@ -67,6 +68,38 @@ describe("S1 미리보기", () => {
     expect(totals.get("11110")).toBe(1000);
     expect(tileStep(25000, 25000)).toBe(5);
     expect(tileStep(1000, 25000)).toBe(1);
+    expect(tileStep(null, 25000)).toBe(0);
+    expect(tileStep(0, 25000)).toBe(1);
+    expect(tileStep(5001, 25000)).toBe(2);
+    expect(tileRanges(25000)).toEqual([
+      { step: 1, min: 0, max: 5000 },
+      { step: 2, min: 5001, max: 10000 },
+      { step: 3, min: 10001, max: 15000 },
+      { step: 4, min: 15001, max: 20000 },
+      { step: 5, min: 20001, max: 25000 },
+    ]);
+    expect(
+      tileRanges(
+        Math.max(
+          ...sigunguPeaks([
+            festival,
+            { ...festival, eventId: "e-2", peakP50: 4000 },
+          ]).values(),
+        ),
+      ),
+    ).toEqual(tileRanges(25000));
+    const legend = renderToStaticMarkup(
+      <SceneLegend
+        peoplePerDoll={100}
+        capExceeded={false}
+        festivals={[]}
+        dataMode
+        totals={totals}
+      />,
+    );
+    expect(legend).toContain("예보 없음");
+    expect(legend).toContain("20,001~25,000명");
+    expect(legend).toContain("지금 필터 기준으로 다시 나눔");
     expect(placeFestivals([festival], totals)[0].y).toBe(10);
     expect(
       renderToStaticMarkup(<DataModeToggle enabled onChange={() => {}} />),

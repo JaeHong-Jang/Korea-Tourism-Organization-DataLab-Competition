@@ -1,6 +1,7 @@
 // 군중 축척과 등급, 접근 가능한 행사 목록을 항상 같은 자리에서 제공한다.
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import type { ReactNode } from "react";
+import { tileRanges } from "../../features/mini-korea/data-mode";
 import { FestivalList } from "./festival-list";
 import { GradeMark } from "./grade-mark";
 import { HonestNote } from "./honest-note";
@@ -12,6 +13,7 @@ export function SceneLegend({
   capExceeded,
   festivals,
   dataMode = false,
+  totals,
   controls,
   notices,
 }: {
@@ -19,9 +21,11 @@ export function SceneLegend({
   capExceeded: boolean;
   festivals: FestivalSummary[];
   dataMode?: boolean;
+  totals?: Map<string, number>;
   controls?: ReactNode;
   notices?: ReactNode;
 }) {
+  const maximum = totals ? Math.max(0, ...totals.values()) : 0;
   return (
     <div className="scene-stage__note scene-legend">
       <div className="scene-legend__scale">
@@ -29,6 +33,24 @@ export function SceneLegend({
         1개 = {peoplePerDoll.toLocaleString("ko-KR")}명
       </div>
       {controls}
+      {dataMode && (
+        <fieldset className="scene-legend__data">
+          <legend className="sr-only">기간 안 예보 인파 구간</legend>
+          <span className="scene-legend__data-row">
+            <i className="scene-legend__tile scene-legend__tile--empty" />
+            예보 없음
+          </span>
+          {tileRanges(maximum).map(({ step, min, max }) => (
+            <span className="scene-legend__data-row" key={step}>
+              <i className={`scene-legend__tile scene-legend__tile--${step}`} />
+              {min.toLocaleString("ko-KR")}~{max.toLocaleString("ko-KR")}명
+            </span>
+          ))}
+          <span className="scene-legend__note">
+            지금 필터 기준으로 다시 나눔
+          </span>
+        </fieldset>
+      )}
       {capExceeded && (
         <div className="scene-legend__note">행사가 많아 일부는 1개로 표시</div>
       )}

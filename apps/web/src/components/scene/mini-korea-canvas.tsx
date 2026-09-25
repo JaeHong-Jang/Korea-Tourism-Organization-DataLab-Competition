@@ -56,11 +56,13 @@ export function MiniKoreaCanvas({
   onScaleChange,
   dataMode = false,
   totals = EMPTY_TOTALS,
+  overviewRevision = 0,
 }: {
   festivals?: FestivalSummary[];
   onScaleChange?: (scale: SceneScale) => void;
   dataMode?: boolean;
   totals?: Map<string, number>;
+  overviewRevision?: number;
 }) {
   const [topology, setTopology] = useState<Topology | null>(null);
   const [error, setError] = useState(false);
@@ -207,7 +209,7 @@ export function MiniKoreaCanvas({
           position: [center[0] + 430, 590, center[1] + 810],
           fov: 44,
           near: 10,
-          far: 2600,
+          far: 5000,
         }}
         gl={{
           antialias: true,
@@ -241,6 +243,9 @@ export function MiniKoreaCanvas({
           }
           reducedMotion={reducedMotion}
           focus={Boolean(diagnostics.focusCode || selectedId)}
+          width={width}
+          depth={depth}
+          overviewRevision={overviewRevision}
         />
         <FrameSignal
           measure={diagnostics.measure}
