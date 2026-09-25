@@ -7,7 +7,7 @@ import type {
 import {
   formatPeople,
   formatQuantity,
-  formatRange,
+  formatSnapshotNumber,
   representativeValue,
 } from "../../lib/format";
 import {
@@ -70,7 +70,15 @@ export function RangeBar({
     10 ** Math.ceil(Math.log10(Math.max(high, hostValue ?? 0, 100_000)));
   const position = (value: number) =>
     `${(Math.log10(Math.max(1, value)) / Math.log10(maxValue)) * 100}%`;
-  const rangeText = `예측 ${formatRange(low, high)}, 중앙 ${formatPeople(middle)} · ${timeUnit} · ${spatialScope} · 추정 산식 기반`;
+  const directRange = `예상 ${formatSnapshotNumber(low)}~${formatSnapshotNumber(high)}명 (가운데 ${formatPeople(middle)})`;
+  const rangeText = `${directRange} · ${timeUnit} · ${spatialScope} · 추정 산식 기반`;
+  const ratio = Math.round(middle / 1000);
+  const conclusion =
+    low >= 1000
+      ? `기준보다 약 ${ratio}배 — 수립 대상 구간이에요`
+      : high >= 1000
+        ? "법정 기준을 걸치는 구간이에요"
+        : "법정 기준 아래 구간이에요";
   const hostText =
     hostExpected == null || expectedValue == null
       ? null
@@ -82,7 +90,8 @@ export function RangeBar({
       className={`range-bar${mini ? " range-bar--mini" : ""}`}
       aria-label={rangeText}
     >
-      <p className="range-bar__axis-label">로그 눈금</p>
+      {!mini && <h4>순간 최대 예상 인원과 법정 기준</h4>}
+      {!mini && <p className="range-bar__direct-label">{directRange}</p>}
       <div className="range-bar__track">
         <button
           type="button"
@@ -91,8 +100,8 @@ export function RangeBar({
             left: position(low),
             width: `calc(${position(high)} - ${position(low)})`,
           }}
-          title={`예측 구간 ${formatRange(low, high)}`}
-          aria-label={`예측 구간 ${formatRange(low, high)}`}
+          title={directRange}
+          aria-label={directRange}
         />
         <button
           type="button"
@@ -105,8 +114,8 @@ export function RangeBar({
           type="button"
           className="range-bar__threshold range-bar__target"
           style={{ left: position(1000) }}
-          title="기준 1,000명"
-          aria-label="기준 1,000명"
+          title="법정 기준 1,000명(안전관리계획 수립)"
+          aria-label="법정 기준 1,000명(안전관리계획 수립)"
         />
         {hostValue != null && (
           <button
@@ -121,18 +130,28 @@ export function RangeBar({
         )}
       </div>
       <div className="range-bar__ticks" aria-hidden="true">
-        {axisTicks.map((tick) => (
-          <span key={tick} style={{ left: position(tick) }}>
-            {tick === 1000 ? "기준 1,000명" : formatPeople(tick)}
-          </span>
-        ))}
+        {axisTicks
+          .filter((tick) => tick !== 1000)
+          .map((tick) => (
+            <span key={tick} style={{ left: position(tick) }}>
+              {formatPeople(tick)}
+            </span>
+          ))}
       </div>
-      <p className="range-bar__legend">
-        구간 p10–p90 · 중앙 p50 · 기준선
-        {hostValue != null ? " · ▲ 주최측 예상" : ""}
+      <p className="range-bar__threshold-label">
+        점선: 법정 기준 1,000명{mini ? "" : "(안전관리계획 수립)"}
       </p>
+      {!mini && <p className="range-bar__conclusion">{conclusion}</p>}
+      {!mini && (
+        <p className="range-bar__axis-label">
+          로그 축 · 막대는 예상 구간, 세로선은 가운데 값
+          {hostValue != null ? " · ▲ 주최측 예상" : ""}
+        </p>
+      )}
       <figcaption>
-        {mini ? `${formatPeople(middle)} · 추정 산식 기반` : rangeText}
+        {mini
+          ? `${directRange} · 추정 산식 기반`
+          : "순간 최대 · 행사장 · 추정 산식 기반"}
       </figcaption>
       {hostText && !comparable && (
         <p className="range-bar__unmatched">

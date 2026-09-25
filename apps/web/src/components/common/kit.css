@@ -14,6 +14,11 @@
 .level-badge--4 svg, .level-badge--4 .level-badge__dot { color: var(--level-4); }
 .level-badge small { margin-left: var(--space-1); color: var(--ink-2); font-size: var(--text-caption); }
 .range-bar { min-width: 0; margin: var(--space-3) 0; }
+.range-bar h4 { margin: 0 0 var(--space-2); color: var(--ink); font-size: var(--text-sm); }
+.range-bar__direct-label, .range-bar__conclusion, .range-bar__threshold-label { margin: var(--space-1) 0; color: var(--ink); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.range-bar__direct-label { font-weight: 700; font-variant-numeric: tabular-nums; }
+.range-bar__conclusion { font-weight: 700; }
+.range-bar__threshold-label { color: var(--ink-2); font-size: var(--text-caption); }
 .range-bar__track { position: relative; height: 34px; border-bottom: 1px solid var(--axis); }
 .range-bar__band { position: absolute; top: 8px; height: 20px; border: 0; border-radius: var(--radius-input); background: var(--seq-2); }
 .range-bar__median, .range-bar__threshold { position: absolute; top: 3px; height: 22px; }
@@ -34,6 +39,7 @@
 .range-bar--mini .range-bar__band { top: 5px; height: 8px; }
 .range-bar--mini .range-bar__median, .range-bar--mini .range-bar__threshold { top: 0; height: 17px; }
 .range-bar--mini .range-bar__median::before, .range-bar--mini .range-bar__threshold::before { height: 17px; }
+.range-bar--mini .range-bar__threshold-label, .range-bar--mini figcaption { font-size: var(--text-caption); }
 .range-bar__table { margin-top: var(--space-1); color: var(--ink-2); font-size: var(--text-caption); }
 .range-bar__table summary { width: max-content; color: var(--link); cursor: pointer; }
 .range-bar__table th, .range-bar__table td { padding: var(--space-1) var(--space-3) var(--space-1) 0; text-align: left; }

@@ -1,5 +1,5 @@
 // 예측과 실측의 같은 로그 척도 산점도와 표를 제공한다.
-// biome-ignore-all lint/a11y/noNoninteractiveTabindex lint/a11y/noRedundantRoles: 표의 가로 스크롤 영역을 명시적으로 포커스 가능하게 한다.
+// biome-ignore-all lint/a11y/noNoninteractiveTabindex lint/a11y/noRedundantRoles lint/a11y/noStaticElementInteractions: SVG 점과 표 스크롤을 키보드로 탐색한다.
 import type { BacktestSummary } from "@crowdcast/contracts/types";
 import { useState } from "react";
 import type { ContractState } from "../../lib/validation/use-contract";
@@ -22,6 +22,7 @@ export function PredictionScatter({
       ? "table"
       : "chart",
   );
+  const [activePoint, setActivePoint] = useState<string | null>(null);
   if (!state.value)
     return (
       <ContractMessage
@@ -58,27 +59,48 @@ export function PredictionScatter({
     (point) => point.p10 <= 0,
   ).length;
   const omittedCount = points.length - visiblePoints.length;
+  // 같은 예측·실측 좌표는 하나로 묶어 겹친 표본 수를 직접 적는다.
+  const grouped = new Map<
+    string,
+    {
+      point: (typeof points)[number];
+      count: number;
+      covered: number;
+      names: string[];
+    }
+  >();
+  for (const point of visiblePoints) {
+    const key = `${point.p50}|${point.actual}`;
+    const group = grouped.get(key) ?? {
+      point,
+      count: 0,
+      covered: 0,
+      names: [],
+    };
+    group.count += 1;
+    group.covered += Number(
+      point.p10 <= point.actual && point.actual <= point.p90,
+    );
+    group.names.push(`${point.name} (${point.year} · ${labels[point.tier]})`);
+    grouped.set(key, group);
+  }
   return (
     <div className="validation-content">
       <div className="validation-chart-tools">
         <span className="validation-legend">
-          <span className="validation-legend--silver">
-            <i aria-hidden="true">●</i> 실버
+          <span className="validation-legend--covered">
+            <i aria-hidden="true">●</i> 80% 구간에 실측 포함
           </span>{" "}
           ·{" "}
-          <span className="validation-legend--goldB">
-            <i aria-hidden="true">■</i> 골드 B
-          </span>{" "}
-          ·{" "}
-          <span className="validation-legend--goldA">
-            <i aria-hidden="true">◆</i> 골드 A
+          <span className="validation-legend--outside">
+            <i aria-hidden="true">◆</i> 구간 밖
           </span>
         </span>
         <button
           type="button"
           onClick={() => setView(view === "chart" ? "table" : "chart")}
         >
-          {view === "chart" ? "표 보기" : "차트 보기"}
+          {view === "chart" ? "표로 보기" : "차트 보기"}
         </button>
       </div>
       <JudgmentQuadrants
@@ -87,8 +109,8 @@ export function PredictionScatter({
       />
       {clippedLowCount > 0 && (
         <p className="validation-assumption">
-          p10이 0 이하인 {clippedLowCount}건은 왼쪽 화살표로 표시해요. 0 이하 —
-          표 참고.
+          p10이 0 이하인 {clippedLowCount}건은 점을 가리키면 구간 시작을 왼쪽
+          화살표로 표시해요. 0 이하 — 표 참고.
         </p>
       )}
       {omittedCount > 0 && (
@@ -112,6 +134,9 @@ export function PredictionScatter({
                 y2="70"
                 className="validation-diagonal"
               />
+              <text x="360" y="241" className="validation-diagonal-label">
+                예측 = 실측
+              </text>
               {ticks.map((tick) => (
                 <g key={tick}>
                   <line
@@ -150,15 +175,27 @@ export function PredictionScatter({
                 y2="510"
                 className="validation-axis"
               />
-              {visiblePoints.map((point) => {
+              {Array.from(grouped, ([key, group]) => {
+                const point = group.point;
                 const y = 610 - scale(point.actual);
+                const x = scale(point.p50);
+                const covered = group.covered === group.count;
+                const active = activePoint === key;
+                const detail = `${group.names.join(", ")} · 실측 ${fmt(point.actual)}명/일 · 예측 ${fmt(point.p50)}명/일 · ${group.covered}건 포함, ${group.count - group.covered}건 구간 밖${group.count > 1 ? " · 각 구간은 표 참고" : ` · 구간 ${fmt(point.p10)}~${fmt(point.p90)}명/일`}`;
                 return (
                   <g
-                    key={`${point.eventId}-${point.year}-${point.tier}`}
+                    key={key}
                     data-point={point.eventId}
-                    className={`validation-point validation-point--${point.tier}`}
+                    data-coverage={covered ? "covered" : "outside"}
+                    className={`validation-point validation-point--${covered ? "covered" : "outside"}`}
+                    tabIndex={0}
+                    aria-label={detail}
+                    onMouseEnter={() => setActivePoint(key)}
+                    onMouseLeave={() => setActivePoint(null)}
+                    onFocus={() => setActivePoint(key)}
+                    onBlur={() => setActivePoint(null)}
                   >
-                    {point.p90 > 0 && (
+                    {active && point.p90 > 0 && (
                       <>
                         <line
                           x1={point.p10 > 0 ? scale(point.p10) : 100}
@@ -174,15 +211,27 @@ export function PredictionScatter({
                         )}
                       </>
                     )}
-                    <text
-                      x={scale(point.p50)}
-                      y={y + 5}
-                      textAnchor="middle"
-                      tabIndex={0}
-                    >
-                      {marks[point.tier]}
-                      <title>{`${point.name} · ${point.year} · ${labels[point.tier]} · 실측 ${fmt(point.actual)}명/일 · 예측 ${fmt(point.p50)}명/일 · 구간 ${fmt(point.p10)}~${fmt(point.p90)}명/일`}</title>
-                    </text>
+                    {covered ? (
+                      <circle cx={x} cy={y} r="6" />
+                    ) : (
+                      <rect
+                        x={x - 5}
+                        y={y - 5}
+                        width="10"
+                        height="10"
+                        transform={`rotate(45 ${x} ${y})`}
+                      />
+                    )}
+                    {group.count > 1 && (
+                      <text
+                        x={x + 9}
+                        y={y - 9}
+                        className="validation-overlap-count"
+                      >
+                        {group.count}건 겹침
+                      </text>
+                    )}
+                    <title>{detail}</title>
                   </g>
                 );
               })}

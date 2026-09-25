@@ -67,7 +67,22 @@ it("재예보 카드에 계약 숫자·날씨 근거 링크를 보인다", () =>
   expect(html).toContain("52,000");
   expect(html).toContain("46,000");
   expect(html).toContain("ev-weather-yeongjong-2025-r2");
+  expect(html).toContain(">날씨 근거</a>");
+  expect(html).toContain("my-events-report-link");
   expect(html).toContain("/f/f-yeongjong-2025-r2#evidence-");
+  const titled = renderToStaticMarkup(
+    <ReforecastCard
+      result={resultFixture as ReforecastResult}
+      evidence={[
+        {
+          ...report.evidence[0],
+          id: "ev-weather-yeongjong-2025-r2",
+          title: "기상청 단기예보",
+        },
+      ]}
+    />,
+  );
+  expect(titled).toContain(">기상청 단기예보</a>");
 });
 
 // 게이트의 code와 message를 함께 유지하고 연결 오류는 구별한다.
