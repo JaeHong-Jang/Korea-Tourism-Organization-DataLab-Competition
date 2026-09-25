@@ -9,6 +9,9 @@ import { Board } from "./board";
 import { CameraRig } from "./camera-rig";
 import { FestivalLayer } from "./festival-layer";
 import { buildLandModelForData, LandTiles } from "./land-tiles";
+import { RoadTraffic } from "./motion/road-traffic";
+import { Trains } from "./motion/trains";
+import { WhaleBots } from "./motion/whale-bots";
 import {
   qualityDpr,
   type SceneQuality,
@@ -80,7 +83,13 @@ export function MiniKoreaCanvas({
         ? (value as SceneQuality)
         : null;
     const focusCode = search.get("sceneFocus");
-    return { measure, debug, fixedQuality, focusCode };
+    return {
+      measure,
+      debug,
+      fixedQuality,
+      focusCode,
+      motion: search.get("sceneMotion") !== "0",
+    };
   }, []);
   const activeQuality = diagnostics.fixedQuality ?? quality;
   const scene = useScene(
@@ -235,7 +244,28 @@ export function MiniKoreaCanvas({
         />
         <Board center={center} width={width} depth={depth} />
         {showLand && <LandTiles model={model} onPick={onPick} />}
+        {diagnostics.motion && (
+          <Trains
+            reducedMotion={reducedMotion}
+            diagnostic={diagnostics.debug}
+          />
+        )}
+        {diagnostics.motion && (
+          <RoadTraffic quality={activeQuality} reducedMotion={reducedMotion} />
+        )}
         <FestivalLayer scene={scene} center={center} />
+        {diagnostics.motion && (
+          <WhaleBots
+            selected={
+              scene.placed.find(
+                ({ festival }) => festival.eventId === selectedId,
+              ) ?? null
+            }
+            quality={activeQuality}
+            reducedMotion={reducedMotion}
+            diagnostic={diagnostics.debug}
+          />
+        )}
         <CameraRig
           center={center}
           selected={

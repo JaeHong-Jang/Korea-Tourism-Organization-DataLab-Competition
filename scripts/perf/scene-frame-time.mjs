@@ -96,11 +96,11 @@ async function runDictation(host) {
 }
 
 // 품질과 DPR을 높음·1로 고정한 R3F 프레임과 Chromium 메모리를 읽는다.
-async function measure(browser, ollamaHost, fixture = false, festivalCount = 0) {
+async function measure(browser, ollamaHost, fixture = false, festivalCount = 0, motion = true) {
   const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   const page = await context.newPage();
   if (festivalCount === 211) await page.route("**/api/festivals", (route) => route.fulfill({ json: festivalScale211() }));
-  await page.goto(`http://127.0.0.1:5185/?theme=day&at=2025-10-18T13:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}`);
+  await page.goto(`http://127.0.0.1:5185/?theme=day&at=2025-10-18T13:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}${motion ? "" : "&sceneMotion=0"}`);
   await page.waitForFunction(() => document.documentElement.dataset.sceneReady === "true", { timeout: 30000 });
   if (festivalCount || fixture) await page.waitForFunction((expected) => document.querySelectorAll(".festival-list__items li").length === expected, festivalCount || 30, { timeout: 30000 });
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -159,7 +159,27 @@ const server = await startServer();
 let browser;
 try {
   browser = await chromium.launch({ args: ["--enable-gpu", "--use-gl=egl", "--enable-precise-memory-info", "--enable-unsafe-swiftshader"] });
-  if (process.argv.includes("--t433")) {
+  if (process.argv.includes("--t434a")) {
+    // 같은 브라우저 실행에서 이동 레이어만 끈 기준과 켠 장면을 차례로 잰다.
+    const baseline = await measure(browser, null, true, 0, false);
+    const animated = await measure(browser, null, true);
+    if (baseline.festivals !== 30 || animated.festivals !== 30) throw new Error("견본 행사 30건 조건 불일치");
+    const p95Ratio = animated.p95_ms / baseline.p95_ms;
+    const report = { task: "T-434a", viewport: "1366x768", quality: "high (고정)", seconds_per_case: 30, baseline_t433b: baseline, with_motion: animated, p50_ratio: animated.p50_ms / baseline.p50_ms, p95_ratio: p95Ratio, passed: p95Ratio <= 1.3 };
+    mkdirSync(output, { recursive: true });
+    writeFileSync(join(output, "T-434a-frame-time.json"), `${JSON.stringify(report, null, 2)}\n`);
+    writeFileSync(join(output, "T-434a-frame-time.md"), [
+      "# T-434a 전국 판 이동 연출 프레임 시간", "",
+      `- 조건: Chromium ${browser.version()}, ${report.viewport}, high, 각 30초, 견본 행사 30건`,
+      `- 렌더러: ${animated.renderer}${animated.software_renderer ? " (소프트웨어 렌더러)" : ""}`, "",
+      "| 조건 | p50 | p95 | draw calls | triangles |", "| --- | ---: | ---: | ---: | ---: |",
+      `| 같은 실행의 T-433b 장면 | ${baseline.p50_ms?.toFixed(2)}ms | ${baseline.p95_ms?.toFixed(2)}ms | ${baseline.draw_calls} | ${baseline.triangles} |`,
+      `| 이동 연출 포함 | ${animated.p50_ms?.toFixed(2)}ms | ${animated.p95_ms?.toFixed(2)}ms | ${animated.draw_calls} | ${animated.triangles} |`,
+      `- 비율: p50 ${report.p50_ratio.toFixed(2)}배, p95 ${p95Ratio.toFixed(2)}배 (합격선 1.3배): ${report.passed ? "통과" : "미달"}`, "",
+    ].join("\n"));
+    console.log(`T-434a p95 비율 ${p95Ratio.toFixed(2)}배: ${report.passed ? "통과" : "미달"}`);
+    if (!report.passed) process.exitCode = 1;
+  } else if (process.argv.includes("--t433")) {
     const t432Condition = await measure(browser, null, true);
     const actualScale = await measure(browser, null, false, 211);
     if (t432Condition.festivals !== 30 || actualScale.festivals !== 211) throw new Error(`행사 조건 불일치: ${t432Condition.festivals}건 / ${actualScale.festivals}건`);
