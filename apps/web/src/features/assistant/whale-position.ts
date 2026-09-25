@@ -56,7 +56,9 @@ export function restoreWhale(size: WhaleSize): WhalePoint {
   const fallback = clampWhale(
     {
       x: window.innerWidth - size.width - 20,
-      y: window.innerHeight - size.height - 20,
+      // 휴대전화에서는 아래 정보 탭·상담 버튼 위로 띄운다.
+      y:
+        window.innerHeight - size.height - (window.innerWidth < 640 ? 140 : 20),
     },
     size,
   );

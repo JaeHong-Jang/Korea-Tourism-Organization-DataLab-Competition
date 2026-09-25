@@ -174,10 +174,9 @@ async function routeSavedReport(page: Page) {
 	);
 }
 
-// 3D·2D·간단 지도에서 보기 전환과 작은 화면 패널을 키보드로 사용할 수 있다.
+// 미니어처와 간단 지도(WebGL 없는 기기)에서 작은 화면 패널을 키보드로 사용할 수 있다.
 for (const [name, query] of [
 	["s1", "sceneFixture=1"],
-	["s1-2d", "sceneFixture=1&view=top"],
 	["s1-svg", "sceneFixture=1&forceSvg=1"],
 ] as const) {
 	test(`S1 ${name} 접근성과 폭`, async ({ page }) => {
@@ -186,7 +185,9 @@ for (const [name, query] of [
 		await routeFixtures(page);
 		await page.goto(`/?${query}&theme=day`);
 		if (name !== "s1-svg")
-			await expect(page.locator(".map-2d__hint")).toBeVisible();
+			await expect(page.locator(".scene-stage canvas")).toBeVisible({
+				timeout: 45_000,
+			});
 		await expect(
 			page.getByRole("heading", { name: "대한민국 행사 지도" }),
 		).toBeVisible();
@@ -280,7 +281,7 @@ test("S3 세 탭과 S4 계획 초안", async ({ page }) => {
 	await expect(page.getByRole("tab", { name: "예보서" })).toBeVisible();
 	await page.getByRole("tab", { name: "예보서" }).focus();
 	await page.keyboard.press("ArrowRight");
-	await expect(page.getByRole("tab", { name: "근거 지도" })).toBeFocused();
+	await expect(page.getByRole("tab", { name: "근거 정리" })).toBeFocused();
 	await page.keyboard.press("Home");
 	await expect(page.getByRole("tab", { name: "예보서" })).toBeFocused();
 	const chip = page.locator('a[href^="#evidence-"]').first();
@@ -289,17 +290,19 @@ test("S3 세 탭과 S4 계획 초안", async ({ page }) => {
 	await expect(page.getByRole("dialog", { name: "근거 서랍" })).toBeVisible();
 	await page.keyboard.press("Escape");
 	await expect(chip).toBeFocused();
-	for (const tab of ["예보서", "근거 지도", "행사장 3D"]) {
+	for (const tab of ["예보서", "근거 정리", "행사장 3D"]) {
 		await page.getByRole("tab", { name: tab }).click();
-		if (tab === "근거 지도") {
-			const filters = page
-				.getByRole("group", { name: "근거 종류 필터" })
-				.getByRole("button");
-			await filters.first().focus();
-			await page.keyboard.press("ArrowRight");
-			await expect(filters.nth(1)).toBeFocused();
-			await page.keyboard.press("Space");
-			await expect(filters.nth(1)).toHaveAttribute("aria-pressed", "true");
+		if (tab === "근거 정리") {
+			// 받치는 근거 카드는 키보드로 근거 서랍을 열고 Escape로 닫는다.
+			const card = page
+				.locator(".evidence-brief__column--support button")
+				.first();
+			await card.focus();
+			await page.keyboard.press("Enter");
+			await expect(
+				page.getByRole("dialog", { name: "근거 서랍" }),
+			).toBeVisible();
+			await page.keyboard.press("Escape");
 		}
 		await checkAxe(page);
 		if (tab === "예보서") await checkWidths(page, "s3");

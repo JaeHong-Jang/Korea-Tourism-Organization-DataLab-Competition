@@ -23,7 +23,7 @@
 .scene-page > .scene-list { max-height: calc(100vh - 205px); }
 .festival-list { display: flex; flex-direction: column; min-height: 0; flex: 1; margin-top: var(--space-3); }
 .festival-list__tools { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); font-size: var(--text-sm); }
-.festival-list__tools label { display: flex; align-items: center; gap: var(--space-2); }
+.festival-list__tools label { display: flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
 .festival-list__tools select { width: auto; }
 .festival-list__items { min-height: 0; overflow: auto; display: grid; align-content: start; gap: var(--space-3); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
 .festival-list__items li { padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); transition: border-color var(--dur-hover), box-shadow var(--dur-hover); }

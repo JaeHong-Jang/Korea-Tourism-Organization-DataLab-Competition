@@ -66,9 +66,10 @@ export function Moon({
   center: [number, number];
   colors: { glow: string; face: string; shade: string };
 }) {
+  const { glow, face, shade } = colors;
   const texture = useMemo(
-    () => moonTexture(colors),
-    [colors.glow, colors.face, colors.shade],
+    () => moonTexture({ glow, face, shade }),
+    [glow, face, shade],
   );
   useEffect(() => () => texture.dispose(), [texture]);
   return (

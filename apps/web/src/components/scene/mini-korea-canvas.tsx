@@ -176,11 +176,13 @@ export function MiniKoreaCanvas({
           width={width}
           depth={depth}
         />
-        <SkyScene
-          center={center}
-          quality={activeQuality}
-          reducedMotion={reducedMotion}
-        />
+        {diagnostics.sky && (
+          <SkyScene
+            center={center}
+            quality={activeQuality}
+            reducedMotion={reducedMotion}
+          />
+        )}
         <Board center={center} width={width} depth={depth} />
         {t435 && (
           <WeatherScene

@@ -223,6 +223,7 @@ function GraphContent({
         const selected = node.id === selectedId;
         const dim = Boolean(active && !active.has(node.id));
         return (
+          // biome-ignore lint/a11y/noStaticElementInteractions: R3F 메쉬는 DOM 요소가 아니며 키보드 선택은 검색·표·상세 목록이 맡는다.
           <mesh
             key={node.id}
             position={position}

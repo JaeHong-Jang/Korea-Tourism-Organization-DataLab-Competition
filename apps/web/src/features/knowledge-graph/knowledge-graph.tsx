@@ -133,7 +133,11 @@ export function KnowledgeGraphView({ graph }: { graph: KnowledgeGraph }) {
               >
                 <i
                   className={`knowledge-graph__swatch knowledge-graph__swatch--${kindStyle[kind].shape}`}
-                  style={{ background: `var(${kindStyle[kind].color})` }}
+                  style={
+                    kindStyle[kind].shape === "torus"
+                      ? undefined
+                      : { background: `var(${kindStyle[kind].color})` }
+                  }
                   aria-hidden="true"
                 />
                 {label}

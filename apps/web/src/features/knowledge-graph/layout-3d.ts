@@ -94,13 +94,13 @@ export function layoutGraph3d(data: GraphData, iterations = 320) {
     });
   }
   const result = new Map<string, Point3>();
-  data.nodes.forEach((node, i) =>
+  data.nodes.forEach((node, i) => {
     result.set(node.id, [
       position[i * 3],
       position[i * 3 + 1],
       position[i * 3 + 2],
-    ]),
-  );
+    ]);
+  });
   return result;
 }
 

@@ -1,13 +1,14 @@
-// 행사 고르기 목록: 아직 끝나지 않은 행사를 가까운 날짜 순으로 두고 검색어로만 좁힌다.
+// 행사 고르기 목록: 곧 열리는 행사를 가까운 날짜 순으로 먼저, 끝난 행사는 뒤에 두고 검색어로만 좁힌다.
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 
 const DAY = 86_400_000;
 
-// 한국 날짜 기준 남은 날을 "진행 중·오늘·D-n"으로 읽는다.
+// 한국 날짜 기준 남은 날을 "지난 행사·진행 중·오늘·D-n"으로 읽는다.
 export function dDayLabel(festival: FestivalSummary, now: Date): string {
   const start = Date.parse(festival.startsAt);
   const end = Date.parse(festival.endsAt);
-  if (start <= now.getTime() && now.getTime() <= end) return "진행 중";
+  if (end < now.getTime()) return "지난 행사";
+  if (start <= now.getTime()) return "진행 중";
   const kstDay = (time: number) => Math.floor((time + 9 * 3_600_000) / DAY);
   const days = kstDay(start) - kstDay(now.getTime());
   return days <= 0 ? "오늘" : `D-${days}`;
@@ -21,8 +22,9 @@ export function soonestFestivals(
   limit: number,
 ): FestivalSummary[] {
   const text = query.trim().toLocaleLowerCase("ko-KR");
+  const ended = (festival: FestivalSummary) =>
+    Date.parse(festival.endsAt) < now.getTime();
   return festivals
-    .filter((festival) => Date.parse(festival.endsAt) >= now.getTime())
     .filter(
       (festival) =>
         !text ||
@@ -30,6 +32,12 @@ export function soonestFestivals(
           .toLocaleLowerCase("ko-KR")
           .includes(text),
     )
-    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
+    .sort(
+      (a, b) =>
+        Number(ended(a)) - Number(ended(b)) ||
+        (ended(a)
+          ? Date.parse(b.startsAt) - Date.parse(a.startsAt)
+          : Date.parse(a.startsAt) - Date.parse(b.startsAt)),
+    )
     .slice(0, limit);
 }

@@ -18,15 +18,15 @@
 .evidence-brief__level { font-weight: 800; }
 .evidence-brief__chain { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: stretch; gap: var(--space-3); margin: var(--space-5) 0 0; padding: 0; list-style: none; }
 .evidence-brief__chain > li:not(.evidence-brief__arrow) { display: grid; align-content: start; gap: var(--space-1); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
-.evidence-brief__chain small { color: var(--ink-2); font-size: var(--text-caption); }
-.evidence-brief__chain strong { font-size: var(--text-subtitle); font-variant-numeric: tabular-nums; }
-.evidence-brief__chain span { color: var(--ink-2); font-size: var(--text-caption); }
+.evidence-brief__chain li > small { color: var(--ink-2); font-size: var(--text-caption); }
+.evidence-brief__chain li > strong { font-size: var(--text-subtitle); font-variant-numeric: tabular-nums; }
+.evidence-brief__chain li > span { color: var(--ink-2); font-size: var(--text-caption); }
 .evidence-brief__arrow { display: grid; place-items: center; color: var(--ink-2); }
-.evidence-brief__result { border-width: 2px !important; }
-.evidence-brief__result.evidence-brief__level--1 { border-color: var(--level-1) !important; }
-.evidence-brief__result.evidence-brief__level--2 { border-color: var(--level-2) !important; }
-.evidence-brief__result.evidence-brief__level--3 { border-color: var(--level-3) !important; }
-.evidence-brief__result.evidence-brief__level--4 { border-color: var(--level-4) !important; }
+.evidence-brief__chain > li.evidence-brief__result { border-width: 2px; }
+.evidence-brief__chain > li.evidence-brief__result.evidence-brief__level--1 { border-color: var(--level-1); }
+.evidence-brief__chain > li.evidence-brief__result.evidence-brief__level--2 { border-color: var(--level-2); }
+.evidence-brief__chain > li.evidence-brief__result.evidence-brief__level--3 { border-color: var(--level-3); }
+.evidence-brief__chain > li.evidence-brief__result.evidence-brief__level--4 { border-color: var(--level-4); }
 .evidence-brief__columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .evidence-brief__column ul, .evidence-brief__sources ul { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
 .evidence-brief__column li > button, .evidence-brief__column li > div { display: grid; gap: var(--space-1); width: 100%; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font: inherit; text-align: left; }

@@ -50,11 +50,11 @@ const items = [
   ),
 ];
 
-// 검색어가 없으면 끝난 행사를 빼고 가까운 날짜부터 준다.
+// 검색어가 없으면 가까운 날짜부터 주고 끝난 행사는 맨 뒤에 둔다.
 test("입력 없이 곧 열리는 행사를 날짜 순으로 보여 준다", () => {
   expect(
     soonestFestivals(items, "", now, 5).map((item) => item.eventId),
-  ).toEqual(["d", "b", "c"]);
+  ).toEqual(["d", "b", "c", "a"]);
   expect(soonestFestivals(items, "", now, 2)).toHaveLength(2);
 });
 
@@ -69,8 +69,9 @@ test("이름이나 지역으로 좁힌다", () => {
 });
 
 // 남은 날은 한국 날짜 기준으로 읽는다.
-test("진행 중·D-n을 붙인다", () => {
+test("진행 중·D-n·지난 행사를 붙인다", () => {
   expect(dDayLabel(items[3], now)).toBe("진행 중");
   expect(dDayLabel(items[2], now)).toBe("D-2");
   expect(dDayLabel(items[0], now)).toBe("D-15");
+  expect(dDayLabel(items[1], now)).toBe("지난 행사");
 });

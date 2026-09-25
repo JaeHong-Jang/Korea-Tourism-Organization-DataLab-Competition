@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { GradeMark } from "../../components/scene/grade-mark";
 import { getFestivals } from "../../lib/api-client";
 import { formatDate } from "../../lib/format";
+import { useTheme } from "../../lib/theme/theme-provider";
 import { dDayLabel, soonestFestivals } from "./soonest-festivals";
 
 // 목록은 한 번만 읽고, 입력 없이도 가까운 행사 5개(더 보기 12개)를 먼저 보여 준다.
@@ -33,7 +34,8 @@ export function FestivalPicker({
     return () => controller.abort();
   }, []);
 
-  const now = new Date();
+  // 앱 시계(?at= 데모 시각 포함)를 기준으로 남은 날을 센다.
+  const { at: now } = useTheme();
   const searching = query.trim().length > 0;
   const matches = soonestFestivals(
     festivals,

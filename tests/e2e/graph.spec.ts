@@ -63,23 +63,30 @@ test("전체 근거 그래프를 탐색한다", async ({ page }) => {
 		}),
 	);
 	await page.goto("/validation");
-	await page.getByRole("link", { name: "근거 그래프" }).click();
+	await page
+		.getByRole("navigation", { name: "검증 둘러보기" })
+		.getByRole("link", { name: "근거 그래프" })
+		.click();
 	await expect(
 		page.getByRole("heading", { name: "근거 그래프" }),
 	).toBeVisible();
 	await expect(
 		page.getByRole("region", { name: "온톨로지와 기준 그래프" }),
 	).toBeVisible();
+	await expect(page.locator(".knowledge-graph__canvas canvas")).toBeVisible();
+	await expect(page.locator(".knowledge-graph__hint")).toContainText(
+		"휠 버튼 끌기 회전",
+	);
 	await expect(
-		page.getByRole("button", { name: "규칙: 행사 안전 판정 규칙" }),
-	).toBeVisible();
-	await expect(page.locator(".react-flow__edge").first()).toBeVisible();
+		page.getByRole("button", { name: "가정", exact: true }),
+	).toHaveAttribute("aria-pressed", "true");
+	await page.screenshot({ path: resolve(screens, "T-444-graph.png") });
+
+	// 종류 버튼으로 가정을 껐다 켜고 검색 결과에서 데이터셋으로 이동한다.
+	await page.getByRole("button", { name: "가정", exact: true }).click();
 	await expect(
 		page.getByRole("button", { name: "가정", exact: true }),
 	).toHaveAttribute("aria-pressed", "false");
-	await page.screenshot({ path: resolve(screens, "T-444-graph.png") });
-
-	// 종류 버튼으로 가정을 켜고 검색 결과에서 데이터셋으로 이동한다.
 	await page.getByRole("button", { name: "가정", exact: true }).click();
 	await expect(
 		page.getByRole("button", { name: "가정", exact: true }),

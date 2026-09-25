@@ -28,7 +28,6 @@ type Scene = {
 const scenes: Scene[] = [
   { screen: "g", state: "header", path: "/validation" },
   { screen: "s1", state: "3d", path: "/?sceneFixture=1&view=miniature&sceneQuality=high" },
-  { screen: "s1", state: "2d", path: "/?sceneFixture=1&view=top" },
   { screen: "s1", state: "svg", path: "/?sceneFixture=1&forceSvg=1" },
   {
     screen: "s1",
@@ -98,10 +97,6 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
         "true",
         { timeout: 45_000 },
       );
-    if (scene.state === "2d")
-      await expect(page.locator(".map-2d__hint")).toBeVisible({
-        timeout: 30_000,
-      });
     if (scene.state === "svg")
       await expect(page.locator(".svg-korea-map")).toBeVisible();
     if (scene.state === "selected") await selectFestival(page, mobile);
@@ -112,8 +107,8 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
           .getByRole("button", { name: "범례" })
           .click();
       await expect(
-        page.getByRole("button", { name: "데이터 모드 켜짐" }),
-      ).toBeVisible();
+        page.getByRole("button", { name: "데이터 모드" }),
+      ).toHaveAttribute("aria-pressed", "true");
     }
     return;
   }
@@ -148,11 +143,10 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
       ).toBeVisible();
     }
     if (scene.state === "map") {
-      await page.getByRole("tab", { name: "근거 지도" }).click();
+      await page.getByRole("tab", { name: "근거 정리" }).click();
       await expect(
-        page.getByRole("region", { name: "발행 문장과 근거 연결 그래프" }),
+        page.getByRole("region", { name: "근거 정리" }),
       ).toBeVisible();
-      await expect(page.locator(".react-flow__edge").first()).toBeVisible();
     }
     if (scene.state === "venue") {
       await page.getByRole("tab", { name: "행사장 3D" }).click();

@@ -8,8 +8,8 @@
 .scene-map-tools button:hover { border-color: var(--line-strong, var(--line)); }
 .scene-map-tools button[aria-pressed="true"] { border-color: var(--select); background: var(--select-soft); color: var(--select-ink); }
 .scene-map-tools button:focus-visible, .scene-stage:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.scene-legend-panel { flex: none; min-height: 0; max-height: 60%; overflow: auto; }
-.scene-legend-panel > .scene-legend { position: relative; inset: auto; z-index: auto; width: 100%; max-width: none; }
+.scene-legend-panel { flex: none; min-height: 0; max-height: 60%; overflow: visible; } /* 넘침을 자르면 범례 그림자가 각진 회색 상자로 보인다 */
+.scene-legend-panel > .scene-legend { position: relative; inset: auto; z-index: auto; width: 100%; max-width: none; max-height: 100%; overflow: auto; }
 .scene-page .scene-cta { left: calc(300px + var(--space-8) + var(--space-4)); transform: none; }
 .scene-mobile-tabs, .scene-mobile-scale { display: none; }
 .scene-page > .scene-list { display: flex; flex-direction: column; max-height: calc(100vh - 170px); }

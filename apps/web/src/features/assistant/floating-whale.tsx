@@ -146,7 +146,10 @@ export function FloatingWhale({
       <span className="assistant-whale__figure" aria-hidden="true">
         <img src="/assistant/whale.png" alt="" draggable={false} />
       </span>
-      <span className="assistant-whale__status" aria-live="polite">
+      <span
+        className={`assistant-whale__status${working || published ? "" : " is-idle"}`}
+        aria-live="polite"
+      >
         {working ? (
           <>
             <span className="assistant-whale__dots" aria-hidden="true">
