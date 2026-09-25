@@ -212,12 +212,13 @@
    "evidence": "develop 2e83ebb · gateway 853(깨끗한 상태) · sol PASS · 실사용 후속 6종"
   },
   "R-05": {
-   "status": "running",
-   "updated": "2026-09-25T03:21:16.438Z",
-   "note": "1차 FAIL — High 1(카드 판정 문구)·High 2(LLM 3회)는 계획·계약 문구 정정으로 판정, Med 1 → T-304b, Med 2 → 계획에 T-306·T-309 예정 표시. T-304b 뒤 재검토"
+   "status": "done",
+   "updated": "2026-09-25T03:44:24.854Z",
+   "evidence": "2차 PASS — 체크리스트 5/5, develop b71906d"
   },
   "T-306": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T03:44:26.277Z"
   },
   "T-307": {
    "status": "done",
@@ -400,6 +401,9 @@
    "status": "done",
    "updated": "2026-09-25T03:39:16.820Z",
    "evidence": "develop b71906d · gateway 862 · sol PASS · 실사용 게이트 A 앞 세 단계"
+  },
+  "T-306b": {
+   "status": "todo"
   }
  },
  "history": [
@@ -1168,6 +1172,17 @@
    "id": "T-304b",
    "status": "done",
    "evidence": "develop b71906d · gateway 862 · sol PASS · 실사용 게이트 A 앞 세 단계"
+  },
+  {
+   "at": "2026-09-25T03:44:24.854Z",
+   "id": "R-05",
+   "status": "done",
+   "evidence": "2차 PASS — 체크리스트 5/5, develop b71906d"
+  },
+  {
+   "at": "2026-09-25T03:44:26.277Z",
+   "id": "T-306",
+   "status": "running"
   }
  ]
 }
