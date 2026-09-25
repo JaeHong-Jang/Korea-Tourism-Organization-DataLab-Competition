@@ -1,0 +1,26 @@
+{
+  "response": {
+    "header": {
+      "resultCode": "0",
+      "resultMsg": "NORMAL_SERVICE"
+    },
+    "body": {
+      "dataType": "JSON",
+      "items": {
+        "item": [
+          {
+            "baseDate": "20210628",
+            "baseTime": "0600",
+            "category": "RN1",
+            "nx": "55",
+            "ny": "127",
+            "obsrValue": "1.1"
+          }
+        ]
+      },
+      "pageNo": 1,
+      "numOfRows": 1000,
+      "totalCount": 1
+    }
+  }
+}
