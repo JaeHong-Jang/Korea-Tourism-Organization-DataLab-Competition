@@ -285,14 +285,20 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 		.locator(".festival-list__pick")
 		.filter({ hasText: "견본 행사 20" })
 		.click();
-	let posts = 0;
+	// [이 행사 예보 받기]는 화면을 옮기지 않고 고래 봇 대화를 열어 고른 행사로 예보를 요청한다(T-442).
+	const sessions: string[] = [];
 	page.on("request", (request) => {
-		if (request.method() === "POST") posts++;
+		if (
+			request.method() === "POST" &&
+			new URL(request.url()).pathname.startsWith("/api/team/sessions")
+		)
+			sessions.push(request.url());
 	});
-	await page.getByRole("link", { name: "예보 상담에서 자세히 보기" }).click();
-	await expect(page.locator("#consult-text")).toHaveValue(/견본 행사 20/);
-	expect(posts).toBe(0);
-	await page.goBack();
+	await page.getByRole("link", { name: "이 행사 예보 받기" }).click();
+	await expect(page.getByLabel("고래 봇 대화")).toBeVisible();
+	await expect(page).toHaveURL(/\/(\?|$)/);
+	await expect.poll(() => sessions.length).toBeGreaterThan(0);
+	await page.getByRole("button", { name: "대화 닫기" }).click();
 	await page.getByRole("button", { name: "데이터 모드 꺼짐" }).click();
 	await expect(
 		page.getByRole("button", { name: "데이터 모드 켜짐" }),

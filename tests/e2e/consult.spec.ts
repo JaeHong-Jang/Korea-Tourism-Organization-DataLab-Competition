@@ -27,6 +27,12 @@ const frames = (events: SseEvent[]) =>
 		.map((event) => `event: ${event.event}\ndata: ${JSON.stringify(event)}\n\n`)
 		.join("");
 
+// 대화 서랍의 공용 입력칸에서 행사 설명을 보낸다.
+async function sendExample(page: Page) {
+	await page.getByLabel("행사를 설명해 주세요").fill(example);
+	await page.getByRole("button", { name: "보내기" }).click();
+}
+
 // 별도 폼 회귀 검사는 주최·시각·위험 질문을 한 응답에 모은다.
 function asking(): SseEvent[] {
 	const asks = [
@@ -117,7 +123,7 @@ test("질문 뒤 숫자 카드와 테마별 화면", async ({ page }) => {
 		path: resolve(output, "T-405-consult-start-day.png"),
 		fullPage: true,
 	});
-	await page.getByRole("button", { name: example }).click();
+	await sendExample(page);
 	await expect(
 		page.getByText("위험요소를 확인해 주세요.", { exact: false }),
 	).toBeVisible();
@@ -126,7 +132,7 @@ test("질문 뒤 숫자 카드와 테마별 화면", async ({ page }) => {
 		fullPage: true,
 	});
 	await page.getByRole("checkbox", { name: "폭죽 써요" }).click();
-	await page.getByRole("button", { name: "답하기" }).click();
+	await page.getByRole("button", { name: "보내기" }).click();
 	await expect(page.locator(".key-number strong").first()).toBeVisible();
 	expect(messages[1].answer).toEqual({ hazards: ["폭죽"] });
 	await expect(page.getByText("게이트 publish")).toHaveCount(0);
@@ -141,9 +147,9 @@ test("질문 뒤 숫자 카드와 테마별 화면", async ({ page }) => {
 	).toBeVisible();
 	await expect(page.getByRole("button", { name: "새 상담" })).toBeVisible();
 	await page.goto("/consult?theme=night&at=2026-10-18T19:00+09:00");
-	await page.getByRole("button", { name: example }).click();
+	await sendExample(page);
 	await page.getByRole("checkbox", { name: "폭죽 써요" }).click();
-	await page.getByRole("button", { name: "답하기" }).click();
+	await page.getByRole("button", { name: "보내기" }).click();
 	await expect(page.locator(".key-number strong").first()).toBeVisible();
 	await page.screenshot({
 		path: resolve(output, "T-405-consult-forecast-night.png"),
@@ -169,7 +175,7 @@ test("펫 기록 조회 실패 뒤 다시 불러온다", async ({ page }) => {
 		});
 	});
 	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
-	await page.getByRole("button", { name: example }).click();
+	await sendExample(page);
 	await page.getByRole("button", { name: "받아쓰기 작업 기록 열기" }).click();
 	await expect(
 		page.getByRole("button", { name: "다시 불러오기" }),
@@ -191,12 +197,12 @@ test("400 응답 뒤 되묻기 폼을 유지한다", async ({ page }) => {
 		return route.fallback();
 	});
 	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
-	await page.getByRole("button", { name: example }).click();
+	await sendExample(page);
 	await page.getByRole("checkbox", { name: "폭죽 써요" }).click();
-	await page.getByRole("button", { name: "답하기" }).click();
+	await page.getByRole("button", { name: "보내기" }).click();
 	await expect(page.getByRole("alert")).toContainText("고쳐서 다시 보내 주세요");
 	await expect(page.getByRole("checkbox", { name: "폭죽 써요" })).toBeChecked();
-	await page.getByRole("button", { name: "답하기" }).click();
+	await page.getByRole("button", { name: "보내기" }).click();
 	await expect(page.locator(".key-number strong").first()).toBeVisible();
 });
 
@@ -204,11 +210,11 @@ test("400 응답 뒤 되묻기 폼을 유지한다", async ({ page }) => {
 test("세 종류의 질문을 한 번에 답한다", async ({ page }) => {
 	const messages = await routeConsult(page, "valid-new-forecast", true);
 	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
-	await page.getByRole("button", { name: example }).click();
+	await sendExample(page);
 	await page.getByRole("button", { name: "지자체", exact: true }).click();
 	await page.getByLabel("행사 날짜").fill("2026-10-18");
 	await page.getByRole("checkbox", { name: "폭죽 써요" }).click();
-	await page.getByRole("button", { name: "답하기" }).click();
+	await page.getByRole("button", { name: "보내기" }).click();
 	await expect(page.locator(".key-number strong").first()).toBeVisible();
 	expect(messages).toHaveLength(2);
 	expect(messages[1].answer).toEqual({
@@ -223,9 +229,9 @@ test("세 종류의 질문을 한 번에 답한다", async ({ page }) => {
 test("게이트 A 실패는 숫자 카드를 열지 않는다", async ({ page }) => {
 	await routeConsult(page, "valid-gate-a-failed");
 	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
-	await page.getByRole("button", { name: example }).click();
+	await sendExample(page);
 	await page.getByRole("checkbox", { name: "폭죽 써요" }).click();
-	await page.getByRole("button", { name: "답하기" }).click();
+	await page.getByRole("button", { name: "보내기" }).click();
 	await expect(page.getByRole("alert")).toContainText(
 		"분석 결과 검사를 통과하지 못해",
 	);
@@ -255,7 +261,7 @@ for (const name of [
 			}),
 		);
 		await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
-		await page.getByRole("button", { name: example }).click();
+		await sendExample(page);
 		await expect(page.getByRole("alert")).toContainText("순서 검사");
 		await expect(page.locator(".key-number strong")).toHaveCount(0);
 	});
@@ -278,6 +284,6 @@ test("계약 위반 SSE 오류 카드", async ({ page }) => {
 		}),
 	);
 	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
-	await page.getByRole("button", { name: example }).click();
+	await sendExample(page);
 	await expect(page.getByRole("alert")).toContainText("형식 검사");
 });

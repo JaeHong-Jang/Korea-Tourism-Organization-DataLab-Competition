@@ -55,7 +55,7 @@ export function FestivalSummaryPanel({
       <Link
         to={`/consult?text=${encodeURIComponent(consultationText(festival))}`}
       >
-        예보 상담에서 자세히 보기
+        이 행사 예보 받기
       </Link>
     </section>
   );

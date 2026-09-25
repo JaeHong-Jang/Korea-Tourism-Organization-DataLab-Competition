@@ -1,0 +1,8 @@
+## QA-2-web 결과: PARTIAL
+
+- 변경 파일: 구간 막대([range-bar.tsx](/home/data/crowdcast-wt/L4b/apps/web/src/components/charts/range-bar.tsx)), 산점도([prediction-scatter.tsx](/home/data/crowdcast-wt/L4b/apps/web/src/features/validation/prediction-scatter.tsx)), 모델 카드([model-details.tsx](/home/data/crowdcast-wt/L4b/apps/web/src/features/validation/model-details.tsx), [model-limit-summary.ts](/home/data/crowdcast-wt/L4b/apps/web/src/features/validation/model-limit-summary.ts)), 최신성 카드([freshness-card.tsx](/home/data/crowdcast-wt/L4b/apps/web/src/features/ops/freshness-card.tsx)), 재예보 카드([reforecast-card.tsx](/home/data/crowdcast-wt/L4b/apps/web/src/features/my-events/reforecast-card.tsx), [event-detail.tsx](/home/data/crowdcast-wt/L4b/apps/web/src/features/my-events/event-detail.tsx)), 관련 CSS·단위 테스트·[QA 스크린샷 스펙](/home/data/crowdcast-wt/L4b/tests/e2e/qa-2-web.spec.ts). 페이지 제목은 이미 “내 행사”였습니다.
+- 수용 기준: `npm -w apps/web test` → 231개 통과. `npm -w apps/web run build` → 통과. `npm -w apps/web run lint` → 통과(기존 선택자 경고 2개). 색 하드코딩 0건, `git diff --check` 통과. Playwright 스펙 19개 로딩 확인.
+- 의존성 변경: 없음
+- CONTRACT-CHANGE: 모델 카드 `notes`에는 작은 행사 **규모 편향**만 명시되어 있어 “과대 예보” 방향은 단정하지 않았습니다. 방향과 근거를 명시하는 구조화 필드를 제안합니다.
+- BLOCKED: E2E 실행 시 Vite의 `127.0.0.1:5184` 바인딩이 `listen EPERM`으로 거부됐습니다. 따라서 기존 E2E 통과 여부와 요청한 `QA-2-*.png` 5장은 확인·생성하지 못했습니다.
+- 남은 일·주의: 포트 바인딩이 가능한 오케스트레이터 환경에서 `npm -w apps/web run e2e -- qa-2-web.spec.ts s6-s7.spec.ts s8.spec.ts s5.spec.ts`를 실행하고 스크린샷을 검토해야 합니다.

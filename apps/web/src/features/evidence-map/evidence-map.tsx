@@ -7,6 +7,7 @@ import {
   type ReactFlowInstance,
 } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { evidenceKinds } from "../../components/common/evidence-chip";
 import { evidenceNumber } from "../../components/common/evidence-number";
 import type { OpenEvidence } from "../forecast-report/report-claims";
@@ -197,6 +198,7 @@ export function EvidenceMap({
         <div>
           <h2 id="evidence-map-title">근거 지도</h2>
           <p>문장부터 근거와 원문 자료까지 연결을 따라가요.</p>
+          <Link to="/graph">전체 근거 그래프 보기</Link>
         </div>
         <button type="button" onClick={() => setTable((value) => !value)}>
           {table ? "그래프로 보기" : "표로 보기"}

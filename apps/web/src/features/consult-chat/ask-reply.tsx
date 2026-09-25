@@ -1,8 +1,8 @@
 // 여러 되묻기를 한 폼에 모아 게이트웨이에 답 한 번으로 보낸다.
 import type { EventDraft } from "@crowdcast/contracts/types";
 import { useState } from "react";
-import { Button } from "../../components/ui/button";
 import { type Ask, askOptions, combinedAnswer } from "./answers";
+import { ConsultInput } from "./consult-input";
 
 // 질문별 선택은 전송 전까지 로컬에 보관한다.
 export function AskReply({
@@ -11,12 +11,18 @@ export function AskReply({
   onReply,
   disabled,
   replyError,
+  text,
+  onText,
+  onStop,
 }: {
   asks: Ask[];
   draft: EventDraft | null;
   onReply: (reply: { text: string; answer: object }) => void;
   disabled: boolean;
   replyError: string;
+  text: string;
+  onText: (value: string) => void;
+  onStop: () => void;
 }) {
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [hazards, setHazards] = useState<EventDraft["hazards"] | null>(null);
@@ -30,7 +36,21 @@ export function AskReply({
   // 질문에서 받은 선택지만 허용하고 시각은 날짜와 함께 검증한다.
   const submit = () => {
     try {
-      onReply(combinedAnswer(asks, { choices, hazards, date, start, end }));
+      const freeField = asks.find(
+        (ask) =>
+          ask.field !== "time" &&
+          ask.field !== "hazards" &&
+          ask.field !== "type" &&
+          ask.field !== "hostType" &&
+          ask.field !== "fee",
+      );
+      const entered =
+        freeField && text.trim()
+          ? { ...choices, [freeField.field]: text.trim() }
+          : choices;
+      onReply(
+        combinedAnswer(asks, { choices: entered, hazards, date, start, end }),
+      );
       setError("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "답을 확인해 주세요.");
@@ -127,28 +147,25 @@ export function AskReply({
                   {option.label}
                 </button>
               ))}
-              {!askOptions(ask).length && (
-                <label>
-                  직접 입력
-                  <input
-                    value={choices[ask.field] ?? ""}
-                    onChange={(event) =>
-                      setChoices((current) => ({
-                        ...current,
-                        [ask.field]: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-              )}
             </div>
           )}
         </div>
       ))}
       {(error || replyError) && <p role="alert">{error || replyError}</p>}
-      <Button type="button" disabled={disabled} onClick={submit}>
-        답하기
-      </Button>
+      <ConsultInput
+        text={text}
+        onText={onText}
+        busy={disabled}
+        answering
+        canSubmit={Boolean(
+          text.trim() ||
+            Object.keys(choices).length ||
+            hazards !== null ||
+            asks.some((ask) => ask.field === "time"),
+        )}
+        onSubmit={submit}
+        onStop={onStop}
+      />
     </fieldset>
   );
 }

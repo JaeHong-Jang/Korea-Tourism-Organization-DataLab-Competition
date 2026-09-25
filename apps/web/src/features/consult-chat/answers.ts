@@ -119,7 +119,11 @@ export function combinedAnswer(
     } else {
       const choice = inputs.choices[ask.field]?.trim();
       const allowed = askOptions(ask).map((option) => option.value);
-      if (!choice || (allowed.length > 0 && !allowed.includes(choice)))
+      const fixedChoice = ["type", "hostType", "fee"].includes(ask.field);
+      if (
+        !choice ||
+        (fixedChoice && allowed.length > 0 && !allowed.includes(choice))
+      )
         throw new Error(`${ask.question} 답을 확인해 주세요.`);
       answer[ask.field] = choice;
       summaries.push(choice);

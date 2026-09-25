@@ -28,6 +28,12 @@ const frames = (events: SseEvent[]) =>
     .map((event) => `event: ${event.event}\ndata: ${JSON.stringify(event)}\n\n`)
     .join("");
 
+// 대화 서랍의 공용 입력칸에서 행사 설명을 보낸다.
+async function sendExample(page: Page) {
+  await page.getByLabel("행사를 설명해 주세요").fill(example);
+  await page.getByRole("button", { name: "보내기" }).click();
+}
+
 // 원래 픽스처의 일정을 일요일로 옮기고 계약 카드의 수치와 id를 새 예보로 바꾼다.
 function sundayForecast(): SseEvent[] {
   const events = structuredClone(contract("valid-new-forecast"));
@@ -84,7 +90,7 @@ test("일요일 what-if 비교", async ({ page }) => {
   const messages = await routeSession(page, sundayForecast());
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto("/consult?theme=day");
-  await page.getByRole("button", { name: example }).click();
+  await sendExample(page);
   await expect(page.getByRole("button", { name: "일요일이면?" })).toBeVisible();
   await page.getByRole("button", { name: "일요일이면?" }).click();
   const comparison = page.getByRole("region", {
@@ -111,7 +117,7 @@ test("일요일 what-if 비교", async ({ page }) => {
 test("followup 답변은 비교 카드를 만들지 않는다", async ({ page }) => {
   const messages = await routeSession(page, contract("valid-followup-why"));
   await page.goto("/consult?theme=day");
-  await page.getByRole("button", { name: example }).click();
+  await sendExample(page);
   await page.getByRole("button", { name: "왜 이렇게 많아?" }).click();
   await expect(
     page.getByText("토요일 저녁에 열려서 평소보다 사람이 많이 몰려요"),

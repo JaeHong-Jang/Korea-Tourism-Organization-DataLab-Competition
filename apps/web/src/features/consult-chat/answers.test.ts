@@ -84,6 +84,27 @@ it("주최 유형 버튼을 해당 필드의 답으로 보낸다", () => {
   });
 });
 
+// 장소 후보가 있어도 사용자는 같은 입력칸에서 실제 장소를 직접 적을 수 있다.
+it("장소 후보 외 자유 답을 계약으로 검사해 보낸다", () => {
+  const reply = combinedAnswer(
+    [
+      {
+        field: "venueText",
+        question: "어디에서 열리나요?",
+        options: [{ label: "서울숲", value: "서울숲" }],
+      },
+    ],
+    {
+      choices: { venueText: "영종 씨사이드파크" },
+      hazards: null,
+      date: "",
+      start: "",
+      end: "",
+    },
+  );
+  expect(reply.answer).toEqual({ venueText: "영종 씨사이드파크" });
+});
+
 // 실제 되묻기 세 종류를 한 번의 검증된 answer 부분 객체로 묶는다.
 it("주최·시각·위험 질문을 한 번에 답한다", () => {
   const asks = [

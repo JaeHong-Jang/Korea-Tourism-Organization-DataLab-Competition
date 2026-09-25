@@ -24,12 +24,14 @@
 .ops-artifacts button, .weekly-brush button { border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--link); cursor: pointer; }
 .ops-artifacts button { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1); }
 .ops-facts { display: grid; gap: var(--space-2); margin: var(--space-3) 0; }
-.ops-facts div { display: flex; justify-content: space-between; gap: var(--space-3); border-bottom: 1px solid var(--line); }
+.ops-facts div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); min-width: 0; border-bottom: 1px solid var(--line); }
 .ops-facts dt { color: var(--ink-2); }
-.ops-facts dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.ops-facts dd { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-1); min-width: 0; margin: 0; overflow-wrap: anywhere; text-align: right; font-variant-numeric: tabular-nums; }
+.ops-run-id { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-1); min-width: 0; }
+.ops-run-id button { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--link); cursor: pointer; }
 .ops-evaluation, .ops-freshness { margin-top: var(--space-4); font-size: var(--text-sm); }
 .ops-freshness h3 { margin: var(--space-4) 0 var(--space-2); font-size: var(--text-ui); }
 .ops-freshness ul { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.ops-freshness li { display: grid; gap: var(--space-1); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); }
+.ops-freshness li { display: grid; gap: var(--space-1); min-width: 0; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); overflow-wrap: anywhere; }
 .ops-freshness li span:last-child { display: inline-flex; align-items: center; gap: var(--space-1); }
 .ops-freshness li.ops-dataset--late { border-color: var(--level-4); }

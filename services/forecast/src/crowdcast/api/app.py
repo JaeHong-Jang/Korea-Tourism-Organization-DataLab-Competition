@@ -7,6 +7,7 @@ from crowdcast.api.routes import (
     baseline,
     geocode,
     health,
+    images,
     insights,
     model_card,
     ops,
@@ -32,6 +33,7 @@ app.include_router(backtest.router)
 app.include_router(predict.router)
 app.include_router(whatif.router)
 app.include_router(upcoming.router)
+app.include_router(images.router)
 app.include_router(regions.router)
 app.include_router(preregistration.router)
 app.include_router(ops.router)
