@@ -26,7 +26,7 @@ function QuantityChange({
 }) {
   return (
     <div className="my-events-change-row">
-      <dt>{title} p50 전후 차이</dt>
+      <dt>{title} 중앙값 전후 비교</dt>
       <dd>
         <span>
           {value.before

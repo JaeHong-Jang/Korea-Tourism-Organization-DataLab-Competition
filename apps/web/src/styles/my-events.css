@@ -15,6 +15,7 @@
 .my-events-table tbody th { font-weight: 600; }
 .my-events-table tbody tr.is-selected { background: var(--surface-sunken); }
 .my-events-table button { padding: var(--space-1); border: 0; background: transparent; color: var(--link); font: inherit; text-align: left; cursor: pointer; }
+.my-events-table button:focus-visible, .my-events-detail :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .my-events-table .level-badge { white-space: nowrap; }
 
 /* 발행 이력과 변화 카드의 값은 계약 순서대로 읽을 수 있게 배치한다. */
@@ -39,5 +40,21 @@
 .my-events-detail button:disabled { cursor: wait; opacity: .6; }
 .my-events-share { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
 .my-events-share input { width: 100%; }
+.my-events-share input { min-width: 0; overflow-wrap: anywhere; }
 .my-events-detail [role="alert"] { color: var(--ink); }
 @media (max-width: 1100px) { .my-events-layout { grid-template-columns: 1fr; } }
+
+/* 좁은 화면에서는 같은 표 행을 항목별 이름이 붙은 카드로 읽는다. */
+@media (max-width: 640px) {
+  .my-events-table-wrap { overflow: visible; }
+  .my-events-table { display: block; min-width: 0; }
+  .my-events-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .my-events-table tbody { display: grid; gap: var(--space-3); }
+  .my-events-table tbody tr { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); }
+  .my-events-table tbody tr.is-selected { border-color: var(--brand); }
+  .my-events-table tbody th, .my-events-table tbody td { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(0, 2fr); align-items: start; gap: var(--space-2); min-width: 0; padding: 0; border: 0; overflow-wrap: anywhere; }
+  .my-events-table tbody th::before, .my-events-table tbody td::before { content: attr(data-label); color: var(--ink-2); font-size: var(--text-caption); font-weight: 400; }
+  .my-events-table button { padding: 0; }
+  .my-events-detail { gap: var(--space-4); }
+  .my-events-share input { width: 100%; }
+}

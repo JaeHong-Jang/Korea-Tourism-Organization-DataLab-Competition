@@ -2,6 +2,7 @@
 import type { ForecastReport } from "@crowdcast/contracts/types";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { EmptyState } from "../components/common/empty-state";
 import { ErrorState } from "../components/common/error-state";
 import { PageHeading } from "../components/common/page-heading";
 import { SharedReport } from "../features/my-events/shared-report";
@@ -23,13 +24,9 @@ export function SharedPage() {
     setError("");
     getSharedReport(token, controller.signal)
       .then(setReport)
-      .catch((reason: unknown) => {
+      .catch(() => {
         if (!controller.signal.aborted)
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "공유 예보서를 열 수 없어요.",
-          );
+          setError("공유 예보서를 열 수 없어요. 주소를 확인해 주세요.");
       });
     return () => controller.abort();
   }, [token]);
@@ -41,7 +38,10 @@ export function SharedPage() {
         description="발행 당시 예보와 근거를 확인하세요. 참고용 — 담당자 검토 필수"
       />
       {!report && !error && (
-        <p role="status">공유된 예보서를 불러오고 있어요.</p>
+        <EmptyState
+          message="공유 예보서를 불러오고 있어요."
+          action={<span>잠시만 기다려 주세요.</span>}
+        />
       )}
       {error && <ErrorState message={error} />}
       {report && <SharedReport report={report} />}

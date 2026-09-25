@@ -49,11 +49,11 @@ describe("S1 미리보기", () => {
       renderToStaticMarkup(
         <HonestNotices festivals={festivals} fixture={fixture} />,
       );
-    expect(render([festival], true)).toContain("골든 사례 0건");
+    expect(render([festival], true)).toContain("비교 검증 사례가 아직 없어요");
     expect(render([festival], true)).toContain("견본 데이터");
     expect(
       render([{ ...festival, modelVerdict: undefined }], false),
-    ).not.toContain("골든 사례 0건");
+    ).not.toContain("비교 검증 사례가 아직 없어요");
     expect(render([], false)).toContain("작은 행사는 크게 예보될 수 있어요");
   });
 

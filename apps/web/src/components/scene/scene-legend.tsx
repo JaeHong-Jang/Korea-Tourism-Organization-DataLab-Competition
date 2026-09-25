@@ -28,8 +28,8 @@ export function SceneLegend({
   return (
     <div className="scene-stage__note scene-legend">
       <div className="scene-legend__scale">
-        {dataMode && <>타일 색·높이 = 기간 안 예보 순간 최대(p50) 합 · </>}인형
-        1개 = {peoplePerDoll.toLocaleString("ko-KR")}명
+        {dataMode && <>타일 색·높이 = 기간 안 예보 순간 최대 중앙값 합 · </>}
+        인형 1개 = {peoplePerDoll.toLocaleString("ko-KR")}명
       </div>
       {controls}
       {dataMode && (
@@ -68,8 +68,8 @@ export function SceneLegend({
         인원 규모는 예보값 비례 · 인형 위치는 실제 사람 위치가 아니에요 · 날씨
         효과 = 기상청 예보 기반 연출 ·
         {dataMode
-          ? "데이터 모드에서는 열차·차량을 숨겨요 · 봇 움직임은 연출이에요."
-          : "열차·차량·봇 움직임은 연출 — 실제 운행·교통량이 아님."}
+          ? "데이터 모드에서는 열차·차량을 숨겨요 · 인형 움직임은 연출이에요."
+          : "열차·차량·인형 움직임은 연출 — 실제 운행·교통량이 아니에요."}
       </span>
       {notices}
       <FestivalList festivals={festivals} />

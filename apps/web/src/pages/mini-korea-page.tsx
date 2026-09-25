@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { MiniKoreaCanvas } from "../components/scene";
 import { crowdScale } from "../components/scene/crowd-scale";
+import { GradeMark } from "../components/scene/grade-mark";
 import { SceneLegend } from "../components/scene/scene-legend";
 import { Button } from "../components/ui/button";
 import { FestivalFiltersPanel } from "../features/festival-filters/festival-filters";
@@ -39,6 +40,9 @@ export function MiniKoreaPage() {
     useUpcomingFestivals(filters);
   const [scale, setScale] = useState(() => crowdScale([], "high"));
   const [overviewRevision, setOverviewRevision] = useState(0);
+  const [mobilePanel, setMobilePanel] = useState<
+    "filter" | "list" | "timeline" | "legend"
+  >("filter");
   const [view, setView] = useState<"3d" | "2d">(() =>
     preferredView(location.search),
   );
@@ -77,15 +81,16 @@ export function MiniKoreaPage() {
     else query.delete("data");
     navigate({ pathname: location.pathname, search: query.toString() });
   };
-  const [svgMode] = useState(() => {
-    if (new URLSearchParams(window.location.search).get("forceSvg") === "1")
-      return true;
+  const [webglAvailable] = useState(() => {
     try {
-      return !document.createElement("canvas").getContext("webgl2");
+      return Boolean(document.createElement("canvas").getContext("webgl2"));
     } catch {
-      return true;
+      return false;
     }
   });
+  const svgMode =
+    !webglAvailable ||
+    new URLSearchParams(location.search).get("forceSvg") === "1";
 
   // 주소 이동과 브라우저 뒤로 가기에서도 저장한 보기 선택을 복원한다.
   useEffect(() => {
@@ -93,17 +98,22 @@ export function MiniKoreaPage() {
   }, [location.search]);
 
   // 현재 필터·데모 주소를 보존한 채 보기만 바꾼다.
-  const changeView = (next: "3d" | "2d") => {
-    setView(next);
-    rememberView(next);
+  const changeView = (next: "3d" | "2d" | "svg") => {
     const query = new URLSearchParams(location.search);
-    if (next === "2d") query.set("view", "2d");
-    else query.delete("view");
+    if (next === "svg") {
+      query.set("forceSvg", "1");
+    } else {
+      setView(next);
+      rememberView(next);
+      query.delete("forceSvg");
+      if (next === "2d") query.set("view", "2d");
+      else query.delete("view");
+    }
     navigate({ pathname: location.pathname, search: query.toString() });
   };
 
   return (
-    <div className="scene-page">
+    <div className="scene-page" data-mobile-panel={mobilePanel}>
       <section
         className="scene-stage"
         aria-labelledby="scene-title"
@@ -169,23 +179,63 @@ export function MiniKoreaPage() {
           <button
             type="button"
             aria-pressed={!svgMode && view === "3d"}
-            disabled={svgMode}
+            disabled={!webglAvailable}
             onClick={() => changeView("3d")}
-            title={svgMode ? "WebGL이 없어 SVG 지도를 보여 줍니다" : undefined}
+            title={
+              !webglAvailable
+                ? "이 기기에서는 3D 보기를 사용할 수 없어요"
+                : undefined
+            }
           >
             3D
           </button>
           <button
             type="button"
             aria-pressed={!svgMode && view === "2d"}
-            disabled={svgMode}
+            disabled={!webglAvailable}
             onClick={() => changeView("2d")}
-            title={svgMode ? "2D 지도에도 WebGL이 필요합니다" : undefined}
+            title={
+              !webglAvailable
+                ? "이 기기에서는 2D 보기를 사용할 수 없어요"
+                : undefined
+            }
           >
             2D 지도
           </button>
+          <button
+            type="button"
+            aria-pressed={svgMode}
+            onClick={() => changeView("svg")}
+          >
+            SVG 지도
+          </button>
         </fieldset>
+        {!svgMode && view === "3d" && (
+          <p className="scene-mobile-scale">
+            인형 1개 = {scale.peoplePerDoll.toLocaleString("ko-KR")}명 ·
+            움직임은 연출
+          </p>
+        )}
       </section>
+      <nav className="scene-mobile-tabs" aria-label="미니 대한민국 정보">
+        {(
+          [
+            ["filter", "필터"],
+            ["list", "행사 목록"],
+            ["timeline", "행사 현황"],
+            ["legend", "범례"],
+          ] as const
+        ).map(([panel, label]) => (
+          <button
+            key={panel}
+            type="button"
+            aria-pressed={mobilePanel === panel}
+            onClick={() => setMobilePanel(panel)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
       <div className="scene-cta">
         <Button asChild size="sm">
           <Link to="/consult">
@@ -202,38 +252,54 @@ export function MiniKoreaPage() {
         >
           <FestivalFiltersPanel all={all} />
         </FeaturePanel>
-        {!svgMode && view === "3d" ? (
-          <SceneLegend
-            peoplePerDoll={scale.peoplePerDoll}
-            capExceeded={scale.capExceeded}
-            festivals={festivals}
-            dataMode={dataMode}
-            totals={totals}
-            controls={
-              <DataModeToggle enabled={dataMode} onChange={changeDataMode} />
-            }
-            notices={<HonestNotices festivals={festivals} fixture={fixture} />}
-          />
-        ) : (
-          <div className="scene-svg-notices">
-            {svgMode && (
-              <p>
-                WebGL을 사용할 수 없어 SVG 지도를 보여 줍니다. 3D와 2D 지도에는
-                WebGL이 필요해요.
-              </p>
-            )}
-            <DataModeToggle
-              enabled={false}
-              onChange={changeDataMode}
-              disabled
+        <div className="scene-legend-panel">
+          {!svgMode && view === "3d" ? (
+            <SceneLegend
+              peoplePerDoll={scale.peoplePerDoll}
+              capExceeded={scale.capExceeded}
+              festivals={festivals}
+              dataMode={dataMode}
+              totals={totals}
+              controls={
+                <DataModeToggle enabled={dataMode} onChange={changeDataMode} />
+              }
+              notices={
+                <HonestNotices festivals={festivals} fixture={fixture} />
+              }
             />
-            <p>
-              {svgMode ? "SVG 지도" : "2D 지도"}에서는 데이터 모드를 사용할 수
-              없어요.
-            </p>
-            <HonestNotices festivals={festivals} fixture={fixture} />
-          </div>
-        )}
+          ) : (
+            <div className="scene-svg-notices">
+              {svgMode && (
+                <p>
+                  이 기기에서는 간단한 지도로 보여 드려요. 행사 선택은
+                  목록에서도 할 수 있어요.
+                </p>
+              )}
+              <DataModeToggle
+                enabled={false}
+                onChange={changeDataMode}
+                disabled
+              />
+              <p>
+                {svgMode ? "SVG 지도" : "2D 지도"}에서는 데이터 모드를 사용할 수
+                없어요.
+              </p>
+              <fieldset className="scene-legend__grades">
+                <legend className="sr-only">행사 등급 범례</legend>
+                {[1, 2, 3, 4].map((level) => (
+                  <span className="scene-legend__grade" key={level}>
+                    <span
+                      className="scene-legend__flag"
+                      style={{ background: `var(--level-${level})` }}
+                    />
+                    <GradeMark level={level} />
+                  </span>
+                ))}
+              </fieldset>
+              <HonestNotices festivals={festivals} fixture={fixture} />
+            </div>
+          )}
+        </div>
       </div>
       <FeaturePanel
         id="M1-F3"

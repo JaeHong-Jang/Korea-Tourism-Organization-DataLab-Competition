@@ -42,13 +42,9 @@ export function MyEventsPage() {
           setState("ready");
         }
       })
-      .catch((reason: unknown) => {
+      .catch(() => {
         if (!controller.signal.aborted) {
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "행사 목록을 열 수 없어요.",
-          );
+          setError("저장한 행사를 열 수 없어요. 잠시 뒤 다시 시도해 주세요.");
           setState("error");
         }
       });
@@ -74,7 +70,10 @@ export function MyEventsPage() {
         description="저장한 행사와 발행 예보를 다시 찾아보세요."
       />
       {state === "loading" && (
-        <p role="status">저장한 행사를 불러오고 있어요.</p>
+        <EmptyState
+          message="저장한 행사를 불러오고 있어요."
+          action={<span>잠시만 기다려 주세요.</span>}
+        />
       )}
       {state === "error" && <ErrorState message={error} />}
       {state === "ready" && rows.length === 0 && (
