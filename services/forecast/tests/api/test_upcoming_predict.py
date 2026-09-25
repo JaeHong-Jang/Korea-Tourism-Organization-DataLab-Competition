@@ -1,7 +1,7 @@
 """실제 모델의 단건·일괄 예보 바이트 일치와 평시·관측 부재 처리를 검증한다."""
 
 import json
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import polars as pl
@@ -12,6 +12,8 @@ from crowdcast.api.assemble.identity import canonical
 from crowdcast.api.assemble.inputs import cutoff, korean_date
 from crowdcast.api.contract import validate
 from crowdcast.data.events import contract_event
+from crowdcast.data.weather import service
+from crowdcast.data.weather.normalize import as_kst
 from fastapi.testclient import TestClient
 
 
@@ -92,3 +94,22 @@ def test_batch_no_observation(client: TestClient, upcoming_event: dict) -> None:
     listing = client.get("/v1/festivals/upcoming")
     assert listing.json() == []
     assert f"runId: {listing.headers['x-run-id']}" in report
+
+
+# 임박한 행사도 일괄 예보와 사전 등록 원본 생성에서는 날씨 서비스를 호출하지 않는다.
+def test_nearby_batch_never_calls_weather(upcoming_event: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(service, "now", lambda: as_kst(upcoming_event["startsAt"]) - timedelta(days=7))
+
+    # 배치가 날씨 경로로 들어가면 성공 대체 없이 바로 테스트를 실패시킨다.
+    def forbidden(*args: object, **kwargs: object) -> None:
+        pytest.fail("일괄·사전 등록 예보는 날씨를 조회하면 안 됩니다")
+
+    monkeypatch.setattr(service, "weather", forbidden)
+    day = korean_date(upcoming_event["startsAt"])
+    run_batch(day, day)
+    stored = json.loads((paths.PROCESSED / "upcoming_forecasts.jsonl").read_bytes())["forecast"]
+    assert not any((item["source"] or {}).get("publisher") == "기상청" for item in stored["evidence"])
+    before = canonical(stored)
+    run_batch(day, day)
+    after = json.loads((paths.PROCESSED / "upcoming_forecasts.jsonl").read_bytes())["forecast"]
+    assert canonical(after) == before

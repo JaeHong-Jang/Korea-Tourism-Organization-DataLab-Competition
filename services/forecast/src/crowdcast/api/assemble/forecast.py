@@ -13,9 +13,11 @@ from crowdcast.api.assemble.inputs import BREAK_CODES, cutoff
 from crowdcast.api.assemble.model import current_model
 from crowdcast.api.assemble.observations import feature_frame, observations, prediction_run
 from crowdcast.api.assemble.profile import composition
+from crowdcast.api.assemble.weather import prepare_weather
 from crowdcast.data.crosswalk import CODE_CHANGE_DATE
 from crowdcast.models.distribution import distribution
 from crowdcast.rules.evidence import assumption_evidence
+from crowdcast.rules.judge import judge
 from crowdcast.rules.peak import round_people
 
 
@@ -54,6 +56,10 @@ def predict(event: dict[str, Any]) -> dict[str, Any]:
         raise Unavailable("예보에 필요한 전처리 자료가 없습니다") from None
     observed = observations(frame, model.encoding["features"], event["sigunguCode"])
     quantiles, factors, ood = model.infer(frame)
+    # 날씨는 D-14 피처와 분리하며 표본으로 추정한 배수가 있을 때만 예측 분위수를 바꾼다.
+    weather = prepare_weather(event)
+    if weather is not None and weather.coefficient is not None:
+        quantiles = [value * weather.multiplier for value in quantiles]
     forecast_id = identifier(
         "f",
         {
@@ -61,6 +67,7 @@ def predict(event: dict[str, Any]) -> dict[str, Any]:
             "asOf": as_of.isoformat(),
             "modelVersion": pointer["modelVersion"],
             "event": event,
+            **({"weather": weather.identity()} if weather is not None else {}),
         },
     )
     peak, judgment = distribution(
@@ -70,6 +77,12 @@ def predict(event: dict[str, Any]) -> dict[str, Any]:
         n=model.config["samples"],
         basis=model.choice["basis"],
     )
+    # 같은 순간 최대 표본을 유지하면서 실제 행사일 날씨로 우천 점검을 판정한다.
+    if weather is not None:
+        judgment = judge(
+            peak.samples, {**event, "startsAt": event["startsAt"].upper()},
+            weather.weather, basis=model.choice["basis"],
+        )
     daily = {
         "id": identifier("q", [forecast_id, "dailyMean"]),
         "name": "일평균 방문객",
@@ -104,6 +117,15 @@ def predict(event: dict[str, Any]) -> dict[str, Any]:
         "composition": None,
     }
 
+    # 요청 날씨의 실제 가용시각과 보정 가정을 모델 근거 직렬화 전에 수치에 표시한다.
+    if weather is not None:
+        result["createdAt"] = weather.available_at
+        if weather.coefficient is not None:
+            # 일평균 계약의 estimated=false는 유지하고 추정 보정을 이름과 가정으로 명시한다.
+            result["dailyMean"]["name"] = "일평균 방문객(날씨 보정 추정)"
+            for key in ("dailyMean", "peakConcurrent"):
+                result[key]["assumptionIds"].append("as-weather-adjustment")
+
     # 조회 API와 같은 근거 객체를 재사용해 세션 내 재적재 시 내용 충돌을 막는다.
     evidence, feature_ids = observation_evidence(observed)
     try:
@@ -128,6 +150,10 @@ def predict(event: dict[str, Any]) -> dict[str, Any]:
     ]
     evidence.extend([explanation, *peak.evidence, *judgment.evidence, assumption_evidence(holiday)])
     result["evidence"] = list({item["id"]: item for item in evidence}.values())
+
+    # 보정 가정과 날씨 요인은 학습 모델의 SHAP 근거와 구분해 연결한다.
+    if weather is not None:
+        weather.attach(result)
 
     # 기존 OOD 판정에 지역 연속성 단절만 더하며 개편 뒤 값을 복원하지 않는다.
     reasons = []
