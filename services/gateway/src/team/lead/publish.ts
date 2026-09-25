@@ -77,13 +77,32 @@ async function explain(
 }
 
 // 남은 요청 시간 안에서 knowledge 쓰기·검사 범위도 취소할 수 있게 한다
-function knowledgeClient(settings: TeamSettings, deadline: Deadline) {
+export function knowledgeClient(settings: TeamSettings, deadline: Deadline) {
   return createKnowledgeClient({
     baseUrl: settings.config.services.knowledge,
     fetch: settings.fetcher,
     signal: deadline.controller.signal,
     timeoutMs: deadline.budget(8_000, 2),
   });
+}
+
+// 새 예보와 후속 설명은 같은 버전의 원자적 발행 승인을 확인한다
+export async function approvePublication(
+  knowledge: ReturnType<typeof createKnowledgeClient>,
+  sessionId: string,
+  gate: Pick<GateReport, "revision" | "masterVersion">,
+  writer: EventWriter,
+) {
+  const { revision, masterVersion } = gate;
+  const published = await knowledge.publishSession(
+    sessionId,
+    revision,
+    masterVersion,
+  );
+  requireGateScope(published, "publish", revision, masterVersion);
+  await writer.emit("gate", published);
+  if (!published.passed)
+    throw new ExplanationGateError("설명 문장을 발행하지 못했어요");
 }
 
 // 최대 두 번의 실패 게이트 이후 템플릿 실패는 추가 게이트 없이 오류로 끝낸다
@@ -170,18 +189,20 @@ export async function publishForecast(
   if (!responseSchema("forecast-report")(report))
     throw new ExplanationGateError("예보서 계약 위반");
   // 성공한 원자적 발행 뒤에만 처음으로 문장과 근거를 전송한다
-  const published = await knowledgeClient(settings, deadline).publishSession(
+  await approvePublication(
+    knowledgeClient(settings, deadline),
     session.id,
-    revision,
-    masterVersion,
+    approved.gate,
+    writer,
   );
-  requireGateScope(published, "publish", revision, masterVersion);
-  await writer.emit("gate", published);
-  if (!published.passed)
-    throw new ExplanationGateError("설명 문장을 발행하지 못했어요");
   session.completed = true;
   session.forecastId = bundle.forecast.id;
   report.publishedAt = new Date().toISOString();
+  session.published = {
+    report: structuredClone(report as ForecastReport),
+    revision,
+    masterVersion,
+  };
 
   for (const claim of report.claims) await writer.emit("claim", claim);
   await writer.emit("evidence", { items: report.evidence });

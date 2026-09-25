@@ -57,6 +57,11 @@ afterEach(() => {
 export type Call = { url: URL; body: unknown; signal?: AbortSignal | null };
 type Options = TeamOptions & {
   override?: (call: Call) => Promise<Response | undefined>;
+  // 가짜 서비스가 처리한 뒤의 응답을 바꿔 "처리됐지만 응답 유실"을 흉내 낸다
+  afterResponse?: (
+    call: Call,
+    response: Response,
+  ) => Promise<Response | undefined>;
 };
 
 // 실제 계약 참조 검사로 가짜 knowledge의 잘못된 적재 순서도 실패시킨다
@@ -73,10 +78,10 @@ export function teamFixture(options: Options = {}) {
     calls.push(call);
     const override = await options.override?.(call);
     if (override) return override;
-    return (
+    const response =
       knowledge(url, body as SessionFacts | undefined) ??
-      fakeForecastFetch(input, init)
-    );
+      (await fakeForecastFetch(input, init));
+    return (await options.afterResponse?.(call, response)) ?? response;
   };
   const app = new Hono().route(
     "/api/team/sessions",
@@ -110,6 +115,7 @@ export function teamFixture(options: Options = {}) {
   return {
     app,
     calls,
+    knowledgeClaims: knowledge.claims,
     traceDirectory,
     // HTTP로 세션을 생성해 식별자 규칙과 저장소 연결도 함께 검사한다
     async create() {

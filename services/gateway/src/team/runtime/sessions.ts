@@ -1,6 +1,11 @@
 // 세션별 행사 초안과 작업 기록을 보관하고 같은 세션의 동시 실행을 막는다
 import { randomUUID } from "node:crypto";
-import type { AgentStep, EventDraft } from "@crowdcast/contracts/types";
+import type {
+  AgentStep,
+  Claim,
+  EventDraft,
+  ForecastReport,
+} from "@crowdcast/contracts/types";
 
 export type TeamSession = {
   id: string;
@@ -13,6 +18,12 @@ export type TeamSession = {
   analyzed: boolean;
   completed: boolean;
   forecastId?: string;
+  published?: {
+    report: ForecastReport;
+    revision: number;
+    masterVersion: number;
+    pendingClaims?: Claim[];
+  };
 };
 
 // 저장소 인스턴스는 앱마다 분리해 테스트와 다른 앱의 세션이 섞이지 않게 한다

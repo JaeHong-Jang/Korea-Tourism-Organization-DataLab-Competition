@@ -46,6 +46,10 @@ type Options = {
   rewrite?: (claims: DraftText[], attempt: number) => DraftText[];
   forecast?: (forecast: Forecast) => Forecast;
   override?: (call: Call) => Promise<Response | undefined>;
+  afterResponse?: (
+    call: Call,
+    response: Response,
+  ) => Promise<Response | undefined>;
   deadlineMs?: number;
 };
 
@@ -56,6 +60,7 @@ export function explanationFixture(options: Options = {}) {
   const harness = teamFixture({
     env: { LLM_MODE: "ollama" },
     deadlineMs: options.deadlineMs,
+    afterResponse: options.afterResponse,
     override: async (call) => {
       const overridden = await options.override?.(call);
       if (overridden) return overridden;
