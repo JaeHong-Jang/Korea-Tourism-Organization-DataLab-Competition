@@ -100,6 +100,7 @@ export function SvgKoreaMap({ festivals }: { festivals: FestivalSummary[] }) {
   if (!map) return <p role="status">SVG 전국 지도를 불러오는 중이에요.</p>;
   return (
     <div className="svg-korea-map">
+      {/* biome-ignore lint/a11y/useSemanticElements: SVG 안에서는 fieldset을 쓸 수 없어 지역·행사 버튼 묶음을 group 역할로 알린다 */}
       <svg
         viewBox="0 0 900 650"
         role="group"
