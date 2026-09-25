@@ -8,6 +8,7 @@ import type {
   SseEvent,
 } from "@crowdcast/contracts/types";
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ErrorState } from "../components/common/error-state";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { PageHeading } from "../components/common/page-heading";
@@ -30,7 +31,8 @@ type Message = { text: string; answer?: object };
 
 // 스트림에서 검증된 이벤트만 현재 상담 화면 상태에 반영한다.
 export function ConsultPage() {
-  const [text, setText] = useState("");
+  const [searchParams] = useSearchParams();
+  const [text, setText] = useState(() => searchParams.get("text") ?? "");
   const [sent, setSent] = useState<{ id: string; text: string }[]>([]);
   const [asks, setAsks] = useState<Ask[]>([]);
   const [draft, setDraft] = useState<EventDraft | null>(null);

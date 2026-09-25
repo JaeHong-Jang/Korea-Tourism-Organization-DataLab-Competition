@@ -48,7 +48,7 @@ export function buildDollLayout(
   const orientation = new Quaternion();
   const size = new Vector3(1, 1, 1);
   const position = new Vector3();
-  placed.forEach(({ festival, x, z }, festivalIndex) => {
+  placed.forEach(({ festival, x, y, z }, festivalIndex) => {
     let remaining = counts[festivalIndex] ?? 0;
     let dollIndex = 0;
     let radius = 5;
@@ -84,7 +84,7 @@ export function buildDollLayout(
       }
       for (const [px, pz] of ring) {
         occupancy.add(px, pz);
-        position.set(px, LAND_SURFACE_Y + 0.05, pz);
+        position.set(px, LAND_SURFACE_Y + y + 0.05, pz);
         result.push({
           matrix: new Matrix4().compose(position, orientation, size),
           colorIndex: dollColorIndex(festival.eventId, dollIndex++),

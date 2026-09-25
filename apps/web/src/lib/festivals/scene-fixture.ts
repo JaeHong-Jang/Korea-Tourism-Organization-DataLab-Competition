@@ -43,6 +43,7 @@ export function sceneFestivals(today: string): FestivalSummary[] {
       peakP50,
       peakP90: peakP50 + 500,
       pOver1000: (index % 10) / 10,
+      modelVerdict: "미검증",
     } as FestivalSummary;
   });
 }

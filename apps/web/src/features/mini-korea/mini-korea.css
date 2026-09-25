@@ -1,0 +1,21 @@
+/* 장면 중앙을 비우고 왼쪽 필터·범례를 서로 밀어내는 한 칸에 배치한다. */
+.scene-left-rail { position: absolute; z-index: var(--z-panel); top: var(--space-8); bottom: var(--space-4); left: var(--space-8); display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-4); width: 300px; }
+.scene-left-rail > .scene-filter { flex: 0 1 auto; min-height: 0; width: 100%; overflow: auto; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); }
+.scene-left-rail > .scene-legend { position: relative; inset: auto; z-index: auto; flex: none; width: 100%; max-width: none; max-height: 60%; overflow: auto; }
+.scene-page > .scene-list { display: flex; flex-direction: column; max-height: calc(100vh - 170px); }
+.scene-page > .scene-list .festival-list__items { max-height: 330px; }
+.festival-summary { display: grid; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--line); font-size: var(--text-sm); }
+.festival-summary h3, .festival-summary p { margin: 0; }
+.festival-summary a { color: var(--link); font-weight: 700; }
+.festival-summary__empty { margin-top: var(--space-3); color: var(--ink-2); font-size: var(--text-sm); }
+.data-mode-toggle { justify-self: start; padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); cursor: pointer; }
+.data-mode-toggle[aria-pressed="true"] { border-color: var(--focus); outline: 2px solid var(--focus); }
+.scene-honest-notices { display: grid; gap: var(--space-1); color: var(--ink-2); }
+.scene-honest-notices p { margin: 0; }
+.scene-svg-notices { display: grid; gap: var(--space-3); flex: none; width: 100%; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-float); font-size: var(--text-caption); box-sizing: border-box; }
+.scene-name-tag.is-selected { outline: 2px solid var(--focus); }
+.scene-name-tag.is-clickable { cursor: pointer; font-family: inherit; height: 48px; overflow: hidden; }
+.scene-name-tag--far.is-clickable { height: 30px; }
+.scene-name-tag:focus-visible { outline: 3px solid var(--focus); }
+/* 좁은 화면에서는 왼쪽 패널도 장면 아래의 문서 흐름에 놓는다. */
+@media (max-width: 1024px) { .scene-left-rail { position: relative; inset: auto; order: 1; width: auto; margin-inline: var(--space-4); } .scene-page:has(.festival-list) .scene-left-rail > .scene-legend { inset: auto; } .scene-left-rail > .scene-filter { flex: none; overflow: visible; } .scene-page > .scene-list { max-height: none; } }

@@ -12,8 +12,12 @@ export function useScene(
   festivals: FestivalSummary[],
   quality: SceneQuality,
   onScaleChange?: (scale: SceneScale) => void,
+  totals: Map<string, number> | null = null,
 ) {
-  const placed = useMemo(() => placeFestivals(festivals), [festivals]);
+  const placed = useMemo(
+    () => placeFestivals(festivals, totals),
+    [festivals, totals],
+  );
   const scale = useMemo(
     () =>
       crowdScale(

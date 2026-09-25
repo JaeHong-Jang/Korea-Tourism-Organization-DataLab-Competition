@@ -1,11 +1,14 @@
 // Canvas를 쓸 수 없어도 행사 이름·지역·등급을 키보드로 볼 수 있다.
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { useState } from "react";
+import { useSelectionStore } from "../../lib/selection-store";
 import { GradeMark } from "./grade-mark";
 
 // 목록 버튼은 향후 T-433 행사 패널과 합쳐질 접근성 진입점이다.
 export function FestivalList({ festivals }: { festivals: FestivalSummary[] }) {
   const [open, setOpen] = useState(false);
+  const selectedId = useSelectionStore((state) => state.selectedFestivalId);
+  const selectFestival = useSelectionStore((state) => state.selectFestival);
   return (
     <div className="scene-list-control">
       <button
@@ -24,8 +27,14 @@ export function FestivalList({ festivals }: { festivals: FestivalSummary[] }) {
         >
           {festivals.map((festival) => (
             <li key={festival.eventId}>
-              {festival.name}, {festival.sigunguName},{" "}
-              <GradeMark level={festival.level} />
+              <button
+                type="button"
+                aria-pressed={selectedId === festival.eventId}
+                onClick={() => selectFestival(festival.eventId)}
+              >
+                {festival.name}, {festival.sigunguName},{" "}
+                <GradeMark level={festival.level} />
+              </button>
             </li>
           ))}
         </ol>

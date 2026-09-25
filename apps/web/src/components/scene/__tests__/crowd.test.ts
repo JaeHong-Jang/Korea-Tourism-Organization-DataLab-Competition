@@ -97,8 +97,8 @@ test("상한을 넘는 최소 인형 수를 알린다", () => {
 
 // 같은 좌표의 두 행사도 다른 인형과 몸통 간격을 유지한다.
 test("같은 좌표의 군중은 서로 겹치지 않는다", () => {
-  const first = { festival: sceneFestivals[0], x: 0, z: 0 };
-  const second = { festival: sceneFestivals[1], x: 0, z: 0 };
+  const first = { festival: sceneFestivals[0], x: 0, y: 0, z: 0 };
+  const second = { festival: sceneFestivals[1], x: 0, y: 0, z: 0 };
   const instances = buildDollLayout([first, second], [100, 100]);
   const points = instances.map(({ matrix }) => [
     matrix.elements[12],

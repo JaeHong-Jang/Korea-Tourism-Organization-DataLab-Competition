@@ -1,5 +1,4 @@
 // 실제 시청 좌표와 경계 원본으로 투영 거리와 모든 클릭 코드 범위를 검증한다.
-import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Topology } from "topojson-specification";
@@ -7,14 +6,9 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { buildLandModel, codeForFace } from "../land-tiles";
 import { projectKorea } from "../projection";
 
-// 작업 트리의 공용 데이터 경로를 Git 메타데이터에서 찾는다.
+// 작업 트리에 연결된 공개 경계 파일을 실제 장면과 같은 경로에서 읽는다.
 function boundaryPath(): string {
-  const worktrees = execFileSync("git", ["worktree", "list", "--porcelain"], {
-    encoding: "utf8",
-  });
-  const main = worktrees.match(/^worktree (.+)$/m)?.[1];
-  if (!main) throw new Error("공용 경계 데이터 경로를 찾을 수 없습니다.");
-  return join(main, "data/external/boundaries/sigungu.topo.json");
+  return join(process.cwd(), "public/geo/sigungu.topo.json");
 }
 
 // 테스트에서는 계약 토큰의 색만 흉내 내고 실제 원본 경계를 사용한다.

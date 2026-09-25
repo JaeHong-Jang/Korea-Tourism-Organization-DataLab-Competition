@@ -39,7 +39,12 @@ export function modelForType(type: FestivalSummary["type"]): ModelPart[] {
 }
 
 // 조각을 월드 좌표의 버퍼로 만들어 같은 재료끼리 병합할 수 있게 한다.
-function partGeometry(part: ModelPart, x: number, z: number): BufferGeometry {
+function partGeometry(
+  part: ModelPart,
+  x: number,
+  y: number,
+  z: number,
+): BufferGeometry {
   const geometry =
     part.kind === "block"
       ? new BoxGeometry(...part.scale)
@@ -54,7 +59,7 @@ function partGeometry(part: ModelPart, x: number, z: number): BufferGeometry {
     );
   geometry.translate(
     x + part.position[0],
-    LAND_BASE_Y + part.position[1],
+    LAND_BASE_Y + y + part.position[1],
     z + part.position[2],
   );
   return geometry;
@@ -63,10 +68,10 @@ function partGeometry(part: ModelPart, x: number, z: number): BufferGeometry {
 // 행사 전체의 같은 재료 조각을 한 메시로 묶어 그리기 호출을 줄인다.
 function mergedModels(placed: PlacedFestival[]) {
   const byColor = new Map<string, BufferGeometry[]>();
-  for (const { festival, x, z } of placed) {
+  for (const { festival, x, y, z } of placed) {
     for (const part of modelForType(festival.type)) {
       const pieces = byColor.get(part.color) ?? [];
-      pieces.push(partGeometry(part, x, z));
+      pieces.push(partGeometry(part, x, y, z));
       byColor.set(part.color, pieces);
     }
   }

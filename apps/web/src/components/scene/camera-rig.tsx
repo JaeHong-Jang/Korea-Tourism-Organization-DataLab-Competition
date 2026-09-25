@@ -20,28 +20,34 @@ export function CameraRig({
   focus = false,
 }: CameraRigProps) {
   const controls = useRef<OrbitControlsImpl>(null);
-  const desired = useRef(new Vector3(center[0], 0, center[1]));
-  const previous = useRef(new Vector3());
+  const desired = useRef(new Vector3(center[0], 0, center[1] + 90));
+  const desiredPosition = useRef(
+    new Vector3(center[0] + 430, 590, center[1] + 810),
+  );
   const moving = useRef(false);
   const { camera } = useThree();
 
   // 선택 지점으로 카메라와 표적을 함께 옮겨 시선 각도를 보존한다.
   useEffect(() => {
+    const point = selected ?? [center[0], center[1] + 90];
+    const close = Boolean(selected && focus);
+    desired.current.set(point[0], 0, point[1]);
+    desiredPosition.current.set(
+      point[0] + (close ? 75 : 430),
+      close ? 105 : 590,
+      point[1] + (close ? 155 : 720),
+    );
     if (reducedMotion) {
+      if (controls.current) {
+        controls.current.target.copy(desired.current);
+        camera.position.copy(desiredPosition.current);
+        controls.current.update();
+      }
       moving.current = false;
       return;
     }
-    if (!selected || !controls.current) return;
-    if (focus) {
-      controls.current.target.set(selected[0], 0, selected[1]);
-      camera.position.set(selected[0] + 25, 45, selected[1] + 60);
-      controls.current.update();
-      moving.current = false;
-      return;
-    }
-    desired.current.set(selected[0], 0, selected[1]);
     moving.current = true;
-  }, [selected, reducedMotion, focus, camera]);
+  }, [selected, reducedMotion, focus, camera, center[0], center[1]]);
 
   // 방향키는 판 위를 이동하고 +/-는 현재 표적을 향해 확대한다.
   useEffect(() => {
@@ -68,6 +74,8 @@ export function CameraRig({
         camera.position.x += step[0];
         camera.position.z += step[1];
         desired.current.copy(orbit.target);
+        desiredPosition.current.copy(camera.position);
+        moving.current = false;
       } else if (event.key === "+" || event.key === "=" || event.key === "-") {
         event.preventDefault();
         const factor = event.key === "-" ? 1.12 : 0.89;
@@ -75,6 +83,8 @@ export function CameraRig({
           .sub(orbit.target)
           .multiplyScalar(factor)
           .add(orbit.target);
+        desiredPosition.current.copy(camera.position);
+        moving.current = false;
       } else return;
       orbit.update();
     };
@@ -86,21 +96,24 @@ export function CameraRig({
   useFrame((_, delta) => {
     const orbit = controls.current;
     if (!orbit || reducedMotion || !moving.current) return;
-    previous.current.copy(orbit.target);
-    orbit.target.lerp(desired.current, Math.min(1, delta * 4));
-    camera.position.add(orbit.target).sub(previous.current);
+    const step = Math.min(1, delta * 4);
+    orbit.target.lerp(desired.current, step);
+    camera.position.lerp(desiredPosition.current, step);
     orbit.update();
-    if (orbit.target.distanceToSquared(desired.current) < 0.01)
+    if (
+      orbit.target.distanceToSquared(desired.current) < 0.01 &&
+      camera.position.distanceToSquared(desiredPosition.current) < 0.01
+    )
       moving.current = false;
   });
 
   return (
     <OrbitControls
       ref={controls}
-      target={[center[0], 0, center[1]]}
+      target={[center[0], 0, center[1] + 90]}
       minPolarAngle={0.35}
       maxPolarAngle={1.25}
-      minDistance={focus ? 50 : 350}
+      minDistance={50}
       maxDistance={1800}
       enableDamping={!reducedMotion}
       dampingFactor={0.09}
