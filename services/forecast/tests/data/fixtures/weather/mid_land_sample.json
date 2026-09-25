@@ -1,0 +1,39 @@
+{
+  "response": {
+    "header": {
+      "resultCode": "0",
+      "resultMsg": "NORMAL_SERVICE"
+    },
+    "body": {
+      "dataType": "JSON",
+      "items": {
+        "item": [
+          {
+            "regId": "11B00000",
+            "rnSt5Am": "30",
+            "rnSt5Pm": "30",
+            "rnSt6Am": "30",
+            "rnSt6Pm": "30",
+            "rnSt7Am": "30",
+            "rnSt7Pm": "30",
+            "rnSt8": "30",
+            "rnSt9": "30",
+            "rnSt10": "30",
+            "wf5Am": "구름많음",
+            "wf5Pm": "구름많음",
+            "wf6Am": "구름많음",
+            "wf6Pm": "구름많음",
+            "wf7Am": "구름많음",
+            "wf7Pm": "구름많음",
+            "wf8": "구름많음",
+            "wf9": "구름많음",
+            "wf10": "구름많음"
+          }
+        ]
+      },
+      "pageNo": 1,
+      "numOfRows": 1000,
+      "totalCount": 1
+    }
+  }
+}

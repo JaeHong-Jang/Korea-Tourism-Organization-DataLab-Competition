@@ -1,0 +1,28 @@
+{
+  "response": {
+    "header": {
+      "resultCode": "0",
+      "resultMsg": "NORMAL_SERVICE"
+    },
+    "body": {
+      "dataType": "JSON",
+      "items": {
+        "item": [
+          {
+            "baseDate": "20210628",
+            "baseTime": "0500",
+            "category": "TMP",
+            "fcstDate": "20210628",
+            "fcstTime": "0600",
+            "fcstValue": "21",
+            "nx": "55",
+            "ny": "127"
+          }
+        ]
+      },
+      "pageNo": 1,
+      "numOfRows": 1000,
+      "totalCount": 1
+    }
+  }
+}
