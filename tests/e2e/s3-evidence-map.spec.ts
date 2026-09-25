@@ -18,6 +18,13 @@ const screens = resolve(process.cwd(), "../../reports/figures/screens");
 test("S3 근거 지도에서 카드와 표로 이동한다", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   let reportRequests = 0;
+  const otherApi: string[] = [];
+  // 근거 지도는 스냅샷 하나로 그린다 — 예보서 말고 다른 API(knowledge 근거·세션)를 부르지 않는다.
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path.startsWith("/api/") && path !== "/api/forecasts/f-yeongjong-2025")
+      otherApi.push(path);
+  });
   await page.route("**/api/forecasts/f-yeongjong-2025", (route) => {
     reportRequests++;
     return route.fulfill({
@@ -57,5 +64,7 @@ test("S3 근거 지도에서 카드와 표로 이동한다", async ({ page }) =>
     page.getByRole("button", { name: /\[3\].*인원 무관 대상/ }).first(),
   ).toBeVisible();
   await page.screenshot({ path: resolve(screens, "T-413-table.png") });
-  expect(reportRequests).toBe(1);
+  // 개발 모드 StrictMode는 같은 요청을 두 번 보낼 수 있어 횟수 대신 다른 API가 없음을 본다.
+  expect(reportRequests).toBeGreaterThan(0);
+  expect(otherApi).toEqual([]);
 });

@@ -5,6 +5,8 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // MapLibre 6 워커(ES 모듈)를 빌드에서도 모듈 워커로 묶는다
+  worker: { format: "es" },
   server: {
     proxy: {
       "/api": "http://127.0.0.1:8787",

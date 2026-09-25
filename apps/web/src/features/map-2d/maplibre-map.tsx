@@ -9,6 +9,7 @@ import {
   Popup,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "./maplibre-worker";
 import { Protocol } from "pmtiles";
 import { useEffect, useRef, useState } from "react";
 import { largestClearRect } from "../../components/scene/camera-framing";
