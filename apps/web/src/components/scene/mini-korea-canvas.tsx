@@ -190,7 +190,10 @@ export function MiniKoreaCanvas({
             quality={activeQuality}
             reducedMotion={reducedMotion}
             center={center}
-            span={Math.max(width, depth)}
+            width={width}
+            depth={depth}
+            surfaceY={9.5}
+            night={sky === "night"}
           />
         )}
         {t435 &&

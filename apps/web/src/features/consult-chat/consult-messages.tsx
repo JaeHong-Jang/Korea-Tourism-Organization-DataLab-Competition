@@ -2,6 +2,7 @@
 import type { Evidence } from "@crowdcast/contracts/types";
 import { Fragment } from "react";
 import { Link } from "react-router-dom";
+import { renderClaim } from "../../lib/render-claim";
 import type { ClaimReply } from "./use-consult-session";
 
 // 뒤이어 온 근거 이벤트는 이미 보이는 문장의 링크 제목을 채운다.
@@ -26,7 +27,7 @@ export function ConsultMessages({
         )
         .map(({ claim }) => (
           <div className="consult-bubble consult-bubble--reply" key={claim.id}>
-            <p className="consult-bubble__text">{claim.rendered}</p>
+            <p className="consult-bubble__text">{renderClaim(claim)}</p>
             <div className="consult-bubble__evidence">
               {claim.evidenceIds.map((id) => (
                 <Link

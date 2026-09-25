@@ -1,8 +1,10 @@
 // 실제 한강 타일 한 장과 경계·경로·시간 규칙을 네트워크 없이 검증한다.
 import { readFileSync } from "node:fs";
+import { Color } from "three";
 import { describe, expect, it } from "vitest";
 import { motionSeconds } from "../motion/rail-lines";
 import { vehicleCap } from "./actors";
+import { displayBuildingHeight, mergeBuildingTiles } from "./building-tiles";
 import { buildingCap } from "./buildings";
 import { clipPolygon, clipSegment } from "./clip";
 import { tileAt, tilePointToVenue } from "./coordinates";
@@ -124,6 +126,26 @@ describe("행사장 연출", () => {
 
   it("품질 상한과 모션 감소 정지를 지킨다", () => {
     expect(buildingCap("low")).toBeLessThan(buildingCap("high"));
+    expect(buildingCap("high")).toBeLessThanOrEqual(700);
+    expect(
+      displayBuildingHeight(
+        { x: 0, z: 0, width: 8, depth: 8, height: 19, minHeight: 0 },
+        "medium",
+      ),
+    ).toBe(16);
+    const merged = mergeBuildingTiles(
+      [
+        { x: 0, z: 0, width: 8, depth: 8, height: 19, minHeight: 0 },
+        { x: 20, z: 0, width: 8, depth: 8, height: 21, minHeight: 0 },
+      ],
+      "high",
+      true,
+      { wall: new Color(), window: new Color() },
+    );
+    expect(merged).toHaveLength(1);
+    merged.forEach((tile) => {
+      tile.dispose();
+    });
     expect(vehicleCap("high")).toBeLessThanOrEqual(500);
     expect(dollCount(100000, 19, [{ hour: 19, share: 1 }], "low").count).toBe(
       125,

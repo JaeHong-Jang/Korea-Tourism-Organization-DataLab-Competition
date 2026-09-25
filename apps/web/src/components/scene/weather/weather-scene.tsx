@@ -11,27 +11,47 @@ export function WeatherScene({
   quality,
   reducedMotion,
   center,
-  span,
+  width,
+  depth,
+  surfaceY,
+  night,
 }: {
   weather: Weather | null;
   quality: SceneQuality;
   reducedMotion: boolean;
   center: [number, number];
-  span: number;
+  width: number;
+  depth: number;
+  surfaceY: number;
+  night: boolean;
 }) {
   const effects = weatherEffects(weather, quality);
   return (
     <>
       {effects.fog && (
-        <fogExp2 attach="fog" args={[sceneColor("sky-day"), 0.75 / span]} />
+        <fogExp2
+          attach="fog"
+          args={[sceneColor("sky-day"), 0.75 / Math.max(width, depth)]}
+        />
       )}
-      {effects.cloudy && <CloudDeck center={center} span={span} />}
+      {effects.cloudy && (
+        <CloudDeck
+          center={center}
+          width={width}
+          depth={depth}
+          surfaceY={surfaceY}
+        />
+      )}
       {effects.precipitation && (
         <Precipitation
           kind={effects.precipitation}
           count={effects.particles}
           reducedMotion={reducedMotion}
-          span={Math.min(span, 300)}
+          center={center}
+          width={width}
+          depth={depth}
+          surfaceY={surfaceY}
+          night={night}
         />
       )}
     </>

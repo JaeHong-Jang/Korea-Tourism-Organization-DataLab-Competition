@@ -15,7 +15,7 @@ import { weatherEffects } from "../weather/state";
 import { WeatherScene } from "../weather/weather-scene";
 import { WetHighlights } from "../weather/wet-highlights";
 import { VenueActors } from "./actors";
-import { VenueBuildings } from "./buildings";
+import { buildingCap, VenueBuildings } from "./buildings";
 import { VenueDolls } from "./dolls";
 import { VenueGround } from "./ground";
 import { VenueNightLights } from "./night-lights";
@@ -138,7 +138,10 @@ export function VenueScene({
           quality={activeQuality}
           reducedMotion={reducedMotion}
           center={[0, 0]}
-          span={2400}
+          width={2400}
+          depth={2400}
+          surfaceY={0}
+          night={sky === "night"}
         />
       )}
       {t435 && effects.wetGround && (
@@ -190,14 +193,7 @@ export function VenueScene({
         onRegressFactor={setRegress}
       />
       <VenueSignal
-        buildings={Math.min(
-          tiles.buildings.length,
-          activeQuality === "high"
-            ? 2400
-            : activeQuality === "medium"
-              ? 1200
-              : 600,
-        )}
+        buildings={Math.min(tiles.buildings.length, buildingCap(activeQuality))}
         cars={cars}
         sky={sky}
         measure={measure}

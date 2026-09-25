@@ -1,80 +1,105 @@
-// 카메라를 따라가는 인스턴스 입자로 비와 눈을 장면 안에서만 그린다.
-import { useFrame, useThree } from "@react-three/fiber";
+// 비와 눈을 카메라 절두체와 판 경계가 겹치는 곳에만 그린다.
+import { useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
+  AdditiveBlending,
   BoxGeometry,
+  Frustum,
   IcosahedronGeometry,
   type InstancedMesh,
+  Matrix4,
   MeshBasicMaterial,
   Object3D,
+  Vector3,
 } from "three";
 import { sceneColor } from "../quality";
 
-// 결정적 위치와 시간 위상은 눈·비를 다시 열어도 같은 장면을 만든다.
+// 결정적 분포를 판 안쪽으로 제한한다.
+export function precipitationPoint(
+  index: number,
+  width: number,
+  depth: number,
+): [number, number] {
+  const x = (((index * 0.754877666) % 1) - 0.5) * Math.max(0, width - 4);
+  const z = (((index * 0.569840291) % 1) - 0.5) * Math.max(0, depth - 4);
+  return [x, z];
+}
+
+// 결정적 위치를 재사용해 매 프레임에는 행렬 값만 고친다.
 export function Precipitation({
   kind,
   count,
   reducedMotion,
-  span,
+  center,
+  width,
+  depth,
+  surfaceY,
+  night,
 }: {
   kind: "rain" | "snow";
   count: number;
   reducedMotion: boolean;
-  span: number;
+  center: [number, number];
+  width: number;
+  depth: number;
+  surfaceY: number;
+  night: boolean;
 }) {
   const mesh = useRef<InstancedMesh>(null);
-  const camera = useThree((state) => state.camera);
   const object = useMemo(() => new Object3D(), []);
+  const projection = useMemo(() => new Matrix4(), []);
+  const frustum = useMemo(() => new Frustum(), []);
+  const point = useMemo(() => new Vector3(), []);
+  const positions = useMemo(
+    () =>
+      Array.from({ length: count }, (_, index) =>
+        precipitationPoint(index, width, depth),
+      ),
+    [count, width, depth],
+  );
   const geometry = useMemo(
     () =>
       kind === "rain"
-        ? new BoxGeometry(0.2, 3, 0.2)
-        : new IcosahedronGeometry(0.8, 0),
+        ? new BoxGeometry(0.09, 1.4, 0.09)
+        : new IcosahedronGeometry(0.38, 0),
     [kind],
   );
   const material = useMemo(
     () =>
       new MeshBasicMaterial({
-        color: sceneColor("model-canvas"),
+        color: sceneColor(night ? "window-glow" : "model-canvas"),
         transparent: true,
-        opacity: kind === "rain" ? 0.58 : 0.88,
+        opacity: kind === "rain" ? (night ? 0.38 : 0.48) : 0.72,
+        blending: night ? AdditiveBlending : undefined,
         depthWrite: false,
       }),
-    [kind],
+    [kind, night],
   );
-  const phases = useMemo(
-    () =>
-      Float32Array.from(
-        { length: count },
-        (_, index) => (index * 0.61803398875) % 1,
-      ),
-    [count],
-  );
-  const width = span;
 
-  // 같은 Object3D를 재사용해 매 프레임 입자 행렬에 할당을 만들지 않는다.
-  useFrame(({ clock }) => {
+  // 비·눈의 높이 위상만 움직이고 판과 시야의 교집합 밖은 숨긴다.
+  useFrame(({ camera, clock }) => {
     if (!mesh.current) return;
+    projection.multiplyMatrices(
+      camera.projectionMatrix,
+      camera.matrixWorldInverse,
+    );
+    frustum.setFromProjectionMatrix(projection);
     const time = reducedMotion ? 0 : clock.elapsedTime;
     for (let index = 0; index < count; index++) {
-      const phase = phases[index];
-      const x = (((index * 0.754877666) % 1) - 0.5) * width;
-      const z = (((index * 0.569840291) % 1) - 0.5) * width;
-      const fall = (phase - time * (kind === "rain" ? 0.52 : 0.09)) % 1;
-      object.position.set(
-        camera.position.x + x,
-        camera.position.y + (((fall + 1) % 1) - 0.5) * width * 0.65,
-        camera.position.z + z,
-      );
-      object.rotation.set(0, 0, 0);
-      object.scale.setScalar(1);
+      const [x, z] = positions[index];
+      const phase = (index * 0.61803398875) % 1;
+      const fall =
+        (((phase - time * (kind === "rain" ? 0.36 : 0.08)) % 1) + 1) % 1;
+      point.set(center[0] + x, surfaceY + 2 + fall * 24, center[1] + z);
+      object.position.copy(point);
+      object.scale.setScalar(frustum.containsPoint(point) ? 1 : 0);
       object.updateMatrix();
       mesh.current.setMatrixAt(index, object.matrix);
     }
     mesh.current.instanceMatrix.needsUpdate = true;
   });
 
-  // 첫 프레임 전에도 정지 입자가 보이도록 행렬을 한 번 채운다.
+  // 첫 프레임과 언마운트 때 인스턴스 버퍼와 재료를 안전하게 관리한다.
   useLayoutEffect(() => {
     if (mesh.current) mesh.current.frustumCulled = false;
   }, []);
