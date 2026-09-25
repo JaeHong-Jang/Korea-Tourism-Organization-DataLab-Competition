@@ -15,16 +15,19 @@ import {
   dollHeadGeometry,
 } from "./doll-geometry";
 import { buildDollLayout } from "./doll-layout";
+import { addWalkPhases, enableWalking, walkingTime } from "./walk-material";
 
 // 같은 행렬을 두 표현에 올리고 카메라가 가까워질 때만 상세 형상으로 바꾼다.
 export function DollCrowd({
   placed,
   counts,
   center,
+  reducedMotion = false,
 }: {
   placed: PlacedFestival[];
   counts: number[];
   center: [number, number];
+  reducedMotion?: boolean;
 }) {
   const bodyRef = useRef<InstancedMesh>(null);
   const headRef = useRef<InstancedMesh>(null);
@@ -36,19 +39,33 @@ export function DollCrowd({
     () => buildDollLayout(placed, counts),
     [placed, counts],
   );
-  const bodyGeometry = useMemo(dollBodyGeometry, []);
-  const headGeometry = useMemo(dollHeadGeometry, []);
-  const farGeometry = useMemo(dollFarGeometry, []);
+  const bodyGeometry = useMemo(() => {
+    const geometry = dollBodyGeometry();
+    addWalkPhases(geometry, instances.length);
+    return geometry;
+  }, [instances.length]);
+  const headGeometry = useMemo(() => {
+    const geometry = dollHeadGeometry();
+    addWalkPhases(geometry, instances.length);
+    return geometry;
+  }, [instances.length]);
+  const farGeometry = useMemo(() => {
+    const geometry = dollFarGeometry();
+    addWalkPhases(geometry, instances.length);
+    return geometry;
+  }, [instances.length]);
   const bodyMaterial = useMemo(
-    () => new MeshBasicMaterial({ side: DoubleSide }),
+    () => enableWalking(new MeshBasicMaterial({ side: DoubleSide })),
     [],
   );
   const headMaterial = useMemo(
     () =>
-      new MeshBasicMaterial({
-        color: sceneColor("doll-head"),
-        side: DoubleSide,
-      }),
+      enableWalking(
+        new MeshBasicMaterial({
+          color: sceneColor("doll-head"),
+          side: DoubleSide,
+        }),
+      ),
     [],
   );
   const colors = useMemo(
@@ -61,7 +78,9 @@ export function DollCrowd({
   );
 
   // 카메라 거리의 단일 경계에서만 React 상태를 바꿔 프레임 중 할당을 피한다.
-  useFrame(() => {
+  useFrame(({ clock }) => {
+    walkingTime(bodyMaterial, clock.elapsedTime, reducedMotion);
+    walkingTime(headMaterial, clock.elapsedTime, reducedMotion);
     const near =
       Math.hypot(
         camera.position.x - center[0],

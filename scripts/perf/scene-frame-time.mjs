@@ -96,11 +96,21 @@ async function runDictation(host) {
 }
 
 // 품질과 DPR을 높음·1로 고정한 R3F 프레임과 Chromium 메모리를 읽는다.
-async function measure(browser, ollamaHost, fixture = false, festivalCount = 0, motion = true, venue = null) {
+async function measure(browser, ollamaHost, fixture = false, festivalCount = 0, motion = true, venue = null, scenario = null) {
   const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   const page = await context.newPage();
   if (festivalCount === 211) await page.route("**/api/festivals", (route) => route.fulfill({ json: festivalScale211() }));
-  await page.goto(venue ? `http://127.0.0.1:5185/dev/venue/${venue}?sceneMeasure=1&venueHour=19` : `http://127.0.0.1:5185/?theme=day&at=2025-10-18T13:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}${motion ? "" : "&sceneMotion=0"}`);
+  // T-435 비교에서는 실제 API 지연을 빼고 두 날씨를 같은 계약 응답으로 고정한다.
+  if (scenario?.weather) await page.route("**/api/weather?**", (route) => {
+    const query = new URL(route.request().url()).searchParams;
+    return route.fulfill({ json: {
+      lat: Number(query.get("lat")), lng: Number(query.get("lng")), at: query.get("at"),
+      sky: "흐림", pty: scenario.weather, temp: scenario.weather === "눈" ? 2 : 18,
+      pop: 80, source: venue ? "단기예보" : "초단기실황", fetchedAt: query.get("at"),
+    } });
+  });
+  const condition = scenario?.enabled === false ? "&sceneT435=0" : "";
+  await page.goto(venue ? `http://127.0.0.1:5185/dev/venue/${venue}?sceneMeasure=1&venueHour=${scenario?.hour ?? 19}${condition}` : `http://127.0.0.1:5185/?theme=${scenario?.theme ?? "day"}&at=2025-10-18T${scenario?.theme === "night" ? "21" : "13"}:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}${motion ? "" : "&sceneMotion=0"}${condition}`);
   await page.waitForFunction((isVenue) => isVenue ? document.documentElement.dataset.venueReady === "true" : document.documentElement.dataset.sceneReady === "true", venue !== null, { timeout: 45000 });
   if (festivalCount || fixture) await page.waitForFunction((expected) => document.querySelectorAll(".festival-list__items li").length === expected, festivalCount || 30, { timeout: 30000 });
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -163,7 +173,25 @@ const server = await startServer();
 let browser;
 try {
   browser = await chromium.launch({ args: ["--enable-gpu", "--use-gl=egl", "--enable-precise-memory-info", "--enable-unsafe-swiftshader"] });
-  if (process.argv.includes("--t434")) {
+  if (process.argv.includes("--t435")) {
+    // T-433b 정적 장면과 비·밤 및 눈·낮 장면을 같은 브라우저 실행에서 비교한다.
+    const baseline = await measure(browser, null, true, 0, false, null, { enabled: false });
+    const rainNight = await measure(browser, null, true, 0, false, null, { weather: "비", theme: "night" });
+    const venueSnow = await measure(browser, null, false, 0, true, "yeongjong", { weather: "눈", hour: 12 });
+    const ratio = Math.max(rainNight.p95_ms, venueSnow.p95_ms) / baseline.p95_ms;
+    const report = { task: "T-435", baseline_t433b: baseline, rain_night: rainNight, venue_snow: venueSnow, p95_ratio: ratio, passed: ratio <= 1.3 };
+    mkdirSync(output, { recursive: true });
+    writeFileSync(join(output, "T-435-frame-time.json"), `${JSON.stringify(report, null, 2)}\n`);
+    writeFileSync(join(output, "T-435-frame-time.md"), [
+      "# T-435 날씨·연출 프레임 시간", "",
+      "| 장면 | p50 | p95 | draw calls |", "| --- | ---: | ---: | ---: |",
+      ...Object.entries({ "같은 실행 T-433b": baseline, "비·밤 S1": rainNight, "눈·낮 디오라마": venueSnow })
+        .map(([name, result]) => `| ${name} | ${result.p50_ms?.toFixed(2)}ms | ${result.p95_ms?.toFixed(2)}ms | ${result.draw_calls} |`),
+      `- 최고 p95 비율 ${ratio.toFixed(2)}배 / 합격선 1.3배: ${report.passed ? "통과" : "미달"}`, "",
+    ].join("\n"));
+    console.log(`T-435 최고 p95 비율 ${ratio.toFixed(2)}배: ${report.passed ? "통과" : "미달"}`);
+    if (!report.passed) process.exitCode = 1;
+  } else if (process.argv.includes("--t434")) {
     // 전국 기준과 세 행사장을 같은 Chromium 실행에서 재고 가장 느린 장면으로 판정한다.
     const baseline = await measure(browser, null, true, 0, false);
     const venues = {};

@@ -11,12 +11,14 @@ import { OpsPage } from "../pages/ops-page";
 import { PlanPage } from "../pages/plan-page";
 import { SharedPage } from "../pages/shared-page";
 import { ValidationPage } from "../pages/validation-page";
+import { HeaderWeatherChip } from "./header-weather-chip";
 
 // 이후 각 레인이 페이지 내부만 구현할 수 있게 라우트를 고정한다.
 export function App() {
   return (
     <div className="app-shell">
       <SiteHeader />
+      <HeaderWeatherChip />
       <main id="main-content">
         <Routes>
           <Route path="/" element={<MiniKoreaPage />} />

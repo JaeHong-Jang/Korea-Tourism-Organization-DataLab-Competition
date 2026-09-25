@@ -1,119 +1,28 @@
 // 실제 타일 지형과 행사 모형·인형·차량을 행사일 해 아래 한 장면으로 합친다.
-import type { FestivalSummary } from "@crowdcast/contracts/types";
+import type { FestivalSummary, Weather } from "@crowdcast/contracts/types";
 import { OrbitControls } from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { useEffect, useMemo, useState } from "react";
+import { Fireworks } from "../effects/fireworks";
+import { SceneEffects } from "../effects/scene-effects";
 import { FestivalModels } from "../festival-models";
 import type { PlacedFestival } from "../festival-models/placement";
-import {
-  qualityDpr,
-  type SceneQuality,
-  sceneColor,
-  shiftQuality,
-} from "../quality";
-import { FrameSignal, QualityControl } from "../scene-diagnostics";
+import { qualityDpr, type SceneQuality, shiftQuality } from "../quality";
+import { QualityControl } from "../scene-diagnostics";
+import { weatherEffects } from "../weather/state";
+import { WeatherScene } from "../weather/weather-scene";
+import { WetHighlights } from "../weather/wet-highlights";
 import { VenueActors } from "./actors";
 import { VenueBuildings } from "./buildings";
 import { VenueDolls } from "./dolls";
 import { VenueGround } from "./ground";
+import { VenueNightLights } from "./night-lights";
 import { graphRoutes, routeGraph } from "./routes";
 import type { VenueEvent, VenueKey } from "./sites";
 import type { VenueTiles } from "./tiles";
 import { dollCount, venueDate, venueSun } from "./time";
-
-// 프레임 진단은 견본 e2e와 성능 측정에서만 DOM에 숫자를 기록한다.
-function VenueSignal({
-  buildings,
-  cars,
-  sky,
-  measure,
-}: {
-  buildings: number;
-  cars: number;
-  sky: string;
-  measure: boolean;
-}) {
-  const ready = useRef(false);
-  const gl = useThree((state) => state.gl);
-  useEffect(() => {
-    document.documentElement.dataset.venueBuildings = String(buildings);
-    document.documentElement.dataset.venueCars = String(cars);
-    document.documentElement.dataset.venueSky = sky;
-    window.__crowdcastVenueRender = () => ({
-      calls: gl.info.render.calls,
-      triangles: gl.info.render.triangles,
-    });
-    return () => {
-      delete document.documentElement.dataset.venueBuildings;
-      delete document.documentElement.dataset.venueCars;
-      delete document.documentElement.dataset.venueSky;
-      delete window.__crowdcastVenueRender;
-    };
-  }, [buildings, cars, sky, gl]);
-  useEffect(
-    () => () => {
-      delete document.documentElement.dataset.venueReady;
-    },
-    [],
-  );
-  useFrame(() => {
-    if (!ready.current) {
-      document.documentElement.dataset.venueReady = "true";
-      ready.current = true;
-    }
-  });
-  return <FrameSignal measure={measure} diagnostic={measure} />;
-}
-
-// 해 고도와 방위를 행사 장소에 적용하고 밤에 창문과 역 조명을 켠다.
-function VenueLight({
-  event,
-  hour,
-  quality,
-}: {
-  event: VenueEvent;
-  hour: number;
-  quality: SceneQuality;
-}) {
-  const sun = venueSun(event, hour);
-  const night = sun.sky === "night";
-  const dusk = sun.sky === "dusk";
-  const elevation = night ? 0.2 : Math.max(0.1, Math.sin(sun.altitude));
-  const position: [number, number, number] = [
-    -Math.sin(sun.azimuth) * 900,
-    elevation * 900,
-    Math.cos(sun.azimuth) * 900,
-  ];
-  return (
-    <>
-      <color attach="background" args={[sceneColor(`sky-${sun.sky}`)]} />
-      <hemisphereLight
-        color={sceneColor(`sky-${sun.sky}`)}
-        groundColor={sceneColor("board-side")}
-        intensity={night ? 0.65 : dusk ? 1 : 1.3}
-      />
-      <directionalLight
-        position={position}
-        color={dusk ? sceneColor("window-glow") : sceneColor("sky-day")}
-        intensity={night ? 0.5 : dusk ? 1.2 : 1.7}
-        castShadow={quality === "high" && !night}
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-1250}
-        shadow-camera-right={1250}
-        shadow-camera-top={1250}
-        shadow-camera-bottom={-1250}
-      />
-      {night && (
-        <pointLight
-          position={[0, 35, 0]}
-          color={sceneColor("window-glow")}
-          intensity={2000}
-          distance={260}
-        />
-      )}
-    </>
-  );
-}
+import { VenueLight } from "./venue-light";
+import { VenueSignal } from "./venue-signal";
 
 // 견본과 예보서 모두 같은 행사 유형 모형과 등급 깃발을 사용한다.
 function festivalPlacement(
@@ -152,6 +61,7 @@ export function VenueScene({
   level,
   hour,
   reducedMotion,
+  weather,
 }: {
   tiles: VenueTiles;
   event: VenueEvent;
@@ -161,11 +71,13 @@ export function VenueScene({
   level: number;
   hour: number;
   reducedMotion: boolean;
+  weather: Weather | null;
 }) {
   const [quality, setQuality] = useState<SceneQuality>("high");
   const [regress, setRegress] = useState(1);
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const measure = params.get("sceneMeasure") === "1";
+  const t435 = params.get("sceneT435") !== "0";
   const fixed =
     measure ||
     params.get("sceneQuality") === "high" ||
@@ -187,6 +99,7 @@ export function VenueScene({
   );
   const dolls = dollCount(peak, hour, profile, activeQuality);
   const sky = venueSun(event, hour).sky;
+  const effects = weatherEffects(weather, activeQuality);
   const eventHour = Number(event.startsAt.slice(11, 13));
   const cars = roads.length
     ? activeQuality === "high"
@@ -218,7 +131,19 @@ export function VenueScene({
       frameloop="always"
     >
       <VenueLight event={event} hour={hour} quality={activeQuality} />
-      <VenueGround tiles={tiles} />
+      <VenueGround tiles={tiles} wet={effects.wetGround} />
+      {t435 && (
+        <WeatherScene
+          weather={weather}
+          quality={activeQuality}
+          reducedMotion={reducedMotion}
+          center={[0, 0]}
+          span={2400}
+        />
+      )}
+      {t435 && effects.wetGround && (
+        <WetHighlights center={[0, 0]} y={1.35} radius={180} />
+      )}
       <VenueBuildings
         buildings={tiles.buildings}
         stations={tiles.stations}
@@ -228,7 +153,19 @@ export function VenueScene({
       <group position={[0, -7, 0]}>
         <FestivalModels placed={placed} />
       </group>
-      <VenueDolls count={dolls.count} />
+      <VenueDolls
+        count={dolls.count}
+        reducedMotion={reducedMotion || !t435}
+        rain={effects.precipitation === "rain"}
+      />
+      {t435 && sky !== "day" && <VenueNightLights quality={activeQuality} />}
+      {t435 && sky === "night" && event.type.includes("불꽃") && (
+        <Fireworks
+          position={[0, 55, 0]}
+          quality={activeQuality}
+          reducedMotion={reducedMotion}
+        />
+      )}
       <VenueActors
         roadRoutes={roads}
         railRoutes={rails}
@@ -267,13 +204,7 @@ export function VenueScene({
         sky={sky}
         measure={measure}
       />
+      {t435 && <SceneEffects quality={activeQuality} />}
     </Canvas>
   );
-}
-
-declare global {
-  interface Window {
-    __crowdcastVenueRender?: () => { calls: number; triangles: number };
-    __crowdcastVenueVehicle?: () => number[];
-  }
 }
