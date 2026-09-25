@@ -2,7 +2,9 @@
 import type {
   AgentStatus,
   AgentStep,
+  Claim,
   EventDraft,
+  Evidence,
   ForecastCard,
   GateReport,
   SseEvent,
@@ -10,10 +12,16 @@ import type {
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { createTeamSession } from "../../lib/api-client";
-import { postTeamMessage } from "../../lib/team-stream/stream";
 import type { Ask } from "./answers";
+import { postConsultMessage } from "./post-consult-message";
 
 export type Message = { text: string; answer?: object };
+export type ClaimReply = { messageId: string; claim: Claim };
+export type ForecastSnapshot = {
+  card: ForecastCard;
+  draft: EventDraft | null;
+  request: string;
+};
 
 // 검증된 스트림 이벤트만 상담 상태에 반영한다.
 export function useConsultSession() {
@@ -25,11 +33,13 @@ export function useConsultSession() {
   const [statuses, setStatuses] = useState<AgentStatus[]>([]);
   const [stepCounts, setStepCounts] = useState<Record<string, number>>({});
   const [gates, setGates] = useState<GateReport[]>([]);
-  const [card, setCard] = useState<ForecastCard | null>(null);
+  const [forecasts, setForecasts] = useState<ForecastSnapshot[]>([]);
   const [forecastId, setForecastId] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<
-    { id: string; label: string }[]
+    { id: string; label: string; href?: string }[]
   >([]);
+  const [claims, setClaims] = useState<ClaimReply[]>([]);
+  const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [error, setError] = useState("");
   const [replyError, setReplyError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -37,9 +47,11 @@ export function useConsultSession() {
   const session = useRef<string | null>(null);
   const controller = useRef<AbortController | null>(null);
   const lastMessage = useRef<Message | null>(null);
+  const requestId = useRef<string | null>(null);
+  const draftRef = useRef<EventDraft | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
 
-  // 문장·근거 이벤트는 다음 화면 task에서 발행 검증과 함께 표시한다.
+  // 검증된 이벤트의 카드·문장·근거를 요청 순서에 맞게 누적한다.
   const handleEvent = (event: SseEvent) => {
     switch (event.event) {
       case "agent_status":
@@ -54,7 +66,8 @@ export function useConsultSession() {
         break;
       }
       case "event_card":
-        setDraft(event.data as EventDraft);
+        draftRef.current = event.data as EventDraft;
+        setDraft(draftRef.current);
         setSummary("행사 정보를 확인했어요.");
         break;
       case "ask":
@@ -71,17 +84,49 @@ export function useConsultSession() {
         );
         break;
       }
-      case "forecast":
-        setCard(event.data as ForecastCard);
+      case "forecast": {
+        const next = event.data as ForecastCard;
+        setForecasts((current) =>
+          current.some((item) => item.card.id === next.id)
+            ? current
+            : [
+                ...current,
+                {
+                  card: next,
+                  draft: draftRef.current,
+                  request: lastMessage.current?.text ?? "",
+                },
+              ],
+        );
         setSummary("숫자 예보를 확인했어요.");
+        break;
+      }
+      case "claim":
+        setClaims((current) => [
+          ...current,
+          { messageId: requestId.current ?? "", claim: event.data as Claim },
+        ]);
+        break;
+      case "evidence":
+        setEvidence((current) => [
+          ...current,
+          ...(event.data as { items: Evidence[] }).items,
+        ]);
         break;
       case "suggest":
         setSuggestions(
-          (event.data as { actions: { id: string; label: string }[] }).actions,
+          (
+            event.data as {
+              actions: { id: string; label: string; href?: string }[];
+            }
+          ).actions,
         );
         break;
       case "done":
-        setForecastId((event.data as { forecastId: string | null }).forecastId);
+        setForecastId(
+          (current) =>
+            (event.data as { forecastId: string | null }).forecastId ?? current,
+        );
         break;
       case "error":
         setError((event.data as { message: string }).message);
@@ -99,20 +144,27 @@ export function useConsultSession() {
     setError("");
     setReplyError("");
     const messageId = crypto.randomUUID();
+    requestId.current = messageId;
     setSent((current) => [...current, { id: messageId, text: message.text }]);
     setText("");
     setSummary("예보팀이 확인하고 있어요.");
     try {
       session.current ??= await createTeamSession(abort.signal);
       let firstEvent = true;
-      await postTeamMessage(session.current, message, abort.signal, (event) => {
-        // 응답이 실제로 시작할 때 이전 질문을 지워 400이면 입력을 보존한다.
-        if (firstEvent) {
-          setAsks([]);
-          firstEvent = false;
-        }
-        handleEvent(event);
-      });
+      await postConsultMessage(
+        session.current,
+        message,
+        abort.signal,
+        forecastId,
+        (event) => {
+          // 응답이 실제로 시작할 때 이전 질문을 지워 400이면 입력을 보존한다.
+          if (firstEvent) {
+            setAsks([]);
+            firstEvent = false;
+          }
+          handleEvent(event);
+        },
+      );
     } catch (cause) {
       if (abort.signal.aborted) setSummary("상담을 중단했어요.");
       else if (
@@ -123,8 +175,6 @@ export function useConsultSession() {
         setSent((current) => current.filter((item) => item.id !== messageId));
         setReplyError("답을 확인해 주세요. 고쳐서 다시 보내 주세요.");
       } else {
-        setCard(null);
-        setForecastId(null);
         setError(
           cause instanceof Error ? cause.message : "상담 연결을 확인해 주세요.",
         );
@@ -143,9 +193,11 @@ export function useConsultSession() {
     statuses,
     stepCounts,
     gates,
-    card,
+    forecasts,
     forecastId,
     suggestions,
+    claims,
+    evidence,
     error,
     replyError,
     busy,
