@@ -47,3 +47,9 @@ id:as-temporary-holiday-excluded a cc:Assumption ; dcterms:title "임시공휴�
     cc:value "0"^^xsd:double ; cc:rangeLow "0"^^xsd:double ; cc:rangeHigh "1"^^xsd:double ;
     cc:basis "docs/plan/06 §3 달력 피처 — 값은 달력에 반영한 임시공휴일 일수, 범위는 행사 기간에 실제로 있을 수 있는 일수" ;
     cc:note "예보 기준일(D-14)에 지정돼 있던 임시공휴일도 달력 피처에 넣지 않는다 — 연휴 길이가 실제보다 짧게 잡힐 수 있다" .
+
+# D-7 재예보의 날씨 보정 배수 — 과거 강수일 표본으로 추정한 계수가 없으면 1.0(보정 없음, 06 §5 T-208).
+id:as-weather-adjustment a cc:Assumption ; dcterms:title "날씨 보정 배수" ; cc:estimated true ;
+    cc:value "1.0"^^xsd:double ; cc:rangeLow "0.5"^^xsd:double ; cc:rangeHigh "1.2"^^xsd:double ;
+    cc:basis "docs/plan/06 §5 D-7 재예보 — 유형 × 강수 등급별 계수(configs/weather_adjustment.yaml), 표본이 설정 하한보다 적으면 1.0" ;
+    cc:note "과거 강수일 자료(기상청 ASOS 일자료)를 아직 보유하지 않아 기본은 보정 없음(1.0). 계수를 쓸 때는 예보 근거에 계수·표본 수·추정 기간을 함께 싣는다" .

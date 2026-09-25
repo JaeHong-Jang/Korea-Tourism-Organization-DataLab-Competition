@@ -95,6 +95,11 @@ export function ReportToolbar({ report }: { report: ForecastReport }) {
       >
         계획 초안 docx 받기
       </Button>
+      {report.publishedAt && (
+        <a href={`/f/${encodeURIComponent(report.forecastId)}/plan`}>
+          계획 초안 편집하기
+        </a>
+      )}
       <span role="status">
         {reason ||
           copy ||

@@ -18,6 +18,12 @@
       "kind": "법정",
       "clauseId": "law-disaster-act-enf-73-9"
     },
+    "rule-check-capacity": {
+      "title": "동시 최대 수용인원 산정(사람이 다니는 면적 × 면적당 인원 상한)과 초과 시 입장 제한·대기 장소",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.134 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
     "rule-check-fire": {
       "title": "화기 관리",
       "kind": "자체",
@@ -28,6 +34,18 @@
       "kind": "자체",
       "clauseId": null
     },
+    "rule-check-org-chart": {
+      "title": "안전관리 조직도·종합상황실·분야별 책임자 지정",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.137 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
+    "rule-check-org-hq": {
+      "title": "재난안전대책본부 구성과 유관기관 협조 체계",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.142 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
     "rule-check-rain-shelter": {
       "title": "우천 시 대피 공간",
       "kind": "자체",
@@ -37,6 +55,24 @@
       "title": "단일 출입구",
       "kind": "자체",
       "clauseId": null
+    },
+    "rule-check-staff-distinct": {
+      "title": "행사진행요원과 안전관리요원 구분 표기",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.26 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
+    "rule-check-staff-focus": {
+      "title": "요원 규모는 지자체·경찰·소방과 협의, 출입구·주차장·차량 이동로·종료 시 출구 집중 배치",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.46·p.49~50 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
+    "rule-check-staff-plan": {
+      "title": "안전관리요원 배치도와 구역별 인원·임무·책임자, 비상연락망 마련",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.26·p.138 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
     },
     "rule-check-stage-crowd": {
       "title": "무대 앞 밀집",

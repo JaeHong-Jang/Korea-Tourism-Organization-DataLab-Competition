@@ -3,6 +3,7 @@ import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { useEffect, useMemo, useState } from "react";
 import { getFestivals } from "../api-client";
 import type { FestivalFilters } from "../selection-store";
+import { useSelectionStore } from "../selection-store";
 import { getDemoTime } from "../theme/sun-state";
 import { filterFestivals, koreanDay } from "./filter-festivals";
 import { sceneFestivals } from "./scene-fixture";
@@ -70,6 +71,10 @@ export function useUpcomingFestivals(filters: FestivalFilters) {
     () => (fixture ? sceneFestivals(today) : data),
     [fixture, today, data],
   );
+  // 기간 브러시는 현재 기간 밖의 주도 선택할 수 있도록 원본 목록을 공유한다.
+  useEffect(() => {
+    useSelectionStore.getState().setTimelineFestivals(all);
+  }, [all]);
   const festivals = useMemo(
     () => filterFestivals(all, filters, today),
     [all, filters, today],

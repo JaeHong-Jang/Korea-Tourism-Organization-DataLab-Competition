@@ -7,6 +7,7 @@ from crowdcast.api.routes import (
     baseline,
     geocode,
     health,
+    insights,
     model_card,
     ops,
     predict,
@@ -14,6 +15,7 @@ from crowdcast.api.routes import (
     regions,
     similar,
     upcoming,
+    weather,
     whatif,
 )
 from crowdcast.config import get_settings
@@ -33,3 +35,5 @@ app.include_router(upcoming.router)
 app.include_router(regions.router)
 app.include_router(preregistration.router)
 app.include_router(ops.router)
+app.include_router(weather.router)
+app.include_router(insights.router)

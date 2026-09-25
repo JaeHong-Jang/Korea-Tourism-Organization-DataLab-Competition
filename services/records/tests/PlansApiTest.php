@@ -152,18 +152,17 @@ final class PlansApiTest extends TestCase
     {
         $initial = $this->body($this->request('POST', '/v1/plans', $this->json($this->plan())));
         $changed = $initial;
-        $changed['title'] = '영종 불꽃축제 안전관리계획 수정본';
-        $changed['sections'][1]['title'] = '조직과 연락망';
+        $changed['sections'][1]['notes'] = '조직 담당자 확인 필요';
         $first = $this->request('PUT', '/v1/plans/' . $initial['id'], $this->json($changed));
         self::assertSame(200, $first->getStatusCode(), (string) $first->getBody());
         $afterFirst = $this->body($first);
         $changedAgain = $afterFirst;
-        $changedAgain['sections'][1]['title'] = '조직 및 역할';
+        $changedAgain['sections'][1]['notes'] = '조직 담당자에게 연락 완료';
         self::assertSame(200, $this->request('PUT', '/v1/plans/' . $initial['id'], $this->json($changedAgain))->getStatusCode());
 
         // 첫 편집 화면에서 보낸 오래된 수정은 최신 문서와 이력을 바꾸지 못한다
         $stale = $initial;
-        $stale['title'] = '오래된 편집본';
+        $stale['sections'][1]['notes'] = '오래된 메모';
         self::assertSame(409, $this->request('PUT', '/v1/plans/' . $initial['id'], $this->json($stale))->getStatusCode());
 
         // 각 수정 직전의 계획 전체를 읽을 수 있어 이전 본문을 복구할 수 있다
@@ -174,12 +173,44 @@ final class PlansApiTest extends TestCase
         self::assertSame(422, $this->request('PUT', '/v1/plans/plan-other', $this->json($changedAgain))->getStatusCode());
     }
 
+    // 작성자 메모만 저장하며 발행 필드 변경은 첫 차이를 담아 거부한다
+    public function testPutChangesOnlyNotesAndExportsThem(): void
+    {
+        $initial = $this->body($this->request('POST', '/v1/plans', $this->json($this->plan())));
+        $changed = $initial;
+        $changed['sections'][0]['notes'] = "현장 출입구 확인\n담당자 통화";
+        $saved = $this->request('PUT', '/v1/plans/' . $initial['id'], $this->json($changed));
+        self::assertSame(200, $saved->getStatusCode(), (string) $saved->getBody());
+        self::assertSame($changed['sections'][0]['notes'], $this->body($saved)['sections'][0]['notes']);
+        $document = $this->part((string) $this->request('GET', '/v1/plans/' . $initial['id'] . '/export.docx')->getBody(), 'word/document.xml');
+        self::assertStringContainsString('작성자 메모(근거 없음)', $document);
+        self::assertStringContainsString('담당자 통화', $document);
+
+        // 저장된 시각을 갱신한 뒤 본문과 잠금 숫자 변경을 각각 거부한다
+        $savedPlan = $this->body($saved);
+        foreach (['body', 'lockedFields', 'title', 'body-type'] as $field) {
+            $invalid = $savedPlan;
+            if ($field === 'title') {
+                $invalid['title'] = '다른 제목';
+            } elseif ($field === 'body-type') {
+                $invalid['sections'][0]['body'] = [];
+            } elseif ($field === 'body') {
+                $invalid['sections'][0]['body'] .= ' 수정';
+            } else {
+                $invalid['sections'][0]['lockedFields'] = [];
+            }
+            $response = $this->request('PUT', '/v1/plans/' . $initial['id'], $this->json($invalid));
+            self::assertSame(422, $response->getStatusCode(), (string) $response->getBody());
+            self::assertStringContainsString($field === 'body-type' ? 'body' : $field, $this->body($response)['message']);
+        }
+    }
+
     // 수정 이력은 UPDATE·DELETE·REPLACE와 rowid 교체에서도 원문을 유지한다
     public function testRevisionCannotBeChangedBySql(): void
     {
         $initial = $this->body($this->request('POST', '/v1/plans', $this->json($this->plan())));
         $changed = $initial;
-        $changed['title'] = '수정본';
+        $changed['sections'][1]['notes'] = '담당 부서 확인';
         self::assertSame(200, $this->request('PUT', '/v1/plans/' . $initial['id'], $this->json($changed))->getStatusCode());
         $original = $this->db->query('SELECT rowid, * FROM plan_revisions')->fetch(PDO::FETCH_ASSOC);
         self::assertIsArray($original);

@@ -1,0 +1,43 @@
+{
+  "eventId": "e-yeongjong-2025",
+  "forecastId": "f-yeongjong-2025-r2",
+  "previousForecastId": "f-yeongjong-2025",
+  "publishedAt": "2025-10-11T09:00:00+09:00",
+  "level": {
+    "before": 4,
+    "after": 4
+  },
+  "peakConcurrent": {
+    "before": {
+      "p10": 15000,
+      "p50": 21000,
+      "p90": 30000
+    },
+    "after": {
+      "p10": 13000,
+      "p50": 18500,
+      "p90": 27000
+    },
+    "unit": "명"
+  },
+  "dailyMean": {
+    "before": {
+      "p10": 40000,
+      "p50": 52000,
+      "p90": 70000
+    },
+    "after": {
+      "p10": 36000,
+      "p50": 46000,
+      "p90": 63000
+    },
+    "unit": "명/일"
+  },
+  "weather": {
+    "applied": true,
+    "evidenceIds": [
+      "ev-weather-yeongjong-2025-r2"
+    ],
+    "note": "단기예보 강수확률 70% — 불꽃 유형 보정계수 적용"
+  }
+}

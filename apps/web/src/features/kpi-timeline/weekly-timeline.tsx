@@ -1,8 +1,14 @@
 // 등급별 주간 행사 건수를 공통 축의 누적 막대와 표로 보여 준다.
 import type { FestivalSummary } from "@crowdcast/contracts/types";
-import { koreanDay } from "../../lib/festivals/filter-festivals";
+import {
+  filterFestivals,
+  koreanDay,
+} from "../../lib/festivals/filter-festivals";
+import { festivalsClock } from "../../lib/festivals/use-upcoming-festivals";
+import { useSelectionStore } from "../../lib/selection-store";
+import { WeeklyBrush } from "./weekly-brush";
 
-type Week = { start: string; counts: number[]; total: number };
+export type Week = { start: string; counts: number[]; total: number };
 
 // 한국 날짜의 월요일을 주간 묶음 키로 사용한다.
 export function weeklyCounts(festivals: FestivalSummary[]): Week[] {
@@ -28,11 +34,21 @@ export function WeeklyTimeline({
   festivals: FestivalSummary[];
   status?: string;
 }) {
+  const source = useSelectionStore((state) => state.timelineFestivals);
+  const filters = useSelectionStore((state) => state.filters);
   if (status === "loading")
     return <p role="status">주간 흐름을 불러오는 중이에요.</p>;
   if (status === "error")
     return <p role="alert">주간 흐름을 확인할 수 없어요.</p>;
   const weeks = weeklyCounts(festivals);
+  const today = festivalsClock(window.location.search);
+  const brushWeeks = weeklyCounts(
+    filterFestivals(
+      source.length ? source : festivals,
+      { ...filters, period: null },
+      today,
+    ),
+  );
   const max = Math.max(1, ...weeks.map((week) => week.total));
   const labels = ["소규모", "수립 권고", "수립 대상", "대규모"];
   return (
@@ -49,6 +65,7 @@ export function WeeklyTimeline({
           </span>
         ))}
       </div>
+      <WeeklyBrush weeks={brushWeeks} today={today} />
       {weeks.length === 0 ? (
         <p>표시할 주간 행사가 없어요.</p>
       ) : (

@@ -42,8 +42,14 @@ def test_probability_boundaries(
     assert ("rule-legal-1000" in result.judgment["ruleIds"]) == (legal_count >= 50)
     assert ("rule-internal-50pct" in result.judgment["ruleIds"]) == (legal_count >= 50)
     assert ("rule-internal-5000" in result.judgment["ruleIds"]) == (level == 4)
+    # 매뉴얼 계획 점검을 제외한 기존 체크리스트의 문구·순서·근거는 그대로여야 한다.
+    previous_checks = [
+        item
+        for item in result.judgment["checklist"]
+        if "level_min" not in rule_settings()["rules"][item["ruleId"]].get("conditions", {})
+    ]
     if level == 4:
-        assert result.judgment["checklist"] == [
+        assert previous_checks == [
             {
                 "id": "ck-traffic",
                 "text": "교통·주차 통제 계획과 경찰·소방 사전 협의",
@@ -52,7 +58,7 @@ def test_probability_boundaries(
             }
         ]
     else:
-        assert result.judgment["checklist"] == []
+        assert previous_checks == []
 
 
 # 문턱 바로 아래와 같은 값은 각각 미달·도달로 집계하고 확률은 반올림하지 않는다.

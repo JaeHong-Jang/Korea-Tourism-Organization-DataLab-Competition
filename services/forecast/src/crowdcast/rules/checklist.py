@@ -1,4 +1,4 @@
-"""행사 정보와 날씨에서 규모 외 위험 항목 및 켜진 이유의 근거를 만든다."""
+"""행사 정보·날씨·판정 등급에서 점검 항목과 켜진 이유의 근거를 만든다."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -17,7 +17,10 @@ class ChecklistResult:
 
 # 계약 필드 이름을 유지하며 실제로 맞은 조건과 입력값을 기록한다.
 def _matched_conditions(
-    conditions: Mapping[str, Any], event: Mapping[str, Any], weather: Mapping[str, Any] | None
+    conditions: Mapping[str, Any],
+    event: Mapping[str, Any],
+    weather: Mapping[str, Any] | None,
+    level: int | None,
 ) -> dict[str, Any]:
     # 출처만 있고 강수 정보가 모두 없으면 알려진 건조한 날씨로 취급하지 않는다.
     matched: dict[str, Any] = {}
@@ -27,7 +30,10 @@ def _matched_conditions(
 
     # 행사 조건과 유효 시각을 각각 검사하고 맞은 입력은 근거에 그대로 남긴다.
     for field, expected in conditions.items():
-        if field == "hazards":
+        if field == "level_min":
+            if level is not None and level >= expected:
+                matched["level"] = level
+        elif field == "hazards":
             hazards = sorted(set(event["hazards"]) & set(expected))
             if hazards:
                 matched[field] = hazards
@@ -53,13 +59,15 @@ def _matched_conditions(
     return matched
 
 
-# 규모와 무관하게 해당하는 모든 점검을 켜고 항목별 규칙 근거를 연결한다.
-def build(event: Mapping[str, Any], weather: Mapping[str, Any] | None = None) -> ChecklistResult:
+# 등급 조건은 판정에서 받은 값으로만 검사하고 기존 행사·날씨 점검은 그대로 유지한다.
+def build(
+    event: Mapping[str, Any], weather: Mapping[str, Any] | None = None, *, level: int | None = None
+) -> ChecklistResult:
     checklist, evidence = [], []
     for rule_id, rule in rule_settings()["rules"].items():
         if "conditions" not in rule:
             continue
-        matched = _matched_conditions(rule["conditions"], event, weather)
+        matched = _matched_conditions(rule["conditions"], event, weather, level)
         if not matched:
             continue
 

@@ -18,7 +18,7 @@ final class MigrationTest extends TestCase
         $db = Db::connect('sqlite::memory:');
         Migrator::run($db);
         Migrator::run($db);
-        self::assertSame(7, (int) $db->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn());
+        self::assertSame(8, (int) $db->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn());
 
         // 계약 픽스처를 원문 JSON으로 저장해 스냅샷 열의 용도를 확인한다
         $event = (string) file_get_contents(dirname(__DIR__, 3) . '/packages/contracts/fixtures/event/valid-yeongjong.json');
@@ -113,7 +113,7 @@ final class MigrationTest extends TestCase
         self::assertIsArray($original);
         Migrator::run($db);
         Migrator::run($db);
-        self::assertSame(7, (int) $db->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn());
+        self::assertSame(8, (int) $db->query('SELECT COUNT(*) FROM schema_migrations')->fetchColumn());
         self::assertSame(3, (int) $db->query("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE 'plan_revisions_no_%'")->fetchColumn());
 
         // 재실행 후에도 세 종류의 변경 SQL이 이전 본문을 손상시키지 않아야 한다

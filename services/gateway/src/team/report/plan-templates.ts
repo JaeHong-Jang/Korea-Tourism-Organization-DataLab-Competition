@@ -28,7 +28,17 @@ const sections: [SectionKey, string, string?][] = [
   ["non-crowd-risks", "인파 외 위험 요소"],
 ];
 
-// 복합 권고는 동선·대피 → 교통·주차 → 의료·화장실 순서로 한 곳에만 둔다
+// 매뉴얼 권고는 문장에 섞인 교통·출구 키워드보다 근거 규칙의 담당 섹션을 우선한다
+const ruleSections: Record<string, SectionKey> = {
+  "rule-check-staff-plan": "staffing",
+  "rule-check-staff-distinct": "staffing",
+  "rule-check-staff-focus": "staffing",
+  "rule-check-org-chart": "organization",
+  "rule-check-org-hq": "organization",
+  "rule-check-capacity": "routes-evacuation",
+};
+
+// 권고 근거가 가리키는 체크리스트 규칙을 먼저 찾고 나머지는 기존 키워드로 배치한다
 function sectionFor(claim: Claim, report: ForecastReport): SectionKey | null {
   if (claim.claimType === "수치") return "crowd-timeline";
   if (claim.claimType === "판정") {
@@ -43,6 +53,14 @@ function sectionFor(claim: Claim, report: ForecastReport): SectionKey | null {
   if (claim.text === REVIEW_NOTICE || claim.text === MODEL_NOTICE)
     return "overview";
   if (claim.claimType !== "권고") return null;
+  for (const item of report.forecast.judgment.checklist) {
+    const section = ruleSections[item.ruleId];
+    if (
+      section &&
+      item.evidenceIds.some((id) => claim.evidenceIds.includes(id))
+    )
+      return section;
+  }
   if (/대피|동선/.test(claim.text)) return "routes-evacuation";
   if (/교통|주차/.test(claim.text)) return "traffic-parking";
   if (/의료|화장실/.test(claim.text)) return "medical-toilets";
@@ -102,7 +120,7 @@ export function planSections(report: ForecastReport): Plan["sections"] {
   return sections.map(([key, title, pending]) => {
     const claims = assigned.get(key) ?? [];
     const reason =
-      pending ??
+      (claims.length ? undefined : pending) ??
       (key === "crowd-timeline" &&
       (!report.forecast.peakHours || !report.forecast.hourlyProfile.length)
         ? "시간대별 분포 자료가 없어 담당자가 채워야 해요"
