@@ -177,8 +177,11 @@ it.each(
   expect(console.error).toHaveBeenCalled();
 });
 
-// 병렬 상류 요청의 마감은 합산 시간이 아니라 각각 5초다
-it.each(["ops", "spec"])("%s 병렬 요청은 5초에 끝난다", async (kind) => {
+// 병렬 상류 요청의 마감은 합산 시간이 아니라 각각이다 — 운영 상태는 최신성 첫 계산 때문에 15초, 명세는 5초
+it.each([
+  ["ops", 15_000],
+  ["spec", 5_000],
+] as const)("%s 병렬 요청은 %ims에 끝난다", async (kind, budget) => {
   vi.useFakeTimers();
   const fetcher = vi.fn<typeof fetch>(() => new Promise(() => {}));
   const pending =
@@ -187,7 +190,7 @@ it.each(["ops", "spec"])("%s 병렬 요청은 5초에 끝난다", async (kind) =
           "/status",
         )
       : createApp(proxyConfig, fetcher).request("/api/insights/datalab-spec");
-  await vi.advanceTimersByTimeAsync(5_000);
+  await vi.advanceTimersByTimeAsync(budget);
   expect((await pending).status).toBe(503);
   expect(fetcher).toHaveBeenCalledTimes(kind === "ops" ? 3 : 2);
   expect(fetcher.mock.calls.every(([, init]) => init?.signal?.aborted)).toBe(
