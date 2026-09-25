@@ -27,7 +27,8 @@ export function SceneLegend({
     <div className="scene-stage__note scene-legend">
       {city && (
         <div className="scene-legend__note">
-          동네 3D · 건물·도로·공원 = OpenStreetMap · 사람·차·기차·나무 자리 = 연출(보이게 키움)
+          동네 3D · 건물·도로·공원 = OpenStreetMap · 사람·차·기차·나무 자리 =
+          연출(보이게 키움)
         </div>
       )}
       <div className="scene-legend__scale">
@@ -41,12 +42,21 @@ export function SceneLegend({
             <i className="scene-legend__tile scene-legend__tile--empty" />
             예보 없음
           </span>
-          {tileRanges(maximum).map(({ step, min, max }) => (
-            <span className="scene-legend__data-row" key={step}>
-              <i className={`scene-legend__tile scene-legend__tile--${step}`} />
-              {min.toLocaleString("ko-KR")}~{max.toLocaleString("ko-KR")}명
+          {/* 예보가 하나도 없으면 0~1명 같은 빈 구간 대신 없다고만 알린다. */}
+          {maximum > 0 ? (
+            tileRanges(maximum).map(({ step, min, max }) => (
+              <span className="scene-legend__data-row" key={step}>
+                <i
+                  className={`scene-legend__tile scene-legend__tile--${step}`}
+                />
+                {min.toLocaleString("ko-KR")}~{max.toLocaleString("ko-KR")}명
+              </span>
+            ))
+          ) : (
+            <span className="scene-legend__note">
+              표시할 예보가 아직 없어요
             </span>
-          ))}
+          )}
           <span className="scene-legend__note">
             지금 필터 기준으로 다시 나눔
           </span>

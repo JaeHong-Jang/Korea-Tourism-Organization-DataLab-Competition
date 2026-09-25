@@ -1,6 +1,6 @@
 // 게이트웨이 행사 목록을 계약 검증 후 필터링하고 실패 상태를 분리한다.
 import type { FestivalSummary } from "@crowdcast/contracts/types";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getFestivals } from "../api-client";
 import type { FestivalFilters } from "../selection-store";
 import { useSelectionStore } from "../selection-store";
@@ -37,11 +37,15 @@ export function useUpcomingFestivals(filters: FestivalFilters) {
   const [data, setData] = useState<FestivalSummary[]>([]);
   const [status, setStatus] = useState<Status>(fixture ? "ready" : "loading");
   const [receivedAt, setReceivedAt] = useState<string | null>(null);
+  // 서버가 잠깐 재시작해도 스스로 복구하도록 연결 실패는 4초 간격으로 15번까지 다시 받는다.
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((value) => value + 1), []);
 
   // 원본 요청은 필터 변경마다 반복하지 않고 동일한 검증 목록을 화면에서 좁힌다.
   useEffect(() => {
     if (fixture) return;
     const controller = new AbortController();
+    let timer = 0;
     getFestivals(controller.signal)
       .then((festivals) => {
         if (!festivals.every(hasReadableDates)) {
@@ -56,15 +60,21 @@ export function useUpcomingFestivals(filters: FestivalFilters) {
       .catch((reason: unknown) => {
         if (controller.signal.aborted) return;
         setData([]);
-        setStatus(
+        const contract =
           reason instanceof Error &&
-            reason.message.startsWith("API 계약 불일치")
-            ? "error"
-            : "unavailable",
-        );
+          reason.message.startsWith("API 계약 불일치");
+        setStatus(contract ? "error" : "unavailable");
+        if (!contract && attempt < 15)
+          timer = window.setTimeout(
+            () => setAttempt((value) => value + 1),
+            4000,
+          );
       });
-    return () => controller.abort();
-  }, [fixture]);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [fixture, attempt]);
 
   // 견본은 화면 진단에서만 만들고 실제 API 실패 화면에는 섞지 않는다.
   const all = useMemo(
@@ -83,6 +93,7 @@ export function useUpcomingFestivals(filters: FestivalFilters) {
     festivals,
     all,
     status,
+    retry,
     receivedAt: fixture ? clock : receivedAt,
     fixture,
     today,
