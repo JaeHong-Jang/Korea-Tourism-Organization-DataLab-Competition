@@ -217,9 +217,9 @@
    "evidence": "2차 PASS — 체크리스트 5/5, develop b71906d"
   },
   "T-306": {
-   "status": "running",
-   "updated": "2026-09-25T03:44:26.277Z",
-   "note": "1회차 재디스패치 — 새 문장 없이 스냅샷 발행 문장을 섹션에 배치, suggest href(계약 dccd7ff), plans 프록시"
+   "status": "done",
+   "updated": "2026-09-25T04:10:57.488Z",
+   "evidence": "develop 76596bc · gateway 898 · sol PASS · docx 실사용"
   },
   "T-307": {
    "status": "done",
@@ -1190,6 +1190,12 @@
    "id": "T-207",
    "status": "done",
    "evidence": "develop 442924c · forecast 1294 · sol PASS · 선정 20건(등록은 9/29 오케스트레이터)"
+  },
+  {
+   "at": "2026-09-25T04:10:57.488Z",
+   "id": "T-306",
+   "status": "done",
+   "evidence": "develop 76596bc · gateway 898 · sol PASS · docx 실사용"
   }
  ]
 }

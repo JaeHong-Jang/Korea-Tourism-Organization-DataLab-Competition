@@ -58,3 +58,4 @@
 | T-304b | gpt-6-astra | done | 0 | G1 ✓ · G2 gateway 862(깨끗한 상태 862)·build·lint·✓ gateway · 실사용 게이트 A 앞 세 팀원 단계 · G3 sol PASS | sol PASS | 48e697e·b71906d | — |
 | R-05 | 검토(gpt-6-sol) | done | — | 1차 FAIL(High 카드 판정 문구·LLM 3회 → 계약·계획 문구 정정, Med 게이트 A 검증팀 → T-304b, Med 초안·what-if → 예정 표시) · 2차 PASS(체크리스트 5개 모두) | gpt-6-sol PASS | b71906d | — |
 | T-207 | gpt-6-astra | done | 0·0·0 | G1 ✓(공개 경로 RULES.md만) · G2 forecast 1253→1288→1294(깨끗한 상태 1294)·ruff · 실제 선정 211→155→20(층화 8+보충 12, 전부 4등급)·바이트 동일 · G3 sol FAIL(High 취소 필드 → 판정: 채점 상태 파일, 준비본 해시, POST마다 날짜, Med 원장 집합)→FAIL(High 행사 스냅샷 id 대조)→PASS | sol PASS | 1eea97e·442924c | RULES.md dc1aa556e4bd… |
+| T-306 | gpt-6-astra + 오케스트레이터(BLOCKED → 새 문장 없이 배치 결정·계약 dccd7ff·fca11c2) | done | 0·0 | G1 ✓ · G2 gateway 895→898(깨끗한 상태 898)·build·lint·✓ gateway · 실사용 9섹션 중 2 채움·7 검토 필요, 두 번째 요청 같은 계획, 게이트웨이 경유 docx 200·워터마크·요약 표·각주 7 · G3 sol PASS(Low href ':' → 계약 fca11c2) | sol PASS | 32129fa·76596bc | — |
