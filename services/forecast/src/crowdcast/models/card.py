@@ -201,3 +201,23 @@ def backtest_markdown(
         before_id, before_points = comparison
         lines += feature_comparison(before_id, before_points, points)
     return "\n".join(lines)
+
+
+# 사용 모델 카드는 그대로 두고 도전 모델 카드에만 비교 결과 한 줄을 기록한다.
+def challenger_card(base: dict[str, Any], comparison: dict[str, Any]) -> dict[str, Any]:
+    score = next(row for row in comparison["metrics"] if row["model"] == "pymc" and row["year"] is None)
+    version = comparison["modelVersion"]
+    return {
+        **base, "id": f"mr-{version}", "modelVersion": version, "backtestRunId": None,
+        "features": ["type (부분 풀링)", "sido (부분 풀링)", *comparison["features"]],
+        "notes": (
+            f"도전 모델 비교: {comparison['baseRunId']}/challenger/comparison.md; "
+            f"PyMC {comparison['config']['method']}·log 일평균 Student-t; "
+            f"MdAPE {score['mdape']:.6f}%, 80% 포함 {score['covered']}/{score['coverageN']}. "
+            "같은 롤링 폴드·라벨, 마지막 성공 학습 분할만 저장. "
+            "가중 우도·평균장 ADVI 또는 짧은 NUTS 사후분포는 수렴 미확인. "
+            f"{CONDITIONAL_DEFINITION}. 외부 관측은 D-14 공개일 검사, 유형·시도는 행사 입력이다. "
+            "실버는 시군구 순증 보조 정답이며 환산 판정은 추정 산식 기반이다. "
+            "도전 모델은 승격 대상 아님·기본 예보 미연결·합의 근거 기본 끔. 참고용 — 담당자 검토 필수"
+        ),
+    }
