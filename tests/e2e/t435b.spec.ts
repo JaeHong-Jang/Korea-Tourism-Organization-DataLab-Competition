@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { SseEvent } from "@crowdcast/contracts/types";
 import { expect, test } from "@playwright/test";
+import { sendConsultDescription } from "./fixtures/start-consult";
 
 const screens = resolve(process.cwd(), "../../reports/figures/screens");
 const at = encodeURIComponent("2025-10-18T21:00:00+09:00");
@@ -111,11 +112,10 @@ test("상담 말풍선의 자리표시자 숫자", async ({ page }) => {
 	);
 	await page.setViewportSize({ width: 1366, height: 768 });
 	await page.goto("/consult?theme=day");
-	await page
-		.getByRole("button", {
-			name: /영종 씨사이드파크에서 인천 중구가 여는 불꽃축제/,
-		})
-		.click();
+	await sendConsultDescription(
+		page,
+		"10월 18일 19시부터 21시까지 영종 씨사이드파크에서 인천 중구가 여는 불꽃축제를 해요",
+	);
 	await expect(
 		page
 			.locator(".consult-bubble__text")

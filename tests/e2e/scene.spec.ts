@@ -138,10 +138,15 @@ test("WebGL2 대체 안내", async ({ page }) => {
   });
   await page.goto("http://127.0.0.1:5184/?sceneFixture=1");
   await expect(page.locator(".svg-korea-map")).toBeVisible();
-  await expect(page.locator("canvas")).toHaveCount(0);
   await expect(
-    page.locator(".festival-list__items").getByRole("listitem"),
-  ).not.toHaveCount(0);
+    page.locator(".scene-stage canvas, .assistant-whale canvas"),
+  ).toHaveCount(0);
+  await expect(
+    page.locator(".festival-list__items li"),
+  ).toHaveCount(30);
+  await expect(
+    page.locator(".festival-list__items li .festival-list__pick").first(),
+  ).toBeVisible();
 });
 
 // 진단 모드에서 품질 단계마다 실제 캔버스 픽셀 비율이 달라지는지 확인한다.
@@ -162,7 +167,7 @@ test("품질 단계의 DPR을 캔버스에 적용한다", async ({ page }) => {
       { timeout: 30_000 },
     );
     const actual = await page
-      .locator("canvas")
+      .locator(".scene-stage canvas")
       .evaluate((canvas) => canvas.width / canvas.clientWidth);
     expect(actual).toBeCloseTo(expected, 2);
   }
@@ -174,7 +179,7 @@ test("품질 단계의 DPR을 캔버스에 적용한다", async ({ page }) => {
   );
   await page.evaluate(() => window.__crowdcastRegress?.());
   await page.waitForFunction(() => {
-    const canvas = document.querySelector("canvas");
+    const canvas = document.querySelector(".scene-stage canvas");
     return canvas && canvas.width / canvas.clientWidth < 0.75;
   });
 });
@@ -189,7 +194,7 @@ test("낮은 품질 DPR이 재렌더 뒤에도 유지된다", async ({ page }) =
   );
   const ratio = () =>
     page
-      .locator("canvas")
+      .locator(".scene-stage canvas")
       .evaluate((canvas) => canvas.width / canvas.clientWidth);
   expect(await ratio()).toBeCloseTo(0.65, 2);
   await page.setViewportSize({ width: 1180, height: 720 });
@@ -240,7 +245,7 @@ test("자동 품질 강등은 후처리와 DPR을 줄인다", async ({ page }) =
 		"off",
 	);
 	const dpr = await page
-		.locator("canvas")
+		.locator(".scene-stage canvas")
 		.evaluate((canvas) => canvas.width / canvas.clientWidth);
 	expect(dpr).toBeLessThanOrEqual(0.66);
 });

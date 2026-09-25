@@ -1,6 +1,6 @@
 // 앱 위에 작은 저폴리 고래를 띄우고 정지 설정에서는 펫 그림을 쓴다.
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Group } from "three";
 import { PetAvatar } from "../../components/pets";
 
@@ -48,17 +48,117 @@ export function FloatingWhale({
   working,
   published,
   onClick,
+  panelOpen,
 }: {
   working: boolean;
   published: boolean;
   onClick: () => void;
+  panelOpen: boolean;
 }) {
   const target = useRef<HTMLButtonElement>(null);
   const [inView, setInView] = useState(true);
   const [tabVisible, setTabVisible] = useState(() => !document.hidden);
+  const [webglAvailable] = useState(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      return false;
+    try {
+      return Boolean(document.createElement("canvas").getContext("webgl2"));
+    } catch {
+      return false;
+    }
+  });
   const [reduced, setReduced] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
+  const [placement, setPlacement] = useState<{
+    right: number;
+    bottom: number;
+  } | null>(null);
+
+  // 본문 버튼이 바뀌면 가장자리부터 빈 자리를 찾아 고래가 조작을 가리지 않게 한다.
+  useLayoutEffect(() => {
+    const whale = target.current;
+    const main = document.querySelector("main");
+    if (!whale || !main || panelOpen) return;
+    let frame = 0;
+    const place = () => {
+      frame = 0;
+      const size = whale.getBoundingClientRect();
+      const gap = Number.parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--space-5",
+        ),
+      );
+      const controls = Array.from(
+        main.querySelectorAll<HTMLElement>(
+          "button, a, input, select, textarea, summary, [role='button']",
+        ),
+      )
+        .filter(
+          (control) =>
+            !control.matches(".scene-name-tag") &&
+            control.getClientRects().length > 0 &&
+            getComputedStyle(control).visibility !== "hidden",
+        )
+        .map((control) => control.getBoundingClientRect());
+      const overlaps = (left: number, top: number) =>
+        controls.some(
+          (box) =>
+            left < box.right + gap &&
+            left + size.width > box.left - gap &&
+            top < box.bottom + gap &&
+            top + size.height > box.top - gap,
+        );
+      let next = { right: gap, bottom: gap };
+      let found = false;
+      for (
+        let right = gap;
+        right + size.width <= window.innerWidth - gap && !found;
+        right += size.width + gap
+      ) {
+        const left = window.innerWidth - right - size.width;
+        for (
+          let bottom = gap;
+          bottom + size.height <= window.innerHeight - gap;
+          bottom += gap
+        ) {
+          if (!overlaps(left, window.innerHeight - bottom - size.height)) {
+            next = { right, bottom };
+            found = true;
+            break;
+          }
+        }
+      }
+      setPlacement((current) =>
+        current?.right === next.right && current.bottom === next.bottom
+          ? current
+          : next,
+      );
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(place);
+    };
+    const resize = new ResizeObserver(schedule);
+    resize.observe(main);
+    resize.observe(whale);
+    const changes = new MutationObserver(schedule);
+    changes.observe(main, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "hidden", "aria-expanded"],
+    });
+    window.addEventListener("resize", schedule);
+    window.addEventListener("scroll", schedule, true);
+    place();
+    return () => {
+      window.cancelAnimationFrame(frame);
+      resize.disconnect();
+      changes.disconnect();
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("scroll", schedule, true);
+    };
+  }, [panelOpen]);
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduced(media.matches);
@@ -84,9 +184,10 @@ export function FloatingWhale({
       className="assistant-whale"
       aria-label="고래 봇 대화 열기"
       onClick={onClick}
+      style={placement ?? undefined}
     >
       <span className="assistant-whale__figure">
-        {reduced ? (
+        {reduced || !webglAvailable ? (
           <PetAvatar
             agentId="lead"
             state={working ? "working" : published ? "done" : "idle"}

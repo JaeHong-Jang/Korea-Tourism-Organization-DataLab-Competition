@@ -26,13 +26,13 @@
 .assistant-whale__figure { display: block; width: 92px; height: 76px; }
 .assistant-whale__figure canvas { width: 100%; height: 100%; }
 .assistant-whale__status { padding: var(--space-1) var(--space-2); border-radius: var(--radius-input); background: var(--surface-sunken); font-size: var(--text-caption); }
-.assistant-shell--open .assistant-whale { right: calc(min(420px, 100vw) + var(--space-5)); }
+.assistant-shell--open .assistant-whale { display: none; }
 .consult-start { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: var(--space-4) 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
 .consult-start p { margin: 0; }
 .consult-page .consult-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .consult-page .event-summary { grid-column: 1 / -1; }
 .festival-list__consult { margin: var(--space-2); font-size: var(--text-caption); }
-@media (min-width: 1000px) { .app-shell:has(.assistant-shell--open) main { margin-right: 420px; } }
-@media (max-width: 999px) { .assistant-shell--open .assistant-whale { display: none; } }
-@media (max-width: 640px) { .assistant-panel { width: 100vw; border-left: 0; } .consult-page .consult-layout { grid-template-columns: 1fr; } .consult-page .event-summary { grid-column: auto; } }
+@media (min-width: 768px) { .app-shell:has(.assistant-shell--open) main { margin-right: 420px; } }
+@media (max-width: 999px) { .consult-page .consult-layout { grid-template-columns: 1fr; } .consult-page .event-summary { grid-column: auto; } }
+@media (max-width: 767px) { .assistant-panel { width: 100vw; border-left: 0; } }
 @media (prefers-reduced-motion: reduce) { .assistant-whale, .assistant-whale * { animation: none; transition: none; } }

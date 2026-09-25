@@ -11,6 +11,8 @@ type BoundsCache = {
   value: PanelBounds;
   listeners: Set<(bounds: PanelBounds) => void>;
   observer: ResizeObserver;
+  changes: MutationObserver;
+  cleanup: () => void;
 };
 
 const caches = new WeakMap<HTMLElement, BoundsCache>();
@@ -23,16 +25,25 @@ export function observePanelBounds(
   let cache = caches.get(stage);
   if (!cache) {
     const page = stage.closest(".scene-page");
-    const panels = page
+    const scenePanels = page
       ? Array.from(
           page.querySelectorAll<HTMLElement>(
             ".scene-left-rail, .scene-list, .scene-timeline, .scene-cta, .scene-overview",
           ),
         )
       : [];
+    const assistant = document.querySelector<HTMLElement>(".assistant-shell");
+    const observed = new Set<HTMLElement>();
     const listeners = new Set<(bounds: PanelBounds) => void>();
+
+    // 장면 밖에 포털처럼 붙는 고래와 상담 서랍도 같은 좌표계로 옮긴다.
     const measure = () => {
       const rect = stage.getBoundingClientRect();
+      const panels = [
+        ...scenePanels,
+        // 작은 떠다니는 고래는 넣지 않는다 — 자리를 옮길 때마다 장면 구도를 다시 잡아 카메라 조작을 덮는다
+        ...document.querySelectorAll<HTMLElement>(".assistant-panel"),
+      ].filter((panel) => panel.getClientRects().length > 0);
       const value = {
         width: rect.width,
         height: rect.height,
@@ -47,19 +58,48 @@ export function observePanelBounds(
         }),
       };
       const current = caches.get(stage);
+      // 값이 그대로면 알리지 않는다 — 스타일 변화마다 장면 구도를 다시 잡지 않게
+      if (current && JSON.stringify(current.value) === JSON.stringify(value))
+        return;
       if (current) current.value = value;
       for (const receive of listeners) receive(value);
     };
     const observer = new ResizeObserver(measure);
-    observer.observe(stage);
-    for (const panel of panels) observer.observe(panel);
+    const observe = () => {
+      for (const panel of [
+        stage,
+        ...scenePanels,
+        ...document.querySelectorAll<HTMLElement>(".assistant-panel"),
+      ]) {
+        if (!observed.has(panel)) {
+          observer.observe(panel);
+          observed.add(panel);
+        }
+      }
+      measure();
+    };
+    const changes = new MutationObserver(observe);
+    if (assistant)
+      changes.observe(assistant, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["class", "style"],
+      });
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
     cache = {
       value: { width: 0, height: 0, blockers: [] },
       listeners,
       observer,
+      changes,
+      cleanup: () => {
+        window.removeEventListener("resize", measure);
+        window.removeEventListener("scroll", measure, true);
+      },
     };
     caches.set(stage, cache);
-    measure();
+    observe();
   }
   cache.listeners.add(listener);
   listener(cache.value);
@@ -67,6 +107,8 @@ export function observePanelBounds(
     cache.listeners.delete(listener);
     if (cache.listeners.size === 0) {
       cache.observer.disconnect();
+      cache.changes.disconnect();
+      cache.cleanup();
       caches.delete(stage);
     }
   };

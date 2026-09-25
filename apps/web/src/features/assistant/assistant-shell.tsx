@@ -24,6 +24,7 @@ export function AssistantShell() {
         working={busy}
         published={Boolean(forecastId)}
         onClick={openPanel}
+        panelOpen={open}
       />
     </div>
   );
