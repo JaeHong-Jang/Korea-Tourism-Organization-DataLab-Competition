@@ -1,0 +1,35 @@
+/* 실제 지도의 땅·물·도로·건물 색을 낮과 밤의 지도 전용 토큰으로 둔다. */
+:root, [data-theme="day"] {
+  --map-earth: #e8eceb;
+  --map-green: #a8d6af;
+  --map-water: #9dd4eb;
+  --map-road: #ffffff;
+  --map-road-edge: #b8c4c8;
+  --map-rail: #647b85;
+  --map-building: #b5c3cc;
+  --map-sky: #c6e0ee;
+  --map-horizon: #e5eef1;
+  --map-fog: #e8eceb;
+  --map-car: #256abf;
+  --map-bus: #0b8b68;
+  --map-train: #d03b3b;
+}
+[data-theme="night"] {
+  --map-earth: #263339;
+  --map-green: #285e48;
+  --map-water: #214d6b;
+  --map-road: #697d87;
+  --map-road-edge: #364850;
+  --map-rail: #a5b9c0;
+  --map-building: #526776;
+  --map-sky: #152b43;
+  --map-horizon: #283b4b;
+  --map-fog: #263339;
+  --map-car: #86b6ef;
+  --map-bus: #31b88e;
+  --map-train: #ec835a;
+}
+/* 원 데이터와 연출의 차이를 확대 상태에서도 읽을 수 있게 유지한다. */
+.map-2d__honest { position: absolute; z-index: 1; bottom: var(--space-4); left: 50%; transform: translateX(-50%); margin: 0; padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink-2); font-size: var(--text-caption); white-space: nowrap; }
+.map-2d__popup img { width: 100%; max-width: 180px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-input); }
+@media (max-width: 640px) { .map-2d__honest { left: var(--space-4); bottom: var(--space-2); max-width: calc(100% - 2 * var(--space-4)); transform: none; white-space: normal; } }

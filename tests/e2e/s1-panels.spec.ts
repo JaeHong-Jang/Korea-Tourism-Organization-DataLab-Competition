@@ -78,7 +78,7 @@ async function clickVisibleRegion(
 
 // 필터를 합치면 목록과 KPI가 같은 2건을 보여 주고 카드 선택이 스토어에 남는다.
 test("필터·목록·KPI와 선택", async ({ page }) => {
-	await page.goto(`${origin}/?sceneFixture=1&theme=day&at=${clock}`);
+	await page.goto(`${origin}/?sceneFixture=1&view=miniature&theme=day&at=${clock}`);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
 	await expect(page.locator(".scene-kpis__tiles")).toContainText("30건");
 	await page
@@ -115,7 +115,7 @@ test("필터·목록·KPI와 선택", async ({ page }) => {
 // 브러시 드래그와 방향키는 같은 기간 필터를 바꾸고 판·목록·KPI에 함께 반영된다.
 test("주간 브러시 기간 선택과 키보드 핸들", async ({ page }) => {
 	await page.setViewportSize({ width: 1366, height: 768 });
-	await page.goto(`${origin}/?sceneFixture=1&forceSvg=1&theme=day&at=${clock}`);
+	await page.goto(`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
 	await page.getByText("주간 타임라인 펼치기").click();
 	const track = page.getByRole("button", { name: "주간 기간을 끌어 선택" });
@@ -156,7 +156,7 @@ test("주간 브러시 기간 선택과 키보드 핸들", async ({ page }) => {
 
 // 강제 SVG 보기에서도 지도 점과 카드가 동일한 행사·지역을 선택한다.
 test("SVG 대체 지도에서 선택과 필터", async ({ page }) => {
-	await page.goto(`${origin}/?sceneFixture=1&forceSvg=1&theme=day&at=${clock}`);
+	await page.goto(`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`);
 	await expect(
 		page.getByRole("group", {
 			name: "행사와 시군구를 선택할 수 있는 SVG 전국 지도",
@@ -203,7 +203,7 @@ test("SVG 대체 지도에서 선택과 필터", async ({ page }) => {
 // 접으면 목록 본문과 요약이 사라지고 패널 높이가 줄어든 채 새로고침 뒤에도 유지된다.
 test("행사 목록 접기와 기억", async ({ page }) => {
 	await page.setViewportSize({ width: 1366, height: 768 });
-	await page.goto(`${origin}/?sceneFixture=1&forceSvg=1&theme=day&at=${clock}`);
+	await page.goto(`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
 	const panel = page.locator('[data-feature="M1-F3"]');
 	const before = await panel.boundingBox();
@@ -226,7 +226,7 @@ test("행사 목록 접기와 기억", async ({ page }) => {
 for (const theme of ["day", "night"] as const) {
 	test(`${theme} 패널 화면`, async ({ page }) => {
 		await page.setViewportSize({ width: 1366, height: 768 });
-		await page.goto(`${origin}/?sceneFixture=1&theme=${theme}&at=${clock}`);
+		await page.goto(`${origin}/?sceneFixture=1&view=miniature&theme=${theme}&at=${clock}`);
 		await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
 		await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
 		await expect(page.locator("html")).toHaveAttribute(
@@ -241,7 +241,7 @@ for (const theme of ["day", "night"] as const) {
 
 test("모바일 패널 화면", async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
-	await page.goto(`${origin}/?sceneFixture=1&forceSvg=1&theme=day&at=${clock}`);
+	await page.goto(`${origin}/?sceneFixture=1&view=miniature&forceSvg=1&theme=day&at=${clock}`);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
 	const map = await page.locator(".scene-stage").boundingBox();
 	const filter = await page.locator(".scene-filter").boundingBox();

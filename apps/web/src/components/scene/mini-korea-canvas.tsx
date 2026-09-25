@@ -165,6 +165,7 @@ export function MiniKoreaCanvas({
         }}
         gl={{
           antialias: true,
+          alpha: false,
           powerPreference: "high-performance",
         }}
         onCreated={({ gl }) => gl.setClearColor(sceneColor("sky-day"))}

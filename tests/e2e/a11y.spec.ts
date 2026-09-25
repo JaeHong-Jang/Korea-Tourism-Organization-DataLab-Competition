@@ -177,7 +177,7 @@ async function routeSavedReport(page: Page) {
 // 3D·2D·간단 지도에서 보기 전환과 작은 화면 패널을 키보드로 사용할 수 있다.
 for (const [name, query] of [
 	["s1", "sceneFixture=1"],
-	["s1-2d", "sceneFixture=1&view=2d"],
+	["s1-2d", "sceneFixture=1&view=top"],
 	["s1-svg", "sceneFixture=1&forceSvg=1"],
 ] as const) {
 	test(`S1 ${name} 접근성과 폭`, async ({ page }) => {
@@ -185,16 +185,10 @@ for (const [name, query] of [
 		test.setTimeout(60_000);
 		await routeFixtures(page);
 		await page.goto(`/?${query}&theme=day`);
-		if (name === "s1")
-			await expect(page.locator("html")).toHaveAttribute(
-				"data-scene-ready",
-				"true",
-				{ timeout: 30_000 },
-			);
-		if (name === "s1-2d")
+		if (name !== "s1-svg")
 			await expect(page.locator(".map-2d__hint")).toBeVisible();
 		await expect(
-			page.getByRole("heading", { name: "미니 대한민국" }),
+			page.getByRole("heading", { name: "대한민국 행사 지도" }),
 		).toBeVisible();
 		await checkAxe(page);
 		await page.setViewportSize({ width: 390, height: 844 });

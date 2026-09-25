@@ -19,17 +19,17 @@ test("2D 전환과 로컬 타일, 행사 선택, 낮·밤", async ({ page }) => 
     }
   });
   page.on("response", (response) => {
-    if (response.url().includes("korea-z13.pmtiles")) {
+    if (response.url().includes("korea-z15.pmtiles")) {
       tileStatuses.push(response.status());
     }
   });
 
-  // 주소 선택 없이 3D에서 시작한 뒤 버튼으로 2D 지도에 들어간다.
+  // 기본 3D 지도의 카메라를 위에서 보기로 기울임 없이 전환한다.
   await page.goto(`/?sceneFixture=1&theme=day&at=${day}`);
-  await page.getByRole("button", { name: "2D 지도" }).click();
-  await expect(page).toHaveURL(/view=2d/);
+  await page.getByRole("button", { name: "위에서 보기" }).click();
+  await expect(page).toHaveURL(/view=top/);
   await expect(
-    page.getByRole("region", { name: "대한민국 행사 2D 지도" }),
+    page.getByRole("region", { name: "대한민국 행사 위에서 보기 지도" }),
   ).toBeVisible();
   await expect(page.locator(".maplibregl-canvas")).toBeVisible();
   await expect(page.locator(".map-2d__hint")).toBeVisible();
@@ -50,7 +50,7 @@ test("2D 전환과 로컬 타일, 행사 선택, 낮·밤", async ({ page }) => 
   await page.getByRole("combobox", { name: "등급" }).selectOption("1");
   await expect(page.locator(".festival-list__items > li")).toHaveCount(1);
   await page.locator(".festival-list__pick").click();
-  await expect(page.locator(".map-2d__overzoom")).toBeVisible();
+  await expect(page.locator(".map-2d__popup")).toBeVisible();
   await expect(
     page.getByRole("region", { name: "선택 행사 요약" }),
   ).toContainText("견본 행사 1");
@@ -109,10 +109,10 @@ test("2D 전환과 로컬 타일, 행사 선택, 낮·밤", async ({ page }) => 
   await page.screenshot({ path: resolve(screens, "T-403-day.png") });
 
   // 테마 변경 후에도 2D 보기를 복원하며 밤 스프라이트와 로컬 타일만 읽는다.
-  await page.goto(`/?sceneFixture=1&view=2d&theme=night&at=${night}`);
+  await page.goto(`/?sceneFixture=1&view=top&theme=night&at=${night}`);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "night");
   await expect(
-    page.getByRole("region", { name: "대한민국 행사 2D 지도" }),
+    page.getByRole("region", { name: "대한민국 행사 위에서 보기 지도" }),
   ).toBeVisible();
   await expect(page.locator(".map-2d__hint")).toBeVisible();
   await expect
