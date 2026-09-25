@@ -216,11 +216,11 @@ it("API 실패는 빈 상태, 계약 위반은 오류로 남긴다", async () =>
     }),
   );
   await expect(getBacktest()).rejects.toThrow("API 계약 불일치");
-  expect(html(<PerformanceMetrics state={{ status: "empty" }} />)).not.toMatch(
-    /\d/,
+  expect(html(<PerformanceMetrics state={{ status: "empty" }} />)).toContain(
+    "백테스트 결과가 아직 공개되지 않았어요",
   );
-  expect(html(<PerformanceMetrics state={{ status: "error" }} />)).not.toMatch(
-    /\d/,
+  expect(html(<PerformanceMetrics state={{ status: "error" }} />)).toContain(
+    "자료를 확인하지 못했어요",
   );
 });
 

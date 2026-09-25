@@ -1,9 +1,11 @@
 // 파이프라인 실행 기록을 최신순 표와 단계별 상세로 보여 준다.
+// biome-ignore-all lint/a11y/noNoninteractiveTabindex: 표의 가로 스크롤 영역에 키보드 초점을 준다.
 import type { PipelineRun } from "@crowdcast/contracts/types";
 import { AlertTriangle, CheckCircle2, Clock3, Copy } from "lucide-react";
 import { useState } from "react";
 import { EmptyState } from "../../components/common/empty-state";
 import { ErrorState } from "../../components/common/error-state";
+import { LoadingState } from "../../components/common/loading-state";
 import {
   dateTime,
   duration,
@@ -79,19 +81,19 @@ function StageRows({ stages }: { stages: PipelineRun["stages"] }) {
 // 빈 기록·상류 오류·계약 오류를 표와 분리해 복구 방법을 안내한다.
 export function RunList({ state }: { state: OpsResource<PipelineRun[]> }) {
   if (state.phase === "loading")
-    return <p role="status">실행 기록을 불러오는 중이에요.</p>;
+    return <LoadingState message="실행 기록을 불러오는 중이에요." />;
   if (state.phase === "error")
     return (
-      <ErrorState message={`실행 기록을 확인할 수 없어요. ${state.message}`} />
+      <ErrorState message="실행 기록을 확인할 수 없어요. 잠시 뒤 다시 시도해 주세요." />
     );
   if (state.value.length === 0)
     return (
       <EmptyState
-        message="파이프라인을 한 번 돌리면 여기에 쌓여요"
+        message="아직 실행 기록이 없어요. 새로고침해 확인해 주세요."
         action={
-          <p>
-            실행 명령: <code>crowdcast pipeline run</code>
-          </p>
+          <button type="button" onClick={() => window.location.reload()}>
+            새로고침
+          </button>
         }
       />
     );
@@ -99,7 +101,11 @@ export function RunList({ state }: { state: OpsResource<PipelineRun[]> }) {
     (a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt),
   );
   return (
-    <div className="ops-table-scroll">
+    <section
+      className="ops-table-scroll"
+      aria-label="실행 기록 표, 좌우로 스크롤"
+      tabIndex={0}
+    >
       <table className="ops-runs">
         <caption className="sr-only">최근 파이프라인 실행 목록</caption>
         <thead>
@@ -151,7 +157,7 @@ export function RunList({ state }: { state: OpsResource<PipelineRun[]> }) {
           ))}
         </tbody>
       </table>
-      <p>출처: 파이프라인 실행 기록 API</p>
-    </div>
+      <p>출처: 실행 기록</p>
+    </section>
   );
 }

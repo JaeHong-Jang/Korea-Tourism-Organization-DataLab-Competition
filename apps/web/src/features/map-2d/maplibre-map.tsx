@@ -18,6 +18,7 @@ import {
   type PanelBounds,
 } from "../../components/scene/scene-panel-bounds";
 import { useSelectionStore } from "../../lib/selection-store";
+import { cameraMotion, mapPadding } from "./map-camera";
 import {
   FESTIVAL_CLUSTERS,
   FESTIVAL_POINTS,
@@ -36,18 +37,6 @@ function registerTiles() {
   const protocol = new Protocol();
   addProtocol("pmtiles", protocol.tile);
   protocolRegistered = true;
-}
-
-// 패널 경계 캐시의 빈 영역에 전국 지도를 맞춘다.
-function mapPadding(bounds: PanelBounds) {
-  const safe = largestClearRect(bounds);
-  const margin = 24;
-  return {
-    left: Math.max(0, safe.left + margin),
-    right: Math.max(0, bounds.width - safe.right + margin),
-    top: Math.max(0, safe.top + margin),
-    bottom: Math.max(0, bounds.height - safe.bottom + margin),
-  };
 }
 
 // MapLibre가 만든 팝업에는 텍스트 노드만 넣어 행사명을 안전하게 표시한다.
@@ -171,6 +160,7 @@ export function MapLibreMap({
         map.easeTo({
           center: coordinates.coordinates as [number, number],
           zoom,
+          ...cameraMotion(),
         });
       });
     });
@@ -250,6 +240,7 @@ export function MapLibreMap({
       center: [festival.lng, festival.lat],
       zoom: Math.max(map.getZoom(), 13),
       offset,
+      ...cameraMotion(),
     });
     popupRef.current = new Popup({
       closeButton: false,
@@ -266,7 +257,11 @@ export function MapLibreMap({
     const map = mapRef.current;
     const bounds = boundsRef.current;
     if (!map || !bounds || !ready || overviewRevision === 0) return;
-    map.fitBounds(KOREA_BOUNDS, { padding: mapPadding(bounds), maxZoom: 7 });
+    map.fitBounds(KOREA_BOUNDS, {
+      padding: mapPadding(bounds),
+      maxZoom: 7,
+      ...cameraMotion(),
+    });
   }, [overviewRevision, ready]);
 
   return (

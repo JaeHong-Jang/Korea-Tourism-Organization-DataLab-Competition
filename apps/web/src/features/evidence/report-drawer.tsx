@@ -65,6 +65,7 @@ export function ReportDrawer({
   selectedId: string | null;
   onClose: () => void;
 }) {
+  const dialog = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!selectedId) return;
     const card = document.getElementById(`evidence-${selectedId}`);
@@ -78,13 +79,35 @@ export function ReportDrawer({
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
+      } else if (event.key === "Tab" && dialog.current) {
+        const items = Array.from(
+          dialog.current.querySelectorAll<HTMLElement>(
+            'a[href], button:not(:disabled), summary, input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((item) => item.getClientRects().length > 0);
+        const first = items[0];
+        const last = items.at(-1);
+        if (!first || !last) return;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
     window.addEventListener("keydown", onEscape);
     return () => window.removeEventListener("keydown", onEscape);
   }, [selectedId, onClose]);
   return (
-    <div>
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: 선택된 근거에만 대화상자 역할과 모달 속성을 함께 준다.
+    <div
+      ref={dialog}
+      role={selectedId ? "dialog" : undefined}
+      aria-modal={selectedId ? true : undefined}
+      aria-labelledby={selectedId ? "M3-F2-title" : undefined}
+    >
       <FeaturePanel
         id="M3-F2"
         title="근거 서랍"

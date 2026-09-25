@@ -55,6 +55,42 @@ test("2D 전환과 로컬 타일, 행사 선택, 낮·밤", async ({ page }) => 
     page.getByRole("region", { name: "선택 행사 요약" }),
   ).toContainText("견본 행사 1");
   await expect(page.locator(".map-2d__popup")).toContainText("1등급");
+  // 지도 안내 두 줄이 패널·확대 버튼과 겹치지 않는지 두 폭에서 확인한다.
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    const overlaps = await page.evaluate(() => {
+      const rect = (selector: string) =>
+        document.querySelector(selector)?.getBoundingClientRect();
+      const notes = [rect(".map-2d__hint"), rect(".map-2d__overzoom")].filter(
+        (item): item is DOMRect => Boolean(item),
+      );
+      const obstacles = [
+        ".scene-filter",
+        ".scene-list",
+        ".scene-timeline",
+        ".maplibregl-ctrl-bottom-right",
+      ]
+        .map(rect)
+        .filter((item): item is DOMRect => Boolean(item));
+      return notes.some((note) =>
+        obstacles.some(
+          (other) =>
+            note.left < other.right &&
+            note.right > other.left &&
+            note.top < other.bottom &&
+            note.bottom > other.top,
+        ),
+      );
+    });
+    expect(overlaps).toBe(false);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+    await page.screenshot({
+      path: resolve(screens, `T-411a-map-${width}.png`),
+    });
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(700);
   const popup = await page.locator(".maplibregl-popup").boundingBox();
   expect(popup).not.toBeNull();
