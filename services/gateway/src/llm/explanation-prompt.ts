@@ -11,13 +11,18 @@ export const EXPLANATION_PROMPT = [
 ].join("\n");
 
 // 원문 사용자 입력 대신 검증된 예보의 요인과 재작성 사유만 전달한다
-export function explanationInput(forecast: Forecast, violations: string[]) {
+// aliases가 있으면 긴 근거 id(ev-…64자리) 대신 짧은 별칭(E1…)을 보여 모델이 적을 토큰을 줄인다.
+export function explanationInput(
+  forecast: Forecast,
+  violations: string[],
+  aliases?: Map<string, string>,
+) {
   return JSON.stringify({
     basis: forecast.judgment.basis,
     factors: topFactors(forecast).map(({ label, direction, evidenceIds }) => ({
       name: label,
       direction,
-      evidenceIds,
+      evidenceIds: evidenceIds.map((id) => aliases?.get(id) ?? id),
     })),
     violations: [...new Set(violations)].slice(0, 5),
   });

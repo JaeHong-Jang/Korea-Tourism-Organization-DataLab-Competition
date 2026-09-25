@@ -67,15 +67,20 @@ export const explainer: Agent<ExplanationInput, Explanation> = {
         note: "설명할 요인이 없어 템플릿 설명을 검증팀에 넘겨요.",
       };
     if (!ctx.input.templateOnly) {
+      // 근거 id는 모델에 E1… 별칭으로 주고 받은 답에서 원래 id로 되돌린다(출력 토큰·시간 절약).
+      const ids = [...new Set(factors.flatMap((item) => item.evidenceIds))];
+      const toAlias = new Map(ids.map((id, index) => [id, `E${index + 1}`]));
+      const fromAlias = new Map(ids.map((id, index) => [`E${index + 1}`, id]));
       try {
         const result = await ctx.llm.complete({
           schema: ollamaExplanationSchema(
-            factors.flatMap((item) => item.evidenceIds),
+            [...fromAlias.keys()],
             factors.length,
           ),
           recordingKey: ctx.input.violations.length
             ? "explanation-rewrite"
             : "explanation",
+          maxTokens: 384,
           messages: [
             { role: "system", content: EXPLANATION_PROMPT },
             {
@@ -83,11 +88,18 @@ export const explainer: Agent<ExplanationInput, Explanation> = {
               content: explanationInput(
                 ctx.input.forecast,
                 ctx.input.violations,
+                toAlias,
               ),
             },
           ],
         });
         const output: unknown = JSON.parse(result.content);
+        for (const claim of (output as { claims?: { evidenceIds?: unknown }[] })
+          ?.claims ?? [])
+          if (Array.isArray(claim?.evidenceIds))
+            claim.evidenceIds = claim.evidenceIds.map((id: unknown) =>
+              typeof id === "string" ? (fromAlias.get(id) ?? id) : id,
+            );
         if (
           validateExplanation(output) &&
           matchesFactors(output.claims, ctx.input.forecast)

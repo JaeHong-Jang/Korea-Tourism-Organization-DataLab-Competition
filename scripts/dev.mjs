@@ -15,12 +15,13 @@ const PORT_DEFAULTS = { FORECAST_PORT: 8010, KNOWLEDGE_PORT: 8020, RECORDS_PORT:
 function servicesFor(env) {
   const port = (k) => String(env[k] || PORT_DEFAULTS[k]);
   const url = (k) => `http://127.0.0.1:${port(k)}`;
+  // 파이썬 서비스도 소스가 바뀌면 스스로 다시 시작한다(웹·게이트웨이처럼 수정 즉시 반영).
   return [
     { name: "forecast", color: 34, marker: "services/forecast/src/crowdcast/api/app.py",
-      cmd: "uv", args: ["run", "--package", "crowdcast-forecast", "uvicorn", "crowdcast.api.app:app", "--port", port("FORECAST_PORT")],
+      cmd: "uv", args: ["run", "--package", "crowdcast-forecast", "uvicorn", "crowdcast.api.app:app", "--port", port("FORECAST_PORT"), "--reload", "--reload-dir", "services/forecast/src"],
       health: `${url("FORECAST_PORT")}/health` },
     { name: "knowledge", color: 36, marker: "services/knowledge/src/knowledge/api/app.py",
-      cmd: "uv", args: ["run", "--package", "crowdcast-knowledge", "uvicorn", "knowledge.api.app:app", "--port", port("KNOWLEDGE_PORT")],
+      cmd: "uv", args: ["run", "--package", "crowdcast-knowledge", "uvicorn", "knowledge.api.app:app", "--port", port("KNOWLEDGE_PORT"), "--reload", "--reload-dir", "services/knowledge/src"],
       health: `${url("KNOWLEDGE_PORT")}/health` },
     { name: "records", color: 35, marker: "services/records/public/index.php",
       cmd: "php", args: ["-S", `127.0.0.1:${port("RECORDS_PORT")}`, "-t", "services/records/public"],

@@ -3,6 +3,7 @@ export type { AgentStatus } from "./agent-status";
 export type { AgentStep } from "./agent-step";
 export type { BacktestSummary } from "./backtest-summary";
 export type { Claim } from "./claim";
+export type { Concentration } from "./concentration";
 export type { DatalabSpec } from "./datalab-spec";
 export type { DatalabUsage } from "./datalab-usage";
 export type { EventDraft } from "./event-draft";

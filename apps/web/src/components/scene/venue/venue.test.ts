@@ -1,14 +1,20 @@
 // 실제 한강 타일 한 장과 경계·경로·시간 규칙을 네트워크 없이 검증한다.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { cityBuildingCap, cityBuildingGeometry } from "../city/city-buildings";
+import {
+  buildingPalette,
+  cityBuildingGeometry,
+} from "../city/building-geometry";
+import { styleBuildings } from "../city/building-kind";
+import { cityBuildingCap } from "../city/city-buildings";
 import { trafficCaps } from "../city/city-traffic";
 import { motionSeconds } from "../motion/rail-lines";
 import { clipPolygon, clipSegment } from "./clip";
 import { tileAt, tilePointToVenue } from "./coordinates";
-import { graphRoutes, routeGraph, vehicleAt } from "./routes";
+import { graphRoutes, pathRoute, routeGraph, vehicleAt } from "./routes";
 import { sampleEvent } from "./sites";
-import { isStationName, readVenueTile, type VenueTiles } from "./tiles";
+import { isStationName } from "./tile-tags";
+import { readVenueTile, type VenueTiles } from "./tiles";
 import { dollCount, venueSun } from "./time";
 
 // 실제 MVT에서 버퍼를 자른 뒤 타일 안쪽 건물과 길이 남는지 확인한다.
@@ -126,6 +132,68 @@ describe("행사장 연출", () => {
     expect(first).toEqual(second);
   });
 
+  // 동네 전체 격자 길에서 경로가 행사장 근처가 아니라 네 방향 모두에 퍼진다(9/26 "한쪽에 다 모여 있어")
+  it("경로 출발점이 동네 전체에 고르게 퍼진다", () => {
+    const lines = [];
+    for (let at = -1500; at <= 1500; at += 100)
+      for (let step = -1500; step < 1500; step += 100) {
+        lines.push({
+          from: [at, step] as [number, number],
+          to: [at, step + 100] as [number, number],
+          kind: "road",
+          width: 5,
+        });
+        lines.push({
+          from: [step, at] as [number, number],
+          to: [step + 100, at] as [number, number],
+          kind: "road",
+          width: 5,
+        });
+      }
+    const routes = graphRoutes(routeGraph(lines), 48);
+    expect(routes).toHaveLength(48);
+    const quadrants = [0, 0, 0, 0];
+    for (const route of routes) {
+      const [x, z] = route.points[0];
+      quadrants[(x < 0 ? 0 : 1) + (z < 0 ? 0 : 2)]++;
+    }
+    expect(Math.min(...quadrants)).toBeGreaterThanOrEqual(8);
+    expect(
+      Math.max(...routes.map((route) => Math.hypot(...route.points[0]))),
+    ).toBeGreaterThan(1200);
+    expect(routes.every((route) => route.length >= 300)).toBe(true);
+  });
+
+  // 귀가 길은 격자 길에서 길이 가중 최단 경로이며, 이어지지 않으면 만들지 않는다
+  it("두 점 사이 최단 걸음 경로를 찾는다", () => {
+    const lines = [];
+    for (let at = 0; at <= 400; at += 100)
+      for (let step = 0; step < 400; step += 100) {
+        lines.push({
+          from: [at, step] as [number, number],
+          to: [at, step + 100] as [number, number],
+          kind: "road",
+          width: 5,
+        });
+        lines.push({
+          from: [step, at] as [number, number],
+          to: [step + 100, at] as [number, number],
+          kind: "road",
+          width: 5,
+        });
+      }
+    const graph = routeGraph(lines);
+    const route = pathRoute(graph, [0, 0], [300, 200], "역 가는 길");
+    expect(route?.length).toBeCloseTo(500, 5);
+    expect(route?.points[0]).toEqual([0, 0]);
+    expect(route?.points.at(-1)).toEqual([300, 200]);
+    const apart = routeGraph([
+      ...lines,
+      { from: [900, 900], to: [950, 900], kind: "road", width: 5 },
+    ]);
+    expect(pathRoute(apart, [0, 0], [940, 900], "끊긴 길")).toBeNull();
+  });
+
   it("품질 상한과 모션 감소 정지를 지킨다", () => {
     expect(cityBuildingCap("low")).toBeLessThan(cityBuildingCap("high"));
     expect(cityBuildingCap("high")).toBeLessThanOrEqual(2200);
@@ -137,36 +205,42 @@ describe("행사장 연출", () => {
       [x, 8],
     ];
     const merged = cityBuildingGeometry(
-      [
-        {
-          x: 4,
-          z: 4,
-          width: 8,
-          depth: 8,
-          height: 19,
-          minHeight: 0,
-          footprint: square(0),
-        },
-        {
-          x: 24,
-          z: 4,
-          width: 8,
-          depth: 8,
-          height: 21,
-          minHeight: 0,
-          footprint: square(20),
-        },
-      ],
-      { wall: "#f3ead7", roof: "#fbf6ec", tall: "#e8dcc4", cool: "#e3e3de" },
+      styleBuildings(
+        [
+          {
+            x: 4,
+            z: 4,
+            width: 8,
+            depth: 8,
+            height: 19,
+            minHeight: 0,
+            footprint: square(0),
+          },
+          {
+            x: 24,
+            z: 4,
+            width: 8,
+            depth: 8,
+            height: 21,
+            minHeight: 0,
+            footprint: square(20),
+          },
+        ],
+        [],
+        [],
+      ),
+      buildingPalette(() => "#cccccc"),
     );
-    // 벽(창문 그림용 UV 포함)과 지붕을 따로 모으고 칸마다 색을 칠한다.
-    for (const part of [merged?.walls, merged?.roofs]) {
+    // 벽(종류별, 창문 그림용 UV 포함)과 지붕을 따로 모으고 칸마다 색을 칠한다.
+    const walls = Object.values(merged?.walls ?? {});
+    expect(walls.length).toBeGreaterThan(0);
+    for (const part of [...walls, merged?.roofs]) {
       expect(part?.getAttribute("color")?.count).toBe(
         part?.getAttribute("position")?.count,
       );
       part?.dispose();
     }
-    expect(merged?.walls.getAttribute("uv")).toBeDefined();
+    expect(walls[0]?.getAttribute("uv")).toBeDefined();
     expect(trafficCaps("high").cars).toBeLessThanOrEqual(500);
     expect(trafficCaps("low").cars).toBeLessThan(trafficCaps("high").cars);
     expect(dollCount(100000, 19, [{ hour: 19, share: 1 }], "low").count).toBe(

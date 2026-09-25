@@ -223,6 +223,35 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/weather.schema.json
+  /v1/concentration:
+    get:
+      summary: 행사 기간 시군구 관광지 집중률 예측 요약(한국관광공사 15128555)
+      parameters:
+        - name: sigunguCode
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]{5}$"
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: 성공(예측 범위 밖·자료 없음도 status로 알린다)
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/concentration.schema.json
   /v1/festivals/upcoming:
     get:
       summary: 다가오는 행사 일괄 예보

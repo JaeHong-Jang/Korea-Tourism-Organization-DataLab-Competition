@@ -72,7 +72,11 @@ describe("Ollama 전송", () => {
 
   // 토큰 상한으로 잘리거나 도구 호출이 섞인 응답은 필드 추출로 취급하지 않는다
   it.each([
-    { ...response, done_reason: "length" },
+    {
+      ...response,
+      done_reason: "length",
+      message: { role: "assistant", content: '{"text":"잘린' },
+    },
     { ...response, done: false },
     { ...response, message: { content: "{}", tool_calls: [{}] } },
   ])("불완전한 응답을 거부한다", async (body) => {
@@ -82,5 +86,20 @@ describe("Ollama 전송", () => {
         request,
       ),
     ).rejects.toThrow("완결된 필드");
+  });
+
+  // 완결된 JSON 뒤 공백만 이어지다 상한에 걸린 응답은 앞의 JSON만 받는다(작은 모델의 공백 반복)
+  it("상한에 걸렸어도 완결된 JSON이면 받는다", async () => {
+    const body = {
+      ...response,
+      done_reason: "length",
+      message: { role: "assistant", content: '{"text":"안녕"}\n\n  \n' },
+    };
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json(body));
+    const result = await createLlmClient({
+      env: { LLM_MODE: "ollama" },
+      fetch: fetcher,
+    }).complete(request);
+    expect(result.content).toBe('{"text":"안녕"}');
   });
 });

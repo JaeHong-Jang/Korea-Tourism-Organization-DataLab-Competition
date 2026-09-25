@@ -11,10 +11,9 @@ import { CityScene, type CityStatus } from "./city/city-scene";
 import { Fireworks } from "./effects/fireworks";
 import { FestivalLayer } from "./festival-layer";
 import { LandTiles } from "./land-tiles";
-import { RoadTraffic } from "./motion/road-traffic";
-import { Trains } from "./motion/trains";
 import { WhaleBots } from "./motion/whale-bots";
 import { NameTags } from "./name-tag";
+import { NationalScenery } from "./national-scenery";
 import { ForecastOffice } from "./office/forecast-office";
 import { qualityDpr, sceneColor } from "./quality";
 import { nationalDescription } from "./scene-description";
@@ -43,12 +42,15 @@ export function MiniKoreaCanvas({
   dataMode = false,
   totals = EMPTY_TOTALS,
   overviewRevision = 0,
+  homeward = false,
 }: {
   festivals?: FestivalSummary[];
   onScaleChange?: (scale: SceneScale) => void;
   dataMode?: boolean;
   totals?: Map<string, number>;
   overviewRevision?: number;
+  // 동네 3D에서 귀가 인파(가장 가까운 역까지 걷는 길) 보기.
+  homeward?: boolean;
 }) {
   const [regressFactor, setRegressFactor] = useState(1);
   const [showLand, setShowLand] = useState(true);
@@ -196,6 +198,7 @@ export function MiniKoreaCanvas({
               selectSigungu(null);
             }}
             onStatus={setCityStatus}
+            homeward={homeward}
           />
         ) : (
           <>
@@ -237,16 +240,15 @@ export function MiniKoreaCanvas({
                 />
               )}
             {showLand && <LandTiles model={model} onPick={onPick} />}
-            {diagnostics.motion && !dataMode && (
-              <Trains
-                reducedMotion={reducedMotion}
-                diagnostic={diagnostics.debug}
-              />
-            )}
-            {diagnostics.motion && !dataMode && (
-              <RoadTraffic
+            {!dataMode && (
+              <NationalScenery
+                anchors={model.anchors}
+                clusters={showLand}
+                festivals={scene.placed}
                 quality={activeQuality}
                 reducedMotion={reducedMotion}
+                motion={diagnostics.motion}
+                diagnostic={diagnostics.debug}
               />
             )}
             <FestivalLayer

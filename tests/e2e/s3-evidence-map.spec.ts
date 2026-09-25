@@ -22,11 +22,12 @@ test("S3 근거 정리에서 카드와 출처로 이동한다", async ({ page })
 	// 근거 지도는 스냅샷 하나로 그린다 — 예보서 말고 다른 API(knowledge 근거·세션)를 부르지 않는다.
 	page.on("request", (request) => {
 		const path = new URL(request.url()).pathname;
-		// 헤더 날씨 칩(모든 화면 공통)의 /api/weather는 근거 지도와 무관하다.
+		// 헤더 날씨 칩(모든 화면 공통)의 /api/weather와 예보서의 관광지 집중률 참고 카드(발행 뒤 받아 오는 실시간 참고)는 근거 지도와 무관하다.
 		if (
 			path.startsWith("/api/") &&
 			path !== "/api/forecasts/f-yeongjong-2025" &&
-			path !== "/api/weather"
+			path !== "/api/weather" &&
+			path !== "/api/concentration"
 		)
 			otherApi.push(path);
 	});

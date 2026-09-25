@@ -28,14 +28,20 @@ export function MiniKoreaPage() {
   const selectedId = useSelectionStore((state) => state.selectedFestivalId);
   const selectFestival = useSelectionStore((state) => state.selectFestival);
   const selectSigungu = useSelectionStore((state) => state.selectSigungu);
-  const { festivals, all, status, receivedAt, fixture } =
+  const { festivals, all, status, receivedAt, fixture, retry } =
     useUpcomingFestivals(filters);
   const [scale, setScale] = useState(() => crowdScale([], "high"));
   const [overviewRevision, setOverviewRevision] = useState(0);
+  // 동네 3D 귀가 인파 보기(범례 단추로 켜고 끈다).
+  const [homeward, setHomeward] = useState(false);
   const [tab, setTab] = useState<"list" | "filter" | "status">("list");
   const showSpotlight = useAssistantStore((state) => state.showSpotlight);
   const selected =
     festivals.find((festival) => festival.eventId === selectedId) ?? null;
+  // 필터 탭이 닫혀 있어도 걸린 조건 수가 탭 이름에 보이게 한다.
+  const appliedFilters = Object.values(filters).filter(
+    (value) => value !== null && value !== "",
+  ).length;
   const totals = useMemo(() => sigunguPeaks(festivals), [festivals]);
 
   // 필터가 고른 행사를 숨기면 장면과 요약에 오래된 선택이 남지 않게 한다.
@@ -134,6 +140,7 @@ export function MiniKoreaPage() {
             dataMode={dataMode}
             totals={totals}
             overviewRevision={overviewRevision}
+            homeward={homeward}
           />
         )}
         {!svgMode && (
@@ -148,10 +155,25 @@ export function MiniKoreaPage() {
           <section className="scene-intro" aria-labelledby="scene-intro-title">
             <p className="scene-intro__eyebrow">전국 행사 인파예보</p>
             <h2 id="scene-intro-title">미니 대한민국</h2>
-            <p>
-              다가오는 행사 {festivals.length.toLocaleString("ko-KR")}건의 순간
-              최대 인파를 미리 봐요.
-            </p>
+            {/* 불러오는 중·실패일 때 "0건"으로 보이지 않게 상태를 먼저 말한다. */}
+            {status === "loading" ? (
+              <p role="status">행사 예보를 불러오는 중이에요.</p>
+            ) : status === "ready" ? (
+              <p>
+                다가오는 행사 {festivals.length.toLocaleString("ko-KR")}건의
+                순간 최대 인파를 미리 봐요.
+                {festivals.length < all.length &&
+                  ` 필터로 ${all.length.toLocaleString("ko-KR")}건 중 일부만 보는 중이에요.`}
+              </p>
+            ) : (
+              <p role="alert" className="scene-intro__error">
+                행사 예보를 불러오지 못했어요. 서버가 다시 켜지면 저절로 다시
+                받아요.{" "}
+                <button type="button" onClick={retry}>
+                  지금 다시 불러오기
+                </button>
+              </p>
+            )}
             <div className="scene-cta">
               <Button asChild size="sm">
                 <Link to="/consult">
@@ -211,6 +233,8 @@ export function MiniKoreaPage() {
               !svgMode &&
               new URLSearchParams(location.search).get("sceneCity") !== "0"
             }
+            homeward={homeward}
+            onHomeward={() => setHomeward((value) => !value)}
           />
         </div>
       </div>
@@ -224,7 +248,7 @@ export function MiniKoreaPage() {
           {(
             [
               ["list", `행사 목록 ${festivals.length.toLocaleString("ko-KR")}`],
-              ["filter", "필터"],
+              ["filter", appliedFilters ? `필터 · ${appliedFilters}` : "필터"],
               ["status", "행사 현황"],
             ] as const
           ).map(([key, label]) => (

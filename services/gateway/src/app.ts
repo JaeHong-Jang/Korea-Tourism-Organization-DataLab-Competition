@@ -1,6 +1,7 @@
 // 네트워크 리스너 없이도 요청을 검증할 수 있는 Hono 앱을 조립한다
 import { Hono } from "hono";
 import { type GatewayConfig, readConfig } from "./config.js";
+import { createConcentrationRoute } from "./routes/concentration.js";
 import { createEventsRoute } from "./routes/events.js";
 import { createEvidenceRoute } from "./routes/evidence.js";
 import { createFestivalsRoute } from "./routes/festivals.js";
@@ -34,6 +35,7 @@ export function createApp(
   app.route("/api/plans", createPlansRoute(config, fetcher));
   app.route("/api/evidence", createEvidenceRoute(config, fetcher));
   app.route("/api/weather", createWeatherRoute(config, fetcher));
+  app.route("/api/concentration", createConcentrationRoute(config, fetcher));
   app.route("/api/validation", createValidationRoute(config, fetcher));
   app.route("/api/insights", createInsightsRoute(config, fetcher));
   app.route("/api/ops", createOpsRoute(config, fetcher));

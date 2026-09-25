@@ -7,19 +7,20 @@ import {
   railLines,
   routePosition,
 } from "../rail-lines";
-import { roadTrafficCap } from "../road-traffic";
+import { roadTrafficCap, trafficSlots } from "../road-traffic";
 
 describe("전국 판 이동 연출", () => {
   // 모든 경로의 주요 역은 기존 전국 판과 동일한 투영을 쓴다.
   it("공개 역 좌표를 전국 판으로 투영한다", () => {
-    expect(railLines.map((line) => line.name)).toEqual([
+    expect(railLines.slice(0, 3).map((line) => line.name)).toEqual([
       "경부 KTX",
       "호남 KTX",
       "강릉 KTX",
     ]);
+    expect(railLines.length).toBeGreaterThanOrEqual(10);
     expect(railLines[0].points[0]).toEqual(projectKorea(126.9707, 37.5547));
     expect(railLines[0].points.at(-1)).toEqual(projectKorea(129.0435, 35.1151));
-    expect(railLines.every((line) => line.length > 100)).toBe(true);
+    expect(railLines.every((line) => line.length > 40)).toBe(true);
   });
 
   // 같은 시각과 왕복 주기는 프레임 순서와 무관하게 같은 위치를 준다.
@@ -44,7 +45,7 @@ describe("전국 판 이동 연출", () => {
       roadTrafficCap("high"),
       roadTrafficCap("medium"),
       roadTrafficCap("low"),
-    ]).toEqual([120, 60, 0]);
+    ]).toEqual([150, 80, 0]);
     expect(motionSeconds(12, true)).toBe(0);
     expect(motionSeconds(99, true)).toBe(0);
     expect(motionSeconds(12, false)).toBe(12);
@@ -55,5 +56,12 @@ describe("전국 판 이동 연출", () => {
     expect({
       ...routePosition(railLines[0], motionSeconds(99, true), 3.5, 0, point),
     }).toEqual(stopped);
+  });
+
+  // 어떤 대수든 정확히 그 수만큼 자리를 나누고 모든 축에 차가 있다(끝나지 않는 나눗셈 회귀 방지).
+  it.each([1, 7, 80, 150, 151, 240])("차 %i대를 축에 나눈다", (cars) => {
+    const slots = trafficSlots(cars);
+    expect(slots).toHaveLength(cars);
+    if (cars >= 16) expect(new Set(slots.map(([line]) => line)).size).toBe(16);
   });
 });

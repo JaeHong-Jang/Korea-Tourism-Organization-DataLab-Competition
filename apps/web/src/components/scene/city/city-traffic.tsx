@@ -9,7 +9,6 @@ import {
 } from "react";
 import {
   BoxGeometry,
-  Color,
   DynamicDrawUsage,
   type InstancedMesh,
   MeshLambertMaterial,
@@ -17,10 +16,11 @@ import {
 } from "three";
 import type { MotionPoint, MotionRoute } from "../motion/rail-lines";
 import { routePosition } from "../motion/rail-lines";
-import { sceneColor } from "../quality";
 import { towardShare as towardShareAt, vehicleAt } from "../venue/routes";
 import { FAR_DISTANCE } from "./city-people";
+import { newFocus, refocus } from "./focus-routes";
 import type { Pose } from "./stamp";
+import { paintTraffic } from "./traffic-paint";
 import { kindOf, stampCar, stampCart } from "./vehicle-kit";
 
 // 멀리서 생략하는 작은 부품(바퀴·전조등·후미등·택시 표시등).
@@ -32,17 +32,19 @@ export const VEHICLE_SCALE = 3.2;
 const TRAIN_SCALE = 1.25;
 const TRAIN_CARS = 4;
 
-// 품질별 차 수와 열차 수 상한.
-export function trafficCaps(quality: "high" | "medium" | "low") {
+// 품질별 차 수와 열차 수 상한 — 동네 전체(wide)에 흩을 때는 차를 두 배 가까이 둔다.
+export function trafficCaps(quality: "high" | "medium" | "low", wide = false) {
   return quality === "high"
-    ? { cars: 110, trains: 6 }
+    ? { cars: wide ? 200 : 110, trains: 6 }
     : quality === "medium"
-      ? { cars: 70, trains: 4 }
-      : { cars: 32, trains: 2 };
+      ? { cars: wide ? 120 : 70, trains: 4 }
+      : { cars: wide ? 48 : 32, trains: 2 };
 }
 
 export function CityTraffic({
   roadRoutes,
+  nearbyRoads = [],
+  wide = false,
   railRoutes,
   quality,
   hour,
@@ -50,13 +52,17 @@ export function CityTraffic({
   reducedMotion,
 }: {
   roadRoutes: MotionRoute[];
+  // 확대했을 때 보는 곳 근처에 세울 짧은 찻길 모음.
+  nearbyRoads?: MotionRoute[];
+  // 동네 3D처럼 동네 전체 길에 흩을 때 true(차 수를 늘린다).
+  wide?: boolean;
   railRoutes: MotionRoute[];
   quality: "high" | "medium" | "low";
   hour: number;
   eventHour: number;
   reducedMotion: boolean;
 }) {
-  const caps = trafficCaps(quality);
+  const caps = trafficCaps(quality, wide);
   const cars = roadRoutes.length ? caps.cars : 0;
   const trains = railRoutes.length
     ? Math.min(caps.trains, railRoutes.length * 2)
@@ -92,51 +98,13 @@ export function CityTraffic({
   );
   const share = towardShareAt(hour, eventHour);
   const detail = useRef(true);
+  const focus = useMemo(newFocus, []);
+  const near = useRef<MotionRoute[]>([]);
 
   // 차체 색(승용차 7색·택시·버스 2색)과 유리·바퀴·등 색은 처음 한 번만 칠한다.
   // biome-ignore lint/correctness/useExhaustiveDependencies: refs는 같은 객체를 가리킨다.
   useLayoutEffect(() => {
-    const paint = Array.from(
-      { length: 7 },
-      (_, i) => new Color(sceneColor(`car-${i + 1}`)),
-    );
-    const taxi = new Color(sceneColor("taxi"));
-    const buses = [
-      new Color(sceneColor("bus-blue")),
-      new Color(sceneColor("bus-green")),
-    ];
-    const glass = new Color(sceneColor("glass"));
-    const tire = new Color(sceneColor("tire"));
-    const head = new Color(sceneColor("headlamp"));
-    const tail = new Color(sceneColor("taillamp"));
-    for (let index = 0; index < cars; index++) {
-      const kind = kindOf(index);
-      const color =
-        kind === "taxi"
-          ? taxi
-          : kind === "bus"
-            ? buses[index % 2]
-            : paint[index % 7];
-      refs.body.current?.setColorAt(index, color);
-      refs.roof.current?.setColorAt(index, color);
-      refs.glass.current?.setColorAt(index, glass);
-      refs.sign.current?.setColorAt(index, head);
-      for (let wheel = 0; wheel < 4; wheel++)
-        refs.wheel.current?.setColorAt(index * 4 + wheel, tire);
-      for (let side = 0; side < 2; side++) {
-        refs.head.current?.setColorAt(index * 2 + side, head);
-        refs.tail.current?.setColorAt(index * 2 + side, tail);
-      }
-    }
-    const trainBody = new Color(sceneColor("train-body"));
-    const stripe = new Color(sceneColor("train-stripe"));
-    const trainRoof = new Color(sceneColor("train-roof"));
-    for (let index = 0; index < carts; index++) {
-      refs.trainBody.current?.setColorAt(index, trainBody);
-      refs.trainStripe.current?.setColorAt(index, stripe);
-      refs.trainRoof.current?.setColorAt(index, trainRoof);
-      refs.trainGlass.current?.setColorAt(index, glass);
-    }
+    const { head } = paintTraffic(refs, cars, carts);
     for (const ref of Object.values(refs)) {
       const mesh = ref.current;
       if (!mesh) continue;
@@ -177,10 +145,15 @@ export function CityTraffic({
     );
 
   // 차는 오른쪽 차로(길 가운데서 비켜)로 달리고, 열차 칸은 같은 선로에서 칸 간격만큼 뒤따른다.
+  // 확대했을 때는 차 절반을 보는 곳 근처 찻길로 옮긴다(멀리서는 모두 동네 전체 길).
   const place = (seconds: number, full = detail.current) => {
     pose.size = VEHICLE_SCALE;
+    const nearby = near.current;
     for (let index = 0; index < cars; index++) {
-      const route = roadRoutes[index % roadRoutes.length];
+      const route =
+        nearby.length && index % 2 === 0
+          ? nearby[(index * 3) % nearby.length]
+          : roadRoutes[index % roadRoutes.length];
       vehicleAt(
         route,
         seconds,
@@ -227,6 +200,9 @@ export function CityTraffic({
   useFrame(({ clock, camera, controls }) => {
     const target = (controls as { target?: Vector3 } | null)?.target;
     const full = camera.position.distanceTo(target ?? ORIGIN) < FAR_DISTANCE;
+    const moved =
+      full && refocus(focus, nearbyRoads, target?.x ?? 0, target?.z ?? 0);
+    near.current = full ? focus.routes : [];
     const changed = full !== detail.current;
     if (changed) {
       detail.current = full;
@@ -241,7 +217,7 @@ export function CityTraffic({
         if (target) target.count = full ? count : 0;
       }
     }
-    if (!reducedMotion || changed)
+    if (!reducedMotion || changed || moved)
       place(reducedMotion ? 0 : hour * 3600 + clock.elapsedTime, full);
   });
 

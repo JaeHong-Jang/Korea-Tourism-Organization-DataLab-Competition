@@ -191,6 +191,59 @@
   --scene-city-wall-cool: #e3e3de;
   --scene-glass-window: #9fb2c2;
   --scene-city-window: #ffd27a;
+  /* 동네 3D 건물 종류별 벽·지붕·간판 색(정점 색 — 창문 그림과 곱해진다) */
+  --scene-bldg-apartment-1: #f4f1ea;
+  --scene-bldg-apartment-2: #ece5d6;
+  --scene-bldg-apartment-3: #e1e4e3;
+  --scene-bldg-apartment-4: #efe2cc;
+  --scene-bldg-accent-1: #3d5d8e;
+  --scene-bldg-accent-2: #4f7d5c;
+  --scene-bldg-accent-3: #8e4c46;
+  --scene-bldg-accent-4: #3f7f86;
+  --scene-bldg-office-1: #dde9f2;
+  --scene-bldg-office-2: #d4ebe5;
+  --scene-bldg-office-3: #e6e7e8;
+  --scene-bldg-office-4: #ecdcc6;
+  --scene-bldg-office-glass: #5d7f99;
+  --scene-bldg-villa-1: #c98569;
+  --scene-bldg-villa-2: #b9714f;
+  --scene-bldg-villa-3: #dcbc9c;
+  --scene-bldg-villa-4: #d2c9bd;
+  --scene-bldg-house-1: #f6f0e1;
+  --scene-bldg-house-2: #f2e1b6;
+  --scene-bldg-house-3: #eed8cf;
+  --scene-bldg-house-4: #dde6d6;
+  --scene-bldg-house-roof-1: #b4523f;
+  --scene-bldg-house-roof-2: #4f6e90;
+  --scene-bldg-house-roof-3: #5f7e57;
+  --scene-bldg-house-roof-4: #6e6a66;
+  --scene-bldg-shop-1: #e8e2d6;
+  --scene-bldg-shop-2: #d8dcd8;
+  --scene-bldg-shop-3: #efe6d3;
+  --scene-bldg-shop-4: #d5dce3;
+  --scene-bldg-sign-1: #d9453b;
+  --scene-bldg-sign-2: #2f6fb3;
+  --scene-bldg-sign-3: #f2c230;
+  --scene-bldg-sign-4: #3c9a5f;
+  --scene-bldg-sign-5: #ef7d2d;
+  --scene-bldg-sign-6: #f6f6f2;
+  --scene-bldg-school-1: #f1e2b3;
+  --scene-bldg-school-2: #eee6d5;
+  --scene-bldg-factory-1: #c9cdd0;
+  --scene-bldg-factory-2: #adb8c2;
+  /* 옥상: 방수 초록(빌라·상가·학교)·회색 콘크리트·공장 금속 */
+  --scene-bldg-roof-green: #86b08f;
+  --scene-bldg-roof-grey: #d6d3cc;
+  --scene-bldg-roof-dark: #9aa1a6;
+  --scene-bldg-roof-metal: #7e94a7;
+  /* 동네 3D 귀가 길 띠 */
+  --scene-homeward: #f0a23a;
+  /* 전국 판 배·비행기 부품 색 */
+  --scene-ship-hull: #2f5f8f;
+  --scene-ship-cabin: #f6f4ee;
+  --scene-ship-funnel: #e0703a;
+  --scene-plane-body: #f4f5f7;
+  --scene-plane-tail: #2c6fb5;
   /* 동네 사람 옷(장식 — 크림 바탕에서 보이게 진하되 등급 4색과 겹치지 않는 차분한 색) */
   --scene-person-1: #4f68a8;
   --scene-person-2: #9a4f74;

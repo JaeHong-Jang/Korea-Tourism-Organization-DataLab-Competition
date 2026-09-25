@@ -13,6 +13,8 @@ export function SceneLegend({
   totals,
   notices,
   city = false,
+  homeward = false,
+  onHomeward,
 }: {
   peoplePerDoll: number;
   capExceeded: boolean;
@@ -21,13 +23,33 @@ export function SceneLegend({
   totals?: Map<string, number>;
   notices?: ReactNode;
   city?: boolean;
+  homeward?: boolean;
+  onHomeward?: () => void;
 }) {
   const maximum = totals ? Math.max(0, ...totals.values()) : 0;
   return (
     <div className="scene-stage__note scene-legend">
       {city && (
         <div className="scene-legend__note">
-          동네 3D · 건물·도로·공원 = OpenStreetMap · 사람·차·기차·나무 자리 = 연출(보이게 키움)
+          동네 3D · 건물 자리·도로·공원 = OpenStreetMap · 건물 종류·색과 높이
+          정보 없는 건물의 높이 = 추정 · 사람·차·기차·나무 자리 = 연출(보이게
+          키움)
+          {onHomeward && (
+            <button
+              type="button"
+              className="scene-legend__homeward"
+              aria-pressed={homeward}
+              onClick={onHomeward}
+            >
+              {homeward ? "귀가 인파 숨기기" : "귀가 인파 보기"}
+            </button>
+          )}
+          {homeward && (
+            <span className="scene-legend__homeward-note">
+              귀가 인파(연출) = 행사장에서 1.2km 안 가장 가까운 역까지 골목을
+              따라 걷는 가장 짧은 길 · 역이 없으면 그리지 않아요
+            </span>
+          )}
         </div>
       )}
       <div className="scene-legend__scale">
@@ -41,12 +63,21 @@ export function SceneLegend({
             <i className="scene-legend__tile scene-legend__tile--empty" />
             예보 없음
           </span>
-          {tileRanges(maximum).map(({ step, min, max }) => (
-            <span className="scene-legend__data-row" key={step}>
-              <i className={`scene-legend__tile scene-legend__tile--${step}`} />
-              {min.toLocaleString("ko-KR")}~{max.toLocaleString("ko-KR")}명
+          {/* 예보가 하나도 없으면 0~1명 같은 빈 구간 대신 없다고만 알린다. */}
+          {maximum > 0 ? (
+            tileRanges(maximum).map(({ step, min, max }) => (
+              <span className="scene-legend__data-row" key={step}>
+                <i
+                  className={`scene-legend__tile scene-legend__tile--${step}`}
+                />
+                {min.toLocaleString("ko-KR")}~{max.toLocaleString("ko-KR")}명
+              </span>
+            ))
+          ) : (
+            <span className="scene-legend__note">
+              표시할 예보가 아직 없어요
             </span>
-          ))}
+          )}
           <span className="scene-legend__note">
             지금 필터 기준으로 다시 나눔
           </span>

@@ -12,8 +12,10 @@ import {
 import { EvidenceBrief } from "../features/evidence-map/evidence-brief";
 import { ReportActions } from "../features/forecast-report/report-actions";
 import { ReportClaims } from "../features/forecast-report/report-claims";
+import { ReportConcentration } from "../features/forecast-report/report-concentration";
 import { claimText } from "../features/forecast-report/report-content";
 import { ReportContext } from "../features/forecast-report/report-context";
+import { ReportDensity } from "../features/forecast-report/report-density";
 import { ReportJudgment } from "../features/forecast-report/report-judgment";
 import { ReportNumbers } from "../features/forecast-report/report-numbers";
 import { ReportToolbar } from "../features/forecast-report/report-toolbar";
@@ -156,6 +158,8 @@ export function ForecastPage() {
                 >
                   <ReportJudgment report={state.report} onOpen={drawer.open} />
                   <ReportNumbers report={state.report} onOpen={drawer.open} />
+                  <ReportDensity report={state.report} />
+                  <ReportConcentration report={state.report} />
                   <ReportClaims
                     report={state.report}
                     onOpen={drawer.open}

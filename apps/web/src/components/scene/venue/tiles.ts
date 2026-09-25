@@ -6,6 +6,12 @@ import { clipPolygon, clipSegment } from "./clip";
 import type { Point } from "./coordinates";
 import { nearbyTiles, tilePointToVenue } from "./coordinates";
 import type { VenueKey } from "./sites";
+import {
+  buildingHeight,
+  isStationName,
+  roadWidth,
+  ZONE_KINDS,
+} from "./tile-tags";
 
 export type VenueBuilding = {
   x: number;
@@ -16,9 +22,16 @@ export type VenueBuilding = {
   minHeight: number;
   // 실제 건물 외곽선(동·남 미터) — 동네 3D가 상자 대신 이 모양으로 세운다.
   footprint?: Point[];
+  // 높이·층수 태그가 없어 기본 높이를 쓴 건물 — 동네 3D가 종류에 맞춰 높이를 추정한다.
+  guessed?: boolean;
 };
 export type VenueLine = { from: Point; to: Point; kind: string; width: number };
 export type VenueArea = { points: Point[]; kind: "water" | "park" };
+// 건물 종류 추정에 쓰는 토지이용 구역(주거·상업·학교·공업).
+export type VenueZone = {
+  points: Point[];
+  kind: "residential" | "commercial" | "school" | "industrial";
+};
 export type VenueStation = { point: Point; name: string };
 export type VenueTiles = {
   buildings: VenueBuilding[];
@@ -26,57 +39,16 @@ export type VenueTiles = {
   rails: VenueLine[];
   areas: VenueArea[];
   stations: VenueStation[];
+  zones?: VenueZone[];
 };
 
 const archives = new Map<string, PMTiles>();
-
-// 역 이름만 있는 POI와 출입구·승강기 이름은 철도역 목록에서 제외한다.
-export function isStationName(name: string): boolean {
-  const normalized = name.trim();
-  return (
-    normalized.length > 1 &&
-    normalized !== "역" &&
-    !/엘리베이터|출입구|출구|입구|승강기/i.test(normalized)
-  );
-}
 
 // 역점은 해당 타일이 소유한 좌표만 받아 중복 라벨을 막는다.
 function insideTile(point: Point, extent: number): boolean {
   return (
     point[0] >= 0 && point[0] < extent && point[1] >= 0 && point[1] < extent
   );
-}
-
-// 높이 태그가 없을 때 층수 또는 건물 종류의 낮은 기본값을 쓰고 상한을 둔다.
-export function buildingHeight(
-  properties: Record<string, unknown>,
-): [number, number] {
-  const numeric = (value: unknown) =>
-    typeof value === "number"
-      ? value
-      : typeof value === "string"
-        ? Number.parseFloat(value)
-        : Number.NaN;
-  const levels = numeric(properties["building:levels"] ?? properties.levels);
-  const stated = numeric(properties.height);
-  const height =
-    Number.isFinite(stated) && stated > 0
-      ? stated
-      : Number.isFinite(levels) && levels > 0
-        ? levels * 3.2
-        : properties.kind_detail === "garage"
-          ? 3
-          : 9;
-  const min = numeric(properties.min_height);
-  return [
-    Math.min(100, Math.max(2.5, height)),
-    Number.isFinite(min) ? Math.max(0, Math.min(min, height - 1)) : 0,
-  ];
-}
-
-// 도로 분류는 실제 노폭이 아니므로 장난감 길 폭만 정한다.
-function roadWidth(kind: string): number {
-  return kind === "major_road" ? 8 : kind === "minor_road" ? 5 : 2.5;
 }
 
 // 타일 하나의 레이어를 경계로 잘라 중심에서 1.2km 안의 조각만 모은다.
@@ -113,7 +85,12 @@ export function readVenueTile(
       if (!nearby(centerPoint) || maxX - minX < 0.4 || maxZ - minZ < 0.4)
         continue;
       const [height, minHeight] = buildingHeight(feature.properties);
+      const tags = feature.properties;
       into.buildings.push({
+        guessed:
+          tags.height === undefined &&
+          tags["building:levels"] === undefined &&
+          tags.levels === undefined,
         x: centerPoint[0],
         z: centerPoint[1],
         width: maxX - minX,
@@ -163,9 +140,14 @@ export function readVenueTile(
     if (!layer) continue;
     for (let index = 0; index < layer.length; index++) {
       const feature = layer.feature(index);
+      const zone =
+        layerName === "landuse"
+          ? ZONE_KINDS[String(feature.properties.kind)]
+          : undefined;
       if (
         feature.type !== 3 ||
         (layerName === "landuse" &&
+          !zone &&
           !["park", "grass", "forest", "garden"].includes(
             String(feature.properties.kind),
           ))
@@ -179,6 +161,12 @@ export function readVenueTile(
       );
       if (ring.length < 3) continue;
       const points = ring.map(project);
+      // 구역은 꼭짓점이 멀어도 안쪽 건물을 덮을 수 있어 거리로 거르지 않는다.
+      if (zone) {
+        if (!into.zones) into.zones = [];
+        into.zones.push({ points, kind: zone });
+        continue;
+      }
       if (points.some(nearby))
         into.areas.push({
           points,

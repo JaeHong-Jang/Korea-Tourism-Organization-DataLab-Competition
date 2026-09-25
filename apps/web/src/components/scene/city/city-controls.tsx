@@ -59,6 +59,7 @@ export function CityControls({
   return (
     <OrbitControls
       ref={controls}
+      makeDefault // 사람·차가 보는 곳(표적)과 거리를 읽는다
       target={[0, 0, 0]}
       minDistance={35} // 사람 얼굴·차 바퀴가 보일 만큼 가까이 갈 수 있게
       maxDistance={MAX_DISTANCE}
