@@ -171,18 +171,79 @@
 .document-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-top: var(--space-6); }
 .evidence-drawer { min-height: 540px; }
 
-/* 검증과 인사이트는 각 기능의 중요도에 맞게 크기를 다르게 둔다. */
+/* 검증 성적을 앞에, 근거와 제한을 뒤에 놓고 인사이트는 중요도 순으로 배치한다. */
 .validation-layout, .insights-layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-8); }
-.validation-layout > *, .insights-layout > * { grid-column: span 4; min-height: 170px; }
-.validation-kpis { grid-column: span 12; min-height: 128px; }
-.validation-chart { grid-column: span 7; min-height: 280px; }
-.validation-evidence { grid-column: span 5; min-height: 280px; }
-.validation-cases { grid-column: span 7; }
+.validation-layout > *, .insights-layout > * { min-width: 0; }
+.validation-kpis { grid-column: span 12; }
+.validation-chart { grid-column: span 12; }
+.validation-evidence { grid-column: span 7; }
+.validation-cases { grid-column: span 5; align-self: start; }
 .validation-score { grid-column: span 5; }
-.validation-model { grid-column: span 12; min-height: 145px; }
-.insights-main { grid-column: span 8; min-height: 350px; }
-.insights-spec { grid-column: span 4; min-height: 350px; }
-.insights-copy { grid-column: span 12; min-height: 140px; }
+.validation-model { grid-column: span 7; }
+.insights-main { grid-column: span 8; min-height: 170px; }
+.insights-spec { grid-column: span 4; min-height: 170px; }
+
+/* 같은 표본의 수치와 제한 문구를 한 카드 안에서 함께 읽게 한다. */
+.validation-content { display: grid; gap: var(--space-4); min-width: 0; margin-top: var(--space-5); }
+.validation-content h3 { margin: 0; font-size: var(--text-ui); }
+.feature-panel .validation-content p { margin: 0; }
+.validation-state { margin-top: var(--space-5); padding: var(--space-5); border-radius: var(--radius-input); background: var(--surface-sunken); color: var(--ink-2); }
+.validation-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-3); }
+.validation-metrics > div, .validation-rates > div { display: grid; align-content: start; gap: var(--space-1); min-width: 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); }
+.validation-metrics span, .validation-rates span { font-size: var(--text-sm); color: var(--ink-2); }
+.validation-metrics strong, .validation-rates strong { font-size: var(--text-section); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.validation-metrics small, .validation-rates small { color: var(--ink-2); }
+.validation-disclosure { padding: var(--space-4); border-left: 3px solid var(--brand); background: var(--surface-sunken); }
+.feature-panel .validation-disclosure p + p { margin-top: var(--space-2); }
+.validation-source, .validation-assumption { color: var(--ink-2); font-size: var(--text-sm); }
+.validation-warning { color: var(--ink); }
+
+/* 산점도는 같은 로그 척도와 표 전환을 제공하며 점 모양도 범례에 적는다. */
+.validation-chart-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--text-sm); }
+.validation-chart-tools button, .insight-result button { padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--link); cursor: pointer; }
+.validation-quadrant-wrap { display: grid; gap: var(--space-2); }
+.validation-quadrants { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin: 0; }
+.validation-quadrants > div { display: flex; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); }
+.validation-quadrants dt { color: var(--ink-2); }
+.validation-quadrants dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.validation-svg-wrap { width: min(100%, 650px); margin: auto; overflow-x: auto; }
+.validation-svg-wrap svg { display: block; width: 100%; min-width: 600px; height: auto; }
+.validation-svg-wrap text { fill: var(--ink-2); font-size: 12px; }
+.validation-svg-wrap .validation-point text { font-size: 15px; cursor: help; }
+.validation-svg-wrap .validation-point--goldA text { fill: var(--level-4); }
+.validation-svg-wrap .validation-point--goldB text { fill: var(--level-3); }
+.validation-svg-wrap .validation-point--silver text { fill: var(--level-2); }
+.validation-axis { stroke: var(--ink-2); stroke-width: 1; }
+.validation-diagonal { stroke: var(--line); stroke-width: 2; stroke-dasharray: 5 4; }
+.validation-whisker { stroke: var(--brand); stroke-width: 2; }
+.validation-table-scroll { overflow-x: auto; margin-top: var(--space-4); }
+.validation-table-scroll table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.validation-table-scroll th, .validation-table-scroll td { padding: var(--space-2); border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+
+/* 근거율과 데이터셋 막대의 0건 행도 그대로 남긴다. */
+.validation-rates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.validation-datasets { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.validation-datasets li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(60px, 2fr) auto; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+.validation-dataset-label { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.validation-datalab-menu { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); color: var(--ink-2); }
+.validation-dataset-track { height: 8px; border-radius: 4px; background: var(--surface-sunken); }
+.validation-dataset-track span { display: block; height: 100%; border-radius: 4px; background: var(--brand); }
+.validation-primary { justify-self: start; padding: var(--space-2) var(--space-5); border: 0; border-radius: var(--radius-button); background: var(--brand); color: var(--on-brand); cursor: pointer; }
+.validation-model-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+.validation-model-list dt { color: var(--ink-2); font-size: var(--text-sm); }
+.validation-model-list dd { margin: 0; overflow-wrap: anywhere; }
+.validation-notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* 인사이트 원문과 복사 행동을 표본·기간 아래에 배치한다. */
+.insight-results { display: grid; gap: var(--space-4); margin-top: var(--space-5); }
+.insight-result { display: grid; justify-items: start; gap: var(--space-2); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.insight-result strong { font-size: var(--text-section); }
+.insight-result:first-child { padding: var(--space-8); }
+.insight-result:first-child strong { font-size: var(--text-title); }
+.feature-panel.insights-main .insight-result h3, .feature-panel.insights-main .insight-result p { margin: 0; }
+.insight-result small { color: var(--ink-2); }
+@media (max-width: 1024px) { .validation-layout > .feature-panel, .insights-layout > .feature-panel { grid-column: span 12; } .validation-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .validation-metrics, .validation-rates, .validation-model-list, .validation-quadrants { grid-template-columns: 1fr; } .validation-datasets li { grid-template-columns: minmax(0, 1fr) auto; } .validation-dataset-track { grid-column: 1 / -1; grid-row: 2; } }
 
 /* 행사와 운영 화면은 표 영역을 넓게 두고 세부 상태를 옆에 둔다. */
 .table-layout, .ops-layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-8); }
