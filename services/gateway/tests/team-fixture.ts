@@ -114,6 +114,7 @@ export function teamFixture(options: Options = {}) {
   );
   return {
     app,
+    fetcher,
     calls,
     knowledgeClaims: knowledge.claims,
     traceDirectory,
