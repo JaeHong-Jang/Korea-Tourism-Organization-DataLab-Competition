@@ -1,0 +1,35 @@
+/* 운영 카드의 표·단계·평가·최신성 상태를 토큰으로 구분한다. */
+.ops-layout { align-items: start; }
+.ops-layout > .feature-panel { min-width: 0; }
+.ops-layout .kit-screen-state { padding-block: var(--space-5); }
+.ops-table-scroll { max-width: 100%; overflow-x: auto; margin-top: var(--space-4); }
+.ops-runs { width: 100%; min-width: 650px; border-collapse: collapse; font-size: var(--text-sm); }
+.ops-runs th, .ops-runs td { padding: var(--space-3); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.ops-runs th { background: var(--surface-sunken); color: var(--ink-2); }
+.ops-runs td:first-child small { display: block; color: var(--ink-2); }
+.ops-runs td:last-child > span { display: block; max-width: 30ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ops-status, .ops-stage__heading { display: inline-flex; align-items: center; gap: var(--space-2); }
+.ops-status--failed, .ops-stage--failed .ops-stage__heading, .ops-dataset--late > span:last-child, .ops-verdict--failed { color: var(--level-4); }
+.ops-status--passed, .ops-stage--passed .ops-stage__heading, .ops-verdict--passed { color: var(--link); }
+.ops-run--failed { background: var(--surface-sunken); }
+.ops-run__details { margin-top: var(--space-2); }
+.ops-run__details summary { color: var(--link); cursor: pointer; }
+.ops-stages { display: grid; gap: var(--space-2); padding-left: var(--space-4); }
+.ops-stage { padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); }
+.ops-stage--failed { border-color: var(--level-4); }
+.ops-stage p { margin: var(--space-1) 0 0; }
+.ops-artifacts { display: grid; gap: var(--space-1); margin-top: var(--space-2); padding-left: var(--space-4); }
+.ops-artifacts li { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); overflow-wrap: anywhere; }
+.ops-artifacts code { font-variant-numeric: tabular-nums; }
+.ops-artifacts button, .weekly-brush button { border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--link); cursor: pointer; }
+.ops-artifacts button { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1); }
+.ops-facts { display: grid; gap: var(--space-2); margin: var(--space-3) 0; }
+.ops-facts div { display: flex; justify-content: space-between; gap: var(--space-3); border-bottom: 1px solid var(--line); }
+.ops-facts dt { color: var(--ink-2); }
+.ops-facts dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.ops-evaluation, .ops-freshness { margin-top: var(--space-4); font-size: var(--text-sm); }
+.ops-freshness h3 { margin: var(--space-4) 0 var(--space-2); font-size: var(--text-ui); }
+.ops-freshness ul { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ops-freshness li { display: grid; gap: var(--space-1); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); }
+.ops-freshness li span:last-child { display: inline-flex; align-items: center; gap: var(--space-1); }
+.ops-freshness li.ops-dataset--late { border-color: var(--level-4); }
