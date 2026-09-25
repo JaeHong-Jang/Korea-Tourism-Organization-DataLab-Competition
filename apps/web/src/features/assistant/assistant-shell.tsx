@@ -7,6 +7,7 @@ import {
 } from "../../lib/consult-store";
 import { AssistantGuide } from "./assistant-guide";
 import { AssistantPanel } from "./assistant-panel";
+import { FestivalSpotlight } from "./festival-spotlight";
 import { FloatingWhale } from "./floating-whale";
 
 const invitationKey = "crowdcast:assistant:invitation-dismissed";
@@ -25,6 +26,9 @@ export function AssistantShell() {
   const location = useLocation();
   const open = useAssistantStore((state) => state.open);
   const openPanel = useAssistantStore((state) => state.openPanel);
+  const spotlight = useAssistantStore((state) => state.spotlight);
+  const showSpotlight = useAssistantStore((state) => state.showSpotlight);
+  const chooseFestival = useAssistantStore((state) => state.chooseFestival);
   const { busy, forecastId } = useSharedConsultSession();
   const [invitation, setInvitation] = useState(() => !wasDismissed());
   const [guideOpen, setGuideOpen] = useState(false);
@@ -52,7 +56,14 @@ export function AssistantShell() {
   return (
     <div className={`assistant-shell${open ? " assistant-shell--open" : ""}`}>
       {open && <AssistantPanel onGuide={startGuide} />}
-      {invitation && !open && !guideOpen && (
+      {spotlight && !open && !guideOpen && (
+        <FestivalSpotlight
+          festival={spotlight}
+          onTalk={() => chooseFestival(spotlight)}
+          onClose={() => showSpotlight(null)}
+        />
+      )}
+      {invitation && !spotlight && !open && !guideOpen && (
         <div className="assistant-invitation" role="status">
           <button
             type="button"

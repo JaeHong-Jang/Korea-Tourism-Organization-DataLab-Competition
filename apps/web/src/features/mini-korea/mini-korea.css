@@ -1,19 +1,30 @@
-/* 장면 중앙을 비우고 왼쪽 필터·범례를 서로 밀어내는 한 칸에 배치한다. */
-.scene-left-rail { position: absolute; z-index: var(--z-panel); top: var(--space-8); bottom: var(--space-4); left: var(--space-8); display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-4); width: 300px; }
-.scene-left-rail > .scene-filter { flex: 0 1 auto; min-height: 0; width: 100%; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); }
-.scene-left-rail > .scene-filter .festival-filters__actions { position: sticky; bottom: 0; z-index: 1; padding-block: var(--space-2); border-top: 1px solid var(--line); background: var(--surface); } /* 패널 안에서 스크롤해도 적용 개수·초기화는 늘 보인다 */
-/* 지도 도구(전국 보기·데이터 모드)는 행사 목록 왼쪽에 세로로 모아 장면 가운데를 비운다. */
-.scene-map-tools { position: absolute; z-index: var(--z-panel); top: var(--space-8); right: calc(360px + var(--space-8) + var(--space-4)); display: flex; flex-direction: column; gap: var(--space-2); }
-.scene-map-tools button { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
-.scene-map-tools button:hover { border-color: var(--line-strong, var(--line)); }
+/* 성남식 배치: 왼쪽 위 안내·지도 도구, 왼쪽 아래 범례, 오른쪽 탭 패널 하나 — 장면 가운데를 비운다. */
+.scene-left-rail { position: absolute; z-index: var(--z-panel); top: var(--space-8); bottom: var(--space-4); left: var(--space-8); display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-4); width: 300px; pointer-events: none; }
+.scene-left-rail > * { pointer-events: auto; }
+.scene-left-rail__top { display: grid; gap: var(--space-3); }
+.scene-intro, .scene-map-tools { padding: var(--space-4) var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); }
+.scene-intro__eyebrow { margin: 0; color: var(--link); font-size: var(--text-caption); font-weight: 700; letter-spacing: .04em; }
+.scene-intro h2 { margin: var(--space-1) 0; font-size: var(--text-title); letter-spacing: -.03em; }
+.scene-intro p:not(.scene-intro__eyebrow) { margin: 0 0 var(--space-3); color: var(--ink-2); font-size: var(--text-sm); }
+.scene-map-tools { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-3); }
+.scene-map-tools button { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.scene-map-tools button:hover { background: var(--surface-sunken); }
 .scene-map-tools button[aria-pressed="true"] { border-color: var(--select); background: var(--select-soft); color: var(--select-ink); }
 .scene-map-tools button:focus-visible, .scene-stage:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.scene-legend-panel { flex: none; min-height: 0; max-height: 60%; overflow: visible; } /* 넘침을 자르면 범례 그림자가 각진 회색 상자로 보인다 */
+.scene-map-tools__hint { flex-basis: 100%; margin: 0; color: var(--ink-2); font-size: var(--text-caption); }
+.scene-legend-panel { flex: none; min-height: 0; max-height: 45%; overflow: visible; } /* 넘침을 자르면 범례 그림자가 각진 회색 상자로 보인다 */
 .scene-legend-panel > .scene-legend { position: relative; inset: auto; z-index: auto; width: 100%; max-width: none; max-height: 100%; overflow: auto; }
-.scene-page .scene-cta { left: calc(300px + var(--space-8) + var(--space-4)); transform: none; }
-.scene-mobile-tabs, .scene-mobile-scale { display: none; }
+.scene-mobile-scale { display: none; }
+/* 오른쪽 패널: 목록·필터·현황을 탭으로 바꿔 보며 탭 안만 스크롤한다. */
 .scene-page > .scene-list { display: flex; flex-direction: column; max-height: calc(100vh - 170px); }
-.scene-page > .scene-list .festival-list__items { max-height: 330px; }
+.scene-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); margin-top: var(--space-3); padding: var(--space-1); border-radius: var(--radius-button); background: var(--surface-sunken); }
+.scene-tabs button { min-width: 0; padding: var(--space-2) var(--space-1); border: 0; border-radius: var(--radius-input); background: transparent; color: var(--ink-2); font: inherit; font-size: var(--text-sm); font-weight: 600; white-space: nowrap; cursor: pointer; }
+.scene-tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+.scene-tabs button:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.scene-list [role="tabpanel"] { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+.scene-list [role="tabpanel"][hidden] { display: none; }
+.scene-list .scene-filter, .scene-list .scene-timeline { padding-top: var(--space-3); }
+.scene-page > .scene-list .festival-list__items { max-height: calc(100vh - 430px); }
 .festival-summary { display: grid; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--line); font-size: var(--text-sm); }
 .festival-summary h3, .festival-summary p { margin: 0; }
 .festival-summary a { color: var(--link); font-weight: 700; }
@@ -25,43 +36,18 @@
 .scene-name-tag.is-clickable { cursor: pointer; font-family: inherit; height: 48px; overflow: hidden; }
 .scene-name-tag--far.is-clickable { height: 30px; }
 .scene-name-tag:focus-visible { outline: 3px solid var(--focus); }
-/* 좁은 화면에서는 왼쪽 패널도 장면 아래의 문서 흐름에 놓는다. */
+/* 좁은 화면에서는 왼쪽 칸과 오른쪽 패널도 장면 아래 문서 흐름에 놓는다. */
 @media (max-width: 1240px) {
-  .scene-left-rail { position: relative; inset: auto; order: 2; width: auto; margin-inline: var(--space-4); }
-  .scene-left-rail > .scene-filter { flex: none; overflow: visible; }
+  .scene-left-rail { position: relative; inset: auto; order: 2; width: auto; margin-inline: var(--space-4); pointer-events: auto; }
   .scene-legend-panel { max-height: none; }
   .scene-page > .scene-list { order: 3; max-height: none; }
-  .scene-page > .scene-timeline { order: 4; }
-  .scene-page .scene-cta { position: relative; inset: auto; order: 1; align-self: flex-start; margin-inline: var(--space-4); }
-  .scene-map-tools { top: var(--space-4); right: var(--space-4); }
+  .scene-page > .scene-list .festival-list__items { max-height: 480px; }
 }
 
-/* 휴대전화에서는 장면과 네 정보 패널을 한 번에 하나씩 읽는다. */
+/* 휴대전화에서는 장면 아래로 안내·도구·범례·탭 패널을 차례로 읽는다. */
 @media (max-width: 640px) {
   .scene-page:has(.festival-list) > .scene-stage { height: 420px; }
-  .scene-page .scene-left-rail { display: contents; }
-  .scene-page .scene-left-rail > .scene-filter,
-  .scene-page .scene-legend-panel,
-  .scene-page > .scene-list,
-  .scene-page > .scene-timeline { position: relative; inset: auto; order: 3; width: auto; min-height: 0; max-height: none; margin-inline: var(--space-4); }
-  .scene-page .scene-legend-panel > .scene-legend { max-height: none; overflow: visible; }
-  .scene-page .scene-left-rail > .scene-filter { overflow: visible; }
-  .scene-page .scene-mobile-tabs { order: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); margin-inline: var(--space-4); }
-  .scene-mobile-tabs button { min-width: 0; padding: var(--space-2) var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); font: inherit; font-size: var(--text-caption); cursor: pointer; }
-  .scene-mobile-tabs button[aria-pressed="true"] { border-color: var(--select); background: var(--select-soft); color: var(--select-ink); font-weight: 700; }
-  .scene-mobile-tabs button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-  .scene-page .scene-cta { order: 2; margin-inline: var(--space-4); }
+  .scene-page .scene-left-rail, .scene-page > .scene-list { position: relative; inset: auto; width: auto; min-height: 0; max-height: none; margin-inline: var(--space-4); }
+  .scene-page .scene-left-rail .scene-legend-panel > .scene-legend { top: auto; bottom: auto; max-height: none; overflow: visible; } /* 장면 안 안내용 bottom:46px가 왼쪽 칸 범례를 끌어올리지 않게 */
   .scene-mobile-scale { position: absolute; bottom: var(--space-3); left: var(--space-4); display: block; max-width: calc(100% - 2 * var(--space-4)); margin: 0; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font-size: var(--text-caption); }
-  .scene-page[data-mobile-panel="filter"] .scene-legend-panel,
-  .scene-page[data-mobile-panel="filter"] > .scene-list,
-  .scene-page[data-mobile-panel="filter"] > .scene-timeline,
-  .scene-page[data-mobile-panel="list"] .scene-filter,
-  .scene-page[data-mobile-panel="list"] .scene-legend-panel,
-  .scene-page[data-mobile-panel="list"] > .scene-timeline,
-  .scene-page[data-mobile-panel="timeline"] .scene-filter,
-  .scene-page[data-mobile-panel="timeline"] .scene-legend-panel,
-  .scene-page[data-mobile-panel="timeline"] > .scene-list,
-  .scene-page[data-mobile-panel="legend"] .scene-filter,
-  .scene-page[data-mobile-panel="legend"] > .scene-list,
-  .scene-page[data-mobile-panel="legend"] > .scene-timeline { display: none; }
 }

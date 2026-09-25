@@ -29,7 +29,7 @@ const typeIcons: Record<FestivalSummary["type"], LucideIcon> = {
 };
 
 // 대표 이미지가 없으면 행사 유형을 뜻하는 그림을 보여 준다.
-function FestivalImage({ festival }: { festival: FestivalSummary }) {
+export function FestivalImage({ festival }: { festival: FestivalSummary }) {
   const Icon = typeIcons[festival.type];
   return (
     <div className="assistant-recommendation__image">

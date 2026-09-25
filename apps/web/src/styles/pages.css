@@ -5,9 +5,7 @@
 .scene-page > .feature-panel { position: absolute; z-index: var(--z-panel); border-radius: var(--radius-panel); box-shadow: var(--shadow-float); }
 .scene-filter { top: var(--space-8); left: var(--space-8); width: 244px; min-height: 220px; }
 .scene-list { top: var(--space-8); right: var(--space-8); width: 360px; min-height: 440px; }
-.scene-timeline { left: calc(244px + 2 * var(--space-8) + var(--space-6)); right: calc(360px + 2 * var(--space-8) + var(--space-6)); bottom: var(--space-8); min-height: 116px; }
 .scene-id { position: absolute; top: var(--space-8); left: 48%; color: var(--ink-2); font-size: var(--text-caption); }
-.scene-cta { position: absolute; z-index: var(--z-panel); top: var(--space-8); left: 50%; transform: translateX(-50%); }
 
 /* 필터 입력과 목록 선택은 패널 안에서 스크롤되어 전국 판을 가리지 않는다. */
 .scene-page > .scene-filter { width: 300px; max-height: 380px; overflow: auto; } /* 왼쪽 칸(범례·정직한 표시)과 같은 폭 — KPI 띠와 겹치지 않게 */
@@ -61,9 +59,6 @@
 .weekly-timeline__table { margin-top: var(--space-1); }
 .weekly-timeline__table table { border-collapse: collapse; font-size: var(--text-caption); }
 .weekly-timeline__table th, .weekly-timeline__table td { padding: var(--space-1); border-bottom: 1px solid var(--line); text-align: left; }
-.scene-page > .scene-timeline { left: calc(300px + var(--space-8) + var(--space-5)); right: calc(360px + var(--space-8) + var(--space-5)); bottom: var(--space-4); width: auto; min-height: 0; padding: var(--space-3) var(--space-4); }
-.scene-page > .scene-timeline .scene-kpis { margin-top: var(--space-2); }
-.scene-page > .scene-timeline .weekly-timeline { margin-top: var(--space-2); }
 
 /* SVG 경계와 행사 점은 토큰 색을 쓰고 선택을 선 두께로 함께 표시한다. */
 .svg-korea-map { position: absolute; inset: 0; display: grid; place-items: center; background: var(--surface-sunken); }
@@ -89,9 +84,8 @@
   .scene-page:has(.festival-list) { display: flex; flex-direction: column; gap: var(--space-4); min-height: 0; padding-bottom: var(--space-4); overflow: visible; }
   .scene-page:has(.festival-list) > .scene-stage { position: relative; inset: auto; order: 0; width: 100%; height: 620px; flex: none; }
   .scene-page:has(.festival-list) .scene-stage__note { top: auto; bottom: 46px; }
-  .scene-page > .scene-filter, .scene-page > .scene-timeline, .scene-page > .scene-list { position: relative; inset: auto; flex: none; width: auto; margin-inline: var(--space-4); max-height: none; }
+  .scene-page > .scene-filter, .scene-page > .scene-list { position: relative; inset: auto; flex: none; width: auto; margin-inline: var(--space-4); max-height: none; }
   .scene-page > .scene-filter { order: 1; min-height: 0; }
-  .scene-page > .scene-timeline { order: 2; }
   .scene-page > .scene-list { order: 3; min-height: 380px; max-height: 380px; }
   .scene-page > .scene-id { top: var(--space-4); }
   .scene-kpis__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }

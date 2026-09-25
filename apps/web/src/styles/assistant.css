@@ -81,3 +81,12 @@
 .assistant-whale:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .assistant-panel:focus { outline: none; } /* 열 때 패널로 옮긴 초점은 보이지 않게 — 파란 테두리 선이 생기지 않는다 */
 .assistant-whale__status.is-idle { opacity: 0; } /* 대기 중에는 알약을 숨겨 화면을 덜 어지럽힌다(읽기 도구 알림 자리는 유지) */
+/* 고른 행사 카드는 안내 말풍선보다 넓게, 사진을 위에 둔다. */
+.assistant-invitation.assistant-spotlight { display: grid; gap: var(--space-2); width: 300px; padding: var(--space-4); }
+.assistant-spotlight__from { display: flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--ink-2); font-size: var(--text-caption); font-weight: 700; }
+.assistant-spotlight .festival-summary h3 { font-size: var(--text-ui); font-weight: 800; }
+/* 넓은 화면의 홈에서는 오른쪽 탭 패널을 가리지 않게 패널 왼쪽에 띄운다(말풍선 꼬리 없음). */
+@media (min-width: 1241px) { .app-shell:has(.scene-page) .assistant-spotlight { right: calc(360px + var(--space-8) + var(--space-4)); } .app-shell:has(.scene-page) .assistant-spotlight::after { display: none; } }
+.assistant-spotlight .assistant-recommendation__image { height: 120px; }
+.assistant-spotlight .festival-summary { margin: 0; padding: 0; border: 0; }
+.assistant-spotlight > button:last-child { justify-self: start; }

@@ -10,5 +10,4 @@
 
 /* 목록과 선택 요약이 접힌 만큼 떠 있는 패널의 높이를 줄인다. */
 .scene-page > .scene-list:has(.festival-list--collapsed) { min-height: 0; }
-.scene-list:has(.festival-list--collapsed) .festival-summary, .scene-list:has(.festival-list--collapsed) .festival-summary__empty { display: none; }
 .scene-list .festival-list--collapsed { flex: none; }

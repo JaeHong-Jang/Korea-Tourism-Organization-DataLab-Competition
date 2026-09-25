@@ -11,6 +11,9 @@ type AssistantState = {
   closePanel: () => void;
   chooseFestival: (festival: FestivalSummary) => void;
   clearRequest: () => void;
+  // 지도·목록에서 고른 행사를 고래 말풍선 카드로 띄운다(없으면 null).
+  spotlight: FestivalSummary | null;
+  showSpotlight: (festival: FestivalSummary | null) => void;
 };
 
 // 지도와 목록에서도 같은 상담 패널을 열고 행사 요청을 전달한다.
@@ -21,6 +24,8 @@ export const useAssistantStore = create<AssistantState>((set) => ({
   closePanel: () => set({ open: false }),
   chooseFestival: (requestedFestival) => set({ open: true, requestedFestival }),
   clearRequest: () => set({ requestedFestival: null }),
+  spotlight: null,
+  showSpotlight: (spotlight) => set({ spotlight }),
 }));
 
 const SessionContext = createContext<ReturnType<
