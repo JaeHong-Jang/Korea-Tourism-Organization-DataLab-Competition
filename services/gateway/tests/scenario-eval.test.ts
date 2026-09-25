@@ -1,4 +1,5 @@
 // 실제 라우트를 통과한 가짜 스트림과 변조 스트림으로 평가기의 오탐·누락을 검사한다
+import { fileURLToPath } from "node:url";
 import type { Claim, ForecastCard } from "@crowdcast/contracts/types";
 import { beforeAll, describe, expect, it } from "vitest";
 import { scenarioOptions } from "../evals/run-scenario-eval.js";
@@ -170,7 +171,9 @@ describe("시나리오 평가", () => {
         "reports/evals/test.json",
         "reports/evals/test.md",
       ]).markdownFile,
-    ).toMatch(/L3\/reports\/evals\/test.md$/);
+    ).toBe(
+      fileURLToPath(new URL("../../../reports/evals/test.md", import.meta.url)),
+    );
     expect(scenarioOptions(["--fake"]).jsonFile).toMatch(/-fake.json$/);
     expect(() => scenarioOptions([])).toThrow("--base");
   });

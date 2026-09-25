@@ -104,8 +104,9 @@
    "evidence": "develop 병합, forecast 899, 실제 실행 3종(데이터 미수집 → 종료 1 정상), sol PASS"
   },
   "T-105": {
-   "status": "running",
-   "updated": "2026-09-25T04:54:09.646Z"
+   "status": "done",
+   "updated": "2026-09-25T05:20:41.121Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
   },
   "T-106": {
    "status": "todo"
@@ -152,8 +153,9 @@
    "evidence": "develop 442924c · forecast 1294 · sol PASS · 선정 20건(등록은 9/29 오케스트레이터)"
   },
   "T-203b": {
-   "status": "running",
-   "updated": "2026-09-25T04:54:09.564Z"
+   "status": "done",
+   "updated": "2026-09-25T05:20:41.021Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
   },
   "T-210": {
    "status": "todo"
@@ -231,9 +233,9 @@
    "evidence": "develop 병합 0a5502e, gateway 744·build·lint·✓, sol PASS 3회(재디스패치 2회)"
   },
   "T-308": {
-   "status": "running",
-   "updated": "2026-09-25T04:51:02.457Z",
-   "note": "9/25 13:30 사용자 요청으로 중단 — 워크트리에 부분 결과, 같은 명세로 재디스패치해 이어 감"
+   "status": "done",
+   "updated": "2026-09-25T05:20:41.219Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
   },
   "T-309": {
    "status": "todo"
@@ -437,8 +439,9 @@
    "evidence": "구현 우선 모드 — G1·G2(web 156) 통과, 펫 스크린샷 확인"
   },
   "T-434a": {
-   "status": "running",
-   "updated": "2026-09-25T04:58:03.686Z"
+   "status": "done",
+   "updated": "2026-09-25T05:20:41.325Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
   }
  },
  "history": [
@@ -1366,6 +1369,30 @@
    "id": "T-430b",
    "status": "done",
    "evidence": "구현 우선 모드 — G1·G2(web 156) 통과, 펫 스크린샷 확인"
+  },
+  {
+   "at": "2026-09-25T05:20:41.021Z",
+   "id": "T-203b",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  },
+  {
+   "at": "2026-09-25T05:20:41.121Z",
+   "id": "T-105",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  },
+  {
+   "at": "2026-09-25T05:20:41.219Z",
+   "id": "T-308",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  },
+  {
+   "at": "2026-09-25T05:20:41.325Z",
+   "id": "T-434a",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
   }
  ]
 }
