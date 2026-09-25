@@ -2,6 +2,7 @@
 import type { Claim, Forecast } from "@crowdcast/contracts/types";
 import type { CheckInput, CheckResult } from "../report/bundle.js";
 import type { Agent } from "../runtime/agent.js";
+import { type AnalysisCheckInput, analysisCheck } from "./analysis-check.js";
 
 export const REVIEW_NOTICE = "참고용 — 담당자 검토 필수";
 export const MODEL_NOTICE =
@@ -83,5 +84,21 @@ export const skeptic: Agent<CheckInput, CheckResult[]> = {
       })),
       note: "구간 표시와 참고용 고지를 확인했어요.",
     };
+  },
+};
+
+// 게이트 A의 환산 가정과 기준일 이전 관측값 검사를 깐깐이 작업으로 기록한다
+export const analysisSkeptic: Agent<AnalysisCheckInput, null> = {
+  ...skeptic,
+  // 가정과 예보 입력의 근거를 검사 기록에 남기고 새 수치를 계산하지 않는다
+  async run({ input }) {
+    return analysisCheck(
+      input,
+      ["S07", "S09"],
+      input.evidence.filter((item) =>
+        ["assumption", "data", "model"].includes(item.kind),
+      ),
+      "환산 가정과 공개 시점을 확인했어요.",
+    );
   },
 };

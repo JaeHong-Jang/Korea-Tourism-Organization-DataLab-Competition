@@ -97,7 +97,10 @@ describe("새 예보 스트림", () => {
       "local-guide",
       "number-check",
       "rule-check",
+      "rule-check",
       "skeptic",
+      "skeptic",
+      "source-check",
       "source-check",
     ]);
     for (const step of steps) {
