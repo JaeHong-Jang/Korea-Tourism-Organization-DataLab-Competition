@@ -1,6 +1,6 @@
 // 상담 시나리오 스무 개의 실제 또는 가짜 SSE를 채점해 JSON·Markdown으로 저장한다
-import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -62,8 +62,31 @@ export function scenarioOptions(args: string[], date = evaluationDate()) {
   };
 }
 
+// 결과 전체를 같은 디렉터리의 임시 파일에 쓴 뒤 최신 포인터를 원자 교체한다
+async function writeLatestScenario(
+  artifact: ScenarioArtifact,
+  latestFile: string,
+) {
+  const temporary = `${latestFile}.${process.pid}.${randomUUID()}.tmp`;
+  await mkdir(dirname(latestFile), { recursive: true });
+  try {
+    await writeFile(
+      temporary,
+      `${JSON.stringify({ ...artifact, mode: artifact.mode === "가짜" ? "fake" : "live" }, null, 2)}\n`,
+    );
+    await rename(temporary, latestFile);
+  } finally {
+    await rm(temporary, { force: true });
+  }
+}
+
 // 각 사례 실패는 끝까지 수집한 뒤 파일을 남기고 프로세스의 실패 상태로 알린다
-export async function runScenarioEval(args = process.argv.slice(2)) {
+export async function runScenarioEval(
+  args = process.argv.slice(2),
+  latestFile = fileURLToPath(
+    new URL("../../../reports/evals/latest.json", import.meta.url),
+  ),
+) {
   const measuredAt = new Date().toISOString();
   const date = evaluationDate(new Date(measuredAt));
   const options = scenarioOptions(args, date);
@@ -105,6 +128,7 @@ export async function runScenarioEval(args = process.argv.slice(2)) {
   await mkdir(dirname(options.jsonFile), { recursive: true });
   await writeFile(options.jsonFile, `${JSON.stringify(artifact, null, 2)}\n`);
   await writeFile(options.markdownFile, renderScenarioReport(artifact));
+  await writeLatestScenario(artifact, latestFile);
   console.log(
     `${artifact.mode} ${artifact.summary.passed}/${scores.length}: ${options.markdownFile}`,
   );

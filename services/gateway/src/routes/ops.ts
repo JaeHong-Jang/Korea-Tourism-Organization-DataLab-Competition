@@ -2,6 +2,7 @@
 import { readLatestEval } from "../clients/eval-reader.js";
 import { createForecastQueries } from "../clients/forecast-queries.js";
 import { createKnowledgeQueries } from "../clients/knowledge-queries.js";
+import { readPromotedVerdict } from "../clients/promoted-reader.js";
 import { opsStatusSchema, runsSchema } from "../clients/query-schemas.js";
 import type { GatewayConfig } from "../config.js";
 import { createProxyRoute, proxyJson, proxyOptions } from "./proxy-response.js";
@@ -11,6 +12,7 @@ export function createOpsRoute(
   config: GatewayConfig,
   fetcher: typeof fetch,
   readEvals = readLatestEval,
+  readVerdict = readPromotedVerdict,
 ) {
   const route = createProxyRoute();
   route.get("/runs", async (c) => {
@@ -26,11 +28,12 @@ export function createOpsRoute(
     const knowledge = createKnowledgeQueries(
       proxyOptions(config, "knowledge", fetcher, c.req.raw.signal),
     );
-    const [freshness, card, graph, evals] = await Promise.all([
+    const [freshness, card, graph, evals, verdict] = await Promise.all([
       forecast.freshness(),
       forecast.modelCard(),
       knowledge.graphStats(),
       readEvals(),
+      readVerdict(),
     ]);
     return proxyJson(opsStatusSchema, {
       generatedAt: new Date().toISOString(),
@@ -40,6 +43,7 @@ export function createOpsRoute(
         modelVersion: card.modelVersion,
         trainRange: card.trainRange,
         createdAt: card.createdAt,
+        ...(verdict ? { verdict } : {}),
       },
       graph,
       evals,
