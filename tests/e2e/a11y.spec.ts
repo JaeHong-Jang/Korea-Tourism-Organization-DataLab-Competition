@@ -180,6 +180,8 @@ for (const [name, query] of [
 	["s1-svg", "sceneFixture=1&forceSvg=1"],
 ] as const) {
 	test(`S1 ${name} 접근성과 폭`, async ({ page }) => {
+		// 3D 장면(소프트웨어 렌더러)에 네 폭 axe 분석이 겹쳐 전체 실행 부하에서는 30초를 넘길 수 있다
+		test.setTimeout(60_000);
 		await routeFixtures(page);
 		await page.goto(`/?${query}&theme=day`);
 		if (name === "s1")
