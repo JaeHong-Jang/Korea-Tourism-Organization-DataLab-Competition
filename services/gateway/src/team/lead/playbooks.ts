@@ -1,18 +1,10 @@
 // 새 예보의 받아쓰기·병렬 분석·예보·게이트 A 순서를 지휘한다
 
-// @ts-expect-error 계약의 실행 규칙은 JavaScript로만 배포된다
-import { projectCard } from "@crowdcast/contracts/rules/card-projection.mjs";
-import type {
-  Event,
-  EventDraft,
-  ForecastCard,
-} from "@crowdcast/contracts/types";
-import { createKnowledgeClient } from "../../clients/knowledge-client.js";
+import type { Event, EventDraft } from "@crowdcast/contracts/types";
 import { RequestTimeoutError } from "../../clients/request-deadline.js";
 import { archivist } from "../analysis/archivist.js";
 import { dictation } from "../analysis/dictation-step.js";
 import type { TeamMessage } from "../analysis/draft-answer.js";
-import { forecaster } from "../analysis/forecaster.js";
 import { localGuide } from "../analysis/local-guide.js";
 import type { Agent } from "../runtime/agent.js";
 import type { EventWriter } from "../runtime/events.js";
@@ -20,11 +12,8 @@ import type { Executor } from "../runtime/executor.js";
 import type { TeamSession } from "../runtime/sessions.js";
 import type { TeamSettings } from "../runtime/settings.js";
 import type { Deadline } from "./deadline.js";
-import {
-  AnalysisGateError,
-  analysisGate,
-  ExplanationGateError,
-} from "./gates.js";
+import { forecastEvent } from "./forecast-event.js";
+import { ExplanationGateError } from "./gates.js";
 import { publishForecast } from "./publish.js";
 
 // 첫 메시지와 되묻기 재개는 LLM 분류 없이 같은 플레이북을 선택한다
@@ -165,38 +154,21 @@ export async function newForecast(
   );
   if (!analysis) return;
   const { event, baseline, similar } = analysis;
-  const { forecast, revision } = await execute(
-    forecaster,
-    { event, today },
-    "행사 예측과 판정을 요청해요.",
-    2,
+  const { bundle, gate } = await forecastEvent(
+    session.id,
+    event,
+    { baseline, similar },
+    execute,
+    writer,
+    deadline,
+    settings,
+    today,
   );
-  const budgetMs = deadline.budget(8_000);
-  const gate = await deadline.run(budgetMs, (signal) =>
-    analysisGate(
-      createKnowledgeClient({
-        baseUrl: settings.config.services.knowledge,
-        fetch: settings.fetcher,
-        signal,
-        timeoutMs: budgetMs,
-      }),
-      session.id,
-      revision,
-      { forecast, baseline, similar },
-      execute,
-    ),
-  );
-  deadline.check();
-  await writer.emit("gate", gate);
-  if (!gate.passed)
-    throw new AnalysisGateError("분석 게이트를 통과하지 못했습니다");
-  deadline.check();
-  await writer.emit("forecast", projectCard(forecast) as ForecastCard);
   try {
     await publishForecast(
       session,
       event,
-      { forecast, baseline, similar },
+      bundle,
       gate,
       execute,
       writer,

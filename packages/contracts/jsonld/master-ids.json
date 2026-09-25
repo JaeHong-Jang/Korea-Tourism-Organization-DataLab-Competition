@@ -48,7 +48,8 @@
     "as-concurrency-flower",
     "as-concurrency-traditional",
     "as-concurrency-other",
-    "as-temporary-holiday-excluded"
+    "as-temporary-holiday-excluded",
+    "as-weather-adjustment"
   ],
   "agents": [
     "agent-lead",
