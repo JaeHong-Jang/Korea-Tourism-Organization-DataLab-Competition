@@ -20,6 +20,7 @@ class Event(Enum):
     evidence = 'evidence'
     recommend = 'recommend'
     suggest = 'suggest'
+    reply = 'reply'
     done = 'done'
     error = 'error'
 

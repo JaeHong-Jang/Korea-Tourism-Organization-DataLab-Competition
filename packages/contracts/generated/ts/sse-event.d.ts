@@ -17,6 +17,7 @@ export type SseEvent = {
     | "evidence"
     | "recommend"
     | "suggest"
+    | "reply"
     | "done"
     | "error";
   seq: number;

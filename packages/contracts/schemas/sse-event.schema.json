@@ -23,6 +23,7 @@
         "evidence",
         "recommend",
         "suggest",
+        "reply",
         "done",
         "error"
       ]
@@ -443,6 +444,44 @@
               "note": {
                 "type": "string",
                 "description": "고지(혼잡 예보는 참고용·추정 산식 기반 등)"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "reply"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "text",
+              "source"
+            ],
+            "description": "팀장의 대화형 답(모든 모드). 새 사실·숫자를 담지 않는다 — 숫자는 forecast 카드·recommend 목록·발행 문장에만. 게이트 대상이 아니므로 숫자(0-9)를 넣으면 계약 위반",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400,
+                "pattern": "^[^0-9]*$"
+              },
+              "source": {
+                "enum": [
+                  "llm",
+                  "template"
+                ],
+                "description": "로컬 LLM이 썼는지(검사 통과), 규칙 문장인지"
               }
             }
           }

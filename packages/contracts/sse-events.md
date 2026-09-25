@@ -52,3 +52,9 @@ agent_status(lead) → agent_status/agent_step(dictation) → event_card → [as
 - 순서: `agent_status`/`agent_step` → `recommend` 한 번(`query`·최대 10개 `items`·`total`·`note`) → (`suggest`) → `done`(`forecastId: null`). 오류면 `error` → `done`.
 - `items[].summary`는 일괄 예보의 festival-summary 그대로(숫자를 새로 계산하지 않는다), `reason`에는 조건 일치만 적는다.
 - 검사: `rules/sse-sequence.mjs`의 `mode: "recommend"`, 픽스처 `fixtures-sse/valid-recommend.json`·`invalid-recommend-with-gate.json`.
+
+## 팀장의 대화형 답 — `reply` (9/25 밤 추가)
+- 사용자에게 **자연스러운 말**로 결과를 전한다(예: "진천 가까이에서 열리는 축제를 가까운 순으로 골라 봤어요"). 로컬 LLM이 쓰면 `source: "llm"`, 규칙 문장이면 `"template"`.
+- **숫자(0-9)와 새 사실을 넣지 않는다** — 숫자는 `forecast` 카드·`recommend` 목록·발행 `claim`에만(스키마 `pattern`으로 막는다). 근거 칩은 대화에 붙이지 않고 예보서·근거 그래프에서 본다.
+- 어느 모드든 `done` 전 어디서나 보낼 수 있다(게이트 A 실패 뒤에도 안내로).
+- 메시지 본문 `near {lat,lng,label?}`: 사용자가 허락한 브라우저 위치 — 행사 찾기의 가까운 순 정렬에만 쓰고 저장하지 않는다.

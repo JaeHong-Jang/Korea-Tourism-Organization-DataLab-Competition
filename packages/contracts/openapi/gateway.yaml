@@ -87,6 +87,24 @@ paths:
                   type:
                     - object
                     - "null"
+                near:
+                  type: object
+                  additionalProperties: false
+                  required:
+                    - lat
+                    - lng
+                  description: 브라우저 위치(사용자가 허락한 경우만) — 행사 찾기에서 가까운 순 정렬에 쓴다. 저장하지 않는다
+                  properties:
+                    lat:
+                      type: number
+                      minimum: 33
+                      maximum: 39
+                    lng:
+                      type: number
+                      minimum: 124
+                      maximum: 132
+                    label:
+                      type: string
                 eventId:
                   type: string
                   pattern: ^e-[a-z0-9][a-z0-9_.:-]{1,120}$
