@@ -16,6 +16,28 @@ const card = JSON.parse(
 	),
 );
 
+// 움직임 줄이기에서도 장면의 열차·봇 표시와 선택 해제를 확인한다.
+test("연출 열차와 고른 행사 위 고래 봇", async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto(`/?sceneFixture=1&theme=day&sceneDiagnostic=1&at=${time}`);
+	await expect(page.locator("html")).toHaveAttribute("data-scene-ready", "true", { timeout: 30_000 });
+	await expect.poll(async () => Number(await page.locator("html").getAttribute("data-scene-trains"))).toBeGreaterThan(0);
+	const first = await page.evaluate(() => window.__crowdcastTrainPosition?.());
+	await page.waitForTimeout(150);
+	expect(await page.evaluate(() => window.__crowdcastTrainPosition?.())).toEqual(first);
+	await expect(page.locator(".scene-legend")).toContainText("열차·차량·봇 움직임은 연출 — 실제 운행·교통량이 아님");
+	await page.screenshot({ path: resolve(output, "T-434a-s1-day.png") });
+	await page.locator(".festival-list__pick").first().click();
+	await expect.poll(async () => Number(await page.locator("html").getAttribute("data-scene-bots"))).toBeGreaterThan(0);
+	await page.screenshot({ path: resolve(output, "T-434a-s1-selected.png") });
+	await page.keyboard.press("Escape");
+	await expect(page.locator("html")).toHaveAttribute("data-scene-bots", "0");
+	await page.goto(`/?sceneFixture=1&theme=night&sceneDiagnostic=1&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`);
+	await expect(page.locator("html")).toHaveAttribute("data-scene-ready", "true", { timeout: 30_000 });
+	await page.screenshot({ path: resolve(output, "T-434a-s1-night.png") });
+});
+
 // 실제 버튼 경계가 장면 밖으로 나가거나 패널 아래에 숨지 않았는지 확인한다.
 async function visibleTagsAreSafe(
 	page: Page,

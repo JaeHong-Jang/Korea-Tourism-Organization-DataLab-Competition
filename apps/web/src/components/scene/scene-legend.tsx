@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { tileRanges } from "../../features/mini-korea/data-mode";
 import { FestivalList } from "./festival-list";
 import { GradeMark } from "./grade-mark";
-import { HonestNote } from "./honest-note";
 import "./scene-legend.css";
 
 // 참고 문구와 목록 진입점을 Canvas 성공 여부와 관계없이 유지한다.
@@ -65,7 +64,10 @@ export function SceneLegend({
           </span>
         ))}
       </div>
-      <HonestNote />
+      <span className="scene-legend__note">
+        인원 규모는 예보값 비례 · 인형 위치는 실제 사람 위치가 아니에요 ·
+        열차·차량·봇 움직임은 연출 — 실제 운행·교통량이 아님.
+      </span>
       {notices}
       <FestivalList festivals={festivals} />
     </div>
