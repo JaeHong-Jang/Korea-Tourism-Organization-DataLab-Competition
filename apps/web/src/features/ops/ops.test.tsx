@@ -125,3 +125,54 @@ it("평가·최신성 카드에 각 상태와 지연 경고를 표시한다", ()
     ),
   ).toContain("실행 기록을 확인할 수 없어요");
 });
+
+// 선택 집계가 들어오면 정해진 순서의 표와 가짜 실행·모델 미검증 고지를 보여 준다.
+it("항목별 평가·지연과 모델 판정을 계약 값 그대로 표시한다", async () => {
+  if (!status.evals) throw new Error("평가 픽스처가 없습니다");
+  const detailed: OpsStatus = {
+    ...status,
+    model: { ...status.model, verdict: "미검증" },
+    evals: {
+      ...status.evals,
+      checks: {
+        sequence: { passed: 20, total: 20 },
+        evidence: { passed: 19, total: 20 },
+        numbers: { passed: 18, total: 20 },
+        interval: { passed: 17, total: 20 },
+        ask: { passed: 16, total: 20 },
+        intent: { passed: 15, total: 20 },
+        publication: { passed: 14, total: 20 },
+        execution: { passed: 13, total: 20 },
+      },
+      latencySeconds: {
+        forecast: { n: 9, p50: 5.32, p95: 7.61 },
+        publishedDone: { n: 10, p50: 11.45, p95: 14.64 },
+      },
+      mode: "fake",
+    },
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => Response.json(detailed)),
+  );
+  await expect(getOpsStatus()).resolves.toMatchObject(detailed);
+  const evaluation = renderToStaticMarkup(
+    <EvaluationCard state={{ phase: "ready", value: detailed }} />,
+  );
+  expect(evaluation).toContain("가짜 서비스 실행");
+  expect(evaluation).toContain("서식4에 사용하지 마세요");
+  expect(evaluation).toContain("18 / 20");
+  expect(evaluation).toContain("p50 5.3초 · p95 7.6초");
+  expect(evaluation).toContain("p50 11.4초 · p95 14.6초");
+  expect(evaluation.indexOf("순서 규칙")).toBeLessThan(
+    evaluation.indexOf("근거 연결"),
+  );
+  expect(evaluation.indexOf("근거 연결")).toBeLessThan(
+    evaluation.indexOf("숫자 일치"),
+  );
+  const freshness = renderToStaticMarkup(
+    <FreshnessCard state={{ phase: "ready", value: detailed }} />,
+  );
+  expect(freshness).toContain("미검증");
+  expect(freshness).toContain("골든 사례 0건 — 사례 재현 검증 전 임시 사용");
+});

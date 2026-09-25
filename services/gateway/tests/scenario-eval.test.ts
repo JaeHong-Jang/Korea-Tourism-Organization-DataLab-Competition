@@ -1,8 +1,14 @@
 // 실제 라우트를 통과한 가짜 스트림과 변조 스트림으로 평가기의 오탐·누락을 검사한다
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Claim, ForecastCard } from "@crowdcast/contracts/types";
 import { beforeAll, describe, expect, it } from "vitest";
-import { scenarioOptions } from "../evals/run-scenario-eval.js";
+import {
+  runScenarioEval,
+  scenarioOptions,
+} from "../evals/run-scenario-eval.js";
 import {
   loadScenarios,
   materializeScenario,
@@ -176,6 +182,29 @@ describe("시나리오 평가", () => {
     );
     expect(scenarioOptions(["--fake"]).jsonFile).toMatch(/-fake.json$/);
     expect(() => scenarioOptions([])).toThrow("--base");
+  });
+
+  // 가짜 실행의 전체 결과를 별도 최신 파일에 쓰고 임시 파일을 남기지 않는다
+  it("시나리오 실행이 최신 평가를 원자 갱신하며 fake 모드를 기록한다", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "crowdcast-scenario-latest-"),
+    );
+    const latestFile = join(directory, "latest.json");
+    try {
+      const artifact = await runScenarioEval(
+        ["--fake", "--out", join(directory, "scenario.json")],
+        latestFile,
+      );
+      const latest = JSON.parse(await readFile(latestFile, "utf8"));
+      expect(latest).toEqual({ ...artifact, mode: "fake" });
+      expect(await readdir(directory)).toEqual([
+        "latest.json",
+        "scenario.json",
+        "scenario.md",
+      ]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   it("사례 중복·20개 구성과 자료 경계 날짜를 검증한다", async () => {

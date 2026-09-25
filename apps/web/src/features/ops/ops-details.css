@@ -1,0 +1,9 @@
+/* 운영 평가 표와 실행·검증 상태 배지를 기존 화면 토큰으로 표시한다. */
+.ops-detail-badge { display: inline-flex; align-items: center; padding: var(--space-1) var(--space-2); border: 1px solid var(--link); border-radius: var(--radius-input); color: var(--link); font-weight: 700; }
+.ops-detail-badge--caution { border-color: var(--level-4); color: var(--level-4); }
+.ops-model-note { display: block; margin-top: var(--space-1); }
+.ops-checks-scroll { max-width: 100%; overflow-x: auto; }
+.ops-checks { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ops-checks caption { padding: var(--space-2) 0; text-align: left; font-weight: 700; }
+.ops-checks th, .ops-checks td { padding: var(--space-2); border-bottom: 1px solid var(--line); text-align: left; }
+.ops-checks td, .ops-checks thead th:last-child { text-align: right; }

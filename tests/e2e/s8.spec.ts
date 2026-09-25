@@ -137,3 +137,34 @@ test("S8 평가 계약 오류는 최신성 카드에 영향을 주지 않는다"
   );
   await expect(page.locator('[data-feature="M8-F3"]')).toContainText("v0.1.0");
 });
+
+// 가짜 평가 API는 여덟 검사와 초 단위 지연·사용 모델 미검증을 함께 보여 준다.
+test("S8 평가 상세와 가짜 실행·모델 검증 상태", async ({ page }) => {
+  await fakeOps(page, [run], {
+    ...status,
+    model: { ...status.model, verdict: "미검증" },
+    evals: {
+      ...status.evals,
+      mode: "fake",
+      checks: Object.fromEntries(
+        ["sequence", "evidence", "numbers", "interval", "ask", "intent", "publication", "execution"]
+          .map((key) => [key, { passed: 19, total: 20 }]),
+      ),
+      latencySeconds: {
+        forecast: { n: 9, p50: 5.32, p95: 7.61 },
+        publishedDone: { n: 10, p50: 11.45, p95: 14.64 },
+      },
+    },
+  });
+  await page.goto("/ops");
+  const evaluation = page.locator('[data-feature="M8-F2"]');
+  await expect(evaluation.getByText("가짜 서비스 실행")).toBeVisible();
+  await expect(evaluation).toContainText("서식4에 사용하지 마세요");
+  await expect(evaluation.locator(".ops-checks tbody tr")).toHaveCount(8);
+  await expect(evaluation.getByRole("row", { name: /숫자 일치/ })).toContainText("19 / 20");
+  await expect(evaluation).toContainText("p50 5.3초 · p95 7.6초");
+  await expect(evaluation).toContainText("p50 11.4초 · p95 14.6초");
+  const freshness = page.locator('[data-feature="M8-F3"]');
+  await expect(freshness.getByText("미검증", { exact: true })).toBeVisible();
+  await expect(freshness).toContainText("골든 사례 0건 — 사례 재현 검증 전 임시 사용");
+});

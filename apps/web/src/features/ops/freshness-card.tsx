@@ -5,6 +5,7 @@ import { LoadingState } from "../../components/common/loading-state";
 import type { OpsFreshness } from "../../lib/ops-api";
 import { dateTime, lagDays } from "./ops-format";
 import type { OpsResource } from "./use-ops-resource";
+import "./ops-details.css";
 
 // 자료 기준일이 35일을 넘으면 텍스트와 아이콘으로 지연을 알린다.
 export function FreshnessCard({ state }: { state: OpsResource<OpsFreshness> }) {
@@ -58,6 +59,21 @@ export function FreshnessCard({ state }: { state: OpsResource<OpsFreshness> }) {
         </ul>
       )}
       <h3>사용 모델</h3>
+      {model.verdict && (
+        <p>
+          검증 상태:{" "}
+          <span
+            className={`ops-detail-badge ${model.verdict === "미검증" ? "ops-detail-badge--caution" : ""}`}
+          >
+            {model.verdict}
+          </span>
+          {model.verdict === "미검증" && (
+            <span className="ops-model-note">
+              골든 사례 0건 — 사례 재현 검증 전 임시 사용
+            </span>
+          )}
+        </p>
+      )}
       <dl className="ops-facts">
         <div>
           <dt>버전</dt>
