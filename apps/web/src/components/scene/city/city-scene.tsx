@@ -67,28 +67,38 @@ export function CityScene({
     };
   }, [festival.lng, festival.lat, onStatus]);
 
-  const roads = useMemo(
+  // 찻길(보행로 제외)과 사람 길(큰길 제외)을 한 번씩 그래프로 만든다.
+  const roadGraph = useMemo(
     () =>
       tiles
-        ? graphRoutes(
-            routeGraph(tiles.roads.filter((line) => line.kind !== "path")),
-            48,
-          )
-        : [],
+        ? routeGraph(tiles.roads.filter((line) => line.kind !== "path"))
+        : null,
     [tiles],
+  );
+  const walkGraph = useMemo(
+    () =>
+      tiles
+        ? routeGraph(tiles.roads.filter((line) => line.kind !== "major_road"))
+        : null,
+    [tiles],
+  );
+  // 동네 전체를 다니는 긴 경로와, 확대했을 때 보는 곳 근처에 세울 짧은 경로(300m 이하)를 따로 만든다.
+  const roads = useMemo(
+    () => (roadGraph ? graphRoutes(roadGraph, 64) : []),
+    [roadGraph],
+  );
+  const nearbyRoads = useMemo(
+    () => (roadGraph ? graphRoutes(roadGraph, 300, 300) : []),
+    [roadGraph],
   );
   // 사람은 큰길 한가운데가 아니라 골목·보행로 가장자리를 걷는다.
   const walks = useMemo(
-    () =>
-      tiles
-        ? graphRoutes(
-            routeGraph(
-              tiles.roads.filter((line) => line.kind !== "major_road"),
-            ),
-            48,
-          )
-        : [],
-    [tiles],
+    () => (walkGraph ? graphRoutes(walkGraph, 64) : []),
+    [walkGraph],
+  );
+  const nearbyWalks = useMemo(
+    () => (walkGraph ? graphRoutes(walkGraph, 400, 300) : []),
+    [walkGraph],
   );
   const rails = useMemo(
     () => (tiles ? graphRoutes(routeGraph(tiles.rails), 8) : []),
@@ -148,6 +158,7 @@ export function CityScene({
       {tiles && (
         <CityPeople
           routes={walks.length ? walks : roads}
+          nearby={nearbyWalks.length ? nearbyWalks : nearbyRoads}
           gather={gatheredDolls(festival.peakP50)}
           towardShare={towardShare(hour, eventHour)}
           quality={quality}
@@ -158,6 +169,7 @@ export function CityScene({
       {tiles && (
         <CityTraffic
           roadRoutes={roads}
+          nearbyRoads={nearbyRoads}
           railRoutes={rails}
           quality={quality}
           hour={hour}

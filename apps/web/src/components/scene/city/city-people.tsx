@@ -13,6 +13,7 @@ import {
 import type { MotionPoint, MotionRoute } from "../motion/rail-lines";
 import { sceneColor } from "../quality";
 import { vehicleAt } from "../venue/routes";
+import { newFocus, refocus } from "./focus-routes";
 import { type Pose, stamp, swing } from "./stamp";
 
 // 이 거리보다 멀면 몸·머리만 그리는 간단한 모습으로 바꾼다(m).
@@ -22,13 +23,13 @@ const ORIGIN = new Vector3();
 // 멀리서도 사람으로 읽히게 키운 배율(범례에 "크기는 보이게 키움"으로 밝힌다).
 export const PERSON_SCALE = 3.6;
 
-// 품질별 걷는 사람·모인 사람 수 상한.
+// 품질별 걷는 사람·모인 사람 수 상한(걷는 사람은 동네 전체 길에 흩어지므로 모인 사람보다 많다).
 export function walkerCaps(quality: "high" | "medium" | "low") {
   return quality === "high"
-    ? { walk: 360, gather: 360 }
+    ? { walk: 720, gather: 360 }
     : quality === "medium"
-      ? { walk: 220, gather: 220 }
-      : { walk: 100, gather: 100 };
+      ? { walk: 420, gather: 220 }
+      : { walk: 160, gather: 100 };
 }
 
 // 사람 한 명 = 몸 1·머리 1·머리카락 1·팔 2·다리 2 (단위 m, 키 약 1.75m).
@@ -58,6 +59,7 @@ function palette(prefix: string, count: number) {
 
 export function CityPeople({
   routes,
+  nearby = [],
   gather,
   towardShare,
   quality,
@@ -65,6 +67,8 @@ export function CityPeople({
   blocked,
 }: {
   routes: MotionRoute[];
+  // 확대했을 때 보는 곳 근처에 세울 짧은 경로 모음(동네 전체에 촘촘히 깔림).
+  nearby?: MotionRoute[];
   gather: number;
   towardShare: number;
   quality: "high" | "medium" | "low";
@@ -187,8 +191,10 @@ export function CityPeople({
   }, [total, walkCount, gatherCount, blocked]);
 
   // 걷는 사람은 골목·보행로 가장자리를 따라 움직이고 일부는 행사장 쪽으로 향한다.
-  // 멀리서 볼 때(700m 넘게)는 팔다리·머리카락이 점보다 작아 몸·머리만 그린다(소프트웨어 렌더러 부담 절반).
+  // 멀리서 볼 때(700m 넘게)는 팔다리·머리카락이 점보다 작아 몸·머리만 그리고, 모두 동네 전체 길에 흩어 둔다.
+  // 확대하면 열에 여섯은 보는 곳 근처 짧은 길로 옮겨 가까이 본 거리가 비어 보이지 않게 한다.
   const detail = useRef(true);
+  const focus = useMemo(newFocus, []);
   useFrame(({ clock, camera, controls }) => {
     const target = (controls as { target?: Vector3 } | null)?.target;
     const full = camera.position.distanceTo(target ?? ORIGIN) < FAR_DISTANCE;
@@ -199,9 +205,14 @@ export function CityPeople({
       if (legs.current) legs.current.count = full ? total * 2 : 0;
     }
     if (walkCount === 0) return;
+    if (full) refocus(focus, nearby, target?.x ?? 0, target?.z ?? 0);
+    const near = full ? focus.routes : [];
     const seconds = reducedMotion ? 0 : clock.elapsedTime * 1.4;
     for (let index = 0; index < walkCount; index++) {
-      const route = routes[index % routes.length];
+      const route =
+        near.length && index % 5 < 3
+          ? near[(index * 7) % near.length]
+          : routes[index % routes.length];
       vehicleAt(
         route,
         seconds + index * 3.1,

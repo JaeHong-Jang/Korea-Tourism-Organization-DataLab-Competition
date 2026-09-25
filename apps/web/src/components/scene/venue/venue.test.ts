@@ -126,6 +126,38 @@ describe("행사장 연출", () => {
     expect(first).toEqual(second);
   });
 
+  // 동네 전체 격자 길에서 경로가 행사장 근처가 아니라 네 방향 모두에 퍼진다(9/26 "한쪽에 다 모여 있어")
+  it("경로 출발점이 동네 전체에 고르게 퍼진다", () => {
+    const lines = [];
+    for (let at = -1500; at <= 1500; at += 100)
+      for (let step = -1500; step < 1500; step += 100) {
+        lines.push({
+          from: [at, step] as [number, number],
+          to: [at, step + 100] as [number, number],
+          kind: "road",
+          width: 5,
+        });
+        lines.push({
+          from: [step, at] as [number, number],
+          to: [step + 100, at] as [number, number],
+          kind: "road",
+          width: 5,
+        });
+      }
+    const routes = graphRoutes(routeGraph(lines), 48);
+    expect(routes).toHaveLength(48);
+    const quadrants = [0, 0, 0, 0];
+    for (const route of routes) {
+      const [x, z] = route.points[0];
+      quadrants[(x < 0 ? 0 : 1) + (z < 0 ? 0 : 2)]++;
+    }
+    expect(Math.min(...quadrants)).toBeGreaterThanOrEqual(8);
+    expect(
+      Math.max(...routes.map((route) => Math.hypot(...route.points[0]))),
+    ).toBeGreaterThan(1200);
+    expect(routes.every((route) => route.length >= 300)).toBe(true);
+  });
+
   it("품질 상한과 모션 감소 정지를 지킨다", () => {
     expect(cityBuildingCap("low")).toBeLessThan(cityBuildingCap("high"));
     expect(cityBuildingCap("high")).toBeLessThanOrEqual(2200);
