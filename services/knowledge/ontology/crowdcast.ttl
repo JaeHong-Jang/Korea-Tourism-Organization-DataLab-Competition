@@ -187,3 +187,20 @@ cc:loadedDocument a owl:ObjectProperty ; rdfs:domain cc:Session .
 cc:sourceDocument a owl:DatatypeProperty ; rdfs:range rdf:JSON .
 cc:documentSchema a owl:DatatypeProperty ; rdfs:range xsd:string .
 cc:documentOrder a owl:DatatypeProperty ; rdfs:range xsd:integer .
+
+# 파이프라인 계보는 실행 단계와 파일을 PROV로 잇고 가져온 스냅샷을 보존한다.
+cc:PipelineStage a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:label "파이프라인 단계"@ko .
+cc:LineageSnapshot a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "계보 스냅샷"@ko .
+cc:stageOrder a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:integer .
+cc:stageStatus a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:string .
+cc:gateResult a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:string .
+cc:gatePassed a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:boolean .
+cc:gateMessage a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:string .
+cc:lastRunId a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:string .
+cc:dagsterRunId a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:string .
+cc:filePath a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:sha256 a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:lineageSha256 a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:exportedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+cc:hasStage a owl:ObjectProperty ; rdfs:domain cc:LineageSnapshot ; rdfs:range cc:PipelineStage .
+cc:currentLineage a owl:ObjectProperty ; rdfs:range cc:LineageSnapshot .
