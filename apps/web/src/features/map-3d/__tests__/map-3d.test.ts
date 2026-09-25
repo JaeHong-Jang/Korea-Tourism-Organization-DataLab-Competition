@@ -9,15 +9,22 @@ import card from "../../../../../../packages/contracts/fixtures/festival-summary
 import {
   BUILDING_EXTRUSION,
   FESTIVAL_COLUMNS,
+  KOREA_BOUNDS,
   mapStyle,
 } from "../../map-2d/map-style";
+import { cityActorPlan, festivalShare } from "../city-actors";
 import {
   columnHeight,
   festivalColumns,
   festivalRings,
 } from "../festival-geometry";
-import { vehiclePlan } from "../traffic-layer";
-import { sampleRoute, trafficRoutes, vehicleCap } from "../traffic-routes";
+import { actorSeconds, vehiclePlan } from "../traffic-layer";
+import {
+  peopleCap,
+  sampleRoute,
+  trafficRoutes,
+  vehicleCap,
+} from "../traffic-routes";
 
 const festival = card as FestivalSummary;
 const colors = {
@@ -32,6 +39,8 @@ const colors = {
   roadEdge: "gray",
   rail: "black",
   building: "silver",
+  buildingRoof: "ivory",
+  buildingWindow: "yellow",
 };
 
 // 높이 데이터가 있는 z15 타일과 낮·밤 한국어 스타일의 건물 돌출을 묶어 확인한다.
@@ -55,6 +64,13 @@ it("z15 서울의 건물과 한국어 낮·밤 3D 지도를 조립한다", () =>
     expect(style.layers.find((layer) => layer.id === "water")).toMatchObject({
       paint: { "fill-color": colors.water },
     });
+    expect(
+      style.layers.some(
+        (layer) => layer.id === "places_country" || layer.id === "places_state",
+      ),
+    ).toBe(false);
+    expect(KOREA_BOUNDS[0][0]).toBeGreaterThan(125);
+    expect(KOREA_BOUNDS[1][1]).toBeLessThan(39);
     expect(
       style.layers.find((layer) => layer.id === BUILDING_EXTRUSION),
     ).toMatchObject({
@@ -103,9 +119,33 @@ it("실제 서울 선에서 차량·열차 경로를 만들고 품질 상한을 
   const routes = trafficRoutes(features);
   expect(routes.some((route) => route.kind === "road")).toBe(true);
   expect(routes.some((route) => route.kind === "rail")).toBe(true);
-  expect(vehicleCap("high")).toBe(200);
-  expect(vehiclePlan(routes, "medium")).toHaveLength(80);
+  expect(routes.some((route) => route.kind === "walk")).toBe(true);
+  expect(vehicleCap("high")).toBe(600);
+  expect(peopleCap("high")).toBe(2500);
+  expect(vehiclePlan(routes, "medium")).toHaveLength(250);
   expect(vehiclePlan(routes, "low")).toHaveLength(0);
+  expect(actorSeconds(5000, 1000, true)).toBe(0);
+  expect(actorSeconds(5000, 1000, false)).toBe(4);
+  expect(
+    cityActorPlan(routes, "medium", null).filter(
+      (actor) => actor.kind === "person",
+    ),
+  ).toHaveLength(1000);
+  const small = cityActorPlan(routes, "medium", {
+    lng: 126.98,
+    lat: 37.56,
+    peakP50: 1000,
+  });
+  const large = cityActorPlan(routes, "medium", {
+    lng: 126.98,
+    lat: 37.56,
+    peakP50: 20000,
+  });
+  expect(festivalShare(20000)).toBeGreaterThan(festivalShare(1000));
+  expect(festivalShare(20000, true)).toBeGreaterThan(festivalShare(20000));
+  expect(large.filter((actor) => actor.gathering).length).toBeGreaterThan(
+    small.filter((actor) => actor.gathering).length,
+  );
   const output = { x: 0, y: 0, heading: 0 };
   expect(sampleRoute(routes[0], routes[0].length / 2, output)).toBe(output);
   const first = { ...output };
