@@ -9,6 +9,7 @@ export function ConsultInput({
   answering,
   onSubmit,
   onStop,
+  canSubmit,
 }: {
   text: string;
   onText: (value: string) => void;
@@ -16,26 +17,36 @@ export function ConsultInput({
   answering: boolean;
   onSubmit: () => void;
   onStop: () => void;
+  canSubmit?: boolean;
 }) {
   return (
     <form
       className="consult-compose"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!answering) onSubmit();
+        onSubmit();
       }}
     >
-      <label htmlFor="consult-text">행사를 설명해 주세요</label>
+      <label htmlFor="consult-text">
+        {answering ? "답을 입력해 주세요" : "행사를 설명해 주세요"}
+      </label>
       <textarea
         id="consult-text"
         value={text}
         onChange={(event) => onText(event.target.value)}
         rows={3}
-        placeholder="행사 날짜, 장소, 종류를 적어 주세요"
-        disabled={busy || answering}
+        placeholder={
+          answering
+            ? "선택하거나 여기에 직접 답해 주세요"
+            : "행사 날짜, 장소, 종류를 적어 주세요"
+        }
+        disabled={busy}
       />
       <div className="consult-compose__actions">
-        <Button type="submit" disabled={busy || answering || !text.trim()}>
+        <Button
+          type="submit"
+          disabled={busy || !(canSubmit ?? Boolean(text.trim()))}
+        >
           보내기
         </Button>
         {busy && (
@@ -44,7 +55,6 @@ export function ConsultInput({
           </Button>
         )}
       </div>
-      {answering && <p className="consult-muted">위 질문에 답해 주세요.</p>}
     </form>
   );
 }

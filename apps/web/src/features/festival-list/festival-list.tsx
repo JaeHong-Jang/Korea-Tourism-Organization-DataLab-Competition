@@ -6,6 +6,7 @@ import { RangeBar } from "../../components/charts/range-bar";
 import { EmptyState } from "../../components/common/empty-state";
 import { ErrorState } from "../../components/common/error-state";
 import { LevelBadge } from "../../components/common/level-badge";
+import { useAssistantStore } from "../../lib/consult-store";
 import { formatDate, formatPeople } from "../../lib/format";
 import { useSelectionStore } from "../../lib/selection-store";
 import { type FestivalSort, sortFestivals } from "./sort-festivals";
@@ -40,6 +41,7 @@ export function FestivalList({
   const selectedId = useSelectionStore((state) => state.selectedFestivalId);
   const selectFestival = useSelectionStore((state) => state.selectFestival);
   const selectSigungu = useSelectionStore((state) => state.selectSigungu);
+  const chooseFestival = useAssistantStore((state) => state.chooseFestival);
   const itemRefs = useRef(new Map<string, HTMLLIElement>());
   const listRef = useRef<HTMLOListElement>(null);
   useEffect(() => {
@@ -188,6 +190,13 @@ export function FestivalList({
                   p10–p90 {formatPeople(festival.peakP10)}~
                   {formatPeople(festival.peakP90)} · 추정
                 </p>
+                <button
+                  type="button"
+                  className="festival-list__consult"
+                  onClick={() => chooseFestival(festival)}
+                >
+                  이 행사 예보 받기
+                </button>
               </li>
             ))}
           </ol>
