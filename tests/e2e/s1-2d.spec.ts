@@ -44,7 +44,7 @@ test("2D 전환과 로컬 타일, 행사 선택, 낮·밤", async ({ page }) => 
   );
 
   // 한 행사만 남기면 목록이 선택한 점으로 지도를 옮기고 Esc 뒤 지도 점을 누를 수 있다.
-  await page.getByLabel("기간", { exact: true }).selectOption("two-weeks");
+  await page.getByRole("combobox", { name: /^기간/ }).selectOption("two-weeks");
   await page.getByLabel("시도").selectOption("서울특별시");
   await page.getByLabel("유형").selectOption("불꽃");
   await page.getByRole("combobox", { name: "등급" }).selectOption("1");

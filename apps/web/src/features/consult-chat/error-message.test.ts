@@ -5,8 +5,12 @@ import { consultErrorMessage } from "./error-message";
 describe("consultErrorMessage", () => {
   // 스트림 검사 오류는 개발자 말 대신 검사 종류만 밝힌다
   it("순서·형식 검사 오류를 사용자 말로 바꾼다", () => {
-    expect(consultErrorMessage("SSE 순서 위반: done 없음")).toContain("순서 검사");
-    expect(consultErrorMessage("SSE 계약 위반: data/id")).toContain("형식 검사");
+    expect(consultErrorMessage("SSE 순서 위반: done 없음")).toContain(
+      "순서 검사",
+    );
+    expect(consultErrorMessage("SSE 계약 위반: data/id")).toContain(
+      "형식 검사",
+    );
     expect(consultErrorMessage("SSE 순서 위반: x")).not.toContain("SSE");
   });
 
