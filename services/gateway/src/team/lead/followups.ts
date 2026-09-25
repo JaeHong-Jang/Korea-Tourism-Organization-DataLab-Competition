@@ -1,15 +1,16 @@
-// 발행된 상담의 분류 결과를 설명·저장·초안 자리와 범위 안내로 연결한다
+// 발행된 상담의 분류 결과를 설명·저장·계획 초안과 범위 안내로 연결한다
 import type { EventWriter } from "../runtime/events.js";
 import type { Executor } from "../runtime/executor.js";
 import type { TeamSession } from "../runtime/sessions.js";
 import type { TeamSettings } from "../runtime/settings.js";
 import { classify } from "./classify.js";
 import type { Deadline } from "./deadline.js";
+import { draftPublishedPlan } from "./followup-plan.js";
 import { savePublished } from "./followup-save.js";
 import { explainWhy } from "./followup-why.js";
 import { ExplanationGateError } from "./gates.js";
 
-// T-306은 이 진입점에서 계획서 담당의 검증·발행 플레이북을 연결한다
+// 계획서 담당은 최초 스냅샷의 발행 문장을 재사용해 초안 저장으로 연결한다
 export async function planDraft(ctx: {
   session: TeamSession;
   execute: Executor;
@@ -17,10 +18,7 @@ export async function planDraft(ctx: {
   deadline: Deadline;
   settings: TeamSettings;
 }) {
-  await ctx.writer.emit("error", {
-    code: "OUT_OF_SCOPE",
-    message: "계획 초안은 계획서 담당이 곧 맡아요",
-  });
+  return draftPublishedPlan(ctx);
 }
 
 // 안내만 하는 경로는 발행 전 suggest 대신 계약의 오류 이벤트를 사용한다
