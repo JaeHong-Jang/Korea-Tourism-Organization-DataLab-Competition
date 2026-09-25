@@ -16,7 +16,12 @@ import { HonestNotices } from "../features/mini-korea/honest-notices";
 import "../features/mini-korea/mini-korea.css";
 import { KpiStrip } from "../features/kpi-timeline/kpi-strip";
 import { WeeklyTimeline } from "../features/kpi-timeline/weekly-timeline";
+import { MapLibreMap } from "../features/map-2d/maplibre-map";
 import { SvgKoreaMap } from "../features/map-2d/svg-korea-map";
+import {
+  preferredView,
+  rememberView,
+} from "../features/map-2d/view-preference";
 import { useUpcomingFestivals } from "../lib/festivals/use-upcoming-festivals";
 import { useSelectionStore } from "../lib/selection-store";
 
@@ -34,6 +39,9 @@ export function MiniKoreaPage() {
     useUpcomingFestivals(filters);
   const [scale, setScale] = useState(() => crowdScale([], "high"));
   const [overviewRevision, setOverviewRevision] = useState(0);
+  const [view, setView] = useState<"3d" | "2d">(() =>
+    preferredView(location.search),
+  );
   const selected =
     festivals.find((festival) => festival.eventId === selectedId) ?? null;
   const totals = useMemo(() => sigunguPeaks(festivals), [festivals]);
@@ -78,6 +86,22 @@ export function MiniKoreaPage() {
       return true;
     }
   });
+
+  // 주소 이동과 브라우저 뒤로 가기에서도 저장한 보기 선택을 복원한다.
+  useEffect(() => {
+    setView(preferredView(location.search));
+  }, [location.search]);
+
+  // 현재 필터·데모 주소를 보존한 채 보기만 바꾼다.
+  const changeView = (next: "3d" | "2d") => {
+    setView(next);
+    rememberView(next);
+    const query = new URLSearchParams(location.search);
+    if (next === "2d") query.set("view", "2d");
+    else query.delete("view");
+    navigate({ pathname: location.pathname, search: query.toString() });
+  };
+
   return (
     <div className="scene-page">
       <section
@@ -113,6 +137,11 @@ export function MiniKoreaPage() {
         </h1>
         {svgMode ? (
           <SvgKoreaMap festivals={festivals} />
+        ) : view === "2d" ? (
+          <MapLibreMap
+            festivals={festivals}
+            overviewRevision={overviewRevision}
+          />
         ) : (
           <MiniKoreaCanvas
             festivals={festivals}
@@ -135,6 +164,27 @@ export function MiniKoreaPage() {
             전국 보기
           </button>
         )}
+        <fieldset className="scene-overview scene-view-toggle">
+          <legend className="sr-only">장면 보기</legend>
+          <button
+            type="button"
+            aria-pressed={!svgMode && view === "3d"}
+            disabled={svgMode}
+            onClick={() => changeView("3d")}
+            title={svgMode ? "WebGL이 없어 SVG 지도를 보여 줍니다" : undefined}
+          >
+            3D
+          </button>
+          <button
+            type="button"
+            aria-pressed={!svgMode && view === "2d"}
+            disabled={svgMode}
+            onClick={() => changeView("2d")}
+            title={svgMode ? "2D 지도에도 WebGL이 필요합니다" : undefined}
+          >
+            2D 지도
+          </button>
+        </fieldset>
       </section>
       <div className="scene-cta">
         <Button asChild size="sm">
@@ -152,7 +202,7 @@ export function MiniKoreaPage() {
         >
           <FestivalFiltersPanel all={all} />
         </FeaturePanel>
-        {!svgMode ? (
+        {!svgMode && view === "3d" ? (
           <SceneLegend
             peoplePerDoll={scale.peoplePerDoll}
             capExceeded={scale.capExceeded}
@@ -166,12 +216,21 @@ export function MiniKoreaPage() {
           />
         ) : (
           <div className="scene-svg-notices">
+            {svgMode && (
+              <p>
+                WebGL을 사용할 수 없어 SVG 지도를 보여 줍니다. 3D와 2D 지도에는
+                WebGL이 필요해요.
+              </p>
+            )}
             <DataModeToggle
               enabled={false}
               onChange={changeDataMode}
               disabled
             />
-            <p>SVG 지도에서는 데이터 모드를 사용할 수 없어요.</p>
+            <p>
+              {svgMode ? "SVG 지도" : "2D 지도"}에서는 데이터 모드를 사용할 수
+              없어요.
+            </p>
             <HonestNotices festivals={festivals} fixture={fixture} />
           </div>
         )}
