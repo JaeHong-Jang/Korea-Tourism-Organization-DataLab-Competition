@@ -114,7 +114,7 @@ def check_range(start: date | None, end: date | None) -> None:
         raise ValueError("from은 to보다 늦을 수 없습니다")
 
 
-# 저장된 요약만 조회하고 내부 감사 열은 정본 API 계약 밖으로 내보내지 않는다.
+# 저장된 요약만 조회하고 감사 열은 계약 밖으로 내보내지 않는다(모델 검증 상태는 선택 필드라 있으면 싣는다).
 def upcoming(start: date | None = None, end: date | None = None) -> tuple[str, list[dict[str, Any]]]:
     check_range(start, end)
     try:
@@ -130,7 +130,7 @@ def upcoming(start: date | None = None, end: date | None = None) -> tuple[str, l
         frame = frame.filter(days >= start)
     if end is not None:
         frame = frame.filter(days <= end)
-    return run_id, frame.select(list(SUMMARY_SCHEMA)).sort(
+    return run_id, frame.select([*SUMMARY_SCHEMA, *({"modelVerdict"} & set(frame.columns))]).sort(
         ["level", "pOver1000", "startsAt", "eventId", "forecastId"],
         descending=[True, True, False, False, False],
     ).to_dicts()
