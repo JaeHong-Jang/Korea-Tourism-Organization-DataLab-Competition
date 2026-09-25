@@ -41,6 +41,10 @@ def labels() -> dict:
                 "kind": kind,
                 "clauseId": short(clause) if clause else None,
             }
+            # 매뉴얼 근거가 있는 규칙에만 문서 제목·쪽수·주소를 그대로 전달한다.
+            source = graph.value(node, DCTERMS.source)
+            if source is not None:
+                out["rules"][short(node)]["source"] = str(source)
     for node in sorted(graph.subjects(RDF.type, CC.Dataset)):
         out["datasets"][short(node)] = {
             "title": str(graph.value(node, DCTERMS.title) or ""),
