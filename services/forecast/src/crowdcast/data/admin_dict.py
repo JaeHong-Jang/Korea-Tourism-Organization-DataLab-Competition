@@ -1,6 +1,9 @@
 """2025년 경계와 방문자 코드로 부모 시·옛 이름을 보존한 행정구역 사전을 만든다."""
 
 import re
+import weakref
+from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
 
 import duckdb
@@ -154,6 +157,52 @@ def build_admin(regions: pl.DataFrame, boundary: Path) -> pl.DataFrame:
     return pl.from_dicts(list(records.values())).sort("sigungu_code")
 
 
+# 프레임별 행과 별칭 패턴은 원본 프레임의 수명 동안만 보관한다.
+@dataclass
+class _AdminIndex:
+    frame: weakref.ReferenceType[pl.DataFrame]
+    snapshot: pl.DataFrame
+    rows: list[tuple[dict, list[tuple[str, bool, re.Pattern[str], re.Pattern[str]]]]]
+
+
+# Polars 프레임은 해시 불가이므로 객체 ID와 약한 참조를 함께 확인한다.
+_ADMIN_INDEXES: dict[int, _AdminIndex] = {}
+
+
+# 행 변환과 별칭 정규화·컴파일을 한 번만 하고 프레임 내용이 바뀌면 다시 준비한다.
+def _admin_index(admin: pl.DataFrame) -> _AdminIndex:
+    identity = id(admin)
+    cached = _ADMIN_INDEXES.get(identity)
+    if cached is not None and cached.frame() is admin and cached.snapshot.equals(admin):
+        return cached
+
+    # 먼저 뜬 스냅샷에서만 행·패턴을 만들어 준비 중 원본 변경과 기준이 섞이지 않게 한다.
+    snapshot = admin.clone()
+
+    # 도형은 반환 행에만 보존하고 이름 검색에는 정규화한 별칭과 패턴만 사용한다.
+    patterns = {}
+    rows = []
+    for row in snapshot.to_dicts():
+        aliases = []
+        for alias in row["aliases"]:
+            if alias not in patterns:
+                normal = compact(alias)
+                patterns[alias] = (
+                    normal,
+                    alias.endswith(("시", "군", "구")) and len(normal) >= 2,
+                    re.compile(normal),
+                    re.compile(rf"(?<![가-힣]){re.escape(alias)}(?![가-힣])"),
+                )
+            aliases.append(patterns[alias])
+        rows.append((row, aliases))
+
+    # 프레임이 해제되면 도형을 포함한 캐시도 해제해 사전 교체 시 누적을 막는다.
+    reference = weakref.ref(admin, lambda _: _ADMIN_INDEXES.pop(identity, None))
+    cached = _AdminIndex(reference, snapshot, rows)
+    _ADMIN_INDEXES[identity] = cached
+    return cached
+
+
 # 독립된 짧은 별칭 또는 정식 행정명만 찾아 장소명 속 우연한 부분 문자열을 줄인다.
 def lookup_admin(text: str | None, sido_hint: str | None, admin: pl.DataFrame) -> list[dict]:
     raw, key = str(text or ""), compact(text)
@@ -164,15 +213,12 @@ def lookup_admin(text: str | None, sido_hint: str | None, admin: pl.DataFrame) -
     if "군위군" in key and sido == "경상북도":
         sido = "대구광역시"
     spans = []
-    for row in admin.to_dicts():
+    for row, aliases in _admin_index(admin).rows:
         if sido and row["sido"] != sido:
             continue
-        for alias in row["aliases"]:
-            normal = compact(alias)
-            full = alias.endswith(("시", "군", "구")) and len(normal) >= 2
-            short = re.search(rf"(?<![가-힣]){re.escape(alias)}(?![가-힣])", raw)
-            if normal == key or full or short:
-                spans.extend((match.start(), match.end(), row) for match in re.finditer(normal, key))
+        for normal, full, occurrences, boundary in aliases:
+            if normal == key or full or boundary.search(raw):
+                spans.extend((match.start(), match.end(), row) for match in occurrences.finditer(key))
     # 남양주시 안의 양주시 같은 부분 이름을 제거하되 서로 다른 위치의 지명은 남긴다.
     hits = {
         row["sigungu_code"]: row
@@ -182,7 +228,8 @@ def lookup_admin(text: str | None, sido_hint: str | None, admin: pl.DataFrame) -
     hits = list(hits.values())
     # 수원시 장안구처럼 자식이 명시되면 동시에 잡힌 수원시 부모를 제거한다.
     parents = {row["parent_code"] for row in hits if row["parent_code"]}
-    return [row for row in hits if row["sigungu_code"] not in parents]
+    # 반환 행의 중첩 목록을 수정해도 다음 조회와 캐시에는 영향을 주지 않는다.
+    return [deepcopy(row) for row in hits if row["sigungu_code"] not in parents]
 
 
 # 시·도 자체 행사 중 세종만 기초구역이 하나이므로 해당 코드로 확정할 수 있다.
