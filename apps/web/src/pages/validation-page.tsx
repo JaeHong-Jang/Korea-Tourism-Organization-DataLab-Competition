@@ -1,9 +1,26 @@
-// 성능 지표와 사례, 근거 현황을 서로 다른 크기로 배치한다.
+// 검증 성적을 앞에 두고 근거·사례·등록·모델의 한계를 이어 보여 준다.
 import { FeaturePanel } from "../components/common/feature-panel";
 import { PageHeading } from "../components/common/page-heading";
+import { EvidenceDashboard } from "../features/validation/evidence-dashboard";
+import { GoldenCases } from "../features/validation/golden-cases";
+import { ModelDetails } from "../features/validation/model-details";
+import { PerformanceMetrics } from "../features/validation/performance-metrics";
+import { PredictionScatter } from "../features/validation/prediction-scatter";
+import { PreregistrationBoard } from "../features/validation/preregistration-board";
+import {
+  getBacktest,
+  getModelCard,
+  getScores,
+  getUsage,
+} from "../lib/validation/api";
+import { useContract } from "../lib/validation/use-contract";
 
-// 수치가 없는 단계이므로 그래프와 점수 대신 기능 설명만 둔다.
+// 같은 백테스트 응답을 성적·산점도·골든 사례에서 공유한다.
 export function ValidationPage() {
+  const backtest = useContract(getBacktest);
+  const usage = useContract(getUsage);
+  const scores = useContract(getScores);
+  const model = useContract(getModelCard);
   return (
     <div className="page-wrap regular-page">
       <PageHeading
@@ -15,39 +32,54 @@ export function ValidationPage() {
         <FeaturePanel
           id="M6-F1"
           title="성능 지표"
-          description="오차·포함률·판정 재현율과 비교 기준을 보여 드려요."
+          description="평가 표본과 비교 가능 범위를 함께 확인해요."
           className="validation-kpis"
-        />
+        >
+          <PerformanceMetrics state={backtest} />
+        </FeaturePanel>
         <FeaturePanel
           id="M6-F2"
           title="예측과 실측"
-          description="예측값과 실제 관측값의 관계를 그림과 표로 확인하세요."
+          description="일평균 방문객 예측과 실측을 같은 로그 척도로 비교해요."
           className="validation-chart"
-        />
+        >
+          <PredictionScatter state={backtest} />
+        </FeaturePanel>
         <FeaturePanel
           id="M6-F5"
           title="근거 대시보드"
-          description="문장별 근거 연결과 데이터 출처를 점검하세요."
+          description="문장별 근거 연결과 데이터랩까지 이어진 비율을 따로 봐요."
           className="validation-evidence"
-        />
+        >
+          <EvidenceDashboard state={usage} />
+        </FeaturePanel>
         <FeaturePanel
           id="M6-F3"
           title="골든 케이스"
-          description="검토 대상으로 정한 실제 행사를 비교해요."
+          description="보도된 인원의 단위와 비교 가능 여부를 살펴봐요."
           className="validation-cases"
-        />
+        >
+          <GoldenCases state={backtest} />
+        </FeaturePanel>
         <FeaturePanel
           id="M6-F4"
           title="사전 등록 예보 채점판"
-          description="미리 등록한 예보의 채점 기록과 검증 결과를 보여 드려요."
+          description="공개된 채점과 원장 해시 체인을 확인해요."
           className="validation-score"
-        />
+        >
+          <PreregistrationBoard state={scores} />
+        </FeaturePanel>
         <FeaturePanel
           id="M6-F6"
           title="모델 카드"
-          description="학습 범위와 버전, 사용 시 주의점을 확인하세요."
+          description="사용 모델의 학습 범위와 한계를 읽어 보세요."
           className="validation-model"
-        />
+        >
+          <ModelDetails
+            state={model}
+            goldenEmpty={backtest.value?.golden.length === 0}
+          />
+        </FeaturePanel>
       </div>
     </div>
   );
