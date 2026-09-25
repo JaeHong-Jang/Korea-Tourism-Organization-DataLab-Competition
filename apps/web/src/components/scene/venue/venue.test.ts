@@ -1,14 +1,20 @@
 // 실제 한강 타일 한 장과 경계·경로·시간 규칙을 네트워크 없이 검증한다.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { cityBuildingCap, cityBuildingGeometry } from "../city/city-buildings";
+import {
+  buildingPalette,
+  cityBuildingGeometry,
+} from "../city/building-geometry";
+import { styleBuildings } from "../city/building-kind";
+import { cityBuildingCap } from "../city/city-buildings";
 import { trafficCaps } from "../city/city-traffic";
 import { motionSeconds } from "../motion/rail-lines";
 import { clipPolygon, clipSegment } from "./clip";
 import { tileAt, tilePointToVenue } from "./coordinates";
 import { graphRoutes, routeGraph, vehicleAt } from "./routes";
 import { sampleEvent } from "./sites";
-import { isStationName, readVenueTile, type VenueTiles } from "./tiles";
+import { isStationName } from "./tile-tags";
+import { readVenueTile, type VenueTiles } from "./tiles";
 import { dollCount, venueSun } from "./time";
 
 // 실제 MVT에서 버퍼를 자른 뒤 타일 안쪽 건물과 길이 남는지 확인한다.
@@ -169,36 +175,42 @@ describe("행사장 연출", () => {
       [x, 8],
     ];
     const merged = cityBuildingGeometry(
-      [
-        {
-          x: 4,
-          z: 4,
-          width: 8,
-          depth: 8,
-          height: 19,
-          minHeight: 0,
-          footprint: square(0),
-        },
-        {
-          x: 24,
-          z: 4,
-          width: 8,
-          depth: 8,
-          height: 21,
-          minHeight: 0,
-          footprint: square(20),
-        },
-      ],
-      { wall: "#f3ead7", roof: "#fbf6ec", tall: "#e8dcc4", cool: "#e3e3de" },
+      styleBuildings(
+        [
+          {
+            x: 4,
+            z: 4,
+            width: 8,
+            depth: 8,
+            height: 19,
+            minHeight: 0,
+            footprint: square(0),
+          },
+          {
+            x: 24,
+            z: 4,
+            width: 8,
+            depth: 8,
+            height: 21,
+            minHeight: 0,
+            footprint: square(20),
+          },
+        ],
+        [],
+        [],
+      ),
+      buildingPalette(() => "#cccccc"),
     );
-    // 벽(창문 그림용 UV 포함)과 지붕을 따로 모으고 칸마다 색을 칠한다.
-    for (const part of [merged?.walls, merged?.roofs]) {
+    // 벽(종류별, 창문 그림용 UV 포함)과 지붕을 따로 모으고 칸마다 색을 칠한다.
+    const walls = Object.values(merged?.walls ?? {});
+    expect(walls.length).toBeGreaterThan(0);
+    for (const part of [...walls, merged?.roofs]) {
       expect(part?.getAttribute("color")?.count).toBe(
         part?.getAttribute("position")?.count,
       );
       part?.dispose();
     }
-    expect(merged?.walls.getAttribute("uv")).toBeDefined();
+    expect(walls[0]?.getAttribute("uv")).toBeDefined();
     expect(trafficCaps("high").cars).toBeLessThanOrEqual(500);
     expect(trafficCaps("low").cars).toBeLessThan(trafficCaps("high").cars);
     expect(dollCount(100000, 19, [{ hour: 19, share: 1 }], "low").count).toBe(

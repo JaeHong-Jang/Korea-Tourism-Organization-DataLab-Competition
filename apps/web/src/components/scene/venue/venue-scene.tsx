@@ -164,6 +164,8 @@ export function VenueScene({
       )}
       <CityBuildings
         buildings={tiles.buildings}
+        zones={tiles.zones ?? []}
+        roads={tiles.roads}
         quality={activeQuality}
         night={sky === "night"}
       />

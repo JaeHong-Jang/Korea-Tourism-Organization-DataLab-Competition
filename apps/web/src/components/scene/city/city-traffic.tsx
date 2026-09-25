@@ -32,18 +32,19 @@ export const VEHICLE_SCALE = 3.2;
 const TRAIN_SCALE = 1.25;
 const TRAIN_CARS = 4;
 
-// 품질별 차 수와 열차 수 상한.
-export function trafficCaps(quality: "high" | "medium" | "low") {
+// 품질별 차 수와 열차 수 상한 — 동네 전체(wide)에 흩을 때는 차를 두 배 가까이 둔다.
+export function trafficCaps(quality: "high" | "medium" | "low", wide = false) {
   return quality === "high"
-    ? { cars: 200, trains: 6 }
+    ? { cars: wide ? 200 : 110, trains: 6 }
     : quality === "medium"
-      ? { cars: 120, trains: 4 }
-      : { cars: 48, trains: 2 };
+      ? { cars: wide ? 120 : 70, trains: 4 }
+      : { cars: wide ? 48 : 32, trains: 2 };
 }
 
 export function CityTraffic({
   roadRoutes,
   nearbyRoads = [],
+  wide = false,
   railRoutes,
   quality,
   hour,
@@ -53,13 +54,15 @@ export function CityTraffic({
   roadRoutes: MotionRoute[];
   // 확대했을 때 보는 곳 근처에 세울 짧은 찻길 모음.
   nearbyRoads?: MotionRoute[];
+  // 동네 3D처럼 동네 전체 길에 흩을 때 true(차 수를 늘린다).
+  wide?: boolean;
   railRoutes: MotionRoute[];
   quality: "high" | "medium" | "low";
   hour: number;
   eventHour: number;
   reducedMotion: boolean;
 }) {
-  const caps = trafficCaps(quality);
+  const caps = trafficCaps(quality, wide);
   const cars = roadRoutes.length ? caps.cars : 0;
   const trains = railRoutes.length
     ? Math.min(caps.trains, railRoutes.length * 2)

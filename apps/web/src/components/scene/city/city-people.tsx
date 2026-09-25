@@ -23,13 +23,13 @@ const ORIGIN = new Vector3();
 // 멀리서도 사람으로 읽히게 키운 배율(범례에 "크기는 보이게 키움"으로 밝힌다).
 export const PERSON_SCALE = 3.6;
 
-// 품질별 걷는 사람·모인 사람 수 상한(걷는 사람은 동네 전체 길에 흩어지므로 모인 사람보다 많다).
-export function walkerCaps(quality: "high" | "medium" | "low") {
+// 품질별 걷는 사람·모인 사람 수 상한 — 동네 전체(wide)에 흩을 때는 걷는 사람을 두 배 가까이 둔다.
+export function walkerCaps(quality: "high" | "medium" | "low", wide = false) {
   return quality === "high"
-    ? { walk: 720, gather: 360 }
+    ? { walk: wide ? 720 : 360, gather: 360 }
     : quality === "medium"
-      ? { walk: 420, gather: 220 }
-      : { walk: 160, gather: 100 };
+      ? { walk: wide ? 420 : 220, gather: 220 }
+      : { walk: wide ? 160 : 100, gather: 100 };
 }
 
 // 사람 한 명 = 몸 1·머리 1·머리카락 1·팔 2·다리 2 (단위 m, 키 약 1.75m).
@@ -60,6 +60,7 @@ function palette(prefix: string, count: number) {
 export function CityPeople({
   routes,
   nearby = [],
+  wide = false,
   gather,
   towardShare,
   quality,
@@ -69,6 +70,8 @@ export function CityPeople({
   routes: MotionRoute[];
   // 확대했을 때 보는 곳 근처에 세울 짧은 경로 모음(동네 전체에 촘촘히 깔림).
   nearby?: MotionRoute[];
+  // 동네 3D처럼 동네 전체 길에 흩을 때 true(사람 수를 늘린다).
+  wide?: boolean;
   gather: number;
   towardShare: number;
   quality: "high" | "medium" | "low";
@@ -76,7 +79,7 @@ export function CityPeople({
   // 건물 외곽선 안이면 true — 모인 사람을 건물 속에 세우지 않는다.
   blocked?: (x: number, z: number, margin?: number) => boolean;
 }) {
-  const caps = walkerCaps(quality);
+  const caps = walkerCaps(quality, wide);
   const walkCount = routes.length ? caps.walk : 0;
   const gatherCount = Math.min(caps.gather, Math.max(0, Math.round(gather)));
   const total = walkCount + gatherCount;

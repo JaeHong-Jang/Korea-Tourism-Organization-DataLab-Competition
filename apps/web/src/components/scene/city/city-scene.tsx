@@ -7,7 +7,7 @@ import type { SceneQuality } from "../quality";
 import { SkyScene } from "../sky/sky-scene";
 import { graphRoutes, routeGraph, towardShare } from "../venue/routes";
 import { loadCityTiles, type VenueTiles } from "../venue/tiles";
-import { CityBuildings } from "./city-buildings";
+import { CityBuildings, cityBuildingCap } from "./city-buildings";
 import { CityControls } from "./city-controls";
 import { CityGround } from "./city-ground";
 import { CityLabels } from "./city-labels";
@@ -15,6 +15,7 @@ import { CITY_MOON, CityLight } from "./city-light";
 import { CityPeople } from "./city-people";
 import { CityTraffic } from "./city-traffic";
 import { CityTrees } from "./city-trees";
+import { fillBuildings } from "./fill-buildings";
 import { buildingIndex } from "./free-space";
 import "./city.css";
 
@@ -105,14 +106,26 @@ export function CityScene({
     [tiles],
   );
   // 행사 무대 자리(원점 12m 안)를 덮는 건물만 빼 무대·모인 사람이 건물 속에 묻히지 않게 한다.
+  // OSM 건물이 없는 길가는 품질 상한까지 연출 건물로 채우고, 가까운 건물부터 세우도록 거리순으로 둔다.
   const buildings = useMemo(() => {
     if (!tiles) return [];
     const stage = buildingIndex(tiles.buildings);
-    if (!stage(0, 0, 12)) return tiles.buildings;
-    return tiles.buildings.filter(
-      (building) => !buildingIndex([building])(0, 0, 12),
-    );
-  }, [tiles]);
+    const real = stage(0, 0, 12)
+      ? tiles.buildings.filter(
+          (building) => !buildingIndex([building])(0, 0, 12),
+        )
+      : tiles.buildings;
+    const cap = cityBuildingCap(quality);
+    return [
+      ...real,
+      ...fillBuildings(tiles, cap - Math.min(cap, real.length)),
+    ].sort((a, b) => Math.hypot(a.x, a.z) - Math.hypot(b.x, b.z));
+  }, [tiles, quality]);
+  // 나무도 채운 건물 속에 심지 않게 같은 건물 목록을 준다.
+  const planted = useMemo(
+    () => (tiles ? { ...tiles, buildings } : null),
+    [tiles, buildings],
+  );
   const blocked = useMemo(
     () => (tiles ? buildingIndex(buildings) : undefined),
     [tiles, buildings],
@@ -147,11 +160,13 @@ export function CityScene({
       {tiles && (
         <CityBuildings
           buildings={buildings}
+          zones={tiles.zones ?? []}
+          roads={tiles.roads}
           quality={quality}
           night={sky === "night"}
         />
       )}
-      {tiles && <CityTrees tiles={tiles} quality={quality} />}
+      {planted && <CityTrees tiles={planted} quality={quality} />}
       <group position={[0, 2, 0]} scale={6}>
         <FestivalModels placed={placed} />
       </group>
@@ -159,6 +174,7 @@ export function CityScene({
         <CityPeople
           routes={walks.length ? walks : roads}
           nearby={nearbyWalks.length ? nearbyWalks : nearbyRoads}
+          wide
           gather={gatheredDolls(festival.peakP50)}
           towardShare={towardShare(hour, eventHour)}
           quality={quality}
@@ -170,6 +186,7 @@ export function CityScene({
         <CityTraffic
           roadRoutes={roads}
           nearbyRoads={nearbyRoads}
+          wide
           railRoutes={rails}
           quality={quality}
           hour={hour}
