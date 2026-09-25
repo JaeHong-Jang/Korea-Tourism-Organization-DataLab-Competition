@@ -10,6 +10,7 @@ import polars as pl
 from crowdcast.models.baselines import SimpleModel, host_expected
 from crowdcast.models.calibrate import calibrate, predict_calibrated, rolling_split
 from crowdcast.models.distribution import distribution
+from crowdcast.models.evaluation_event import contract_event as contract_event
 from crowdcast.models.explain import explain
 from crowdcast.models.g0 import read_g0
 from crowdcast.models.ood import detect_ood, fit_ood
@@ -41,18 +42,6 @@ def metrics(points: list[dict[str, Any]], baseline: str = "b2") -> dict[str, Any
         "judgmentPrecision": true_positive / predicted if predicted else None,
         "baselineDeltaPp": delta,
         "comparablePairs": len(pairs),
-    }
-
-
-# 입력의 행사 정의를 기존 환산·판정 함수가 받는 필드로만 옮긴다.
-def contract_event(event: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "id": event["event_id"],
-        "type": event.get("type") or "기타",
-        "startsAt": f"{event['start'].isoformat()}T00:00:00+09:00",
-        "endsAt": f"{event['end'].isoformat()}T23:59:59+09:00",
-        "timeOfDay": event.get("time_of_day") or "미상",
-        "hazards": event.get("hazard_flags") or [],
     }
 
 
@@ -97,6 +86,7 @@ def score_points(
                 "b0": simple.b0(row),
                 "b1": row["previous_daily_mean"],
                 "b2": host_expected(event, row),
+                "scale_source": simple.scale_source(row) if name == "simple" else None,
                 "spatial_scope": row["spatial_scope"],
                 **detect_ood(row, float(prediction[1]), ood),
             }
@@ -145,7 +135,7 @@ def run_backtest(
             continue
 
         # 두 모델 모두 같은 학습 구간을 쓰며 단순 모델의 구간은 학습 잔차로만 만든다.
-        simple = SimpleModel().fit(
+        simple = SimpleModel(announced_scale=config.get("simple_announced_scale", False)).fit(
             training, {"gold": config["gold_weight"], "silver": config["silver_weight"]}
         )
         models, encoding = fit_quantiles(training, names, config)

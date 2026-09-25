@@ -13,7 +13,9 @@ from crowdcast.models.train import select_labels
 
 
 # 학습 표본과 골든 평가 행사를 고른 뒤 공개 시점 검사를 거친 피처를 만든다.
-def select_features(frames: dict[str, pl.DataFrame], config: dict[str, Any]) -> dict[str, Any]:
+def select_features(
+    frames: dict[str, pl.DataFrame], config: dict[str, Any], *, audit_path: Path | None = None
+) -> dict[str, Any]:
     events = frames["events"].to_dicts()
     labels, excluded = select_labels(frames["labels"], events, config)
     golden_ids = set(frames["labels"].filter(pl.col("is_golden"))["event_id"]) | {
@@ -38,6 +40,7 @@ def select_features(frames: dict[str, pl.DataFrame], config: dict[str, Any]) -> 
         frames["labels"].to_dicts(),
         frames["region_daily"],
         set(labels["event_id"]) | set(golden_labels["event_id"]),
+        audit_path=audit_path,
     )
     return {
         "events": events,
@@ -59,8 +62,10 @@ def run_models(
     models_stage: Path,
     report_directory: Path,
     version: str,
+    *,
+    audit_path: Path | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], Any]:
-    selected = select_features(frames, config)
+    selected = select_features(frames, config, audit_path=audit_path)
     labels, excluded, index = selected["labels"], selected["excluded"], selected["index"]
     features, names, golden_labels = selected["features"], selected["names"], selected["golden_labels"]
     frame = labels.join(features, on="event_id", how="inner")
@@ -97,6 +102,10 @@ def run_models(
                     "year": fold["year"],
                     "ratio": state["announced_ratio"],
                     "pairs": state["announced_pairs"],
+                    "used": sum(
+                        p.get("scale_source") == "announced" and p["year"] == fold["year"]
+                        for p in (result if definition == "조건부" else result["sensitivity"])["points"]
+                    ),
                 }
             )
 

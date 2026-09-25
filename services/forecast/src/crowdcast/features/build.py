@@ -148,7 +148,9 @@ def filename_sensitivity(
             if row[f"{name}_is_observation"]:
                 continue
             day = date_available if name in schedule else available
-            row[f"{name}_available_at"] = day
+            # 발표치 규모 계층에는 파일명 가정을 실제 공개일로 전달하지 않는다.
+            if name not in {"visitors_announced", "log_visitors_announced"}:
+                row[f"{name}_available_at"] = day
             if day is None or day > row["as_of"]:
                 row[name] = None
         rows.append(row)

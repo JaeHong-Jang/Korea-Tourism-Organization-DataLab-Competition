@@ -19,12 +19,12 @@ def announcement_table(calibrations: list[dict[str, Any]]) -> list[str]:
         "실버는 시군구 순증과의 보조 관계이며 행사장 실측 비율이 아니다. "
         "비율·기간·발표치가 없으면 유형 중앙값으로 규모대를 고른다.",
         "",
-        "| 정의 | 평가 연도 | 보정비율 | 골드A 쌍 | 골드B 쌍 | 실버 쌍 |",
-        "|---|---:|---:|---:|---:|---:|",
+        "| 정의 | 평가 연도 | 보정비율 | 골드A 쌍 | 골드B 쌍 | 실버 쌍 | 발표치 계층 사용 N |",
+        "|---|---:|---:|---:|---:|---:|---:|",
         *[
             f"| {row['definition']} | {row['year']} | {number(row['ratio'])} | "
             f"{row['pairs'].get('goldA', 0)} | {row['pairs'].get('goldB', 0)} | "
-            f"{row['pairs'].get('silver', 0)} |"
+            f"{row['pairs'].get('silver', 0)} | {row.get('used', 0)} |"
             for row in calibrations
         ],
     ]

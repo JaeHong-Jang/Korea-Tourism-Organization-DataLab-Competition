@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 import polars as pl
+from crowdcast.features.announced import announced_scale_daily
 from crowdcast.features.availability import publication_date
 
 
@@ -32,7 +33,7 @@ def weighted_quantile(pairs: list[list[float]], q: float | list[float]) -> Any:
 # 기준선 B0와 단순 모델의 계층·잔차는 fit에 전달한 학습 자료에서만 계산한다.
 class SimpleModel:
     # 중앙값과 (값, 가중치) 쌍을 직렬화 가능한 숫자·목록으로 보관한다.
-    def __init__(self) -> None:
+    def __init__(self, *, announced_scale: bool = False) -> None:
         self.type_medians: dict[str, float] = {}
         self.weighted_type_medians: dict[str, float] = {}
         self.groups: dict[str, list[list[float]]] = {}
@@ -40,6 +41,9 @@ class SimpleModel:
         self.global_median = 0.0
         self.announced_ratio: float | None = None
         self.announced_pairs: dict[str, int] = {}
+        # 기존 발행본은 계층 선택만 사용하고 새 학습에서만 발표치 중앙값을 켠다.
+        self.announced_scale = announced_scale
+        self.announced_residuals: list[list[float]] = []
 
     # 실버는 보조 정답이라 가중치를 낮춘다(06 §2 — LightGBM과 같은 설정). B0 유형 중앙값만 무가중이다.
     def fit(self, frame: pl.DataFrame, weights: dict[str, float] | None = None) -> "SimpleModel":
@@ -57,15 +61,24 @@ class SimpleModel:
         self.groups.clear()
         self.residuals.clear()
         self.announced_pairs.clear()
+        self.announced_residuals.clear()
         # 전년 누적 발표치를 입력 기간으로 나눈 규모 대용치와 정답의 비율을 학습 표본에서만 맞춘다.
         ratios = []
         for row in rows:
-            daily = announced_daily(row)
+            daily = announced_scale_daily(row) if self.announced_scale else announced_daily(row)
             if daily is not None and daily > 0 and row["daily_mean"] > 0:
                 ratios.append([daily / row["daily_mean"], weight(row)])
                 tier = row.get("label_tier", "미상")
                 self.announced_pairs[tier] = self.announced_pairs.get(tier, 0) + 1
         self.announced_ratio = float(weighted_quantile(ratios, 0.5)) if ratios else None
+
+        # 발표치 계층의 폭은 유형 잔차가 아닌 학습 발표치↔라벨 로그 잔차로 고정한다.
+        if self.announced_scale:
+            for row in rows:
+                scale = self.announced_center(row)
+                if scale is not None:
+                    residual = float(np.log1p(row["daily_mean"]) - np.log1p(scale))
+                    self.announced_residuals.append([residual, weight(row)])
 
         # 유형 중앙값과 규모 계층은 보정·평가 정답을 보지 않고 같은 학습 표본으로 고정한다.
         self.global_median = float(weighted_quantile([[r["daily_mean"], weight(r)] for r in rows], 0.5))
@@ -87,7 +100,7 @@ class SimpleModel:
     @classmethod
     def load(cls, path: Path) -> "SimpleModel":
         state = json.loads(path.read_text(encoding="utf-8"))
-        model = cls()
+        model = cls(announced_scale=state.get("announced_scale", False))
         model.type_medians = state["type_medians"]
         model.weighted_type_medians = state["weighted_type_medians"]
         model.groups = state["groups"]
@@ -96,13 +109,14 @@ class SimpleModel:
         # v1 발행본에는 발표 보정이 없으므로 기존 유형 중앙값 동작을 유지한다.
         model.announced_ratio = state.get("announced_ratio")
         model.announced_pairs = state.get("announced_pairs", {})
+        model.announced_residuals = state.get("announced_residuals", [])
         return model
 
     # 전회차 골드를 우선하고 발표치·학습 보정 쌍이 없으면 기존 유형 중앙값으로 돌아간다.
     def group(self, row: dict[str, Any]) -> str:
         prior = row.get("previous_daily_mean")
         if prior is None and self.announced_ratio is not None:
-            daily = announced_daily(row)
+            daily = announced_scale_daily(row) if self.announced_scale else announced_daily(row)
             if daily is not None:
                 prior = daily / self.announced_ratio
         fallback = self.weighted_type_medians.get(event_type(row), self.global_median)
@@ -112,10 +126,30 @@ class SimpleModel:
     def b0(self, row: dict[str, Any]) -> float | None:
         return self.type_medians.get(event_type(row))
 
-    # 공개된 직전 실측이 있으면 계층 가중 중앙값보다 우선한다.
+    # T-203b 비율은 발표/라벨이므로 역수를 곱해 일평균 규모를 보정한다.
+    def announced_center(self, row: dict[str, Any]) -> float | None:
+        if not self.announced_scale or self.announced_ratio is None:
+            return None
+        daily = announced_scale_daily(row)
+        return daily / self.announced_ratio if daily is not None else None
+
+    # 실제 선택한 계층을 백테스트·다가오는 행사 집계에서 동일하게 센다.
+    def scale_source(self, row: dict[str, Any]) -> str:
+        if row.get("previous_daily_mean") is not None:
+            return "previous"
+        return "announced" if self.announced_center(row) is not None else "type"
+
+    # 공개된 직전 실측이 있으면 발표치와 유형 중앙값보다 우선한다.
     def center(self, row: dict[str, Any]) -> float:
         if row.get("previous_daily_mean") is not None:
             return float(row["previous_daily_mean"])
+        if self.announced_scale:
+            scale = self.announced_center(row)
+            return (
+                scale
+                if scale is not None
+                else self.weighted_type_medians.get(event_type(row), self.global_median)
+            )
         group = self.groups.get(self.group(row))
         if group:
             return float(weighted_quantile(group, 0.5))
@@ -128,6 +162,8 @@ class SimpleModel:
             residuals = self.residuals.get(
                 self.group(row), self.residuals.get(event_type(row), self.residuals["전체"])
             )
+            if self.scale_source(row) == "announced":
+                residuals = self.announced_residuals
             low, high = weighted_quantile(residuals, [0.1, 0.9])
             center = np.log1p(self.center(row))
             predictions.append(np.expm1(np.maximum(0, [center + min(0, low), center, center + max(0, high)])))
