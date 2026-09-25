@@ -60,7 +60,7 @@ def model_version(input_hashes: dict[str, str], config: dict[str, Any]) -> str:
     for path in files:
         digest.update(path.name.encode())
         digest.update(path.read_bytes())
-    return "v1-" + digest.hexdigest()[:20]
+    return "v2-" + digest.hexdigest()[:20]
 
 
 # 표본 하한과 평가 연도 목록을 실행 전에 확인한다.

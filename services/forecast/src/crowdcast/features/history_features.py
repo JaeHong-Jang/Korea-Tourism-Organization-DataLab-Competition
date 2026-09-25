@@ -51,6 +51,7 @@ def history_features(
     available = publication_date(label.get("available_at"))
     if (
         label["label_tier"] not in GOLD_TIERS
+        or (label["label_tier"] == "goldB" and label.get("spatial_scope") != "행사장")
         or not label["is_primary"]
         or not label["usable_for_training"]
         or label["is_golden"]

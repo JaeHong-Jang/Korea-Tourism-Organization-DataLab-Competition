@@ -3,6 +3,7 @@
 import math
 from typing import Any
 
+from crowdcast.features.announced import announced_features
 from crowdcast.features.availability import Feature
 
 # 계약 범주 순서를 고정해 평가 자료로 인코딩 사전을 학습하지 않는다.
@@ -28,7 +29,7 @@ HAZARDS = {
 
 # 행사 자체 속성은 예보 입력이므로 관측 공개일 유무와 관계없이 보존한다.
 def event_features(event: dict[str, Any]) -> dict[str, Feature]:
-    result = {}
+    result = announced_features(event)
     for key, categories in CATEGORIES.items():
         value = event.get(key)
         encoded = float(categories.index(value)) if value in categories else None

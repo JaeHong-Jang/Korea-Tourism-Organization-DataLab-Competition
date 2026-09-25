@@ -38,6 +38,8 @@ def select_labels(
             reasons.append("명절 실버 채점 불가")
         if not row["usable_for_training"]:
             reasons.append("라벨 QC 제외")
+        if row["label_tier"] == "goldB" and row.get("spatial_scope") != "행사장":
+            reasons.append("영역 미확인 골드B")
         if not event or not event.get("start") or not event.get("end") or event["end"] < event["start"]:
             reasons.append("일정·행사 연결 미확정")
         if not np.isfinite(row["daily_mean"]) or row["daily_mean"] <= 0 or row["available_at"] is None:

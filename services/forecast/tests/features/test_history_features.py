@@ -21,6 +21,14 @@ def test_previous_actual_is_gold_only(tier: str, expected: float | None) -> None
         "usable_for_training": True,
         "is_golden": False,
         "quality_flag": "ok",
+        "spatial_scope": "행사장",
     }
     result = history_features(current, date(2025, 4, 19), [prior, current], {"e-2024": label})
     assert result["previous_daily_mean"].value == expected
+
+    # 과거 형식에서 학습 가능 표시가 남아 있어도 영역 미확인 골드B는 이력이 아니다.
+    if tier == "goldB":
+        for scope in ("지정영역", None, "시군구"):
+            label["spatial_scope"] = scope
+            result = history_features(current, date(2025, 4, 19), [prior, current], {"e-2024": label})
+            assert result["previous_daily_mean"].value is None

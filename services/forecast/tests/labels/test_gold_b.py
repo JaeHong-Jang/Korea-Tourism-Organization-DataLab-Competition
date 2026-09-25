@@ -24,6 +24,7 @@ def test_template_roundtrip_and_new_targets(tmp_path: Path) -> None:
         diy_area="전곡리 유적, 행사장",
         diy_checked_at="2025-06-01",
         diy_note="확인 완료\n원문 메모",
+        diy_area_matches_venue="예",
     )
     write_csv(template, fields, rows)
     roundtrip, recovered = prepare_template(source, template)
@@ -104,7 +105,10 @@ def test_area_confirmation(tmp_path: Path, matches: str, scope: str) -> None:
         diy_area_matches_venue=matches,
     )
     label = build_gold_b(rows, "DIY.csv", EventMatcher([festival()]), [], [])[0]
-    assert label["spatial_scope"] == scope and label["usable_for_training"]
+    assert label["spatial_scope"] == scope
+    assert label["usable_for_training"] is (matches == "예")
+    assert ("영역 미확인 골드B" in label["quality_flag"]) is (matches != "예")
+    assert label["daily_mean"] == 1000
 
 
 # 이전 여섯 수기 열 템플릿에 입력된 숫자·메모를 잃지 않고 새 확인 열만 덧붙인다.

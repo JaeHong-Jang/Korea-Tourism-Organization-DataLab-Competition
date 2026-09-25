@@ -99,3 +99,16 @@ def test_simple_model_downweights_silver() -> None:
     assert weighted.b0({"type": 0.0}) == unweighted.b0({"type": 0.0}) == 3000
     assert weighted.center({"type": 0.0}) == pytest.approx(1000 + 2000 * 0.25 / 0.375)
     assert unweighted.center({"type": 0.0}) == 3000
+
+
+# 영역 미확인 골드B는 옛 usable 표시와 관계없이 참고로만 남고 행사장 일치 건만 학습한다.
+@pytest.mark.parametrize("scope", ["지정영역", None, "시군구"])
+def test_unmatched_gold_b_excluded(model_data: tuple, config: dict, scope: str | None) -> None:
+    frame, events = model_data
+    rows = frame.head(2).to_dicts()
+    for row in rows:
+        row.update(label_tier="goldB", is_primary=True, usable_for_training=True, quality_flag="ok")
+    rows[0]["spatial_scope"] = scope
+    selected, excluded = select_labels(pl.DataFrame(rows), list(events.values()), config)
+    assert selected["event_id"].to_list() == [rows[1]["event_id"]]
+    assert excluded[0]["reasons"] == ["영역 미확인 골드B"]
