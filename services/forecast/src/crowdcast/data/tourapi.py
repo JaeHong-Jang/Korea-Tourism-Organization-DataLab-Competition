@@ -7,6 +7,15 @@ from crowdcast.data.call_ledger import korea_today
 from crowdcast.data.datago_client import DataGoClient
 
 
+# 대표 원본을 우선하고 저작권 유형은 응답에 있는 값만 그대로 보존한다.
+def image_metadata(item: dict[str, Any]) -> dict[str, str | None]:
+    fields = {key.lower(): str(value).strip() for key, value in item.items() if value is not None}
+    return {
+        "image_url": fields.get("firstimage") or fields.get("firstimage2") or None,
+        "image_copyright": fields.get("cpyrhtdivcd") or None,
+    }
+
+
 # 수정되는 관광정보를 날짜별 캐시로 가져오고 두 검색에서 같은 근거 규칙을 쓴다.
 def _search(client: DataGoClient, api: str, params: dict[str, str]) -> list[dict[str, Any]]:
     return [

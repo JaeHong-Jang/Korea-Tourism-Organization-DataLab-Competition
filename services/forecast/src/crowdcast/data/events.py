@@ -41,8 +41,8 @@ FLOWER_KEYWORDS = ("꽃", "벚", "유채", "튤립", "장미", "국화", "철쭉
 # 꽃이 식물을 뜻하지 않는 낱말은 꽃 근거를 찾기 전에 지운다.
 NOT_FLOWER_WORDS = ("꽃게", "불꽃", "꽃동네", "눈꽃", "얼음꽃")
 STRINGS = ("event_id name type time_of_day sido sigungu_code sigungu_name sigungu_text venue fee host_type "
-           "date_text sigungu_match coord_source visitors_announced_meaning date_source date_available_at"
-           ).split()
+           "date_text sigungu_match coord_source visitors_announced_meaning date_source date_available_at "
+           "image_url image_copyright").split()
 EVENT_DTYPES = {**dict.fromkeys(STRINGS, pl.String),
                 **dict.fromkeys(("year", "edition", "budget_krw", "planned_month", "visitors_announced"),
                                 pl.Int64),

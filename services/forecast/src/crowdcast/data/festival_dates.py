@@ -8,7 +8,7 @@ from datetime import UTC, date, datetime
 from crowdcast.data.admin_dict import normalize_sido
 from crowdcast.data.datago_client import DataGoClient
 from crowdcast.data.geocode import Gazetteer, festival_location, match_festival
-from crowdcast.data.tourapi import search_festivals
+from crowdcast.data.tourapi import image_metadata, search_festivals
 
 WINDOW_START, WINDOW_END = date(2026, 9, 29), date(2026, 11, 30)
 
@@ -95,6 +95,8 @@ def merge_occurrence(group: list[dict]) -> tuple[dict, list[str]]:
     merged = dict(group[0])
     identity = merged["event_id"]
     for field in merged:
+        if field in {"image_url", "image_copyright"}:
+            continue
         if isinstance(merged[field], list):
             merged[field] = sorted({value for row in group for value in row[field]})
             continue
@@ -109,6 +111,10 @@ def merge_occurrence(group: list[dict]) -> tuple[dict, list[str]]:
             if field in {"budget_krw", "edition", "planned_month", "visitors_announced",
                          "visitors_announced_meaning", "time_of_day"}:
                 merged[field] = None
+    # 중복 콘텐츠에서도 이미지와 저작권은 같은 응답의 쌍을 선택한다.
+    image_source = next((row for row in group if row.get("image_url")), None)
+    if image_source:
+        merged.update({key: image_source.get(key) for key in ("image_url", "image_copyright")})
     # 겹침을 확인한 완전한 기간끼리만 합집합을 취하고 원문 감사 열도 함께 보존한다.
     for fields in (("start", "end"), ("start_mcst", "end_mcst")):
         periods = [(row[fields[0]], row[fields[1]]) for row in group
@@ -222,6 +228,10 @@ def enrich_events(
             if event["date_source"] == "TourAPI":
                 event["date_available_at"] = min((event["date_available_at"], earliest), key=available_key)
             event["source"] = sorted(set(event["source"]) | {"TourAPI"})
+            # 같은 응답의 URL·저작권을 한 쌍으로 보존하고 이미지 없는 추가 출처는 덮어쓰지 않는다.
+            image = image_metadata(item)
+            if image["image_url"] or not event.get("image_url"):
+                event.update(image)
             event["source_refs"] = sorted(
                 set(event["source_refs"])
                 | {
