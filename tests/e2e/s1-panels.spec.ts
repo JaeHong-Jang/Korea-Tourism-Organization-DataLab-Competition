@@ -54,18 +54,20 @@ async function selection(page: import("@playwright/test").Page) {
 	});
 }
 
-// 구불구불한 지역 경계는 경계 상자 중앙이 이웃 지역일 수 있어 실제 보이는 면을 누른다.
+// 서울 구는 전국 지도에서 몇 픽셀이고 행사 점·이웃 구에 덮이므로, 실제로 보이는 지점이 있는 첫 지역을 누른다.
 async function clickVisibleRegion(
 	page: import("@playwright/test").Page,
-	region: import("@playwright/test").Locator,
+	regions: import("@playwright/test").Locator,
 ) {
-	const point = await region.evaluate((path) => {
-		const bounds = path.getBoundingClientRect();
-		for (let row = 0; row < 20; row++) {
-			for (let column = 0; column < 20; column++) {
-				const x = bounds.left + (bounds.width * (column + 0.5)) / 20;
-				const y = bounds.top + (bounds.height * (row + 0.5)) / 20;
-				if (document.elementFromPoint(x, y) === path) return { x, y };
+	const point = await regions.evaluateAll((paths) => {
+		for (const path of paths) {
+			const bounds = path.getBoundingClientRect();
+			for (let row = 0; row < 20; row++) {
+				for (let column = 0; column < 20; column++) {
+					const x = bounds.left + (bounds.width * (column + 0.5)) / 20;
+					const y = bounds.top + (bounds.height * (row + 0.5)) / 20;
+					if (document.elementFromPoint(x, y) === path) return { x, y };
+				}
 			}
 		}
 		return null;
@@ -127,7 +129,7 @@ test("SVG 대체 지도에서 선택과 필터", async ({ page }) => {
 	).toHaveCount(1);
 	await clickVisibleRegion(
 		page,
-		page.getByRole("button", { name: /서울특별시 .* 선택/ }).first(),
+		page.getByRole("button", { name: /서울특별시 .* 선택/ }),
 	);
 	expect((await selection(page)).festival).toBeNull();
 	await expect(
