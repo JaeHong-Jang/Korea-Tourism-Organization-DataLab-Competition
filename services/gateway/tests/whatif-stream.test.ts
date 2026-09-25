@@ -36,10 +36,9 @@ it.each([
       endsAt: "2026-10-26T21:00:00+09:00",
     },
   ],
-  ["밤이면?", { timeOfDay: "야간" }],
+  // 픽스처 행사는 이미 야간·무료라 "밤이면?"·"무료면?"은 조건이 같다 — 새 예보 없이 안내(whatif-failures 테스트)
   ["낮이면?", { timeOfDay: "주간" }],
   ["유료면?", { fee: "유료" }],
-  ["무료면?", { fee: "무료" }],
   ["공연이면?", { type: "공연" }],
 ] as const)("%s는 new 모드로 새 예보를 발행한다", async (text, changes) => {
   const harness = whatifFixture();
