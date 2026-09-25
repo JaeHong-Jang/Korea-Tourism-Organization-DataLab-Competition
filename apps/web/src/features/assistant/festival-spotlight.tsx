@@ -3,7 +3,7 @@ import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { FestivalSummaryPanel } from "../mini-korea/festival-summary";
 import { FestivalImage } from "./recommendation-cards";
 
-// 사진·예보 요약·예보 받기 링크에 고래에게 묻기와 닫기를 붙인다.
+// 사진·예보 요약·예보 받기 링크와 닫기를 둔다(링크는 고래 봇 대화로 이어진다).
 export function FestivalSpotlight({
   festival,
   onTalk,
@@ -14,7 +14,19 @@ export function FestivalSpotlight({
   onClose: () => void;
 }) {
   return (
-    <div className="assistant-invitation assistant-spotlight">
+    // 요약의 "이 행사 예보 받기"는 화면을 옮기지 않고 고래 봇 대화에서 이 행사로 예보를 요청한다(T-442와 같은 동작).
+    <div
+      className="assistant-invitation assistant-spotlight"
+      onClickCapture={(event) => {
+        if (
+          event.target instanceof Element &&
+          event.target.closest(".festival-summary a")
+        ) {
+          event.preventDefault();
+          onTalk();
+        }
+      }}
+    >
       <button
         type="button"
         className="assistant-invitation__close"
@@ -29,9 +41,6 @@ export function FestivalSpotlight({
       </p>
       {festival.image && <FestivalImage festival={festival} />}
       <FestivalSummaryPanel festival={festival} />
-      <button type="button" onClick={onTalk}>
-        고래에게 이 행사 물어보기
-      </button>
     </div>
   );
 }

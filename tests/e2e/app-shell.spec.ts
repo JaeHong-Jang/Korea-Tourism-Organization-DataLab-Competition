@@ -48,12 +48,11 @@ test("home mobile 화면", async ({ page }) => {
 	await expect(
 		page.getByRole("heading", { name: "대한민국 행사 지도", level: 1 }),
 	).toBeVisible();
-	// 390폭은 패널을 탭으로 접는다(T-411b) — 목록 탭을 열어 확인한다.
-	await page
-		.getByRole("navigation", { name: "미니 대한민국 정보" })
-		.getByRole("button", { name: "행사 목록" })
-		.click();
-	await expect(page.getByRole("heading", { name: "행사 목록" })).toBeVisible();
+	// 390폭은 지도 아래에 안내·도구·범례와 탭 패널(행사 목록·필터·행사 현황)을 차례로 둔다.
+	await page.getByRole("tab", { name: /^행사 목록/ }).click();
+	await expect(
+		page.getByRole("heading", { name: "행사 둘러보기" }),
+	).toBeVisible();
 	await page.screenshot({
 		path: resolve(output, "T-401-home-mobile.png"),
 		fullPage: true,

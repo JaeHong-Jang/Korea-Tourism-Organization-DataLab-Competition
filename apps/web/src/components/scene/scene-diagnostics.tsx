@@ -49,8 +49,15 @@ export function QualityControl({
   });
 
   // R3F가 재렌더마다 Canvas dpr prop을 다시 적용하므로 회귀 계수는 prop 쪽으로 올려 보낸다.
+  // 낮춘 해상도는 1.5초 유지한 뒤 되돌린다 — R3F 기본 200ms 안에 복귀하면 무거운 장면 재렌더와
+  // 겹쳐 낮춘 값이 반영되지 못하고, 해상도가 오르내리며 깜박이지도 않게 한다.
   useEffect(() => {
-    onRegressFactor(current);
+    if (current < 1) {
+      onRegressFactor(current);
+      return;
+    }
+    const timer = window.setTimeout(() => onRegressFactor(current), 1500);
+    return () => window.clearTimeout(timer);
   }, [current, onRegressFactor]);
 
   // 현재 품질 단계를 문서에 표시해 테스트·측정이 읽게 한다.

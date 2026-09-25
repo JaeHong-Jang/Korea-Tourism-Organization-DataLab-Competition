@@ -89,4 +89,5 @@
 @media (min-width: 1241px) { .app-shell:has(.scene-page) .assistant-spotlight { right: calc(360px + var(--space-8) + var(--space-4)); } .app-shell:has(.scene-page) .assistant-spotlight::after { display: none; } }
 .assistant-spotlight .assistant-recommendation__image { height: 120px; }
 .assistant-spotlight .festival-summary { margin: 0; padding: 0; border: 0; }
-.assistant-spotlight > button:last-child { justify-self: start; }
+@media (max-width: 640px) { .assistant-invitation.assistant-spotlight { right: var(--space-4); left: var(--space-4); bottom: 120px; width: auto; } .assistant-invitation.assistant-spotlight::after { display: none; } } /* 휴대폰에서는 고래 위로 화면 폭에 맞춘다 */
+@media (max-width: 640px) { .consult-page .team-group { grid-template-columns: 48px minmax(0, 1fr); gap: var(--space-2); } .consult-page .team-members { grid-template-columns: repeat(4, minmax(52px, 1fr)); gap: var(--space-2); } .consult-page .team-group:first-child .team-members { grid-template-columns: minmax(56px, calc((100% - 3 * var(--space-2)) / 4)); } } /* 휴대폰은 팀원 네 칸이 화면 폭 안에 들어오게 간격을 줄인다 */

@@ -68,7 +68,8 @@ test("S8 실행 상세와 운영 상태", async ({ page, context }) => {
   await page.goto("/ops?theme=day");
   const rows = page.locator(".ops-run");
   await expect(rows).toHaveCount(2);
-  await expect(rows.first()).toContainText("수집 게이트 실패");
+  // 요약 칸은 어느 단계에서 왜 멈췄는지를 한 줄로 보여 준다.
+  await expect(rows.first()).toContainText("수집에서 멈췄어요 — 결측률 초과");
   await rows.first().getByText("단계 펼치기").click();
   await expect(rows.first().locator(".ops-stage--failed")).toContainText(
     "결측률 초과",

@@ -63,6 +63,8 @@ test("1366 필터와 네 폭의 지도 도구", async ({ page }) => {
 			.getByRole("button", { name: "데이터 모드" })
 			.click({ trial: true });
 		if (width === 1366) {
+			// 필터는 오른쪽 패널의 "필터" 탭에 있다.
+			await page.getByRole("tab", { name: "필터" }).click();
 			const grade = page.getByRole("combobox", { name: "등급" });
 			await grade.scrollIntoViewIfNeeded();
 			await expect(grade).toBeInViewport();
@@ -75,6 +77,7 @@ test("1366 필터와 네 폭의 지도 도구", async ({ page }) => {
 test("390 필터의 첫줄과 날짜", async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto("/?sceneFixture=1&view=miniature&forceSvg=1&theme=day");
+	await page.getByRole("tab", { name: "필터" }).click();
 	await page
 		.getByRole("combobox", { name: "기간", exact: true })
 		.selectOption("custom");
