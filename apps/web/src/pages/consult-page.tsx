@@ -1,4 +1,5 @@
 // 대화, 행사 카드, 예보팀과 숫자 미리보기를 한 상담 흐름으로 연결한다.
+
 import { ErrorState } from "../components/common/error-state";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { PageHeading } from "../components/common/page-heading";
@@ -6,7 +7,10 @@ import { PetAvatar } from "../components/pets";
 import { Button } from "../components/ui/button";
 import { AskReply } from "../features/consult-chat/ask-reply";
 import { ConsultInput } from "../features/consult-chat/consult-input";
+import { ConsultMessages } from "../features/consult-chat/consult-messages";
 import { EventDraftCard } from "../features/consult-chat/event-draft-card";
+import { whatIfChips } from "../features/consult-chat/followup-chips";
+import { ForecastComparison } from "../features/consult-chat/forecast-comparison";
 import { ForecastPreview } from "../features/consult-chat/forecast-preview";
 import { useConsultSession } from "../features/consult-chat/use-consult-session";
 import { TeamBoard } from "../features/team-board/team-board";
@@ -28,9 +32,11 @@ export function ConsultPage() {
     statuses,
     stepCounts,
     gates,
-    card,
+    forecasts,
     forecastId,
     suggestions,
+    claims,
+    evidence,
     error,
     replyError,
     busy,
@@ -40,6 +46,9 @@ export function ConsultPage() {
     lastMessage,
     send,
   } = useConsultSession();
+  const original = forecasts[0];
+  const changed = forecasts.length > 1 ? forecasts.at(-1) : null;
+  const followups = ["왜 이렇게 많아?", ...whatIfChips(draft)];
   return (
     <div className="consult-page page-wrap">
       <PageHeading
@@ -73,14 +82,7 @@ export function ConsultPage() {
                 ))}
               </div>
             )}
-            {sent.map((message) => (
-              <p
-                className="consult-bubble consult-bubble--user"
-                key={message.id}
-              >
-                {message.text}
-              </p>
-            ))}
+            <ConsultMessages sent={sent} claims={claims} evidence={evidence} />
             {asks.length > 0 && (
               <AskReply
                 key={asks.map((ask) => ask.field).join("-")}
@@ -91,18 +93,40 @@ export function ConsultPage() {
                 onReply={(reply) => void send(reply)}
               />
             )}
-            {suggestions.length > 0 && (
+            {forecastId && asks.length === 0 && (
               <fieldset className="consult-choices" aria-label="다음 할 일">
-                {suggestions.map((suggestion) => (
-                  <button type="button" disabled key={suggestion.id}>
-                    {suggestion.label}
+                <legend className="sr-only">후속 질문과 다음 할 일</legend>
+                {followups.map((question) => (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    key={question}
+                    onClick={() => void send({ text: question })}
+                  >
+                    {question}
                   </button>
                 ))}
+                {suggestions.map((suggestion) =>
+                  suggestion.href ? (
+                    <a href={suggestion.href} key={suggestion.id}>
+                      {suggestion.label}
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      key={suggestion.id}
+                      onClick={() => void send({ text: suggestion.label })}
+                    >
+                      {suggestion.label}
+                    </button>
+                  ),
+                )}
               </fieldset>
             )}
             {error && (
               <ErrorState
-                message={error}
+                message="상담을 이어가지 못했어요. 같은 내용을 다시 보내 주세요."
                 action={
                   <Button
                     type="button"
@@ -149,7 +173,18 @@ export function ConsultPage() {
             description="검증을 마친 숫자를 먼저 보여 드려요."
             className="report-preview"
           >
-            <ForecastPreview card={card} forecastId={forecastId} />
+            {original && changed ? (
+              <ForecastComparison
+                original={original}
+                changed={changed}
+                forecastId={forecastId}
+              />
+            ) : (
+              <ForecastPreview
+                card={original?.card ?? null}
+                forecastId={forecastId}
+              />
+            )}
           </FeaturePanel>
           <FeaturePanel
             id="M2-F2"

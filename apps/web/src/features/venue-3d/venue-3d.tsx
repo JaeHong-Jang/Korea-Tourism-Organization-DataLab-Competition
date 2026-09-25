@@ -12,8 +12,13 @@ import {
   loadVenueTiles,
   type VenueTiles,
 } from "../../components/scene/venue/tiles";
-import { dollCount, venueSun } from "../../components/scene/venue/time";
+import {
+  dollCount,
+  venueDate,
+  venueSun,
+} from "../../components/scene/venue/time";
 import { VenueScene } from "../../components/scene/venue/venue-scene";
+import { useWeather } from "../../lib/use-weather";
 import "./venue-3d.css";
 
 // WebGL2가 없는 환경에서는 조작할 수 없는 캔버스 대신 위치 정보를 보인다.
@@ -72,6 +77,13 @@ export function Venue3D({
   const profile = report?.forecast.hourlyProfile ?? [];
   const level = report?.forecast.judgment.level ?? 1;
   const sky = event ? venueSun(event, hour).sky : "day";
+  const at = event ? venueDate(event.startsAt, hour) : new Date(0);
+  const weather = useWeather(
+    event?.venue.lat ?? 37.5665,
+    event?.venue.lng ?? 126.978,
+    at,
+    Boolean(event),
+  );
   const dolls = dollCount(peak, hour, profile, "high");
 
   // 행사 좌표가 바뀌면 주변 z15 타일만 새로 읽고 이전 요청 결과는 버린다.
@@ -114,7 +126,14 @@ export function Venue3D({
           <h2>{event.venue.name} 주변 3D</h2>
           <p>반경 약 1.2km · © OpenStreetMap · Protomaps</p>
         </div>
-        <span>{sky === "day" ? "낮" : sky === "dusk" ? "노을" : "밤"}</span>
+        <span>
+          {sky === "day" ? "낮" : sky === "dusk" ? "노을" : "밤"} ·{" "}
+          {weather?.source === "없음" || !weather
+            ? "날씨 정보 없음"
+            : weather.pty && weather.pty !== "없음"
+              ? weather.pty
+              : weather.sky}
+        </span>
       </div>
       {!webgl && (
         <p role="status">
@@ -138,10 +157,11 @@ export function Venue3D({
             level={level}
             hour={hour}
             reducedMotion={reducedMotion}
+            weather={weather}
           />
           <p className="venue-3d__honest">
             건물·도로 = OpenStreetMap · 인형·차량 위치와 흐름은 연출 · 인원
-            규모는 예보값 비례
+            규모는 예보값 비례 · 날씨 효과 = 기상청 예보 기반 연출
           </p>
         </div>
       )}
@@ -160,13 +180,17 @@ export function Venue3D({
           onChange={(event) => setHour(Number(event.target.value))}
           aria-valuetext={`${hour}시`}
         />
-        <datalist id="venue-event-hours">
-          <option value={Number(event.startsAt.slice(11, 13))} label="개최" />
-          <option value={Number(event.endsAt.slice(11, 13))} label="종료" />
-        </datalist>
+        {report && (
+          <datalist id="venue-event-hours">
+            <option value={Number(event.startsAt.slice(11, 13))} label="개최" />
+            <option value={Number(event.endsAt.slice(11, 13))} label="종료" />
+          </datalist>
+        )}
         <p>
           <strong>
-            개최 {event.startsAt.slice(11, 16)} ~ {event.endsAt.slice(11, 16)}
+            {report
+              ? `개최 ${event.startsAt.slice(11, 16)} ~ ${event.endsAt.slice(11, 16)}`
+              : "견본은 개최 시간 없음"}
           </strong>{" "}
           · 인형 1개 = {dolls.peoplePerDoll}명 ·{" "}
           {report ? "추정 산식 기반" : "견본 화면 · 예보값 없음"}

@@ -15,7 +15,7 @@ export function InsightsPage() {
   const second = useContract(getSecond);
   const spec = useContract(getSpec);
   return (
-    <div className="page-wrap regular-page">
+    <div className="page-wrap regular-page insights-page">
       <PageHeading
         eyebrow="S7 · 데이터에서 찾은 단서"
         title="인사이트"

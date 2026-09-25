@@ -43,6 +43,13 @@
         },
         "createdAt": {
           "$ref": "common.schema.json#/$defs/datetime"
+        },
+        "verdict": {
+          "enum": [
+            "통과",
+            "미검증"
+          ],
+          "description": "사용 모델 검증 상태(선택 — promoted.json의 verdict)"
         }
       }
     },
@@ -168,6 +175,107 @@
         },
         "passed": {
           "type": "boolean"
+        },
+        "checks": {
+          "type": "object",
+          "description": "항목별 통과/전체(선택 — 평가 결과 파일의 summary.checks 그대로, 예: sequence·evidence·numbers·ask)",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "passed",
+              "total"
+            ],
+            "properties": {
+              "passed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "latencySeconds": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "forecast",
+                "publishedDone"
+              ],
+              "properties": {
+                "forecast": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "n",
+                    "p50",
+                    "p95"
+                  ],
+                  "properties": {
+                    "n": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "p50": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "p95": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  }
+                },
+                "publishedDone": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "n",
+                    "p50",
+                    "p95"
+                  ],
+                  "properties": {
+                    "n": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "p50": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "p95": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "지연(초, 선택): 첫 요청 → forecast 카드, → 발행 done(되묻기 왕복 제외)"
+        },
+        "mode": {
+          "enum": [
+            "live",
+            "fake"
+          ],
+          "description": "실제 서비스 실행인지 가짜 서비스 실행인지(선택)"
         }
       }
     }

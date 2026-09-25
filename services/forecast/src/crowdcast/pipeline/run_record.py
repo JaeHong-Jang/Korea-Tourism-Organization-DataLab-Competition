@@ -2,7 +2,8 @@
 
 import hashlib
 import json
-from datetime import datetime
+import logging
+from datetime import date, datetime
 from pathlib import Path
 from secrets import token_hex
 from typing import Any
@@ -10,8 +11,11 @@ from typing import Any
 from crowdcast import paths
 from crowdcast.api.contract import validate
 from crowdcast.data.call_ledger import KST, atomic_write
+from crowdcast.pipeline.record_privacy import public_text, record_path, relative_artifact
+from jsonschema import ValidationError
 
 FETCH_STATE_MARKER = "; 수집 상태 JSON: "
+LOGGER = logging.getLogger(__name__)
 
 
 # 후보 = 마지막 완료 실행(latest.json), 사용 모델 = 백테스트 게이트를 악화 없이 지난 실행(promoted.json).
@@ -86,18 +90,54 @@ def current_backtest(started_ns: int) -> Path:
 
 # dry·진행 중 기록을 제외하고 직전 수집 단계의 관측일·성공 시각을 이어받는다.
 def fetch_history() -> dict[str, str | None]:
-    runs = paths.REPORTS / "runs"
-    for path in sorted(runs.glob("*/run.json"), reverse=True):
-        if path.parent.name.startswith("dry-"):
+    for record in list_records(limit=None):
+        if record["runId"].startswith("dry-"):
             continue
-        record = json.loads(path.read_bytes())
         if record["finishedAt"] is None:
             continue
         for stage in record["stages"]:
             message = stage["gate"]["message"]
             if stage["name"] == "fetch" and FETCH_STATE_MARKER in message:
-                return json.loads(message.rsplit(FETCH_STATE_MARKER, 1)[1])
+                try:
+                    history = json.loads(message.rsplit(FETCH_STATE_MARKER, 1)[1])
+                    if isinstance(history, dict) and set(history) == {"latest", "last_success"}:
+                        if history["latest"] is not None:
+                            date.fromisoformat(history["latest"])
+                        if history["last_success"] is not None:
+                            if datetime.fromisoformat(history["last_success"]).tzinfo is None:
+                                raise ValueError("수집 성공 시각의 시간대 누락")
+                        return history
+                except (ValueError, TypeError):
+                    LOGGER.warning("실행 기록의 수집 상태 JSON을 건너뜁니다")
     return {"latest": None, "last_success": None}
+
+
+# 깨진 파일·식별자 불일치·비공개 경로는 목록에서 제외하고 읽은 기록만 반환한다.
+def read_record(run_id: str, *, public: bool = True) -> dict[str, Any]:
+    record = json.loads(record_path(run_id).read_bytes())
+    validate("pipeline-run", record)
+    if record["runId"] != run_id:
+        raise ValueError("실행 식별자 불일치")
+    for stage in record["stages"]:
+        if any(not relative_artifact(item["path"]) for item in stage["artifacts"]):
+            raise ValueError("산출물 상대 경로 오류")
+        if public:
+            stage["gate"]["message"] = public_text(stage["gate"]["message"])
+    if public and record["summary"] is not None:
+        record["summary"] = public_text(record["summary"])
+    return record
+
+
+# 폴더 이름 대신 시간대가 있는 실제 시작 시각으로 정렬하고 유효 기록에만 상한을 적용한다.
+def list_records(limit: int | None = 50) -> list[dict[str, Any]]:
+    records = []
+    for path in (paths.REPORTS / "runs").glob("*/run.json"):
+        try:
+            records.append(read_record(path.parent.name))
+        except (OSError, ValueError, ValidationError) as error:
+            LOGGER.warning("실행 기록을 건너뜁니다 (%s)", type(error).__name__)
+    records.sort(key=lambda row: (datetime.fromisoformat(row["startedAt"]), row["runId"]), reverse=True)
+    return records if limit is None else records[:limit]
 
 
 # 큰 산출물도 한 번에 메모리에 올리지 않고 실제 파일 바이트를 해시한다.
@@ -178,13 +218,17 @@ def markdown(record: dict[str, Any]) -> str:
 
 
 # 계약 위반이면 디렉터리조차 만들지 않고 직전 유효 기록을 보존한다.
-def write_record(record: dict[str, Any]) -> Path:
+def write_record(record: dict[str, Any], *, update_latest: bool = True) -> Path:
     validate("pipeline-run", record)
+    target = record_path(record["runId"])
     content = json.dumps(record, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n"
-    directory = paths.REPORTS / "runs" / record["runId"]
+    directory = target.parent
     atomic_write(directory / "run.json", content.encode())
     atomic_write(directory / "run.md", markdown(record).encode())
-    atomic_write(directory.parent / "latest.json", (json.dumps({"runId": record["runId"]}) + "\n").encode())
+    if update_latest:
+        atomic_write(
+            directory.parent / "latest.json", (json.dumps({"runId": record["runId"]}) + "\n").encode()
+        )
     return directory / "run.json"
 
 

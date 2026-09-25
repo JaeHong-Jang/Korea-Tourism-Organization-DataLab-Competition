@@ -4,7 +4,7 @@ import type {
   AgentStep,
   GateReport,
 } from "@crowdcast/contracts/types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PetAvatar } from "../../components/pets";
 import { getTeamSteps } from "../../lib/api-client";
 
@@ -77,6 +77,42 @@ export function TeamBoard({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [reload, setReload] = useState(0);
+  const drawer = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  // 작업 기록을 닫으면 연 팀원 버튼으로 돌아가 다음 팀원을 고를 수 있게 한다.
+  const close = useCallback(() => {
+    setSelected(null);
+    requestAnimationFrame(() => trigger.current?.focus());
+  }, []);
+  // 기록이 열리면 닫기 버튼으로 초점을 옮기고 Tab을 서랍 안에 머물게 한다.
+  useEffect(() => {
+    if (!selected) return;
+    drawer.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+      } else if (event.key === "Tab" && drawer.current) {
+        const buttons = Array.from(
+          drawer.current.querySelectorAll<HTMLButtonElement>(
+            "button:not(:disabled)",
+          ),
+        );
+        const first = buttons[0];
+        const last = buttons.at(-1);
+        if (!first || !last) return;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selected, close]);
   const state = selected ? agentState(statuses, selected) : null;
   const refreshState = state === "done" || state === "error" ? state : null;
   // 같은 배치에서 여러 작업이 끝나도 누적 단계 수로 기록 변경을 감지한다.
@@ -118,7 +154,8 @@ export function TeamBoard({
                     className="team-member"
                     title={status?.note || undefined}
                     key={id}
-                    onClick={() => {
+                    onClick={(event) => {
+                      trigger.current = event.currentTarget;
                       setSelected(id);
                       if (selected === id) setReload((current) => current + 1);
                     }}
@@ -172,14 +209,15 @@ export function TeamBoard({
       </div>
       {selected && (
         <div
+          ref={drawer}
           className="team-steps"
           role="dialog"
-          aria-modal="false"
+          aria-modal="true"
           aria-label="팀원 작업 기록"
         >
           <div className="team-steps__head">
             <strong>{names[selected]} 작업 기록</strong>
-            <button type="button" onClick={() => setSelected(null)}>
+            <button type="button" onClick={close}>
               닫기
             </button>
           </div>
@@ -187,7 +225,9 @@ export function TeamBoard({
             <p>기록을 불러오는 중이에요.</p>
           ) : error ? (
             <div>
-              <p role="alert">{error}</p>
+              <p role="alert">
+                기록을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.
+              </p>
               <button
                 type="button"
                 onClick={() => setReload((current) => current + 1)}

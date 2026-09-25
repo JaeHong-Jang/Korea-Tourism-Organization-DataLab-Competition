@@ -13,7 +13,7 @@ export function OpsPage() {
   const evaluation = useOpsResource(getOpsEvaluation);
   const freshness = useOpsResource(getOpsFreshness);
   return (
-    <div className="page-wrap regular-page">
+    <div className="page-wrap regular-page ops-page">
       <PageHeading
         eyebrow="S8 · 실행 상태"
         title="운영"

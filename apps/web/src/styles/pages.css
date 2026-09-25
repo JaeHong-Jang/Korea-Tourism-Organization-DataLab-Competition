@@ -108,11 +108,15 @@
 .consult-greeting { display: flex; gap: var(--space-3); align-items: center; }
 .consult-greeting p { padding: var(--space-3); border-radius: var(--radius-card); background: var(--surface-sunken); color: var(--ink); }
 .consult-examples, .consult-choices, .consult-preview__actions, .consult-field-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.consult-examples button, .consult-choices > button, .consult-field, .team-steps button, .team-member { border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); cursor: pointer; }
-.consult-examples button, .consult-choices > button { padding: var(--space-2) var(--space-3); text-align: left; }
+.consult-examples button, .consult-choices > button, .consult-choices > a, .consult-field, .team-steps button, .team-member { border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); cursor: pointer; }
+.consult-examples button, .consult-choices > button, .consult-choices > a { padding: var(--space-2) var(--space-3); text-align: left; }
 .consult-examples button:hover, .consult-field:hover, .team-member:hover { background: var(--surface-sunken); }
 .consult-bubble { max-width: 90%; padding: var(--space-3); border-radius: var(--radius-card); background: var(--surface-sunken); overflow-wrap: anywhere; }
 .consult-bubble--user { justify-self: end; border: 1px solid var(--line); }
+.consult-bubble--reply { justify-self: start; }
+.consult-bubble__text { margin: 0; }
+.consult-bubble__evidence { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--text-caption); }
+.consult-bubble__evidence a { color: var(--link); }
 .consult-bubble--ask { justify-self: start; color: var(--ink); }
 .consult-ask { min-width: 0; margin: 0; padding: 0; border: 0; display: grid; gap: var(--space-3); }
 .consult-ask__item { display: grid; gap: var(--space-2); }
@@ -149,14 +153,41 @@
 .team-gates details { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); font-size: var(--text-caption); }
 .team-gates summary { cursor: pointer; }
 .team-gates ul { padding-left: var(--space-4); }
-.team-steps { position: relative; margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.team-steps { position: absolute; z-index: var(--z-sheet); inset: 0; max-height: 100%; overflow: auto; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-float); }
 .team-steps__head { display: flex; justify-content: space-between; }
 .team-steps button { padding: var(--space-1) var(--space-2); }
 .team-steps ul { padding-left: var(--space-4); }
 .team-step-detail { display: block; color: var(--ink-2); font-size: var(--text-caption); }
 .consult-choices[aria-label="다음 할 일"] { margin: 0; padding: 0; border: 0; }
+.consult-choices > button:hover, .consult-choices > a:hover { background: var(--surface-sunken); }
+.consult-choices > button:disabled { cursor: wait; opacity: .6; }
+/* 두 예보는 같은 조건 행과 수치 자리를 써서 바뀐 부분을 바로 읽게 한다. */
+.consult-compare { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
+.consult-compare__columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.consult-compare__card { display: grid; align-content: start; gap: var(--space-3); min-width: 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.consult-compare__card--changed { border-color: var(--brand); }
+.consult-compare__card h3 { margin: 0; font-size: var(--text-subtitle); }
+.consult-compare__conditions { display: grid; gap: var(--space-1); margin: 0; }
+.consult-compare__conditions > div { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); padding: var(--space-1); border-radius: var(--radius-input); font-size: var(--text-sm); }
+.consult-compare__conditions dt { color: var(--ink-2); }
+.consult-compare__conditions dd { margin: 0; overflow-wrap: anywhere; }
+.consult-compare__condition--changed, .consult-compare__request { background: var(--surface-sunken); outline: 1px solid var(--brand); }
+.consult-compare__request { margin: 0; padding: var(--space-2); border-radius: var(--radius-input); font-size: var(--text-sm); }
+.consult-compare__metric { display: grid; gap: var(--space-1); }
+.consult-compare__metric > span { color: var(--ink-2); font-size: var(--text-sm); }
+.consult-compare__metric strong { font-size: var(--text-section); font-variant-numeric: tabular-nums; }
+.consult-compare__metric small { color: var(--ink-2); font-size: var(--text-caption); }
+/* 비교 막대는 두 행이 같은 로그 좌표를 쓰고, 숫자는 카드의 원본값으로 남긴다. */
+.consult-compare-range { display: grid; gap: var(--space-2); min-width: 0; margin: 0; }
+.consult-compare-range figcaption { font-weight: 700; }
+.consult-compare-range__row { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: var(--space-2); align-items: center; font-size: var(--text-caption); }
+.consult-compare-range__track { position: relative; height: 24px; border-bottom: 1px solid var(--axis); background: var(--surface-sunken); }
+.consult-compare-range__band { position: absolute; top: 6px; height: 12px; border-radius: var(--radius-input); background: var(--seq-2); }
+.consult-compare-range__row:nth-of-type(2) .consult-compare-range__band { background: var(--seq-4); }
+.consult-compare-range__median { position: absolute; top: 3px; height: 18px; border-left: 2px solid var(--ink); }
+.consult-compare-range__legend { margin: 0; color: var(--ink-2); font-size: var(--text-caption); }
 @media (max-width: 900px) { .consult-layout { grid-template-columns: 1fr; } .consult-chat { min-height: 360px; } }
-@media (max-width: 640px) { .consult-preview__numbers { grid-template-columns: 1fr; } .consult-time { display: grid; } }
+@media (max-width: 640px) { .consult-preview__numbers, .consult-compare__columns { grid-template-columns: 1fr; } .consult-time { display: grid; } }
 
 /* 검증 성적을 앞에, 근거와 제한을 뒤에 놓고 인사이트는 중요도 순으로 배치한다. */
 .validation-layout, .insights-layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-8); }

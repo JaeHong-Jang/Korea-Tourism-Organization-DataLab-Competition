@@ -2,10 +2,10 @@
 .forecast-tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-6); border-bottom: 1px solid var(--line); }
 .forecast-tabs button { padding: var(--space-3) var(--space-5); border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--ink-2); font: inherit; cursor: pointer; }
 .forecast-tabs button[aria-selected="true"] { border-color: var(--brand); color: var(--ink); font-weight: 700; }
-.forecast-tabs button:focus-visible, .evidence-map button:focus-visible, .evidence-map a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.forecast-tabs button:focus-visible, .evidence-map button:focus-visible, .evidence-map a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .forecast-tab-panel { display: none; }
 .forecast-tab-panel.is-active { display: block; }
-.report-claim--map-selected { outline: 2px solid var(--brand); outline-offset: var(--space-2); background: var(--surface-sunken); }
+.report-claim--map-selected { outline: 2px solid var(--focus); outline-offset: var(--space-2); background: var(--surface-sunken); }
 .evidence-map { padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .evidence-map__heading { display: flex; justify-content: space-between; align-items: start; gap: var(--space-4); }
 .evidence-map__heading h2 { margin: 0; font-size: var(--text-section); }
@@ -36,7 +36,7 @@
 .evidence-map-node--source { border-radius: var(--radius-button); background: var(--surface-sunken); }
 .evidence-map-node--document { border-left: 4px double var(--brand); }
 .evidence-map-node.is-dimmed { opacity: .28; }
-.evidence-map-node.is-selected { outline: 3px solid var(--brand); }
+.evidence-map-node.is-selected { outline: 3px solid var(--focus); }
 .evidence-map-node__button { display: grid; align-content: start; gap: var(--space-1); width: 100%; height: 100%; padding: var(--space-3); border: 0; border-radius: inherit; color: var(--ink); background: transparent; text-align: left; cursor: pointer; }
 .evidence-map-node__kind { display: flex; align-items: center; gap: var(--space-1); color: var(--link); font-size: var(--text-caption); }
 .evidence-map-node__button strong, .evidence-map-node__button small { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; -webkit-line-clamp: 2; }

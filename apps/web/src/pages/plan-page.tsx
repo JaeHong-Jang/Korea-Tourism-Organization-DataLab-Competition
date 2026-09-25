@@ -3,8 +3,8 @@ import type { ForecastReport, Plan } from "@crowdcast/contracts/types";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ErrorState } from "../components/common/error-state";
+import { LoadingState } from "../components/common/loading-state";
 import { PageHeading } from "../components/common/page-heading";
-import { PetAvatar } from "../components/pets";
 import { Button } from "../components/ui/button";
 import { loadPlan } from "../features/safety-plan/api";
 import { PlanEditor } from "../features/safety-plan/plan-editor";
@@ -47,25 +47,22 @@ export function PlanPage() {
         description="발행 문장과 수치는 그대로 두고, 확인할 내용은 작성자 메모에 적어 주세요."
       />
       {state.status === "loading" && (
-        <div className="kit-screen-state" role="status">
-          <PetAvatar agentId="plan-writer" state="working" size={96} />
-          <p>
-            {state.retrying
+        <LoadingState
+          message={
+            state.retrying
               ? "계획 초안을 다시 불러오고 있어요."
-              : "계획 초안을 불러오고 있어요."}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setAttempt((value) => value + 1)}
-          >
-            다시 불러오기
-          </Button>
-        </div>
+              : "계획 초안을 불러오고 있어요."
+          }
+          action={
+            <a href={`/f/${encodeURIComponent(forecastId ?? "")}`}>
+              예보서 보기
+            </a>
+          }
+        />
       )}
       {state.status === "error" && (
         <ErrorState
-          message={state.message}
+          message="계획 초안을 열지 못했어요. 잠시 뒤 다시 시도해 주세요."
           action={
             <Button
               type="button"

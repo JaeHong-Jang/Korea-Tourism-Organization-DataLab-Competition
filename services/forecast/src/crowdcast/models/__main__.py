@@ -6,6 +6,7 @@ import importlib.metadata
 import io
 import json
 import shutil
+import sys
 import tempfile
 import time
 from datetime import UTC, datetime
@@ -211,6 +212,13 @@ def write_features(config_path: Path) -> dict[str, Any]:
 
 # 데이터 추가 뒤에도 같은 명령을 쓰도록 입력 위치는 공용 경로 설정을 따른다.
 def main() -> None:
+    # 도전 모델 비교는 자기 인자를 가진 하위 명령으로 넘긴다(T-211 — 승격 없음).
+    if sys.argv[1:2] == ["challenger"]:
+        from crowdcast.models.challenger.__main__ import main as challenger_main
+
+        sys.argv = [sys.argv[0], *sys.argv[2:]]
+        challenger_main()
+        return
     parser = argparse.ArgumentParser(description="공개 시점 피처·G0 고정·롤링 백테스트")
     # 학습과 롤링 백테스트는 한 실행이다(최종 모델 = 마지막 분할) — train·backtest 단계가 같은 명령을 부른다.
     parser.add_argument("command", choices=["features", "train", "backtest"])

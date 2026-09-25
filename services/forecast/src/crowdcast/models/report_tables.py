@@ -143,3 +143,23 @@ def sensitivity_table(points: list[dict[str, Any]]) -> list[str]:
             f"{sum(p['schedule_attributes_masked'] for p in rows)} |"
         )
     return lines
+
+
+# 도전 모델은 동일 폴드에서만 비교하며 실제 양성 분모와 구간 폭도 함께 공개한다.
+def challenger_table(comparison: dict[str, Any]) -> list[str]:
+    lines = [
+        "## 도전 모델 비교", "",
+        f"기준 실행: `{comparison['baseRunId']}`; 사용 모델: `{comparison['primaryModel']}`. "
+        "사용 모델·LightGBM·PyMC는 같은 학습/평가 라벨을 쓴다. 승격 대상 아님.", "",
+        "| 평가 연도 | 모델 | N | MdAPE(%) | 80% 포함률(%) | 포함/N | 폭 중앙값 | "
+        "환산 판정 재현율(%) | 실제 대상 이상 N |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for row in comparison["metrics"]:
+        lines.append(
+            f"| {row['year'] or '전체'} | {row['model']} | {row['coverageN']} | {number(row['mdape'])} | "
+            f"{number(row['coverage80'], percent=True)} | {row['covered']}/{row['coverageN']} | "
+            f"{number(row['medianWidth'])} | {number(row['judgmentRecall'], percent=True)} | "
+            f"{row['actualPositive']} |"
+        )
+    return lines

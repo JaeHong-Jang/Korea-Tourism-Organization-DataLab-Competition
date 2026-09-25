@@ -1,6 +1,7 @@
 // 자료별 수집·반영 지연과 모델·근거 그래프 상태를 표시한다.
 import { AlertTriangle } from "lucide-react";
 import { ErrorState } from "../../components/common/error-state";
+import { LoadingState } from "../../components/common/loading-state";
 import type { OpsFreshness } from "../../lib/ops-api";
 import { dateTime, lagDays } from "./ops-format";
 import type { OpsResource } from "./use-ops-resource";
@@ -8,10 +9,10 @@ import type { OpsResource } from "./use-ops-resource";
 // 자료 기준일이 35일을 넘으면 텍스트와 아이콘으로 지연을 알린다.
 export function FreshnessCard({ state }: { state: OpsResource<OpsFreshness> }) {
   if (state.phase === "loading")
-    return <p role="status">최신성을 불러오는 중이에요.</p>;
+    return <LoadingState message="자료의 최신성을 불러오는 중이에요." />;
   if (state.phase === "error")
     return (
-      <ErrorState message={`최신성을 확인할 수 없어요. ${state.message}`} />
+      <ErrorState message="자료의 최신성을 확인할 수 없어요. 잠시 뒤 다시 시도해 주세요." />
     );
   const { freshness, model, graph, generatedAt } = state.value;
   return (
@@ -97,9 +98,7 @@ export function FreshnessCard({ state }: { state: OpsResource<OpsFreshness> }) {
       <p>
         상태 기준: <time dateTime={generatedAt}>{dateTime(generatedAt)}</time>
       </p>
-      <p>
-        출처: 운영 상태 API · 반영 지연은 자료 기준일과 상태 기준일의 차이예요.
-      </p>
+      <p>출처: 운영 기록 · 반영 지연은 자료 기준일과 상태 기준일의 차이예요.</p>
     </div>
   );
 }

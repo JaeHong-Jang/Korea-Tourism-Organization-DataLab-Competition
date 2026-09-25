@@ -8,7 +8,7 @@ import { clipPolygon, clipSegment } from "./clip";
 import { tileAt, tilePointToVenue } from "./coordinates";
 import { graphRoutes, routeGraph, vehicleAt } from "./routes";
 import { sampleEvent } from "./sites";
-import { readVenueTile, type VenueTiles } from "./tiles";
+import { isStationName, readVenueTile, type VenueTiles } from "./tiles";
 import { dollCount, venueSun } from "./time";
 
 // 실제 MVT에서 버퍼를 자른 뒤 타일 안쪽 건물과 길이 남는지 확인한다.
@@ -86,6 +86,12 @@ describe("행사장 z15 타일", () => {
 
 // 경로 연결성, 결정적 이동, 품질 상한과 모션 감소를 확인한다.
 describe("행사장 연출", () => {
+  it("역이 아닌 출입구와 엘리베이터 이름을 목록에서 제외한다", () => {
+    expect(isStationName("역")).toBe(false);
+    expect(isStationName("운서역 (엘리베이터)")).toBe(false);
+    expect(isStationName("인천공항1터미널역 3번 출입구")).toBe(false);
+    expect(isStationName("운서역")).toBe(true);
+  });
   it("3m 안 끝점을 이은 경로의 같은 시각 위치가 같다", () => {
     const lines = [
       {
