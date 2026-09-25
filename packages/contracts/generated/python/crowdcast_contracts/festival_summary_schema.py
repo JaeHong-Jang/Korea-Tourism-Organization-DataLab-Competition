@@ -3,11 +3,17 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import common_schema
+
+
+class ModelVerdict(Enum):
+    통과 = '통과'
+    미검증 = '미검증'
 
 
 class FestivalSummary(BaseModel):
@@ -30,3 +36,9 @@ class FestivalSummary(BaseModel):
     peakP90: Annotated[int, Field(ge=0)]
     pOver1000: Annotated[float, Field(ge=0.0, le=1.0)]
     ood: bool
+    modelVerdict: Annotated[
+        ModelVerdict | None,
+        Field(
+            description="이 예보를 만든 사용 모델의 검증 상태(reports/backtest/promoted.json의 verdict, 06 §8). 미검증이면 지도·목록에 '골든 사례 0건 — 사례 재현 검증 전 임시 사용'을 표시한다. 없으면 표시 근거가 없는 것으로 본다(선택 필드 — 9/25 추가)."
+        ),
+    ] = None

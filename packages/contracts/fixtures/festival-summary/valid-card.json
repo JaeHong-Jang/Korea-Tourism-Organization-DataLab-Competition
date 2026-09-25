@@ -14,5 +14,6 @@
   "peakP50": 21000,
   "peakP90": 35000,
   "pOver1000": 0.99,
-  "ood": false
+  "ood": false,
+  "modelVerdict": "미검증"
 }
