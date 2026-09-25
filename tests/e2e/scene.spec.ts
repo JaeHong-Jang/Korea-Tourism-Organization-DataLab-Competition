@@ -1,6 +1,5 @@
 // 고정 시각의 낮·노을·밤 장면을 첫 렌더 뒤 같은 해상도로 저장한다.
 import { type ChildProcess, spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 
@@ -96,9 +95,7 @@ for (const scene of [
       `인형 1개 = ${scale.toLocaleString("ko-KR")}명`,
     );
     await expect(page.locator(".scene-legend__grade")).toHaveCount(4);
-    await page.getByRole("button", { name: "목록으로 보기" }).click();
-    await expect(page.locator(".scene-festival-list li")).toHaveCount(30);
-    await page.getByRole("button", { name: "목록 닫기" }).click();
+    await expect(page.locator(".festival-list__items li")).toHaveCount(30);
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({
       path: resolve(output, `T-432-scene-${scene.sky}.png`),
@@ -124,8 +121,7 @@ test("견본 쿼리가 없는 장면은 군중이 비어 있다", async ({ page 
     "data-scene-doll-count",
     "0",
   );
-  await page.getByRole("button", { name: "목록으로 보기" }).click();
-  await expect(page.locator(".scene-festival-list li")).toHaveCount(0);
+  await expect(page.locator(".festival-list__items li")).toHaveCount(0);
 });
 
 // WebGL2를 제공하지 않는 브라우저는 캔버스 대신 SVG 전국 지도와 같은 행사 목록을 보여 준다(M1-F1-f — T-404).
@@ -250,8 +246,8 @@ test("자동 품질 강등은 후처리와 DPR을 줄인다", async ({ page }) =
 	expect(dpr).toBeLessThanOrEqual(0.66);
 });
 
-// 후처리와 타일을 열 번씩 교체한 뒤 형상·텍스처가 원래 개수로 돌아온다.
-test("장면 전환 10회 뒤 GPU 리소스 수가 늘지 않는다", async ({ page }) => {
+// 데이터 모드로 땅 타일을 다섯 번 다시 만든 뒤 형상·텍스처가 원래 개수로 돌아온다.
+test("데이터 모드 전환 5회 뒤 GPU 리소스 수가 늘지 않는다", async ({ page }) => {
 	await page.goto(
 		"http://127.0.0.1:5184/?sceneFixture=1&view=miniature&sceneQuality=high&sceneDiagnostic=1",
 	);
@@ -262,35 +258,28 @@ test("장면 전환 10회 뒤 GPU 리소스 수가 늘지 않는다", async ({ p
 	);
 	const memory = () => page.evaluate(() => window.__crowdcastSceneMemory?.());
 	const initial = await memory();
-	const picker = page.getByLabel("장면 품질");
-	for (let index = 0; index < 10; index++) {
-		await picker.selectOption("low");
-		await picker.selectOption("high");
+	// 데이터 모드는 땅 모형을 다시 만들어 부하가 크면 전환에 몇 초가 걸린다.
+	test.setTimeout(150_000);
+	const toggle = page.getByRole("button", { name: "데이터 모드" });
+	for (let index = 0; index < 5; index++) {
+		for (const pressed of ["true", "false"]) {
+			await toggle.click();
+			await expect(toggle).toHaveAttribute("aria-pressed", pressed, {
+				timeout: 30_000,
+			});
+			await expect(page.locator("html")).toHaveAttribute(
+				"data-scene-ready",
+				"true",
+				{ timeout: 30_000 },
+			);
+		}
 	}
 	await expect(page.locator("html")).toHaveAttribute(
-		"data-scene-quality",
-		"high",
+		"data-scene-ready",
+		"true",
 	);
 	const final = await memory();
 	expect(final?.geometries).toBeLessThanOrEqual(initial?.geometries ?? 0);
 	expect(final?.textures).toBeLessThanOrEqual(initial?.textures ?? 0);
 });
 
-// 현재 장면을 내려받을 때 PNG 데이터와 현지 시각 이름이 함께 남는다.
-test("장면 저장은 내용이 있는 PNG를 내려받는다", async ({ page }) => {
-	await page.goto("http://127.0.0.1:5184/?sceneFixture=1&view=miniature&sceneQuality=high");
-	await expect(page.locator("html")).toHaveAttribute(
-		"data-scene-ready",
-		"true",
-		{ timeout: 30_000 },
-	);
-	const download = page.waitForEvent("download");
-	await page.getByRole("button", { name: "장면 저장" }).click();
-	const saved = await download;
-	expect(saved.suggestedFilename()).toMatch(
-		/^crowdcast-national-\d{8}-\d{4}\.png$/,
-	);
-	const bytes = readFileSync((await saved.path()) ?? "");
-	expect(bytes.length).toBeGreaterThan(1000);
-	expect(bytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
-});

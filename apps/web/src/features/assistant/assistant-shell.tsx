@@ -43,6 +43,12 @@ export function AssistantShell() {
   useEffect(() => {
     if (location.pathname === "/consult" && !guideOpen) openPanel();
   }, [location.pathname, openPanel, guideOpen]);
+  // 첫 안내 말풍선은 잠깐만 보이고 스스로 접힌다(닫음 기록은 남기지 않아 다음 방문에 다시 보인다).
+  useEffect(() => {
+    if (!invitation) return;
+    const timer = window.setTimeout(() => setInvitation(false), 9000);
+    return () => window.clearTimeout(timer);
+  }, [invitation]);
   return (
     <div className={`assistant-shell${open ? " assistant-shell--open" : ""}`}>
       {open && <AssistantPanel onGuide={startGuide} />}

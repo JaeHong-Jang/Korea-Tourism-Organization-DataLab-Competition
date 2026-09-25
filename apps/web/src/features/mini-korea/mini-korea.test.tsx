@@ -8,7 +8,6 @@ import card from "../../../../../packages/contracts/fixtures/festival-summary/va
 import { placeFestivals } from "../../components/scene/festival-models/placement";
 import { SceneLegend } from "../../components/scene/scene-legend";
 import { sigunguPeaks, tileRanges, tileStep } from "./data-mode";
-import { DataModeToggle } from "./data-mode-toggle";
 import { consultationText, FestivalSummaryPanel } from "./festival-summary";
 import { HonestNotices } from "./honest-notices";
 
@@ -104,8 +103,5 @@ describe("S1 미리보기", () => {
     expect(legend).toContain("지금 필터 기준으로 다시 나눔");
     expect(legend).toContain("데이터 모드에서는 열차·차량을 숨겨요");
     expect(placeFestivals([festival], totals)[0].y).toBe(10);
-    expect(
-      renderToStaticMarkup(<DataModeToggle enabled onChange={() => {}} />),
-    ).toContain('aria-pressed="true"');
   });
 });

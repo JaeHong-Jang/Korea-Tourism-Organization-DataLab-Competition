@@ -16,6 +16,12 @@
 .assistant-picker__results, .assistant-recommendations ol { display: grid; gap: var(--space-2); padding: 0; margin: 0; list-style: none; }
 .assistant-picker__results button { display: grid; width: 100%; gap: var(--space-1); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; }
 .assistant-picker__results span { color: var(--ink-2); font-size: var(--text-caption); }
+.assistant-picker__results button { grid-template-columns: auto 1fr; column-gap: var(--space-2); align-items: baseline; }
+.assistant-picker__results button > strong, .assistant-picker__results button > span:last-child { grid-column: 2; }
+.assistant-picker__results button:hover { border-color: var(--select); }
+.assistant-picker__when { grid-row: 1 / span 2; align-self: center; min-width: 52px; padding: 2px var(--space-2); border-radius: 999px; background: var(--select-soft); color: var(--select-ink); font-size: var(--text-caption); font-weight: 700; text-align: center; }
+.assistant-picker__caption { margin: 0; color: var(--ink-2); font-size: var(--text-caption); }
+.assistant-picker__more { justify-self: start; padding: var(--space-1) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); cursor: pointer; }
 .assistant-recommendations { display: grid; gap: var(--space-3); }
 .assistant-recommendations h3 { margin: 0; }
 .assistant-recommendation { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); }
@@ -24,11 +30,11 @@
 .assistant-recommendation__image img { width: 100%; height: 100%; object-fit: cover; }
 .assistant-recommendation__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .assistant-recommendation__actions button:last-child { font-size: var(--text-caption); }
-.assistant-whale { position: fixed; z-index: var(--z-popover); display: grid; justify-items: center; width: 92px; height: 100px; padding: var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); cursor: grab; touch-action: none; user-select: none; }
+.assistant-whale { position: fixed; z-index: var(--z-popover); display: grid; justify-items: center; gap: 2px; width: 96px; height: 104px; padding: 0; border: 0; border-radius: var(--radius-panel); background: transparent; color: var(--ink); cursor: grab; touch-action: none; user-select: none; } /* 그림 뒤에 상자를 두지 않는다 — 고래만 떠 있게 */
 .assistant-whale--dragging { cursor: grabbing; }
 .assistant-whale__figure { display: grid; place-items: center; width: 78px; height: 70px; animation: assistant-float 4s ease-in-out infinite; }
-.assistant-whale__figure img { display: block; max-width: 100%; max-height: 100%; pointer-events: none; }
-.assistant-whale__status { padding: var(--space-1) var(--space-2); border-radius: var(--radius-input); background: var(--surface-sunken); font-size: var(--text-caption); white-space: nowrap; }
+.assistant-whale__figure img { display: block; max-width: 100%; max-height: 100%; filter: drop-shadow(0 6px 10px rgba(10, 20, 40, 0.28)); pointer-events: none; }
+.assistant-whale__status { padding: 2px var(--space-2); border: 1px solid var(--line); border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-1); font-size: var(--text-caption); white-space: nowrap; }
 .assistant-whale__dots, .consult-work__dots { display: inline-block; animation: assistant-pulse 1.2s ease-in-out infinite; }
 .assistant-shell--open .assistant-whale { display: none; }
 .assistant-invitation { position: fixed; z-index: var(--z-popover); right: 124px; bottom: var(--space-8); width: 215px; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); }
@@ -67,7 +73,9 @@
 .consult-result small { color: var(--ink-2); }
 .consult-page .event-summary { grid-column: 1 / -1; }
 .festival-list__consult { margin: var(--space-2); font-size: var(--text-caption); }
-@media (min-width: 768px) { .app-shell:has(.assistant-shell--open) main { margin-right: 420px; } }
+@media (min-width: 768px) { .app-shell:has(.assistant-shell--open) main:not(:has(.scene-page)) { margin-right: 420px; } } /* 홈 장면은 밀지 않고 패널을 위에 띄운다 — 절대 배치 패널이 겹치지 않게 */
 @media (max-width: 999px) { .consult-page .consult-layout { grid-template-columns: 1fr; } .consult-page .event-summary { grid-column: auto; } }
 @media (max-width: 767px) { .assistant-panel { width: 100vw; border-left: 0; } }
 @media (prefers-reduced-motion: reduce) { .assistant-whale, .assistant-whale *, .consult-work__dots { animation: none; transition: none; } }
+.assistant-whale:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.assistant-whale__status.is-idle { opacity: 0; } /* 대기 중에는 알약을 숨겨 화면을 덜 어지럽힌다(읽기 도구 알림 자리는 유지) */

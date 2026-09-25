@@ -2,7 +2,7 @@
 import { OrbitControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Vector3 } from "three";
+import { MOUSE, TOUCH, Vector3 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { overviewPose } from "./camera-framing";
 import { observePanelBounds, type PanelBounds } from "./scene-panel-bounds";
@@ -187,6 +187,28 @@ export function CameraRig({
       moving.current = false;
   });
 
+  // 끌어서 옮긴 표적이 판 밖으로 나가면 카메라와 함께 판 가장자리로 되돌린다.
+  const keepOnBoard = () => {
+    const orbit = controls.current;
+    if (!orbit) return;
+    const x = Math.min(
+      center[0] + width / 2,
+      Math.max(center[0] - width / 2, orbit.target.x),
+    );
+    const z = Math.min(
+      center[1] + depth / 2,
+      Math.max(center[1] - depth / 2, orbit.target.z),
+    );
+    const dx = x - orbit.target.x;
+    const dz = z - orbit.target.z;
+    if (dx === 0 && dz === 0) return;
+    orbit.target.x = x;
+    orbit.target.z = z;
+    camera.position.x += dx;
+    camera.position.z += dz;
+  };
+
+  // 왼쪽 끌기·한 손가락은 이동, 휠 버튼·오른쪽 끌기는 회전, 휠은 커서 위치로 확대한다(성남 3D 여행과 같은 조작).
   return (
     <OrbitControls
       ref={controls}
@@ -198,6 +220,18 @@ export function CameraRig({
       enableDamping={!reducedMotion}
       dampingFactor={0.09}
       enablePan
+      screenSpacePanning={false}
+      zoomToCursor
+      mouseButtons={{
+        LEFT: MOUSE.PAN,
+        MIDDLE: MOUSE.ROTATE,
+        RIGHT: MOUSE.ROTATE,
+      }}
+      touches={{ ONE: TOUCH.PAN, TWO: TOUCH.DOLLY_ROTATE }}
+      onStart={() => {
+        moving.current = false;
+      }}
+      onChange={keepOnBoard}
     />
   );
 }

@@ -1,4 +1,4 @@
-// 대화 카드의 근거 지도 링크가 예보서의 지도 탭을 바로 열게 한다.
+// 대화 카드의 근거 정리 링크가 예보서의 근거 탭을 바로 열게 한다.
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 

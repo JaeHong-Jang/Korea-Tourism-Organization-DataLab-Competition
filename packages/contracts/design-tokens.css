@@ -23,6 +23,11 @@
   --team-verification: #1baf7a;
   --team-lead: #1c2f55;
   --diverging-mid: #f0efec;
+  /* 선택 표시: 낮은 파란 테두리, 밤은 달빛 노랑 테두리 + 은은한 빛(색만으로 구분하지 않게 늘 테두리와 함께) */
+  --select: #256abf;
+  --select-soft: #eaf1fb;
+  --select-ink: #1c4f8f;
+  --select-glow: 0 0 0 3px rgba(37, 106, 191, 0.18);
 }
 
 /* 밤 테마: 해 고도 −6° 이하이거나 사용자가 밤을 고르면 */
@@ -47,6 +52,10 @@
   --team-verification: #199e70;
   --team-lead: #9aa9c9;
   --diverging-mid: #383835;
+  --select: #f3d27a;
+  --select-soft: rgba(243, 210, 122, 0.12);
+  --select-ink: #ffe7a8;
+  --select-glow: 0 0 0 3px rgba(243, 210, 122, 0.22), 0 0 18px rgba(243, 210, 122, 0.28);
 }
 
 /* 낮·밤 공통: 등급(상태 팔레트, 의미 고정), 차트, 타이포, 간격, 모서리, 그림자, 층, 모션 */
@@ -153,6 +162,20 @@
   --scene-sky-day: #dde9f1;
   --scene-sky-dusk: #f0c7a6;
   --scene-sky-night: #1a2335;
+  /* 하늘 공 그라데이션: 위(천정)·지평선(위 3색)·아래(판 둘레 빈 공간) */
+  --scene-sky-day-top: #a9cdea;
+  --scene-sky-day-low: #cfe2ee;
+  --scene-sky-dusk-top: #6f86b3;
+  --scene-sky-dusk-low: #3b3552;
+  --scene-sky-night-top: #0e1830;
+  --scene-sky-night-low: #070c19;
+  /* 달(장식): 번짐·원판·무늬 */
+  --scene-moon-glow: rgba(255, 236, 196, 0.42);
+  --scene-moon-face: #fffaf0;
+  --scene-moon-shade: #e8d7ad;
+  --scene-moonlight: #cfdcff;
+  /* 낮 햇빛 번짐(장식, 더하기 합성) */
+  --scene-sunlight: #ffe2a8;
   --scene-window-glow: #ffd98a;
   --scene-shadow: rgba(40, 30, 20, 0.28);
   /* 블록 인형 옷(데이터 의미 없음 — 등급·팀 색과 겹치지 않게 채도를 낮춘 파스텔 8색)과 칠하지 않은 나무 머리 */

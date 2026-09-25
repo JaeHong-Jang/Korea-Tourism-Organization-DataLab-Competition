@@ -54,6 +54,8 @@ export function readSceneOptions() {
     focusCode: search.get("sceneFocus"),
     motion: search.get("sceneMotion") !== "0",
     t435: search.get("sceneT435") !== "0",
+    // 성능 비교용: sceneSky=0이면 하늘 공·별·달·햇빛을 끈다.
+    sky: search.get("sceneSky") !== "0",
   };
 }
 

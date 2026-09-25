@@ -8,7 +8,6 @@ import { useTheme } from "../../lib/theme/theme-provider";
 import { Board } from "./board";
 import { CameraRig } from "./camera-rig";
 import { Fireworks } from "./effects/fireworks";
-import { SceneEffects } from "./effects/scene-effects";
 import { FestivalLayer } from "./festival-layer";
 import { LandTiles } from "./land-tiles";
 import { RoadTraffic } from "./motion/road-traffic";
@@ -16,7 +15,6 @@ import { Trains } from "./motion/trains";
 import { WhaleBots } from "./motion/whale-bots";
 import { ForecastOffice } from "./office/forecast-office";
 import { qualityDpr, sceneColor } from "./quality";
-import { SceneCaptureFrame } from "./scene-capture";
 import { nationalDescription } from "./scene-description";
 import { FrameSignal, QualityControl } from "./scene-diagnostics";
 import {
@@ -25,7 +23,7 @@ import {
   useScenePreferences,
   useSceneQuality,
 } from "./scene-options";
-import { SceneTools } from "./scene-tools";
+import { SkyScene } from "./sky/sky-scene";
 import { SunLight } from "./sun-light";
 import { useLandModel } from "./use-land-model";
 import { type SceneScale, useScene } from "./use-scene";
@@ -51,15 +49,9 @@ export function MiniKoreaCanvas({
   overviewRevision?: number;
 }) {
   const [regressFactor, setRegressFactor] = useState(1);
-  const [captureRequest, setCaptureRequest] = useState(0);
   const [showLand, setShowLand] = useState(true);
   const diagnostics = useMemo(readSceneOptions, []);
-  const {
-    mode,
-    setMode,
-    quality: activeQuality,
-    change,
-  } = useSceneQuality(diagnostics);
+  const { mode, quality: activeQuality, change } = useSceneQuality(diagnostics);
   const t435 = diagnostics.t435;
   const scene = useScene(
     festivals,
@@ -184,6 +176,13 @@ export function MiniKoreaCanvas({
           width={width}
           depth={depth}
         />
+        {diagnostics.sky && (
+          <SkyScene
+            center={center}
+            quality={activeQuality}
+            reducedMotion={reducedMotion}
+          />
+        )}
         <Board center={center} width={width} depth={depth} />
         {t435 && (
           <WeatherScene
@@ -268,19 +267,7 @@ export function MiniKoreaCanvas({
           measure={diagnostics.measure}
           diagnostic={diagnostics.debug}
         />
-        {t435 && <SceneEffects quality={activeQuality} />}
-        <SceneCaptureFrame
-          request={captureRequest}
-          screen="national"
-          note="인원 규모는 예보값 비례 · 움직임은 연출 · 인형 위치는 실제 사람 위치가 아니에요. 날씨 효과 = 기상청 예보 기반 연출."
-          postprocessed={t435 && activeQuality === "high"}
-        />
       </Canvas>
-      <SceneTools
-        mode={mode}
-        onModeChange={setMode}
-        onSave={() => setCaptureRequest((request) => request + 1)}
-      />
     </section>
   );
 }

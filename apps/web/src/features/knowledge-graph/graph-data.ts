@@ -18,13 +18,6 @@ export const graphKinds: { kind: GraphKind; label: string }[] = [
   { kind: "agent", label: "에이전트" },
   { kind: "other", label: "기타" },
 ];
-export const initialKinds: GraphKind[] = [
-  "class",
-  "rule",
-  "clause",
-  "dataset",
-  "model",
-];
 export const kindLabel = (kind: GraphKind) =>
   graphKinds.find((item) => item.kind === kind)?.label ?? "기타";
 

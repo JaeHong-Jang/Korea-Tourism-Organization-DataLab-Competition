@@ -7,7 +7,6 @@ import { LoadingState } from "../components/common/loading-state";
 import { PageHeading } from "../components/common/page-heading";
 import { getKnowledgeGraph } from "../features/knowledge-graph/api";
 import { KnowledgeGraphView } from "../features/knowledge-graph/knowledge-graph";
-import "@xyflow/react/dist/style.css";
 
 // 로딩·빈 값·계약 오류를 분리하고 재시도할 수 있게 한다.
 export function KnowledgeGraphPage() {

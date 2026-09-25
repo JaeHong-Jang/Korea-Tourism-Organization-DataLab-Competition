@@ -56,7 +56,9 @@ test("현재 비·밤 날씨 칩과 장면", async ({ page }) => {
 test("연출 열차와 고른 행사 위 고래 봇", async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	await page.setViewportSize({ width: 1440, height: 900 });
-	await page.goto(`/?sceneFixture=1&view=miniature&theme=day&sceneDiagnostic=1&at=${time}`);
+	await page.goto(
+		`/?sceneFixture=1&view=miniature&theme=day&sceneDiagnostic=1&at=${time}`,
+	);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
 		"true",
@@ -199,7 +201,9 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 	test.setTimeout(90_000);
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	await page.setViewportSize({ width: 1440, height: 900 });
-	await page.goto(`/?sceneFixture=1&view=miniature&theme=day&sceneDiagnostic=1&at=${time}`);
+	await page.goto(
+		`/?sceneFixture=1&view=miniature&theme=day&sceneDiagnostic=1&at=${time}`,
+	);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
 		"true",
@@ -302,13 +306,15 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 			sessions.push(request.url());
 	});
 	await page.getByRole("link", { name: "이 행사 예보 받기" }).click();
-	await expect(page.getByRole("complementary", { name: "고래 봇 대화" })).toBeVisible();
+	await expect(
+		page.getByRole("complementary", { name: "고래 봇 대화" }),
+	).toBeVisible();
 	await expect(page).toHaveURL(/\/(\?|$)/);
 	await expect.poll(() => sessions.length).toBeGreaterThan(0);
 	await page.getByRole("button", { name: "대화 닫기" }).click();
-	await page.getByRole("button", { name: "데이터 모드 꺼짐" }).click();
+	await page.getByRole("button", { name: "데이터 모드" }).click();
 	await expect(
-		page.getByRole("button", { name: "데이터 모드 켜짐" }),
+		page.getByRole("button", { name: "데이터 모드" }),
 	).toHaveAttribute("aria-pressed", "true");
 	await expect(page.locator(".scene-legend")).toContainText(
 		"타일 색·높이 = 기간 안 예보 순간 최대 중앙값 합",
@@ -351,8 +357,8 @@ test("밤과 노트북 장면 캡처", async ({ page }) => {
 	});
 	expect(panelsOverlap).toBe(false);
 	await expect(
-		page.getByRole("button", { name: "데이터 모드 꺼짐" }),
-	).toBeVisible();
+		page.getByRole("button", { name: "데이터 모드" }),
+	).toHaveAttribute("aria-pressed", "false");
 	await expect(
 		page.locator(".scene-filter .festival-filters__actions"),
 	).toBeInViewport();
@@ -365,21 +371,23 @@ test("실제 API와 SVG 선택 고지", async ({ page }) => {
 	);
 	await page.goto(`/?forceSvg=1&data=1&at=${time}`);
 	await expect(page.locator(".festival-list__pick")).toHaveCount(1);
-	await expect(page.locator(".scene-svg-notices")).not.toContainText(
+	await expect(page.locator(".scene-svg-notices")).toContainText(
+		"이 기기에서는 간단한 지도로 보여 드려요",
+	);
+	await expect(page.locator(".scene-honest-notices")).not.toContainText(
 		"비교 검증 사례가 아직 없어요",
 	);
-	await expect(page.locator(".scene-svg-notices")).toContainText(
+	await expect(page.locator(".scene-honest-notices")).toContainText(
 		"작은 행사는 크게 예보될 수 있어요",
 	);
-	await expect(page.locator(".scene-svg-notices")).not.toContainText(
+	await expect(page.locator(".scene-honest-notices")).not.toContainText(
 		"견본 데이터",
 	);
-	await expect(
-		page.getByRole("button", { name: "데이터 모드 꺼짐" }),
-	).toBeDisabled();
-	await expect(page.locator(".scene-svg-notices")).toContainText(
-		"SVG 지도에서는 데이터 모드를 사용할 수 없어요",
+	// 간단 지도에는 지도 도구(데이터 모드)가 없고 주소의 data=1도 범례에 쓰지 않는다.
+	await expect(page.getByRole("button", { name: "데이터 모드" })).toHaveCount(
+		0,
 	);
+	await expect(page.locator(".scene-legend__data")).toHaveCount(0);
 	await page.locator(".svg-korea-map__event").click();
 	await expect(
 		page.getByRole("region", { name: "선택 행사 요약" }),

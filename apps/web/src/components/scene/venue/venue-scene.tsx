@@ -4,11 +4,9 @@ import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
 import { Fireworks } from "../effects/fireworks";
-import { SceneEffects } from "../effects/scene-effects";
 import { FestivalModels } from "../festival-models";
 import type { PlacedFestival } from "../festival-models/placement";
 import { type QualityMode, qualityDpr, type SceneQuality } from "../quality";
-import { SceneCaptureFrame } from "../scene-capture";
 import { QualityControl } from "../scene-diagnostics";
 import { readSceneOptions } from "../scene-options";
 import { weatherEffects } from "../weather/state";
@@ -64,7 +62,6 @@ export function VenueScene({
   hour,
   reducedMotion,
   weather,
-  captureRequest,
   qualityMode,
   quality,
   onQualityChange,
@@ -78,7 +75,6 @@ export function VenueScene({
   hour: number;
   reducedMotion: boolean;
   weather: Weather | null;
-  captureRequest: number;
   qualityMode: QualityMode;
   quality: SceneQuality;
   onQualityChange: (step: -1 | 1) => void;
@@ -198,13 +194,6 @@ export function VenueScene({
         sky={sky}
         measure={measure}
         diagnostic={options.debug || measure}
-      />
-      {t435 && <SceneEffects quality={activeQuality} />}
-      <SceneCaptureFrame
-        request={captureRequest}
-        screen="venue"
-        note="건물·도로 = OpenStreetMap · 인형·차량 위치와 흐름은 연출 · 인원 규모는 예보값 비례 · 날씨 효과 = 기상청 예보 기반 연출 · 참고용 — 담당자 검토 필수"
-        postprocessed={t435 && activeQuality === "high"}
       />
     </Canvas>
   );

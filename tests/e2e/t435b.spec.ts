@@ -8,8 +8,8 @@ import { sendConsultDescription } from "./fixtures/start-consult";
 const screens = resolve(process.cwd(), "../../reports/figures/screens");
 const at = encodeURIComponent("2025-10-18T21:00:00+09:00");
 
-// 비가 오는 밤에 판 안쪽 효과와 장면 도구를 함께 촬영한다.
-test("비 오는 밤의 장면과 저장 도구", async ({ page }) => {
+// 비가 오는 밤에 판 안쪽 효과와 지도 도구를 함께 촬영한다.
+test("비 오는 밤의 장면과 지도 도구", async ({ page }) => {
 	await page.setViewportSize({ width: 1366, height: 768 });
 	await page.route("**/api/weather?**", (route) => {
 		const query = new URL(route.request().url()).searchParams;
@@ -27,7 +27,9 @@ test("비 오는 밤의 장면과 저장 도구", async ({ page }) => {
 			},
 		});
 	});
-	await page.goto(`/?sceneFixture=1&view=miniature&sceneQuality=high&theme=night&at=${at}`);
+	await page.goto(
+		`/?sceneFixture=1&view=miniature&sceneQuality=high&theme=night&at=${at}`,
+	);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
 		"true",
@@ -36,16 +38,20 @@ test("비 오는 밤의 장면과 저장 도구", async ({ page }) => {
 		},
 	);
 	await expect(page.locator(".weather-chip--forecast")).toContainText("비");
-	await page.getByRole("button", { name: "장면 저장" }).click({ trial: true });
+	await page
+		.getByRole("button", { name: "데이터 모드" })
+		.click({ trial: true });
 	await page.evaluate(() => document.fonts.ready);
 	await page.screenshot({ path: resolve(screens, "T-435b-s1-rain-night.png") });
 });
 
 // 낮은 데스크톱과 전화 폭에서 필터 칸이 스크롤과 문서 순서대로 보인다.
-test("1366 필터와 네 폭의 장면 도구", async ({ page }) => {
+test("1366 필터와 네 폭의 지도 도구", async ({ page }) => {
 	for (const width of [1366, 1024, 768, 390]) {
 		await page.setViewportSize({ width, height: 768 });
-		await page.goto("/?sceneFixture=1&view=miniature&sceneQuality=high&theme=day");
+		await page.goto(
+			"/?sceneFixture=1&view=miniature&sceneQuality=high&theme=day",
+		);
 		await expect(page.locator("html")).toHaveAttribute(
 			"data-scene-ready",
 			"true",
@@ -54,7 +60,7 @@ test("1366 필터와 네 폭의 장면 도구", async ({ page }) => {
 			},
 		);
 		await page
-			.getByRole("button", { name: "장면 저장" })
+			.getByRole("button", { name: "데이터 모드" })
 			.click({ trial: true });
 		if (width === 1366) {
 			const grade = page.getByRole("combobox", { name: "등급" });
@@ -116,10 +122,9 @@ test("상담 말풍선의 자리표시자 숫자", async ({ page }) => {
 		page,
 		"10월 18일 19시부터 21시까지 영종 씨사이드파크에서 인천 중구가 여는 불꽃축제를 해요",
 	);
+	// 대화는 요약 카드(T-446)로 숫자를 보여 주고 원문 자리표시자는 쉼표 숫자로 채운다.
 	await expect(
-		page
-			.locator(".consult-bubble__text")
-			.getByText("순간 최대는 21,000명 안팎으로 예상돼요"),
+		page.getByText("순간 최대 2.1만 명", { exact: false }).first(),
 	).toBeVisible();
 	await page.screenshot({
 		path: resolve(screens, "T-435b-s2-claims.png"),

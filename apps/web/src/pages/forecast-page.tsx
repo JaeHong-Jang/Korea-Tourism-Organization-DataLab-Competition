@@ -1,4 +1,4 @@
-// 발행된 예보서 스냅샷 한 건으로 문서·근거 지도·행사장 3D·근거 서랍을 그린다.
+// 발행된 예보서 스냅샷 한 건으로 문서·근거 정리·행사장 3D·근거 서랍을 그린다.
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ErrorState } from "../components/common/error-state";
@@ -9,7 +9,7 @@ import {
   ReportDrawer,
   useEvidenceDrawer,
 } from "../features/evidence/report-drawer";
-import { EvidenceMap } from "../features/evidence-map/evidence-map";
+import { EvidenceBrief } from "../features/evidence-map/evidence-brief";
 import { ReportActions } from "../features/forecast-report/report-actions";
 import { ReportClaims } from "../features/forecast-report/report-claims";
 import { claimText } from "../features/forecast-report/report-content";
@@ -20,7 +20,6 @@ import { ReportToolbar } from "../features/forecast-report/report-toolbar";
 import { useReport } from "../features/forecast-report/use-report";
 import { Venue3D } from "../features/venue-3d/venue-3d";
 import "../features/forecast-report/report.css";
-import "@xyflow/react/dist/style.css";
 import "../styles/evidence-map.css";
 
 // 예보서 탭 순서(방향키 이동 순서와 같다)
@@ -126,7 +125,7 @@ export function ForecastPage() {
               onClick={() => chooseTab("map")}
               onKeyDown={onTabKeyDown}
             >
-              근거 지도
+              근거 정리
             </button>
             <button
               id="forecast-tab-venue"
@@ -178,7 +177,7 @@ export function ForecastPage() {
                 aria-labelledby="forecast-tab-map"
               >
                 {tab === "map" && (
-                  <EvidenceMap
+                  <EvidenceBrief
                     report={state.report}
                     onOpen={drawer.open}
                     onViewClaim={(id) => {

@@ -2,11 +2,15 @@
 .scene-left-rail { position: absolute; z-index: var(--z-panel); top: var(--space-8); bottom: var(--space-4); left: var(--space-8); display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-4); width: 300px; }
 .scene-left-rail > .scene-filter { flex: 0 1 auto; min-height: 0; width: 100%; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; border-radius: var(--radius-panel); box-shadow: var(--shadow-float); }
 .scene-left-rail > .scene-filter .festival-filters__actions { position: sticky; bottom: 0; z-index: 1; padding-block: var(--space-2); border-top: 1px solid var(--line); background: var(--surface); } /* 패널 안에서 스크롤해도 적용 개수·초기화는 늘 보인다 */
-.scene-overview { position: absolute; z-index: var(--z-panel); top: var(--space-8); left: calc(300px + var(--space-8) + var(--space-5)); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); cursor: pointer; }
-.scene-overview:focus-visible, .scene-stage:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.scene-legend-panel { flex: none; min-height: 0; max-height: 60%; overflow: auto; }
-.scene-legend-panel > .scene-legend { position: relative; inset: auto; z-index: auto; width: 100%; max-width: none; }
-.scene-page .scene-cta { left: calc(300px + var(--space-8) + 365px); transform: none; }
+/* 지도 도구(전국 보기·데이터 모드)는 행사 목록 왼쪽에 세로로 모아 장면 가운데를 비운다. */
+.scene-map-tools { position: absolute; z-index: var(--z-panel); top: var(--space-8); right: calc(360px + var(--space-8) + var(--space-4)); display: flex; flex-direction: column; gap: var(--space-2); }
+.scene-map-tools button { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.scene-map-tools button:hover { border-color: var(--line-strong, var(--line)); }
+.scene-map-tools button[aria-pressed="true"] { border-color: var(--select); background: var(--select-soft); color: var(--select-ink); }
+.scene-map-tools button:focus-visible, .scene-stage:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.scene-legend-panel { flex: none; min-height: 0; max-height: 60%; overflow: visible; } /* 넘침을 자르면 범례 그림자가 각진 회색 상자로 보인다 */
+.scene-legend-panel > .scene-legend { position: relative; inset: auto; z-index: auto; width: 100%; max-width: none; max-height: 100%; overflow: auto; }
+.scene-page .scene-cta { left: calc(300px + var(--space-8) + var(--space-4)); transform: none; }
 .scene-mobile-tabs, .scene-mobile-scale { display: none; }
 .scene-page > .scene-list { display: flex; flex-direction: column; max-height: calc(100vh - 170px); }
 .scene-page > .scene-list .festival-list__items { max-height: 330px; }
@@ -14,13 +18,10 @@
 .festival-summary h3, .festival-summary p { margin: 0; }
 .festival-summary a { color: var(--link); font-weight: 700; }
 .festival-summary__empty { margin-top: var(--space-3); color: var(--ink-2); font-size: var(--text-sm); }
-.data-mode-toggle { justify-self: start; padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); cursor: pointer; }
-.data-mode-toggle[aria-pressed="true"] { border-color: var(--focus); outline: 2px solid var(--focus); }
 .scene-honest-notices { display: grid; gap: var(--space-1); color: var(--ink-2); }
 .scene-honest-notices p { margin: 0; }
-.scene-svg-notices { display: grid; gap: var(--space-3); flex: none; width: 100%; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-float); font-size: var(--text-caption); box-sizing: border-box; }
-.scene-svg-notices .scene-legend__grades { margin: 0; padding: 0; border: 0; }
-.scene-name-tag.is-selected { outline: 2px solid var(--focus); }
+.scene-svg-notices { margin: 0 0 var(--space-2); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-float); font-size: var(--text-caption); }
+.scene-name-tag.is-selected { border-color: var(--select); box-shadow: var(--select-glow); }
 .scene-name-tag.is-clickable { cursor: pointer; font-family: inherit; height: 48px; overflow: hidden; }
 .scene-name-tag--far.is-clickable { height: 30px; }
 .scene-name-tag:focus-visible { outline: 3px solid var(--focus); }
@@ -32,7 +33,7 @@
   .scene-page > .scene-list { order: 3; max-height: none; }
   .scene-page > .scene-timeline { order: 4; }
   .scene-page .scene-cta { position: relative; inset: auto; order: 1; align-self: flex-start; margin-inline: var(--space-4); }
-  .scene-overview { left: var(--space-4); }
+  .scene-map-tools { top: var(--space-4); right: var(--space-4); }
 }
 
 /* 휴대전화에서는 장면과 네 정보 패널을 한 번에 하나씩 읽는다. */
@@ -47,7 +48,7 @@
   .scene-page .scene-left-rail > .scene-filter { overflow: visible; }
   .scene-page .scene-mobile-tabs { order: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); margin-inline: var(--space-4); }
   .scene-mobile-tabs button { min-width: 0; padding: var(--space-2) var(--space-1); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); font: inherit; font-size: var(--text-caption); cursor: pointer; }
-  .scene-mobile-tabs button[aria-pressed="true"] { border-color: var(--brand); background: var(--brand); color: var(--on-brand); font-weight: 700; }
+  .scene-mobile-tabs button[aria-pressed="true"] { border-color: var(--select); background: var(--select-soft); color: var(--select-ink); font-weight: 700; }
   .scene-mobile-tabs button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   .scene-page .scene-cta { order: 2; margin-inline: var(--space-4); }
   .scene-mobile-scale { position: absolute; bottom: var(--space-3); left: var(--space-4); display: block; max-width: calc(100% - 2 * var(--space-4)); margin: 0; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font-size: var(--text-caption); }

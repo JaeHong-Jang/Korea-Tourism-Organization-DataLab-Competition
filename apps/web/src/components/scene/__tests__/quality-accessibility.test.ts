@@ -8,7 +8,6 @@ import {
   sampleQuality,
   shiftQuality,
 } from "../quality";
-import { captureFilename } from "../scene-capture";
 import { nationalDescription, venueDescription } from "../scene-description";
 
 // 연속된 느린 구간만 강등하고 빠른 구간은 한 번만 복구한다.
@@ -54,12 +53,5 @@ test("전국·행사장 장면 설명에 표시 데이터와 시각을 넣는다
   );
   expect(venueDescription(216, 9, null)).toBe(
     "행사장 반경 약 1.2km · 건물 216동 · 시각 09:00 · 날씨 정보 없음",
-  );
-});
-
-// 저장 이름은 사용자의 현지 날짜와 시각을 분 단위로 고정한다.
-test("PNG 파일 이름에 화면과 현지 시각을 넣는다", () => {
-  expect(captureFilename("national", new Date(2025, 9, 18, 9, 7))).toBe(
-    "crowdcast-national-20251018-0907.png",
   );
 });

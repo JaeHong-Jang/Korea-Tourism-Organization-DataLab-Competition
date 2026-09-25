@@ -7,6 +7,7 @@ import { Object3D } from "three";
 import { useTheme } from "../../lib/theme/theme-provider";
 import type { SceneQuality } from "./quality";
 import { sceneColor } from "./quality";
+import { MOON_OFFSET } from "./sky/moon";
 
 // 고도와 방위를 광원 위치로 옮기고 밤에는 약한 달빛으로 유지한다.
 export function SunLight({
@@ -30,11 +31,19 @@ export function SunLight({
   const height = sky === "night" ? 0.55 : Math.max(0.12, Math.sin(altitude));
   const shadowExtent = Math.hypot(width, depth) * 0.8;
   const target = useMemo(() => new Object3D(), []);
-  const position: [number, number, number] = [
-    center[0] - Math.sin(azimuth) * 800,
-    height * 850,
-    center[1] + Math.cos(azimuth) * 800,
-  ];
+  // 밤에는 화면의 달 쪽(판 뒤 위)에서 달빛이 들어오게 한다.
+  const position: [number, number, number] =
+    sky === "night"
+      ? [
+          center[0] + MOON_OFFSET[0] * 0.45,
+          700,
+          center[1] + MOON_OFFSET[2] * 0.45,
+        ]
+      : [
+          center[0] - Math.sin(azimuth) * 800,
+          height * 850,
+          center[1] + Math.cos(azimuth) * 800,
+        ];
   const skyColor = sceneColor(`sky-${sky}`);
 
   // 장면 밝기는 해 상태별로 조절하고 헤더와 같은 상태를 캡처에 기록한다.
@@ -78,8 +87,14 @@ export function SunLight({
       <directionalLight
         position={position}
         target={target}
-        color={twilight ? sceneColor("window-glow") : sceneColor("sky-day")}
-        intensity={daylight ? 1.7 : twilight ? 1.35 : 0.9}
+        color={
+          twilight
+            ? sceneColor("window-glow")
+            : daylight
+              ? sceneColor("sky-day")
+              : sceneColor("moonlight")
+        }
+        intensity={daylight ? 1.7 : twilight ? 1.35 : 1.05}
         castShadow={quality === "high" && !twilight}
         shadow-mapSize={[1024, 1024]}
         shadow-camera-near={1}

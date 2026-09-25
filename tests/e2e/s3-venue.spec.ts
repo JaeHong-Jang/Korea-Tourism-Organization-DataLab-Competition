@@ -74,8 +74,8 @@ test("모션 감소 시 차량 위치가 고정된다", async ({ page }) => {
   expect(after).toEqual(before);
 });
 
-// 행사장 설명은 슬라이더를 따라가고 저장 버튼은 후처리 결과를 PNG로 만든다.
-test("행사장 시각 설명과 PNG 저장", async ({ page }) => {
+// 행사장 설명은 시간대 슬라이더를 따라간다.
+test("행사장 시각 설명", async ({ page }) => {
 	await page.goto("/dev/venue/yeongjong?sceneQuality=high&venueHour=12");
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-venue-ready",
@@ -89,13 +89,6 @@ test("행사장 시각 설명과 PNG 저장", async ({ page }) => {
 	await expect(page.locator(".venue-3d [aria-live=polite]")).toContainText(
 		"시각 13:00",
 	);
-	const download = page.waitForEvent("download");
-	await page.getByRole("button", { name: "장면 저장" }).click();
-	const saved = await download;
-	expect(saved.suggestedFilename()).toMatch(
-		/^crowdcast-venue-\d{8}-\d{4}\.png$/,
-	);
-	expect(readFileSync((await saved.path()) ?? "").length).toBeGreaterThan(1000);
 });
 
 // 예보서 탭에서 행사장 캔버스를 열 번 새로 만들고 렌더러 메모리 개수를 비교한다.

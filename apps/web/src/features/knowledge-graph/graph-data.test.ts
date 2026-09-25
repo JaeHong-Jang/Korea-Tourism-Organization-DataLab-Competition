@@ -7,7 +7,7 @@ import {
   filterGraph,
   searchGraph,
 } from "./graph-data";
-import { flowEdges, flowNodes, layoutGraph } from "./layout";
+import { layoutGraph3d, nodeDegrees } from "./layout-3d";
 
 const graph: KnowledgeGraph = {
   masterVersion: 4,
@@ -54,16 +54,11 @@ const graph: KnowledgeGraph = {
 
 // 없는 노드로 향하는 잘못된 관계는 화면에서 제외하고 정상 관계의 이름은 보존한다.
 describe("전체 근거 그래프", () => {
-  it("노드와 관계를 React Flow 자료로 변환한다", () => {
+  it("노드와 관계를 그래프 자료로 변환하고 연결 수를 센다", () => {
     const data = buildGraph(graph);
-    const positions = new Map(
-      data.nodes.map((node, index) => [node.id, { x: index * 100, y: 0 }]),
-    );
     expect(data.edges).toHaveLength(3);
-    expect(flowNodes(data, positions, null, null, () => {})).toHaveLength(5);
-    expect(flowEdges(data, null).map((edge) => edge.label)).toContain(
-      "근거로 삼는다",
-    );
+    expect(data.edges.map((edge) => edge.label)).toContain("근거로 삼는다");
+    expect(nodeDegrees(data).get("rule-safety")).toBeGreaterThan(0);
   });
 
   // 필터 뒤에는 양쪽 노드가 모두 남은 관계만 표시한다.
@@ -91,12 +86,15 @@ describe("전체 근거 그래프", () => {
     ]);
   });
 
-  // 클래스 층 제약을 ELK에서 실제로 계산해 좌표와 관계 방향을 확인한다.
-  it("클래스를 개체보다 앞 층에 배치한다", async () => {
-    const positions = await layoutGraph(buildGraph(graph));
-    expect(positions).toHaveProperty("size", graph.nodes.length);
-    expect(positions.get("cc:Evidence")?.x).toBeLessThan(
-      positions.get("rule-safety")?.x ?? 0,
-    );
+  // 3D 배치는 같은 그래프에 늘 같은 좌표를 주고 모든 좌표가 유한하다.
+  it("3D 배치가 결정적이고 유한하다", () => {
+    const data = buildGraph(graph);
+    const first = layoutGraph3d(data, 60);
+    const second = layoutGraph3d(data, 60);
+    expect(first).toHaveProperty("size", graph.nodes.length);
+    for (const [id, point] of first) {
+      expect(point.every(Number.isFinite)).toBe(true);
+      expect(point).toEqual(second.get(id));
+    }
   });
 });

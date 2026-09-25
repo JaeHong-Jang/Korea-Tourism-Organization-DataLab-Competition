@@ -86,7 +86,7 @@ export function formatQuantity(
   return unit === "detail" ? detail : `${main} ${detail}`;
 }
 
-// 서버 시각을 한국 표준시의 월일·요일·시각으로 고정한다.
+// 서버 시각을 한국 표준시의 월일·요일·시각으로 고정한다(일괄 예보처럼 시각 없이 00:00이면 날짜만).
 export function formatDate(value: string): string {
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
   const date = new Date(value);
@@ -103,7 +103,10 @@ export function formatDate(value: string): string {
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((item) => item.type === type)?.value ?? "";
   const day = `${part("month")}.${part("day")}(${part("weekday")})`;
-  return dateOnly ? day : `${day} ${part("hour")}:${part("minute")}`;
+  const midnight = part("hour") === "00" && part("minute") === "00";
+  return dateOnly || midnight
+    ? day
+    : `${day} ${part("hour")}:${part("minute")}`;
 }
 
 // 계약의 0~1 확률을 정수 백분율 또는 이미 계산된 구간으로 표기한다.

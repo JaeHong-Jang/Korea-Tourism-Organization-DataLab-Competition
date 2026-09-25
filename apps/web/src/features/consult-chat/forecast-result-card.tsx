@@ -49,7 +49,7 @@ export function ForecastResultCard({
       <nav className="consult-result__actions" aria-label="예보 이어보기">
         <Link to={href}>예보서 보기</Link>
         <Link to="/graph">근거 그래프</Link>
-        <Link to={`${href}#forecast-tab-map`}>근거 지도</Link>
+        <Link to={`${href}#forecast-tab-map`}>근거 정리</Link>
         <Link to={`${href}/plan`}>계획 초안</Link>
       </nav>
       <small>참고용 — 담당자 검토 필수 · 추정 산식 기반</small>
