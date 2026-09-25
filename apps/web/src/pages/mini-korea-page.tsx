@@ -33,6 +33,7 @@ export function MiniKoreaPage() {
   const { festivals, all, status, receivedAt, fixture } =
     useUpcomingFestivals(filters);
   const [scale, setScale] = useState(() => crowdScale([], "high"));
+  const [overviewRevision, setOverviewRevision] = useState(0);
   const selected =
     festivals.find((festival) => festival.eventId === selectedId) ?? null;
   const totals = useMemo(() => sigunguPeaks(festivals), [festivals]);
@@ -82,6 +83,13 @@ export function MiniKoreaPage() {
       <section
         className="scene-stage"
         aria-labelledby="scene-title"
+        role="application"
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: 캔버스 컨테이너에 직접 포커스해 카메라 방향키를 켠다.
+        tabIndex={0}
+        onPointerDown={(event) => {
+          if (event.target instanceof HTMLCanvasElement)
+            event.currentTarget.focus();
+        }}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             selectFestival(null);
@@ -111,7 +119,21 @@ export function MiniKoreaPage() {
             onScaleChange={setScale}
             dataMode={dataMode}
             totals={totals}
+            overviewRevision={overviewRevision}
           />
+        )}
+        {!svgMode && (
+          <button
+            type="button"
+            className="scene-overview"
+            onClick={() => {
+              selectFestival(null);
+              selectSigungu(null);
+              setOverviewRevision((value) => value + 1);
+            }}
+          >
+            전국 보기
+          </button>
         )}
       </section>
       <div className="scene-cta">
@@ -136,6 +158,7 @@ export function MiniKoreaPage() {
             capExceeded={scale.capExceeded}
             festivals={festivals}
             dataMode={dataMode}
+            totals={totals}
             controls={
               <DataModeToggle enabled={dataMode} onChange={changeDataMode} />
             }
@@ -164,7 +187,7 @@ export function MiniKoreaPage() {
       </FeaturePanel>
       <FeaturePanel
         id="M1-F4"
-        title="KPI 띠·타임라인"
+        title="행사 현황"
         description="행사 흐름과 등급별 주간 변화를 살펴보세요."
         className="scene-timeline"
       >

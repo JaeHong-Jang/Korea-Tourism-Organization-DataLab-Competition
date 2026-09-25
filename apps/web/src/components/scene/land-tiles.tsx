@@ -134,16 +134,17 @@ export function buildLandModelForData(
   regions.features.forEach((region, index) => {
     const { sgg: code, sidonm: sido } = region.properties;
     const geometry = regionGeometry(region);
-    const step = tileStep(totals?.get(code) ?? 0, maximum);
-    if (totals) geometry.scale(1, 1, step);
+    const step = tileStep(totals?.get(code) ?? null, maximum);
+    if (totals) geometry.scale(1, 1, Math.max(1, step));
     const positions = geometry.getAttribute("position");
-    const color = totals
-      ? new Color(
-          getComputedStyle(document.documentElement)
-            .getPropertyValue(`--seq-${step}`)
-            .trim(),
-        )
-      : palette[index % palette.length];
+    const color =
+      totals && step > 0
+        ? new Color(
+            getComputedStyle(document.documentElement)
+              .getPropertyValue(`--seq-${step}`)
+              .trim(),
+          )
+        : palette[index % palette.length];
     const colors = new Float32Array(positions.count * 3);
     // 윗면은 지역색, 옆면은 토큰의 흙 가장자리 색으로 칠한다.
     for (const group of geometry.groups) {

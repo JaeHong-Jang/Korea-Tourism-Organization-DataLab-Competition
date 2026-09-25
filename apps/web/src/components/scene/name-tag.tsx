@@ -6,6 +6,7 @@ import { Matrix4, Vector3 } from "three";
 import type { PlacedFestival } from "./festival-models/placement";
 import { GradeMark } from "./grade-mark";
 import { LAND_SURFACE_Y } from "./scene-height";
+import { observePanelBounds } from "./scene-panel-bounds";
 import { type ScreenRect, tagFitsSafeArea } from "./tag-visibility";
 
 export type TagBox = { id: string; level: number; x: number; y: number };
@@ -92,33 +93,11 @@ export function NameTags({
   // 패널을 펼치거나 화면 크기가 바뀔 때만 클릭 금지 영역을 다시 읽는다.
   useLayoutEffect(() => {
     const stage = gl.domElement.closest(".scene-stage");
-    const page = stage?.closest(".scene-page");
-    if (!stage || !page) return;
-    const panels = Array.from(
-      page.querySelectorAll<HTMLElement>(
-        ".scene-left-rail, .scene-list, .scene-timeline, .scene-cta",
-      ),
-    );
-    const measure = () => {
-      const stageRect = stage.getBoundingClientRect();
-      blockers.current = panels.map((element) => {
-        const rect = element.getBoundingClientRect();
-        return {
-          left: rect.left - stageRect.left,
-          top: rect.top - stageRect.top,
-          right: rect.right - stageRect.left,
-          bottom: rect.bottom - stageRect.top,
-        };
-      });
+    if (!(stage instanceof HTMLElement)) return;
+    return observePanelBounds(stage, ({ blockers: measured }) => {
+      blockers.current = measured;
       blockersRevision.current++;
-    };
-    const observer = new ResizeObserver(measure);
-    observer.observe(stage);
-    panels.forEach((panel) => {
-      observer.observe(panel);
     });
-    measure();
-    return () => observer.disconnect();
   }, [gl.domElement]);
 
   // 실제 이름표 크기와 같은 경계로 가리고 먼 시점에는 여섯 개까지만 남긴다.
