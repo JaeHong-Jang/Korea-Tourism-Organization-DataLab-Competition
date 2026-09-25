@@ -2,9 +2,14 @@
 
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { layers, namedFlavor } from "@protomaps/basemaps";
-import type { FeatureCollection, Point } from "geojson";
 import type { StyleSpecification } from "maplibre-gl";
+import { buildingLayers } from "../map-3d/building-style";
+import { festivalGeoJson } from "../map-3d/festival-source";
+
+export { festivalGeoJson } from "../map-3d/festival-source";
+
 import { festivalColumns, festivalRings } from "../map-3d/festival-geometry";
+import { southKoreanLabelFilter } from "../map-3d/south-korea-area";
 
 export const FESTIVAL_SOURCE = "festivals";
 export const FESTIVAL_POINTS = "festival-points";
@@ -15,7 +20,6 @@ export const KOREA_BOUNDS: [[number, number], [number, number]] = [
   [125.7, 33.0],
   [131.0, 38.7],
 ];
-
 // 브라우저가 제공하는 의미 색을 읽어 지도 점에도 같은 등급 팔레트를 쓴다.
 export function mapColors(element: Element = document.documentElement) {
   const css = getComputedStyle(element);
@@ -32,36 +36,8 @@ export function mapColors(element: Element = document.documentElement) {
     roadEdge: token("--map-road-edge"),
     rail: token("--map-rail"),
     building: token("--map-building"),
-  };
-}
-
-// 목록에 보이는 행사만 좌표와 예보 규모 구간을 가진 점으로 옮긴다.
-export function festivalGeoJson(
-  festivals: FestivalSummary[],
-): FeatureCollection<Point> {
-  return {
-    type: "FeatureCollection",
-    features: festivals
-      .filter(
-        (festival) =>
-          Number.isFinite(festival.lng) && Number.isFinite(festival.lat),
-      )
-      .map((festival) => ({
-        type: "Feature" as const,
-        geometry: {
-          type: "Point" as const,
-          coordinates: [festival.lng, festival.lat],
-        },
-        properties: {
-          eventId: festival.eventId,
-          level: festival.level,
-          size: festival.peakP50 < 1_000 ? 1 : festival.peakP50 < 5_000 ? 2 : 3,
-          name: festival.name,
-          grade:
-            ["✓ 1등급", "! 2등급", "▲ 3등급", "◆ 4등급"][festival.level - 1] ??
-            "◆ 4등급",
-        },
-      })),
+    buildingRoof: token("--map-building-roof"),
+    buildingWindow: token("--map-building-window"),
   };
 }
 
@@ -69,14 +45,45 @@ export function festivalGeoJson(
 export function mapStyle(
   theme: "day" | "night",
   festivals: FestivalSummary[],
-  colors = mapColors(),
+  colors: Omit<
+    ReturnType<typeof mapColors>,
+    "buildingRoof" | "buildingWindow"
+  > &
+    Partial<
+      Pick<ReturnType<typeof mapColors>, "buildingRoof" | "buildingWindow">
+    > = mapColors(),
   origin = window.location.origin,
 ): StyleSpecification {
   const flavor = theme === "night" ? "dark" : "light";
   // 베이스맵의 땅·녹지·물·도로를 지도 전용 디자인 토큰으로 맞춘다.
-  const base = layers("protomaps", namedFlavor(flavor), { lang: "ko" }).map(
-    (layer) => {
+  const base = layers("protomaps", namedFlavor(flavor), { lang: "ko" })
+    .filter(
+      (layer) => layer.id !== "places_country" && layer.id !== "places_state",
+    )
+    .map((layer) => {
       if (layer.id === "buildings") return { ...layer, maxzoom: 13 };
+      if (
+        layer.type === "symbol" &&
+        layer.layout?.["text-field"] &&
+        layer.id !== "address_label"
+      )
+        return {
+          ...layer,
+          filter: southKoreanLabelFilter(layer.filter),
+          layout: {
+            ...layer.layout,
+            "text-field": [
+              "coalesce",
+              ["get", "name:ko"],
+              [
+                "case",
+                ["==", ["get", "script"], "Hangul"],
+                ["get", "name"],
+                "",
+              ],
+            ],
+          },
+        };
       if (layer.type === "background")
         return {
           ...layer,
@@ -129,8 +136,7 @@ export function mapStyle(
           [layer.type === "fill" ? "fill-color" : "line-color"]: color,
         },
       };
-    },
-  );
+    }) as StyleSpecification["layers"];
   const firstLabel = base.findIndex((layer) => layer.type === "symbol");
   return {
     version: 8,
@@ -157,26 +163,7 @@ export function mapStyle(
     sprite: `/tiles/sprites/v4/${flavor}`,
     layers: [
       ...base.slice(0, firstLabel),
-      {
-        id: BUILDING_EXTRUSION,
-        type: "fill-extrusion",
-        source: "protomaps",
-        "source-layer": "buildings",
-        minzoom: 13,
-        paint: {
-          "fill-extrusion-color": colors.building,
-          "fill-extrusion-height": [
-            "case",
-            ["has", "height"],
-            ["to-number", ["get", "height"], 10],
-            ["has", "building:levels"],
-            ["*", ["to-number", ["get", "building:levels"], 1], 3],
-            10,
-          ],
-          "fill-extrusion-base": ["to-number", ["get", "min_height"], 0],
-          "fill-extrusion-opacity": 0.82,
-        },
-      },
+      ...buildingLayers(BUILDING_EXTRUSION, theme, colors),
       {
         id: "festival-forecast-area",
         type: "fill",

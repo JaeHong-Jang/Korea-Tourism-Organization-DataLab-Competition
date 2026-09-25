@@ -1,8 +1,10 @@
 // 게이트 거부·무결성·버전 충돌·지연에서 숫자와 발행 전 문장이 차단되는지 검증한다
+
 import { setTimeout as delay } from "node:timers/promises";
 import { describe, expect, it } from "vitest";
 import { fakeForecastFetch } from "../src/team/runtime/fake-forecast.js";
 import { readContractFixture } from "./contract-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { teamFixture, validSequence } from "./team-fixture.js";
 
 describe("분석 실패 차단", () => {
@@ -35,7 +37,7 @@ describe("분석 실패 차단", () => {
       });
       const events = await harness.message(await harness.prepare());
       validSequence(events);
-      expect(events.slice(-3)).toMatchObject([
+      expect(withoutReplyEvents(events).slice(-3)).toMatchObject([
         { event: "gate", data: { gate: "A", passed: false } },
         { event: "error", data: { code: "ANALYSIS_GATE_FAILED" } },
         { event: "done" },
@@ -60,7 +62,7 @@ describe("분석 실패 차단", () => {
     });
     const events = await harness.message(await harness.prepare());
     validSequence(events);
-    expect(events.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(events).at(-2)).toMatchObject({
       event: "error",
       data: { code: "ANALYSIS_GATE_FAILED" },
     });
@@ -89,7 +91,7 @@ describe("분석 실패 차단", () => {
       });
       const events = await harness.message(await harness.prepare());
       validSequence(events);
-      expect(events.at(-2)).toMatchObject({
+      expect(withoutReplyEvents(events).at(-2)).toMatchObject({
         event: "error",
         data: { code: "ANALYSIS_GATE_FAILED" },
       });
@@ -108,7 +110,7 @@ describe("분석 실패 차단", () => {
     });
     const events = await harness.message(await harness.prepare());
     validSequence(events);
-    expect(events.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(events).at(-2)).toMatchObject({
       event: "error",
       data: { code: "SERVICE_UNAVAILABLE" },
     });
@@ -133,20 +135,24 @@ describe("분석 실패 차단", () => {
     const id = await harness.prepare();
     const events = await harness.message(id);
     validSequence(events);
-    expect(events.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(events).at(-2)).toMatchObject({
       event: "error",
       data: { code: "DEADLINE_EXCEEDED" },
     });
-    const pending = harness.calls.filter((call) =>
-      ["/v1/baseline", "/v1/similar"].includes(call.url.pathname),
-    );
+    const pending = harness.calls
+      .filter((call) => !isReplyCall(call))
+      .filter((call) =>
+        ["/v1/baseline", "/v1/similar"].includes(call.url.pathname),
+      );
     expect(pending).toHaveLength(2);
     expect(pending.every((call) => call.signal?.aborted)).toBe(true);
-    const count = harness.calls.length;
+    const count = harness.calls.filter((call) => !isReplyCall(call)).length;
     const trace = harness.trace(id);
     release();
     await delay(25);
-    expect(harness.calls).toHaveLength(count);
+    expect(harness.calls.filter((call) => !isReplyCall(call))).toHaveLength(
+      count,
+    );
     expect(harness.trace(id)).toEqual(trace);
     expect(
       events
@@ -200,7 +206,7 @@ describe("분석 실패 차단", () => {
     });
     const events = await harness.message(await harness.prepare());
     validSequence(events);
-    expect(events.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(events).at(-2)).toMatchObject({
       event: "error",
       data: { code: "SERVICE_UNAVAILABLE" },
     });

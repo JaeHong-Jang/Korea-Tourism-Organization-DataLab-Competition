@@ -1,20 +1,27 @@
 // 저장 확인과 최초 발행 스냅샷 재시도의 쓰기 횟수·마감을 검증한다
+
 import { expect, it, vi } from "vitest";
 import { followupFixture, validFollowup } from "./followup-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { teamFixture, validSequence } from "./team-fixture.js";
 
 // 스냅샷이 있으면 조회만 하고 동일 세션의 기존 예보 id로 종료한다
 it("저장된 스냅샷은 records 쓰기 없이 저장 완료를 안내한다", async () => {
   const harness = followupFixture();
   const { id, forecastId, report } = await harness.publish();
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text: "저장해 줘" });
   validFollowup(events, forecastId);
-  expect(harness.calls.slice(before).map((call) => call.url.pathname)).toEqual([
-    `/v1/snapshots/${forecastId}`,
-  ]);
   expect(
-    events.filter((event) => event.event === "agent_step").at(-1)?.data,
+    harness.calls
+      .filter((call) => !isReplyCall(call))
+      .slice(before)
+      .map((call) => call.url.pathname),
+  ).toEqual([`/v1/snapshots/${forecastId}`]);
+  expect(
+    withoutReplyEvents(events)
+      .filter((event) => event.event === "agent_step")
+      .at(-1)?.data,
   ).toMatchObject({ agentId: "lead", note: "예보서를 저장했어요" });
   expect(harness.snapshots.get(forecastId)).toEqual(report);
 });
@@ -34,10 +41,12 @@ it("행사 저장 뒤 스냅샷이 실패하면 기존 행사를 재사용한다
   expect(harness.storedEvents.get(report.event.id)).toEqual(report.event);
   unavailable = false;
   validFollowup(await harness.message(id, { text: "왜?" }), forecastId);
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text: "저장해 줘" });
   validFollowup(events, forecastId);
-  const calls = harness.calls.slice(before);
+  const calls = harness.calls
+    .filter((call) => !isReplyCall(call))
+    .slice(before);
   expect(calls.map((call) => call.url.pathname)).toEqual([
     `/v1/snapshots/${forecastId}`,
     `/v1/events/${report.event.id}`,
@@ -55,10 +64,12 @@ it("저장된 행사가 없으면 행사와 스냅샷을 한 번씩 저장한다
   const { id, forecastId, report } = await harness.publish();
   harness.storedEvents.clear();
   harness.snapshots.clear();
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text: "저장해 줘" });
   validFollowup(events, forecastId);
-  const calls = harness.calls.slice(before);
+  const calls = harness.calls
+    .filter((call) => !isReplyCall(call))
+    .slice(before);
   expect(calls.map((call) => call.url.pathname)).toEqual([
     `/v1/snapshots/${forecastId}`,
     `/v1/events/${report.event.id}`,
@@ -96,10 +107,12 @@ it.each(["different-event", "unavailable"])(
         endsAt: "2026-10-19T21:00:00+09:00",
       });
     retry = true;
-    const before = harness.calls.length;
+    const before = harness.calls.filter((call) => !isReplyCall(call)).length;
     const events = await harness.message(id, { text: "저장해 줘" });
     validFollowup(events, forecastId);
-    const calls = harness.calls.slice(before);
+    const calls = harness.calls
+      .filter((call) => !isReplyCall(call))
+      .slice(before);
     expect(calls.map((call) => call.url.pathname)).toEqual([
       `/v1/snapshots/${forecastId}`,
       `/v1/events/${report.event.id}`,
@@ -119,7 +132,7 @@ it("발행 전 저장 요청은 먼저 예보를 받도록 안내한다", async 
     text: "저장해 줘",
   });
   validSequence(events);
-  expect(events).toMatchObject([
+  expect(withoutReplyEvents(events)).toMatchObject([
     {
       event: "error",
       data: {
@@ -129,7 +142,7 @@ it("발행 전 저장 요청은 먼저 예보를 받도록 안내한다", async 
     },
     { event: "done", data: { forecastId: null } },
   ]);
-  expect(harness.calls).toHaveLength(0);
+  expect(harness.calls.filter((call) => !isReplyCall(call))).toHaveLength(0);
 });
 
 // 없음 이외 조회 장애는 덮어쓰기 대신 안내하고 게이트·suggest 없이 끝낸다
@@ -143,13 +156,15 @@ it("records 조회 장애는 저장하지 못했다는 안내를 남긴다", asy
   });
   const { id, forecastId } = await harness.publish();
   unavailable = true;
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text: "보관해 줘" });
   validFollowup(events, forecastId);
   expect(JSON.stringify(events)).toContain(
     "저장하지 못했어요 — 잠시 뒤 다시 눌러 주세요",
   );
-  expect(harness.calls.slice(before)).toHaveLength(1);
+  expect(
+    harness.calls.filter((call) => !isReplyCall(call)).slice(before),
+  ).toHaveLength(1);
 });
 
 // 늦은 저장 응답은 5초 예산을 넘기지 않고 취소 신호와 재시도 안내로 끝낸다

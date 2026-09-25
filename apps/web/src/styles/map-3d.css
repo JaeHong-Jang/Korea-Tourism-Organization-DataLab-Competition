@@ -1,30 +1,56 @@
 /* 실제 지도의 땅·물·도로·건물 색을 낮과 밤의 지도 전용 토큰으로 둔다. */
 :root, [data-theme="day"] {
-  --map-earth: #e8eceb;
-  --map-green: #a8d6af;
-  --map-water: #9dd4eb;
-  --map-road: #ffffff;
-  --map-road-edge: #b8c4c8;
-  --map-rail: #647b85;
-  --map-building: #b5c3cc;
-  --map-sky: #c6e0ee;
-  --map-horizon: #e5eef1;
-  --map-fog: #e8eceb;
+  --map-earth: #efe9db;
+  --map-green: #bdd5a8;
+  --map-water: #bcdbe6;
+  --map-road: #e7e4dc;
+  --map-road-edge: #fffdf7;
+  --map-rail: #8e969b;
+  --map-building: #c9baa3;
+  --map-building-roof: #eee0c7;
+  --map-building-window: #e6d6a8;
+  --map-taxi: #d6ad54;
+  --map-person-base: #ffffff;
+  --map-person-skin: #d6a98d;
+  --map-person-1: #c97067;
+  --map-person-2: #d4ad6a;
+  --map-person-3: #6a8fa9;
+  --map-person-4: #86a67f;
+  --map-person-5: #a88dab;
+  --map-person-6: #d49572;
+  --map-person-7: #7b94a3;
+  --map-person-8: #b6a47d;
+  --map-sky: #d5e4e7;
+  --map-horizon: #eff1e9;
+  --map-fog: #efe9db;
   --map-car: #256abf;
   --map-bus: #0b8b68;
   --map-train: #d03b3b;
 }
 [data-theme="night"] {
-  --map-earth: #263339;
-  --map-green: #285e48;
-  --map-water: #214d6b;
-  --map-road: #697d87;
-  --map-road-edge: #364850;
-  --map-rail: #a5b9c0;
-  --map-building: #526776;
+  --map-earth: #26313b;
+  --map-green: #365747;
+  --map-water: #25465b;
+  --map-road: #596671;
+  --map-road-edge: #81909c;
+  --map-rail: #b8c3c8;
+  --map-building: #35424e;
+  --map-building-roof: #566270;
+  --map-building-window: #f4d99d;
+  --map-taxi: #e4ba65;
+  --map-person-base: #ffffff;
+  --map-person-skin: #c79a7d;
+  --map-person-1: #e28e81;
+  --map-person-2: #dfba82;
+  --map-person-3: #8aacca;
+  --map-person-4: #9fbd92;
+  --map-person-5: #bca1bd;
+  --map-person-6: #deaa87;
+  --map-person-7: #9db3c0;
+  --map-person-8: #c7b58f;
   --map-sky: #152b43;
   --map-horizon: #283b4b;
-  --map-fog: #263339;
+  --map-fog: #26313b;
   --map-car: #86b6ef;
   --map-bus: #31b88e;
   --map-train: #ec835a;
@@ -33,3 +59,8 @@
 .map-2d__honest { position: absolute; z-index: 1; bottom: var(--space-4); left: 50%; transform: translateX(-50%); margin: 0; padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink-2); font-size: var(--text-caption); white-space: nowrap; }
 .map-2d__popup img { width: 100%; max-width: 180px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-input); }
 @media (max-width: 640px) { .map-2d__honest { left: var(--space-4); bottom: var(--space-2); max-width: calc(100% - 2 * var(--space-4)); transform: none; white-space: normal; } }
+
+/* 행사와 장소 이름표는 작은 흰 카드로 화면 위에 띄운다. */
+.map-3d-label { display: flex; align-items: center; gap: var(--space-2); max-width: 22ch; padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); font-size: var(--text-caption); font-weight: 600; cursor: pointer; }
+.map-3d-label img { width: 28px; height: 28px; object-fit: cover; border-radius: var(--radius-input); }
+.map-3d-label--place { cursor: default; font-weight: 500; }

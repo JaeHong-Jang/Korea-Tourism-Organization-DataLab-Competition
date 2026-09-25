@@ -1,8 +1,10 @@
 // 계획 초안의 실제 상담 스트림·records 저장·중복 조회·오류 안내를 함께 검증한다
+
 import type { Plan } from "@crowdcast/contracts/types";
 import { expect, it, vi } from "vitest";
 import { validFollowup } from "./followup-fixture.js";
 import { planProblem, planRecordsFixture } from "./plan-records-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { teamFixture, validSequence } from "./team-fixture.js";
 
 // 독립적인 주제 권고를 예측 응답에 추가한 뒤 최초 발행 검증까지 통과시킨다
@@ -28,7 +30,7 @@ it("최초 발행 문장만 9섹션에 저장하고 링크만 전송한다", asy
   const whyIds = why
     .filter((event) => event.event === "claim")
     .map((event) => (event.data as { id: string }).id);
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text: "계획 초안 만들어 줘" });
   validFollowup(events, forecastId);
   const planId = `plan-${forecastId.slice(2)}`;
@@ -55,15 +57,18 @@ it("최초 발행 문장만 9섹션에 저장하고 링크만 전송한다", asy
     expect(claim?.evidenceIds.length).toBeGreaterThan(0);
     expect(whyIds).not.toContain(claimId);
   }
-  expect(harness.calls.slice(before).map((call) => call.url.pathname)).toEqual([
-    "/v1/plans",
-  ]);
+  expect(
+    harness.calls
+      .filter((call) => !isReplyCall(call))
+      .slice(before)
+      .map((call) => call.url.pathname),
+  ).toEqual(["/v1/plans"]);
   expect(
     events.filter((event) =>
       ["claim", "evidence", "gate", "forecast"].includes(event.event),
     ),
   ).toEqual([]);
-  expect(events.at(-2)).toMatchObject({
+  expect(withoutReplyEvents(events).at(-2)).toMatchObject({
     event: "suggest",
     data: {
       actions: [
@@ -76,7 +81,9 @@ it("최초 발행 문장만 9섹션에 저장하고 링크만 전송한다", asy
     },
   });
   expect(
-    events.filter((event) => event.event === "agent_step").at(-1)?.data,
+    withoutReplyEvents(events)
+      .filter((event) => event.event === "agent_step")
+      .at(-1)?.data,
   ).toMatchObject({
     agentId: "plan-writer",
     usedLlm: false,
@@ -93,16 +100,20 @@ it("두 번째 요청은 같은 계획을 409 뒤 조회하고 기존 예보 id�
   const first = await harness.message(id, { text: "계획 초안 만들어 줘" });
   validFollowup(first, forecastId);
   const saved = structuredClone([...harness.plans.values()][0]);
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const second = await harness.message(id, { text: "계획 초안 만들어 줘" });
   validFollowup(second, forecastId);
-  expect(harness.calls.slice(before).map((call) => call.url.pathname)).toEqual([
-    "/v1/plans",
-    `/v1/plans/${saved.id}`,
-  ]);
+  expect(
+    harness.calls
+      .filter((call) => !isReplyCall(call))
+      .slice(before)
+      .map((call) => call.url.pathname),
+  ).toEqual(["/v1/plans", `/v1/plans/${saved.id}`]);
   expect(harness.plans.size).toBe(1);
   expect(harness.plans.get(saved.id)).toEqual(saved);
-  expect(second.at(-2)?.data).toEqual(first.at(-2)?.data);
+  expect(withoutReplyEvents(second).at(-2)?.data).toEqual(
+    withoutReplyEvents(first).at(-2)?.data,
+  );
 });
 
 // 가짜 records도 무효 본문·섹션 순서·스냅샷 밖 문장·잠금 값은 실제처럼 422로 거부한다
@@ -134,7 +145,7 @@ it.each(["body", "order", "claim", "locked", "unpublished"])(
     const { id, forecastId } = await harness.publish();
     const events = await harness.message(id, { text: "계획 초안 만들어 줘" });
     validFollowup(events, forecastId);
-    expect(events.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(events).at(-2)).toMatchObject({
       event: "error",
       data: {
         code: "SERVICE_UNAVAILABLE",
@@ -167,7 +178,9 @@ it("409 뒤 조회 범위가 다르면 저장 실패로 안내한다", async () 
   different = true;
   const events = await harness.message(id, { text: "계획 초안 만들어 줘" });
   validFollowup(events, forecastId);
-  expect(events.at(-2)?.data).toMatchObject({ code: "SERVICE_UNAVAILABLE" });
+  expect(withoutReplyEvents(events).at(-2)?.data).toMatchObject({
+    code: "SERVICE_UNAVAILABLE",
+  });
 });
 
 // 최초 스냅샷 저장 실패를 새 계획이나 후속 문장으로 덮지 않는다
@@ -178,7 +191,9 @@ it("records에 스냅샷이 없으면 422 안내를 돌려준다", async () => {
   harness.snapshots.clear();
   const events = await harness.message(id, { text: "계획 초안 만들어 줘" });
   validFollowup(events, forecastId);
-  expect(events.at(-2)?.data).toMatchObject({ code: "SERVICE_UNAVAILABLE" });
+  expect(withoutReplyEvents(events).at(-2)?.data).toMatchObject({
+    code: "SERVICE_UNAVAILABLE",
+  });
   expect(harness.plans.size).toBe(0);
 });
 
@@ -188,10 +203,10 @@ it.each([false, true])(
   async (existing) => {
     const harness = teamFixture();
     const id = existing ? await harness.prepare() : await harness.create();
-    const before = harness.calls.length;
+    const before = harness.calls.filter((call) => !isReplyCall(call)).length;
     const events = await harness.message(id, { text: "계획 초안 만들어 줘" });
     validSequence(events);
-    expect(events).toMatchObject([
+    expect(withoutReplyEvents(events)).toMatchObject([
       {
         event: "error",
         data: {
@@ -201,6 +216,8 @@ it.each([false, true])(
       },
       { event: "done", data: { forecastId: null } },
     ]);
-    expect(harness.calls.slice(before)).toEqual([]);
+    expect(
+      harness.calls.filter((call) => !isReplyCall(call)).slice(before),
+    ).toEqual([]);
   },
 );

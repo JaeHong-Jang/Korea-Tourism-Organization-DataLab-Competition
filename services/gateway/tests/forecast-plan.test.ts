@@ -1,4 +1,5 @@
 // 세션 없는 예보별 초안 생성이 상담의 계획·저장 충돌·오류 계약을 그대로 지키는지 검사한다
+
 import { readdirSync } from "node:fs";
 import type { Plan } from "@crowdcast/contracts/types";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -10,6 +11,7 @@ import {
   report as snapshot,
   plan as storedPlan,
 } from "./proxy-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 
 // 상류 계약 위반을 의도적으로 만드는 테스트의 오류 로그를 숨긴다
 beforeEach(() => {
@@ -31,10 +33,11 @@ it("세션 없이 초안을 만들고 두 번째 요청에도 최초 계획 바�
   expect(planProblem(plan, snapshot)).toBeNull();
   expect(plan.id).toBe(`plan-${snapshot.forecastId.slice(2)}`);
   expect(docxHref).toBe(`/api/plans/${plan.id}/export.docx`);
-  expect(harness.calls.map((call) => call.url.pathname)).toEqual([
-    `/v1/snapshots/${snapshot.forecastId}`,
-    "/v1/plans",
-  ]);
+  expect(
+    harness.calls
+      .filter((call) => !isReplyCall(call))
+      .map((call) => call.url.pathname),
+  ).toEqual([`/v1/snapshots/${snapshot.forecastId}`, "/v1/plans"]);
 
   // 재시도 시각과 앱의 메모리가 달라도 409 뒤 기존 계획을 그대로 조회한다
   vi.setSystemTime(new Date("2026-09-26T03:00:00Z"));
@@ -44,7 +47,12 @@ it("세션 없이 초안을 만들고 두 번째 요청에도 최초 계획 바�
   expect(second.status).toBe(200);
   expect(Buffer.from(await second.text())).toEqual(Buffer.from(bytes));
   expect(harness.plans.size).toBe(1);
-  expect(harness.calls.slice(2).map((call) => call.url.pathname)).toEqual([
+  expect(
+    harness.calls
+      .filter((call) => !isReplyCall(call))
+      .slice(2)
+      .map((call) => call.url.pathname),
+  ).toEqual([
     `/v1/snapshots/${snapshot.forecastId}`,
     "/v1/plans",
     `/v1/plans/${plan.id}`,
@@ -93,7 +101,7 @@ it.each(["session", "forecast"])(
     expect(Buffer.from(JSON.stringify(harness.plans.get(planId)))).toEqual(
       Buffer.from(firstBytes),
     );
-    expect(sessionEvents.at(-2)?.data).toMatchObject({
+    expect(withoutReplyEvents(sessionEvents).at(-2)?.data).toMatchObject({
       actions: [{ href: result.docxHref }],
     });
     expect(harness.trace(id)).toEqual(traceBefore);
@@ -110,9 +118,11 @@ it("스냅샷이 없으면 404 not_found를 반환한다", async () => {
   );
   expect(response.status).toBe(404);
   expect(await response.json()).toEqual({ error: "not_found" });
-  expect(harness.calls.map((call) => call.url.pathname)).toEqual([
-    "/v1/snapshots/f-sorae-2026",
-  ]);
+  expect(
+    harness.calls
+      .filter((call) => !isReplyCall(call))
+      .map((call) => call.url.pathname),
+  ).toEqual(["/v1/snapshots/f-sorae-2026"]);
   expect(harness.plans.size).toBe(0);
 });
 

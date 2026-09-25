@@ -1,4 +1,4 @@
-// T-440 실제 지도와 미니어처를 같은 Chromium 실행에서 1440×900 프레임 시간으로 비교한다.
+// T-445 실제 지도와 미니어처를 같은 Chromium 실행에서 1440×900 프레임 시간으로 비교한다.
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -18,13 +18,13 @@ async function startServer() {
   for (let attempt = 0; attempt < 100; attempt++) {
     if (server.exitCode !== null) {
       await new Promise((done) => setTimeout(done, 100));
-      throw new Error(`T-440 서버 시작 실패: ${failure.trim()}`);
+      throw new Error(`T-445 서버 시작 실패: ${failure.trim()}`);
     }
     try { if ((await fetch(origin)).ok) return server; } catch { /* 시작 중인 로컬 서버를 기다린다. */ }
     await new Promise((done) => setTimeout(done, 100));
   }
   server.kill();
-  throw new Error(`T-440 지도 측정 서버를 시작하지 못했습니다. ${failure.trim()}`);
+  throw new Error(`T-445 지도 측정 서버를 시작하지 못했습니다. ${failure.trim()}`);
 }
 
 // 일정 시간의 requestAnimationFrame 간격을 모아 p50·p95를 계산한다.
@@ -60,6 +60,7 @@ async function measure(browser, view, center = null) {
   }
   const result = await frameTimes(page);
   result.vehicles = Number(await page.locator("html").getAttribute("data-map-vehicles") ?? 0);
+  result.people = Number(await page.locator("html").getAttribute("data-map-people") ?? 0);
   result.buildings = center ? await page.evaluate(() => window.__crowdcastMap?.queryRenderedFeatures({ layers: ["building-extrusion"] }).length ?? 0) : 0;
   await context.close();
   return result;
@@ -76,11 +77,11 @@ try {
   const seoul = await measure(browser, "map", [126.98, 37.56]);
   const busan = await measure(browser, "map", [129.08, 35.18]);
   const ratio = Math.max(overview.p95_ms, seoul.p95_ms, busan.p95_ms) / miniature.p95_ms;
-  const report = { task: "T-440", viewport: "1440x900", browser: browser.version(), miniature, overview, seoul, busan, p95_ratio: ratio, passed: ratio <= 1 };
+  const report = { task: "T-445", viewport: "1440x900", browser: browser.version(), miniature, overview, seoul, busan, p95_ratio: ratio, passed: ratio <= 1 };
   mkdirSync(output, { recursive: true });
-  writeFileSync(join(output, "T-440-frame-time.json"), `${JSON.stringify(report, null, 2)}\n`);
-  writeFileSync(join(output, "T-440-frame-time.md"), ["# T-440 지도 프레임 시간", "", "| 조건 | p50 | p95 | 차량 | 건물 |", "| --- | ---: | ---: | ---: | ---: |", ...Object.entries({ "미니어처": miniature, "전국 3D 지도": overview, "서울 z15": seoul, "부산 z15": busan }).map(([name, value]) => `| ${name} | ${value.p50_ms?.toFixed(2)}ms | ${value.p95_ms?.toFixed(2)}ms | ${value.vehicles} | ${value.buildings} |`), "", `- 최대 p95 비율 ${ratio.toFixed(2)}배 / 합격선 1.0배: ${report.passed ? "통과" : "미달"}`, ""].join("\n"));
-  console.log(`T-440 p95 비율 ${ratio.toFixed(2)}배: ${report.passed ? "통과" : "미달"}`);
+  writeFileSync(join(output, "T-445-frame-time.json"), `${JSON.stringify(report, null, 2)}\n`);
+  writeFileSync(join(output, "T-445-frame-time.md"), ["# T-445 지도 프레임 시간", "", "| 조건 | p50 | p95 | 사람 | 차량 | 건물 |", "| --- | ---: | ---: | ---: | ---: | ---: |", ...Object.entries({ "미니어처": miniature, "전국 3D 지도": overview, "서울 z15": seoul, "부산 z15": busan }).map(([name, value]) => `| ${name} | ${value.p50_ms?.toFixed(2)}ms | ${value.p95_ms?.toFixed(2)}ms | ${value.people} | ${value.vehicles} | ${value.buildings} |`), "", `- 최대 p95 비율 ${ratio.toFixed(2)}배 / 합격선 1.0배: ${report.passed ? "통과" : "미달"}`, ""].join("\n"));
+  console.log(`T-445 p95 비율 ${ratio.toFixed(2)}배: ${report.passed ? "통과" : "미달"}`);
   if (!report.passed) process.exitCode = 1;
 } finally {
   await browser?.close();

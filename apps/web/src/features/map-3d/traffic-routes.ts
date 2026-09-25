@@ -1,8 +1,8 @@
-// 로컬 Protomaps 도로·철도 선에서 화면 안 차량 연출 경로를 고른다.
+// 로컬 도로·철도 타일에서 화면 안 차량과 보행자의 연출 경로를 고른다.
 import type { GeoJsonProperties, Geometry } from "geojson";
 import { MercatorCoordinate } from "maplibre-gl";
 
-export type TrafficKind = "road" | "rail";
+export type TrafficKind = "road" | "rail" | "walk";
 export type TrafficRoute = {
   kind: TrafficKind;
   points: [number, number][];
@@ -12,7 +12,7 @@ export type TrafficRoute = {
 };
 export type RoadFeature = { geometry: Geometry; properties: GeoJsonProperties };
 
-// 짧은 타일 조각과 보행로는 차량이 순간 이동하는 것처럼 보이므로 제외한다.
+// 타일 경계에 걸친 짧은 조각도 살려 실제 도로망 위에 배우를 놓는다.
 export function trafficRoutes(
   features: RoadFeature[],
   visible?: (lng: number, lat: number) => boolean,
@@ -21,8 +21,9 @@ export function trafficRoutes(
   const seen = new Set<string>();
   for (const feature of features) {
     const kind = feature.properties?.kind;
-    if (kind !== "major_road" && kind !== "highway" && kind !== "rail")
-      continue;
+    const isRoad = kind === "major_road" || kind === "highway";
+    const isWalk = kind === "path" || kind === "minor_road" || isRoad;
+    if (!isRoad && !isWalk && kind !== "rail") continue;
     const lines =
       feature.geometry.type === "LineString"
         ? [feature.geometry.coordinates]
@@ -54,27 +55,34 @@ export function trafficRoutes(
       const meterScale = MercatorCoordinate.fromLngLat(
         line[0] as [number, number],
       ).meterInMercatorCoordinateUnits();
-      if (length < meterScale * 30) continue;
-      routes.push({
-        kind: kind === "rail" ? "rail" : "road",
+      if (length < meterScale * 12) continue;
+      const route = {
+        kind:
+          kind === "rail"
+            ? ("rail" as const)
+            : isRoad
+              ? ("road" as const)
+              : ("walk" as const),
         points,
         lengths,
         length,
         meterScale,
-      });
-      if (routes.length >= 160) return routes;
+      };
+      routes.push(route);
+      if (isRoad) routes.push({ ...route, kind: "walk" });
+      if (routes.length >= 500) return routes;
     }
   }
   return routes;
 }
 
-// 누적 선분 길이로 같은 경로 위의 위치와 방향을 배열 할당 없이 구한다.
+// 누적 선분 길이로 위치와 방향을 매 프레임 새 배열 없이 구한다.
 export function sampleRoute(
   route: TrafficRoute,
   distance: number,
   output: { x: number; y: number; heading: number },
 ) {
-  const offset = distance % route.length;
+  const offset = ((distance % route.length) + route.length) % route.length;
   let index = 1;
   while (index < route.lengths.length - 1 && route.lengths[index] < offset)
     index++;
@@ -88,8 +96,10 @@ export function sampleRoute(
   return output;
 }
 
-// 저사양과 움직임 감소 설정에서는 GPU 차량을 그리지 않는다.
+// 표시 품질에 따라 차량·보행자 GPU 인스턴스 수를 제한한다.
 export function vehicleCap(quality: "high" | "medium" | "low") {
-  if (quality === "low") return 0;
-  return quality === "high" ? 200 : 80;
+  return quality === "high" ? 600 : quality === "medium" ? 250 : 0;
+}
+export function peopleCap(quality: "high" | "medium" | "low") {
+  return quality === "high" ? 2500 : quality === "medium" ? 1000 : 0;
 }

@@ -1,4 +1,5 @@
 // 실제 예보팀이 기록한 요청의 왕복 일치와 재생 전후 파일 불변을 검증한다
+
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { Hono } from "hono";
@@ -8,6 +9,7 @@ import { readTrace } from "../src/team/replay/read-trace.js";
 import { teamTraceDirectory } from "../src/team/runtime/settings.js";
 import { appendTrace } from "../src/team/runtime/trace.js";
 import { contractEvents, replayFixture, traceText } from "./replay-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { parseEvents, shortText, teamFixture } from "./team-fixture.js";
 
 describe("실제 세션 trace 왕복", () => {
@@ -32,9 +34,13 @@ describe("실제 세션 trace 왕복", () => {
       text: "날짜 변경",
       answer: { startsAt: "2026-10-19T19:00:00+09:00" },
     });
-    expect(original).toMatchObject([
+    expect(withoutReplyEvents(original)).toMatchObject([
       { event: "error", seq: 0, data: { code: "OUT_OF_SCOPE" } },
-      { event: "done", seq: 1, data: { sessionId: id, forecastId: null } },
+      {
+        event: "done",
+        seq: original.length - 1,
+        data: { sessionId: id, forecastId: null },
+      },
     ]);
     expect(harness.trace(id)).toHaveLength(original.length);
 
@@ -44,11 +50,15 @@ describe("실제 세션 trace 왕복", () => {
       "/api/team/replay",
       createTeamReplayRoute(harness, { wait }),
     );
-    const callsBefore = harness.calls.length;
+    const callsBefore = harness.calls.filter(
+      (call) => !isReplyCall(call),
+    ).length;
     const response = await replay.request(`/api/team/replay/${id}`);
     expect(response.status).toBe(200);
     expect(parseEvents(await response.text())).toEqual(original);
-    expect(harness.calls).toHaveLength(callsBefore);
+    expect(harness.calls.filter((call) => !isReplyCall(call))).toHaveLength(
+      callsBefore,
+    );
     expect(wait).toHaveBeenCalledTimes(original.length - 1);
   });
 
@@ -81,11 +91,15 @@ describe("실제 세션 trace 왕복", () => {
       "/api/team/replay",
       createTeamReplayRoute(harness, { wait }),
     );
-    const callsBefore = harness.calls.length;
+    const callsBefore = harness.calls.filter(
+      (call) => !isReplyCall(call),
+    ).length;
     const response = await replay.request(`/api/team/replay/${id}`);
     expect(response.status).toBe(200);
     expect(parseEvents(await response.text())).toEqual(original);
-    expect(harness.calls).toHaveLength(callsBefore);
+    expect(harness.calls.filter((call) => !isReplyCall(call))).toHaveLength(
+      callsBefore,
+    );
     expect(wait).toHaveBeenCalledTimes(original.length - 1);
   });
 
@@ -111,14 +125,18 @@ describe("실제 세션 trace 왕복", () => {
       "/api/team/replay",
       createTeamReplayRoute(harness, { wait }),
     );
-    const callsBefore = harness.calls.length;
+    const callsBefore = harness.calls.filter(
+      (call) => !isReplyCall(call),
+    ).length;
     const response = await replay.request(`/api/team/replay/${id}`);
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("text/event-stream");
     expect(response.headers.get("cache-control")).toBe("no-cache");
     expect(response.headers.get("x-accel-buffering")).toBe("no");
     expect(parseEvents(await response.text())).toEqual(original);
-    expect(harness.calls).toHaveLength(callsBefore);
+    expect(harness.calls.filter((call) => !isReplyCall(call))).toHaveLength(
+      callsBefore,
+    );
 
     // 재생은 trace append를 호출하지 않고 바이트·수정 시각·폴더 목록을 그대로 둔다
     expect(readFileSync(path, "utf8")).toBe(before);

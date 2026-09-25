@@ -1,4 +1,5 @@
 // 후속 설명의 발행·후보 정리 장애가 같은 상담의 다음 발행을 막지 않는지 확인한다
+
 import { writeFileSync } from "node:fs";
 import type { Claim, GateReport } from "@crowdcast/contracts/types";
 import { expect, it } from "vitest";
@@ -8,6 +9,7 @@ import {
   followupFixture,
   validFollowup,
 } from "./followup-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import type { Call } from "./team-fixture.js";
 
 // 최초 예보가 끝난 뒤의 통신 실패와 발행 거부를 각각 주입한다
@@ -42,10 +44,10 @@ it.each(["publish-http", "publish-rejected", "validate-http"])(
     const { id, forecastId, report } = await harness.publish();
     const original = harness.knowledgeClaims(id);
     blocked = true;
-    const before = harness.calls.length;
+    const before = harness.calls.filter((call) => !isReplyCall(call)).length;
     const failed = await harness.message(id, { text: "왜 이렇게 많아?" });
     validFollowup(failed, forecastId);
-    expect(failed.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(failed).at(-2)).toMatchObject({
       event: "error",
       data: {
         code: "SERVICE_UNAVAILABLE",
@@ -60,6 +62,7 @@ it.each(["publish-http", "publish-rejected", "validate-http"])(
 
     // 상태만 rejected로 바뀌며 최초 발행 묶음과 검사·본문은 그대로 남아야 한다
     const candidates = harness.calls
+      .filter((call) => !isReplyCall(call))
       .slice(before)
       .filter((call) => call.url.pathname.endsWith("/facts"))
       .flatMap((call) => (call.body as { items: Claim[] }).items)
@@ -105,6 +108,7 @@ it.each(["publish-http", "publish-rejected", "validate-http"])(
           sessionId: id,
           expectedGates: 6,
           calls: harness.calls
+            .filter((call) => !isReplyCall(call))
             .filter((call) =>
               /\/(facts|validate|publish)$/.test(call.url.pathname),
             )
@@ -152,12 +156,15 @@ it.each([1, 2])(
 
     // 시작 시 정리가 실패한 요청은 새 초안과 게이트를 만들지 않고 후보를 보존한다
     if (cleanupFailures === 2) {
-      const before = harness.calls.length;
+      const before = harness.calls.filter((call) => !isReplyCall(call)).length;
       const failedAgain = await harness.message(id, { text: "왜?" });
       validFollowup(failedAgain, forecastId);
-      expect(failedAgain.at(-2)).toMatchObject({ event: "error" });
+      expect(withoutReplyEvents(failedAgain).at(-2)).toMatchObject({
+        event: "error",
+      });
       expect(failedAgain.some((event) => event.event === "gate")).toBe(false);
       const facts = harness.calls
+        .filter((call) => !isReplyCall(call))
         .slice(before)
         .filter((call) => call.url.pathname.endsWith("/facts"));
       expect(facts).toHaveLength(1);
@@ -173,11 +180,12 @@ it.each([1, 2])(
     }
 
     // 정리에 성공한 뒤에만 새 내용 revision을 만들고 발행까지 진행한다
-    const before = harness.calls.length;
+    const before = harness.calls.filter((call) => !isReplyCall(call)).length;
     const recovered = await harness.message(id, { text: "왜?" });
     validFollowup(recovered, forecastId);
     expect(claimsIn(recovered).length).toBeGreaterThan(0);
     const facts = harness.calls
+      .filter((call) => !isReplyCall(call))
       .slice(before)
       .filter((call) => call.url.pathname.endsWith("/facts"));
     expect(facts[0].body).toEqual({

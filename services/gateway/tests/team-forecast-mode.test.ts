@@ -1,9 +1,11 @@
 // 예시 수치가 기본 연결이나 다른 행사로 흘러가지 않는지 검증한다
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { readConfig } from "../src/config.js";
 import { fakeForecastFetch } from "../src/team/runtime/fake-forecast.js";
 import { teamSettings } from "../src/team/runtime/settings.js";
 import { eventFixture } from "./contract-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import {
   extracted,
   fullText,
@@ -25,8 +27,12 @@ describe("예측 연결 모드", () => {
     });
     const events = await harness.message(await harness.prepare());
     validSequence(events);
-    expect(harness.calls.some((call) => call.url.port === "8010")).toBe(true);
-    expect(events.at(-2)).toMatchObject({
+    expect(
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .some((call) => call.url.port === "8010"),
+    ).toBe(true);
+    expect(withoutReplyEvents(events).at(-2)).toMatchObject({
       event: "error",
       data: { code: "SERVICE_UNAVAILABLE" },
     });
@@ -65,7 +71,7 @@ describe("예측 연결 모드", () => {
     validSequence(await harness.message(id, { text }));
     const events = await harness.message(id);
     validSequence(events);
-    expect(events.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(events).at(-2)).toMatchObject({
       event: "error",
       data: { code: "SERVICE_UNAVAILABLE" },
     });
