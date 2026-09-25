@@ -67,6 +67,6 @@
 
 /* 인쇄에는 지도 탭과 조작기를 숨기고 예보서 원문을 남긴다. */
 @media print {
-  .forecast-page .forecast-tabs, .forecast-page .forecast-tab-panel--map { display: none; }
+  .forecast-page .forecast-tabs, .forecast-page .forecast-tab-panel--map, .forecast-page .forecast-tab-panel--venue { display: none; }
   .forecast-page .forecast-tab-panel--report { display: block; }
 }

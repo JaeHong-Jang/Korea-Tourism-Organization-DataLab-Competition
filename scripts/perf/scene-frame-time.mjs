@@ -96,12 +96,12 @@ async function runDictation(host) {
 }
 
 // 품질과 DPR을 높음·1로 고정한 R3F 프레임과 Chromium 메모리를 읽는다.
-async function measure(browser, ollamaHost, fixture = false, festivalCount = 0, motion = true) {
+async function measure(browser, ollamaHost, fixture = false, festivalCount = 0, motion = true, venue = null) {
   const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   const page = await context.newPage();
   if (festivalCount === 211) await page.route("**/api/festivals", (route) => route.fulfill({ json: festivalScale211() }));
-  await page.goto(`http://127.0.0.1:5185/?theme=day&at=2025-10-18T13:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}${motion ? "" : "&sceneMotion=0"}`);
-  await page.waitForFunction(() => document.documentElement.dataset.sceneReady === "true", { timeout: 30000 });
+  await page.goto(venue ? `http://127.0.0.1:5185/dev/venue/${venue}?sceneMeasure=1&venueHour=19` : `http://127.0.0.1:5185/?theme=day&at=2025-10-18T13:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}${motion ? "" : "&sceneMotion=0"}`);
+  await page.waitForFunction((isVenue) => isVenue ? document.documentElement.dataset.venueReady === "true" : document.documentElement.dataset.sceneReady === "true", venue !== null, { timeout: 45000 });
   if (festivalCount || fixture) await page.waitForFunction((expected) => document.querySelectorAll(".festival-list__items li").length === expected, festivalCount || 30, { timeout: 30000 });
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const renderer = await page.evaluate(() => {
@@ -124,7 +124,9 @@ async function measure(browser, ollamaHost, fixture = false, festivalCount = 0, 
     quality: document.documentElement.dataset.sceneQuality ?? null,
     dolls: Number(document.documentElement.dataset.sceneDollCount ?? 0),
     festivals: document.querySelectorAll(".festival-list__items li").length,
-    render: window.__crowdcastSceneRender?.() ?? null,
+    buildings: Number(document.documentElement.dataset.venueBuildings ?? 0),
+    cars: Number(document.documentElement.dataset.venueCars ?? 0),
+    render: window.__crowdcastSceneRender?.() ?? window.__crowdcastVenueRender?.() ?? null,
     actualDpr: (() => {
       const canvas = document.querySelector("canvas");
       return canvas && canvas.clientWidth ? canvas.width / canvas.clientWidth : null;
@@ -138,6 +140,8 @@ async function measure(browser, ollamaHost, fixture = false, festivalCount = 0, 
     actual_dpr: metrics.actualDpr,
     dolls: metrics.dolls,
     festivals: metrics.festivals,
+    buildings: metrics.buildings,
+    cars: metrics.cars,
     draw_calls: metrics.render?.calls ?? null,
     triangles: metrics.render?.triangles ?? null,
     renderer,
@@ -159,7 +163,19 @@ const server = await startServer();
 let browser;
 try {
   browser = await chromium.launch({ args: ["--enable-gpu", "--use-gl=egl", "--enable-precise-memory-info", "--enable-unsafe-swiftshader"] });
-  if (process.argv.includes("--t434a")) {
+  if (process.argv.includes("--t434")) {
+    // 전국 기준과 세 행사장을 같은 Chromium 실행에서 재고 가장 느린 장면으로 판정한다.
+    const baseline = await measure(browser, null, true, 0, false);
+    const venues = {};
+    for (const key of ["yeongjong", "hangang", "suwon"]) venues[key] = await measure(browser, null, false, 0, true, key);
+    const p95Ratio = Math.max(...Object.values(venues).map((result) => result.p95_ms / baseline.p95_ms));
+    const report = { task: "T-434", baseline_t433b: baseline, venues, p95_ratio: p95Ratio, passed: p95Ratio <= 1.3 };
+    mkdirSync(output, { recursive: true });
+    writeFileSync(join(output, "T-434-frame-time.json"), `${JSON.stringify(report, null, 2)}\n`);
+    writeFileSync(join(output, "T-434-frame-time.md"), ["# T-434 행사장 디오라마 프레임 시간", "", "| 장면 | p50 | p95 | 건물 | 차량 |", "| --- | ---: | ---: | ---: | ---: |", ...Object.entries({ "T-433b 기준": baseline, ...venues }).map(([key, result]) => `| ${key} | ${result.p50_ms?.toFixed(2)}ms | ${result.p95_ms?.toFixed(2)}ms | ${result.buildings} | ${result.cars} |`), `- 최고 p95 비율 ${p95Ratio.toFixed(2)}배 / 합격선 1.3배: ${report.passed ? "통과" : "미달"}`, ""].join("\n"));
+    console.log(`T-434 최고 p95 비율 ${p95Ratio.toFixed(2)}배: ${report.passed ? "통과" : "미달"}`);
+    if (!report.passed) process.exitCode = 1;
+  } else if (process.argv.includes("--t434a")) {
     // 같은 브라우저 실행에서 이동 레이어만 끈 기준과 켠 장면을 차례로 잰다.
     const baseline = await measure(browser, null, true, 0, false);
     const animated = await measure(browser, null, true);

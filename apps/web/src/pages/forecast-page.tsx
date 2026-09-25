@@ -1,4 +1,4 @@
-// 발행된 예보서 스냅샷 한 건으로 문서·근거 지도·근거 서랍을 그린다.
+// 발행된 예보서 스냅샷 한 건으로 문서·근거 지도·행사장 3D·근거 서랍을 그린다.
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ErrorState } from "../components/common/error-state";
@@ -17,16 +17,21 @@ import { ReportJudgment } from "../features/forecast-report/report-judgment";
 import { ReportNumbers } from "../features/forecast-report/report-numbers";
 import { ReportToolbar } from "../features/forecast-report/report-toolbar";
 import { useReport } from "../features/forecast-report/use-report";
+import { Venue3D } from "../features/venue-3d/venue-3d";
 import "../features/forecast-report/report.css";
 import "@xyflow/react/dist/style.css";
 import "../styles/evidence-map.css";
+
+// 예보서 탭 순서(방향키 이동 순서와 같다)
+const TABS = ["report", "map", "venue"] as const;
+type ForecastTab = (typeof TABS)[number];
 
 // 로딩·계약 오류를 분리하고 검증된 스냅샷만 문서에 전달한다.
 export function ForecastPage() {
   const { forecastId } = useParams();
   const state = useReport(forecastId);
   const drawer = useEvidenceDrawer();
-  const [tab, setTab] = useState<"report" | "map">("report");
+  const [tab, setTab] = useState<ForecastTab>("report");
   const [focusClaimId, setFocusClaimId] = useState<string | null>(null);
 
   // 지도에서 고른 문장으로 돌아오면 문서의 해당 문장을 강조하고 초점을 준다.
@@ -57,15 +62,16 @@ export function ForecastPage() {
     };
   }, [tab, focusClaimId, state]);
 
-  // 좌우 화살표로 두 탭을 오가고 선택된 탭만 키보드 순서에 둔다.
-  const chooseTab = (next: "report" | "map") => {
+  // 좌우 화살표로 세 탭을 돌고 선택된 탭만 키보드 순서에 둔다.
+  const chooseTab = (next: ForecastTab) => {
     setFocusClaimId(null);
     setTab(next);
   };
   const onTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
-    const next = tab === "report" ? "map" : "report";
+    const step = event.key === "ArrowRight" ? 1 : TABS.length - 1;
+    const next = TABS[(TABS.indexOf(tab) + step) % TABS.length];
     chooseTab(next);
     document.getElementById(`forecast-tab-${next}`)?.focus();
   };
@@ -114,6 +120,18 @@ export function ForecastPage() {
             >
               근거 지도
             </button>
+            <button
+              id="forecast-tab-venue"
+              type="button"
+              role="tab"
+              aria-selected={tab === "venue"}
+              aria-controls="forecast-panel-venue"
+              tabIndex={tab === "venue" ? 0 : -1}
+              onClick={() => chooseTab("venue")}
+              onKeyDown={onTabKeyDown}
+            >
+              행사장 3D
+            </button>
           </div>
           <div className="document-layout">
             <div className="document-main">
@@ -161,6 +179,14 @@ export function ForecastPage() {
                     }}
                   />
                 )}
+              </div>
+              <div
+                id="forecast-panel-venue"
+                className={`forecast-tab-panel forecast-tab-panel--venue${tab === "venue" ? " is-active" : ""}`}
+                role="tabpanel"
+                aria-labelledby="forecast-tab-venue"
+              >
+                {tab === "venue" && <Venue3D report={state.report} />}
               </div>
             </div>
             <ReportDrawer
