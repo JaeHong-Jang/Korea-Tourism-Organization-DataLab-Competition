@@ -206,11 +206,13 @@
    "evidence": "develop a352073 · gateway 821·forecast 1173·web 137(깨끗한 상태) · sol PASS · 실사용 T-304.live.md"
   },
   "T-305": {
-   "status": "running",
-   "updated": "2026-09-25T02:25:38.771Z"
+   "status": "done",
+   "updated": "2026-09-25T03:21:16.365Z",
+   "evidence": "develop 2e83ebb · gateway 853(깨끗한 상태) · sol PASS · 실사용 후속 6종"
   },
   "R-05": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T03:21:16.438Z"
   },
   "T-306": {
    "status": "todo"
@@ -309,7 +311,8 @@
   },
   "T-433": {
    "status": "running",
-   "updated": "2026-09-25T02:31:49.227Z"
+   "updated": "2026-09-25T02:31:49.227Z",
+   "note": "2회차 재디스패치 — 히트 대상 경계 갱신(High), 이름표 실제 크기·패널 크기 변화·프레임 할당, SVG 데이터 모드"
   },
   "R-07": {
    "status": "todo"
@@ -1129,6 +1132,17 @@
   {
    "at": "2026-09-25T02:50:13.774Z",
    "id": "T-207",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T03:21:16.365Z",
+   "id": "T-305",
+   "status": "done",
+   "evidence": "develop 2e83ebb · gateway 853(깨끗한 상태) · sol PASS · 실사용 후속 6종"
+  },
+  {
+   "at": "2026-09-25T03:21:16.438Z",
+   "id": "R-05",
    "status": "running"
   }
  ]
