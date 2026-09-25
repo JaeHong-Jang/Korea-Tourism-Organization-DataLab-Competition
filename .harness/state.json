@@ -288,7 +288,8 @@
    "evidence": "develop 병합, web 121·build·lint, 녹화 SSE 3클릭 e2e, astra PASS"
   },
   "T-406": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T04:14:37.799Z"
   },
   "R-06": {
    "status": "todo"
@@ -319,7 +320,9 @@
    "evidence": "develop 0bfe5d4 · web 142·e2e 3/3 · astra PASS · 211건 p95 1.26배"
   },
   "R-07": {
-   "status": "todo"
+   "status": "done",
+   "updated": "2026-09-25T04:21:57.237Z",
+   "evidence": "PASS(High 0), Med → T-433b·T-407b"
   },
   "T-412a": {
    "status": "todo"
@@ -404,6 +407,16 @@
    "evidence": "develop b71906d · gateway 862 · sol PASS · 실사용 게이트 A 앞 세 단계"
   },
   "T-306b": {
+   "status": "todo"
+  },
+  "T-306c": {
+   "status": "running",
+   "updated": "2026-09-25T04:14:37.719Z"
+  },
+  "T-407b": {
+   "status": "todo"
+  },
+  "T-433b": {
    "status": "todo"
   }
  },
@@ -1196,6 +1209,27 @@
    "id": "T-306",
    "status": "done",
    "evidence": "develop 76596bc · gateway 898 · sol PASS · docx 실사용"
+  },
+  {
+   "at": "2026-09-25T04:14:37.719Z",
+   "id": "T-306c",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:14:37.799Z",
+   "id": "T-406",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:15:45.352Z",
+   "id": "R-07",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:21:57.237Z",
+   "id": "R-07",
+   "status": "done",
+   "evidence": "PASS(High 0), Med → T-433b·T-407b"
   }
  ]
 }

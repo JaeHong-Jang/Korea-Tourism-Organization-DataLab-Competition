@@ -926,6 +926,18 @@
    ]
   },
   {
+   "id": "T-407b",
+   "type": "task",
+   "lane": "L4b",
+   "priority": "P0",
+   "deps": [
+    "T-407",
+    "R-07"
+   ],
+   "title": "목록 접기·SVG 선택·S6 색·S7 카드별 상태(R-07)",
+   "accept": "R-07 Med 반영"
+  },
+  {
    "id": "T-431",
    "type": "task",
    "lane": "L4c",
@@ -975,6 +987,18 @@
    ]
   },
   {
+   "id": "T-433b",
+   "type": "task",
+   "lane": "L4c",
+   "priority": "P0",
+   "deps": [
+    "T-433",
+    "R-07"
+   ],
+   "title": "S1 다듬기(R-07) — 프레이밍·카메라 키·데이터 모드 범례·제목",
+   "accept": "판 ⊂ 패널 밖, 키 충돌 0"
+  },
+  {
    "id": "R-07",
    "type": "review",
    "kinds": [
@@ -1011,7 +1035,9 @@
    "priority": "P0",
    "deps": [
     "R-06",
-    "R-07"
+    "R-07",
+    "T-433b",
+    "T-407b"
    ],
    "title": "E2E + 스크린샷 v1",
    "accept": "reports/figures/screens"
