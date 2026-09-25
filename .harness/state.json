@@ -136,9 +136,9 @@
    "evidence": "develop 병합, forecast 1115, 계약 오류 0, gateway 744, 실사용 게이트 A 통과, sol PASS"
   },
   "T-205": {
-   "status": "running",
-   "updated": "2026-09-25T00:21:05.419Z",
-   "note": "2회차 재디스패치 — 동시 실행 잠금·runId 해시에서 promotedAt 제외(중단 시 섞임은 runId 감지로 충분 — 오케스트레이터 판정)"
+   "status": "done",
+   "updated": "2026-09-25T02:06:16.943Z",
+   "evidence": "develop 53559d1 · forecast 1166 통과 · sol PASS(3회차) · runId 세 산출물 일치"
   },
   "T-206": {
    "status": "todo"
@@ -381,7 +381,7 @@
   "T-102b": {
    "status": "running",
    "updated": "2026-09-25T01:30:56.676Z",
-   "note": "첫 geocode 25초(정규식 재컴파일) — T-304 실사용에서 발견"
+   "note": "1회차 재디스패치 — 캐시 행을 스냅샷에서 만들기(High)·순서 제어 테스트(Med)"
   },
   "T-204b": {
    "status": "todo"
@@ -1081,6 +1081,12 @@
    "at": "2026-09-25T01:30:56.676Z",
    "id": "T-102b",
    "status": "running"
+  },
+  {
+   "at": "2026-09-25T02:06:16.943Z",
+   "id": "T-205",
+   "status": "done",
+   "evidence": "develop 53559d1 · forecast 1166 통과 · sol PASS(3회차) · runId 세 산출물 일치"
   }
  ]
 }

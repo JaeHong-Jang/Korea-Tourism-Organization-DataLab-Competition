@@ -90,7 +90,8 @@
 - [9/25 수정됨] OOD가 211건 전부 참이던 주된 이유(학습에서 전부 결측인 `time_of_day`를 범위 밖으로 셈)는 develop `7d571db`에서 고쳤다 — 재실행 뒤 OOD 수를 다시 본다.
 
 ## 실사용 확인에서 나온 속도·환경 한계 (9/25 T-304 실사용 — 오케스트레이터 측정)
-- **WSL `/mnt/c` 실행 비용**: 레포가 Windows 드라이브에 있어 WSL에서 파일을 9p로 읽는다. records(PHP)는 요청마다 0.5~1초 — Opis `new Validator()` 한 번이 클래스 파일 80개를 읽는 데 0.68초(같은 vendor를 리눅스 경로에 두면 0.003초). opcache(`enable_cli`·`validate_timestamps=0`)·classmap-authoritative로도 0.48초까지만 준다. forecast는 import만 5.4초(리눅스 경로 0.8초). → 시연은 리눅스 경로 사본 또는 Windows 네이티브 실행을 권장 — R-06/G2 전에 사용자에게 실행 위치를 확인하고 `scripts/dev.mjs` 안내에 적는다. 게이트웨이 records 예산은 T-304 2회차에서 5초로.
+- **WSL `/mnt/c` 실행 비용**: 레포가 Windows 드라이브에 있어 WSL에서 파일을 9p로 읽는다. records(PHP)는 요청마다 0.5~1초 — Opis `new Validator()` 한 번이 클래스 파일 80개를 읽는 데 0.68초(같은 vendor를 리눅스 경로에 두면 0.003초). opcache(`enable_cli`·`validate_timestamps=0`)·classmap-authoritative로도 0.48초까지만 준다. forecast는 import만 5.4초(리눅스 경로 0.8초). → **실측(9/25 10:55)**: develop을 `/home/data/crowdcast-run`(리눅스 경로, `git worktree add --detach`)에 두고 vendor만 복사해 records를 띄우니 health 0.001초·예보→발행·스냅샷 1.67초(같은 시각 `/mnt/c` records는 health 6.9초·스냅샷 안내). 시연은 리눅스 경로 사본 또는 Windows 네이티브 실행을 권장 — R-06/G2 전에 사용자에게 실행 위치를 확인하고 `scripts/dev.mjs` 안내에 적는다. 게이트웨이 records 예산은 T-304 2회차에서 5초로.
 - **geocode 첫 호출 25초**: 지명 사전 빌드가 정규식 재컴파일로 느리다(코드 문제, 리눅스 경로에서도 같음) → T-102b.
 - **forecast 표시 결함**: 사람 수 소수·사유마다 구간 꼬리·법정/자체 판정 문장 중복·요금 "미상" OOD → T-204b(T-207 전에).
 - **확인 스크립트**: `scripts/dev.mjs`가 떠 있는 서비스 위에 또 띄우지 않는지 확인(오케스트레이터 임시 스크립트에서 `a || b && c` 우선순위로 중복 기동 → 로그 덮어쓰기가 있었다 — dev.mjs는 해당 없음, 기록만).
+- **reports/backtest 실행 폴더(R-08에서 결정)**: 맨 위 포인터(`latest.json`·`promoted.json`)만 커밋했다(551d0ba). `bt-v1-*/`(13개 — 승격 1 + 개발 중 후보)는 git 제외도 추적도 아닌 상태. 승격 실행의 `backtest.json`·`backtest.md`는 서식4 숫자의 근거라 올리는 쪽이 맞고, `points.parquet`(행사별 예측·실측)는 데이터랩 재배포 조건 확인 뒤. 나머지 후보 폴더는 `.gitignore`에 넣는다.
