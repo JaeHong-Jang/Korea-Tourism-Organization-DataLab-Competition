@@ -1,4 +1,4 @@
-// 주요 도시 사이와 수도권·부산 주변에 장난감 차와 버스를 흘린다.
+// 주요 도시 사이와 수도권·부산 주변에 부품으로 만든 장난감 승용차·택시·버스를 흘린다.
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   useCallback,
@@ -14,10 +14,11 @@ import {
   type InstancedMesh,
   LineBasicMaterial,
   LineSegments,
-  MeshBasicMaterial,
-  Object3D,
+  MeshLambertMaterial,
   Vector3,
 } from "three";
+import type { Pose } from "../city/stamp";
+import { kindOf, stampCar } from "../city/vehicle-kit";
 import type { SceneQuality } from "../quality";
 import { sceneColor } from "../quality";
 import { LAND_SURFACE_Y } from "../scene-height";
@@ -33,7 +34,9 @@ export function roadTrafficCap(quality: SceneQuality): number {
   return quality === "high" ? 120 : quality === "medium" ? 60 : 0;
 }
 
-// 두 크기의 차량을 각각 하나의 인스턴스 메시로 그린다.
+// 승용차·택시·버스를 동네 3D와 같은 부품(차체·유리·지붕·바퀴)으로 그린다 — 연출이며 실제 교통량이 아니다.
+const NATIONAL_VEHICLE_SIZE = 0.8;
+
 export function RoadTraffic({
   quality,
   reducedMotion,
@@ -42,16 +45,29 @@ export function RoadTraffic({
   reducedMotion: boolean;
 }) {
   const clock = useThree((state) => state.clock);
-  const cap = roadTrafficCap(quality);
-  const buses = Math.floor(cap / 5);
-  const cars = cap - buses;
-  const carMesh = useRef<InstancedMesh>(null);
-  const busMesh = useRef<InstancedMesh>(null);
-  const vehicle = useMemo(() => new Object3D(), []);
+  const cars = roadTrafficCap(quality);
+  const refs = {
+    body: useRef<InstancedMesh>(null),
+    glass: useRef<InstancedMesh>(null),
+    roof: useRef<InstancedMesh>(null),
+    wheel: useRef<InstancedMesh>(null),
+  };
   const point = useMemo<MotionPoint>(() => ({ x: 0, z: 0, heading: 0 }), []);
-  const carGeometry = useMemo(() => new BoxGeometry(2.1, 1.3, 3.4), []);
-  const busGeometry = useMemo(() => new BoxGeometry(2.7, 2.1, 6.2), []);
-  const material = useMemo(() => new MeshBasicMaterial(), []);
+  const pose = useMemo<Pose>(
+    () => ({
+      x: 0,
+      y: LAND_SURFACE_Y,
+      z: 0,
+      heading: 0,
+      size: NATIONAL_VEHICLE_SIZE,
+    }),
+    [],
+  );
+  const box = useMemo(() => new BoxGeometry(1, 1, 1), []);
+  const material = useMemo(
+    () => new MeshLambertMaterial({ flatShading: true }),
+    [],
+  );
   const roadMaterial = useMemo(
     () => new LineBasicMaterial({ color: sceneColor("model-stage") }),
     [],
@@ -83,93 +99,104 @@ export function RoadTraffic({
     () => new LineSegments(roadGeometry, roadMaterial),
     [roadGeometry, roadMaterial],
   );
-  const colors = useMemo(
-    () =>
-      ["--team-analysis", "--team-report", "--team-verification"].map(
-        (token) =>
-          new Color(
-            getComputedStyle(document.documentElement)
-              .getPropertyValue(token)
-              .trim(),
-          ),
-      ),
-    [],
-  );
 
   // 각 경로의 길이에 맞춰 균등하게 벌려 달리되 실제 교통량처럼 해석되지 않게 한다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refs는 같은 useRef 객체를 가리킨다.
   const place = useCallback(
     (seconds: number) => {
-      for (let kind = 0; kind < 2; kind++) {
-        const mesh = kind === 0 ? carMesh.current : busMesh.current;
-        const count = kind === 0 ? cars : buses;
-        if (!mesh) continue;
-        for (let index = 0; index < count; index++) {
-          const line = roadRoutes[index % roadRoutes.length];
-          const slot = Math.floor(index / roadRoutes.length);
-          const slots = Math.ceil(count / roadRoutes.length);
-          routePosition(
-            line,
-            seconds,
-            kind === 0 ? 2.5 : 1.9,
-            (slot / slots) * line.length * 2,
-            point,
-          );
-          vehicle.position.set(
-            point.x + Math.cos(point.heading) * 5,
-            LAND_SURFACE_Y + (kind === 0 ? 1.3 : 1.7),
-            point.z - Math.sin(point.heading) * 5,
-          );
-          vehicle.rotation.set(0, point.heading, 0);
-          vehicle.updateMatrix();
-          mesh.setMatrixAt(index, vehicle.matrix);
-        }
-        mesh.instanceMatrix.needsUpdate = true;
+      const parts = {
+        body: refs.body.current?.instanceMatrix.array,
+        glass: refs.glass.current?.instanceMatrix.array,
+        roof: refs.roof.current?.instanceMatrix.array,
+        wheel: refs.wheel.current?.instanceMatrix.array,
+      };
+      const slots = Math.ceil(cars / roadRoutes.length);
+      for (let index = 0; index < cars; index++) {
+        const line = roadRoutes[index % roadRoutes.length];
+        const slot = Math.floor(index / roadRoutes.length);
+        const bus = kindOf(index) === "bus";
+        routePosition(
+          line,
+          seconds,
+          bus ? 1.9 : 2.5,
+          (slot / slots) * line.length * 2,
+          point,
+        );
+        pose.x = point.x + Math.cos(point.heading) * 5;
+        pose.z = point.z - Math.sin(point.heading) * 5;
+        pose.heading = point.heading;
+        stampCar(parts, index, pose, 1);
       }
+      for (const ref of Object.values(refs))
+        if (ref.current) ref.current.instanceMatrix.needsUpdate = true;
     },
-    [cars, buses, vehicle, point],
+    [cars, point, pose],
   );
 
-  // 처음 배치할 때 팀 색을 각 차량에 한 번만 기록한다.
+  // 차체 색(승용차 7색·택시·버스)과 유리·바퀴 색은 처음 한 번만 칠한다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refs는 같은 객체를 가리킨다.
   useLayoutEffect(() => {
-    for (let index = 0; index < cars; index++)
-      carMesh.current?.setColorAt(index, colors[index % colors.length]);
-    for (let index = 0; index < buses; index++)
-      busMesh.current?.setColorAt(index, colors[(index + 1) % colors.length]);
-    if (carMesh.current?.instanceColor)
-      carMesh.current.instanceColor.needsUpdate = true;
-    if (busMesh.current?.instanceColor)
-      busMesh.current.instanceColor.needsUpdate = true;
+    const paint = Array.from(
+      { length: 7 },
+      (_, i) => new Color(sceneColor(`car-${i + 1}`)),
+    );
+    const taxi = new Color(sceneColor("taxi"));
+    const buses = [
+      new Color(sceneColor("bus-blue")),
+      new Color(sceneColor("bus-green")),
+    ];
+    const glass = new Color(sceneColor("glass"));
+    const tire = new Color(sceneColor("tire"));
+    for (let index = 0; index < cars; index++) {
+      const kind = kindOf(index);
+      const color =
+        kind === "taxi"
+          ? taxi
+          : kind === "bus"
+            ? buses[index % 2]
+            : paint[index % 7];
+      refs.body.current?.setColorAt(index, color);
+      refs.roof.current?.setColorAt(index, color);
+      refs.glass.current?.setColorAt(index, glass);
+      for (let wheel = 0; wheel < 4; wheel++)
+        refs.wheel.current?.setColorAt(index * 4 + wheel, tire);
+    }
+    for (const ref of Object.values(refs))
+      if (ref.current?.instanceColor)
+        ref.current.instanceColor.needsUpdate = true;
     place(motionSeconds(clock.getElapsedTime(), reducedMotion));
-  }, [cars, buses, reducedMotion, colors, place, clock]);
+  }, [cars, reducedMotion, place, clock]);
   useFrame((state) => {
-    if (cap && !reducedMotion)
+    if (cars && !reducedMotion)
       place(motionSeconds(state.clock.elapsedTime, reducedMotion));
   });
 
   // 품질 교체나 언마운트 때 GPU 자원을 해제한다.
   useEffect(
     () => () => {
-      carGeometry.dispose();
-      busGeometry.dispose();
+      box.dispose();
       material.dispose();
       roadGeometry.dispose();
       roadMaterial.dispose();
     },
-    [carGeometry, busGeometry, material, roadGeometry, roadMaterial],
+    [box, material, roadGeometry, roadMaterial],
   );
 
-  if (cap === 0) return null;
+  if (cars === 0) return null;
   return (
     <group>
       <primitive object={roads} />
+      {(["body", "glass", "roof"] as const).map((name) => (
+        <instancedMesh
+          key={name}
+          ref={refs[name]}
+          args={[box, material, cars]}
+          frustumCulled={false}
+        />
+      ))}
       <instancedMesh
-        ref={carMesh}
-        args={[carGeometry, material, cars]}
-        frustumCulled={false}
-      />
-      <instancedMesh
-        ref={busMesh}
-        args={[busGeometry, material, buses]}
+        ref={refs.wheel}
+        args={[box, material, cars * 4]}
         frustumCulled={false}
       />
     </group>

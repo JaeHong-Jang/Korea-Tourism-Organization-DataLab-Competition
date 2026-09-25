@@ -20,7 +20,8 @@ import { routePosition } from "../motion/rail-lines";
 import { sceneColor } from "../quality";
 import { towardShare as towardShareAt, vehicleAt } from "../venue/routes";
 import { FAR_DISTANCE } from "./city-people";
-import { type Pose, stamp } from "./stamp";
+import type { Pose } from "./stamp";
+import { kindOf, stampCar, stampCart } from "./vehicle-kit";
 
 // 멀리서 생략하는 작은 부품(바퀴·전조등·후미등·택시 표시등).
 const DETAIL_PARTS = ["wheel", "head", "tail", "sign"];
@@ -39,52 +40,6 @@ export function trafficCaps(quality: "high" | "medium" | "low") {
       ? { cars: 70, trains: 4 }
       : { cars: 32, trains: 2 };
 }
-
-type Kind = "car" | "taxi" | "bus";
-// 12대 중 1대는 버스, 5대 중 1대는 택시(나머지 승용차).
-function kindOf(index: number): Kind {
-  return index % 12 === 0 ? "bus" : index % 5 === 0 ? "taxi" : "car";
-}
-
-// 차종별 치수(m, 길이 방향 = +z): 차체·유리 띠·지붕의 높이와 길이.
-const SIZES = {
-  car: {
-    w: 1.8,
-    l: 4.3,
-    bodyH: 0.7,
-    bodyY: 0.55,
-    glassY: 1.17,
-    glassH: 0.55,
-    glassL: 2.3,
-    glassZ: -0.2,
-    roofY: 1.49,
-    roofL: 2.1,
-  },
-  taxi: {
-    w: 1.8,
-    l: 4.5,
-    bodyH: 0.7,
-    bodyY: 0.55,
-    glassY: 1.17,
-    glassH: 0.55,
-    glassL: 2.3,
-    glassZ: -0.2,
-    roofY: 1.49,
-    roofL: 2.1,
-  },
-  bus: {
-    w: 2.5,
-    l: 11,
-    bodyH: 2.2,
-    bodyY: 1.45,
-    glassY: 1.95,
-    glassH: 0.9,
-    glassL: 10.4,
-    glassZ: 0,
-    roofY: 2.6,
-    roofL: 10.8,
-  },
-} as const;
 
 export function CityTraffic({
   roadRoutes,
@@ -191,91 +146,35 @@ export function CityTraffic({
     lampMaterial.emissive.copy(head);
   }, [cars, carts, lampMaterial]);
 
-  // 차 한 대의 부품을 적는다 — 택시만 지붕 표시등을 보이고 나머지는 크기 0으로 숨긴다.
-  const placeCar = (index: number, full: boolean) => {
-    const [body, glass, roof, wheel, head, tail, sign] = [
-      refs.body,
-      refs.glass,
-      refs.roof,
-      refs.wheel,
-      refs.head,
-      refs.tail,
-      refs.sign,
-    ].map((ref) => ref.current?.instanceMatrix.array);
-    if (!body || !glass || !roof || !wheel || !head || !tail || !sign) return;
-    const kind = kindOf(index);
-    const size = SIZES[kind];
-    const bus = kind === "bus" ? 1.02 : 0.9;
-    stamp(body, index, pose, [0, size.bodyY, 0], [size.w, size.bodyH, size.l]);
-    stamp(
-      glass,
+  // 차 한 대의 부품을 적는다(공용 부품 도구) — 멀면 차체·유리·지붕만.
+  const placeCar = (index: number, full: boolean) =>
+    stampCar(
+      {
+        body: refs.body.current?.instanceMatrix.array,
+        glass: refs.glass.current?.instanceMatrix.array,
+        roof: refs.roof.current?.instanceMatrix.array,
+        wheel: refs.wheel.current?.instanceMatrix.array,
+        head: refs.head.current?.instanceMatrix.array,
+        tail: refs.tail.current?.instanceMatrix.array,
+        sign: refs.sign.current?.instanceMatrix.array,
+      },
       index,
       pose,
-      [0, size.glassY, size.glassZ],
-      [size.w * bus, size.glassH, size.glassL],
+      full ? 2 : 0,
     );
-    stamp(
-      roof,
-      index,
-      pose,
-      [0, size.roofY, size.glassZ],
-      [size.w * 0.94, 0.1, size.roofL],
-    );
-    if (!full) return;
-    const wheelZ = size.l * 0.32;
-    for (let item = 0; item < 4; item++)
-      stamp(
-        wheel,
-        index * 4 + item,
-        pose,
-        [
-          (item % 2 === 0 ? -1 : 1) * size.w * 0.48,
-          0.33,
-          (item < 2 ? -1 : 1) * wheelZ,
-        ],
-        [0.26, 0.66, 0.66],
-      );
-    for (let side = 0; side < 2; side++) {
-      const x = (side === 0 ? -1 : 1) * size.w * 0.32;
-      stamp(
-        head,
-        index * 2 + side,
-        pose,
-        [x, size.bodyY + 0.1, size.l / 2 + 0.02],
-        [0.36, 0.16, 0.05],
-      );
-      stamp(
-        tail,
-        index * 2 + side,
-        pose,
-        [x, size.bodyY + 0.1, -size.l / 2 - 0.02],
-        [0.32, 0.14, 0.05],
-      );
-    }
-    const shown = kind === "taxi" ? 1 : 0;
-    stamp(
-      sign,
-      index,
-      pose,
-      [0, size.roofY + 0.14, size.glassZ],
-      [0.5 * shown, 0.2 * shown, 0.28 * shown],
-    );
-  };
 
-  // 열차 칸은 흰 차체·파란 띠·창 띠·회색 지붕 네 부품이다.
-  const placeCart = (index: number) => {
-    const [body, stripe, glass, roof] = [
-      refs.trainBody,
-      refs.trainStripe,
-      refs.trainGlass,
-      refs.trainRoof,
-    ].map((ref) => ref.current?.instanceMatrix.array);
-    if (!body || !stripe || !glass || !roof) return;
-    stamp(body, index, pose, [0, 1.9, 0], [3, 3.2, 18.4]);
-    stamp(stripe, index, pose, [0, 1.15, 0], [3.04, 0.35, 18.2]);
-    stamp(glass, index, pose, [0, 2.45, 0], [3.05, 0.9, 16.6]);
-    stamp(roof, index, pose, [0, 3.6, 0], [2.7, 0.25, 18]);
-  };
+  // 열차 칸은 흰 차체·파란 띠·창 띠·회색 지붕 네 부품이다(공용 부품 도구).
+  const placeCart = (index: number) =>
+    stampCart(
+      {
+        body: refs.trainBody.current?.instanceMatrix.array,
+        stripe: refs.trainStripe.current?.instanceMatrix.array,
+        glass: refs.trainGlass.current?.instanceMatrix.array,
+        roof: refs.trainRoof.current?.instanceMatrix.array,
+      },
+      index,
+      pose,
+    );
 
   // 차는 오른쪽 차로(길 가운데서 비켜)로 달리고, 열차 칸은 같은 선로에서 칸 간격만큼 뒤따른다.
   const place = (seconds: number, full = detail.current) => {
@@ -319,11 +218,11 @@ export function CityTraffic({
         ref.current.instanceMatrix.needsUpdate = true;
   };
 
-  // 첫 프레임 전에 배치하고, 움직임 줄이기면 그 자리에 멈춘다.
+  // 첫 프레임 전에 배치하고, 움직임 줄이기면 시각과 관계없이 같은 자리에 멈춘다.
   // biome-ignore lint/correctness/useExhaustiveDependencies: place는 같은 ref·자세 객체만 쓴다.
   useLayoutEffect(() => {
-    place(hour * 3600);
-  }, [cars, carts, hour]);
+    place(reducedMotion ? 0 : hour * 3600);
+  }, [cars, carts, hour, reducedMotion]);
   // 멀리서 볼 때는 바퀴·등·표시등을 빼고 차체·유리·지붕만 그린다(사람과 같은 거리 기준).
   useFrame(({ clock, camera, controls }) => {
     const target = (controls as { target?: Vector3 } | null)?.target;
@@ -343,7 +242,7 @@ export function CityTraffic({
       }
     }
     if (!reducedMotion || changed)
-      place(hour * 3600 + (reducedMotion ? 0 : clock.elapsedTime), full);
+      place(reducedMotion ? 0 : hour * 3600 + clock.elapsedTime, full);
   });
 
   // 진단은 첫 차 차체 행렬만 읽어 움직임 줄이기의 정지 상태를 확인한다.
