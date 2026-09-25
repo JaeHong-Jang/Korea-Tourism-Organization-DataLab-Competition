@@ -1,6 +1,6 @@
 // 행사 기간 시군구 관광지 집중률 예측(한국관광공사)을 참고 근거로 보여 준다 — 인원 예보에는 쓰지 않았다.
 import type { ForecastReport } from "@crowdcast/contracts/types";
-import { useConcentration } from "../../lib/use-concentration";
+import { koreaDate, useConcentration } from "../../lib/use-concentration";
 
 // 행사 기간 평균을 30일 평균과 견줘 한 문장으로 말한다(±5 안은 비슷하다고 본다).
 export function compareToWindow(eventMean: number, windowMean: number) {
@@ -79,8 +79,11 @@ export function ReportConcentration({ report }: { report: ForecastReport }) {
         )}
       <small>
         한국관광공사 관광지 집중률 방문자 추이 예측(데이터랩 15128555) ·
-        최성수기 = 100인 상대치 · 예측값이라 참고용이며 행사 인원 예보에는 쓰지
-        않았어요
+        최성수기 = 100인 상대치 · 예보서 발행 뒤 받아 온 실시간 참고
+        {state.status === "ready" && state.value.fetchedAt
+          ? `(수집 ${koreaDate(state.value.fetchedAt).slice(5).replace("-", "/")})`
+          : ""}
+        이며 행사 인원 예보에는 쓰지 않았어요
       </small>
     </section>
   );
