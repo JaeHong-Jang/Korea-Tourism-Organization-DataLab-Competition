@@ -102,7 +102,7 @@ export function SvgKoreaMap({ festivals }: { festivals: FestivalSummary[] }) {
     <div className="svg-korea-map">
       <svg
         viewBox="0 0 900 650"
-        role="img"
+        role="group"
         aria-label="행사와 시군구를 선택할 수 있는 SVG 전국 지도"
       >
         <g className="svg-korea-map__regions">

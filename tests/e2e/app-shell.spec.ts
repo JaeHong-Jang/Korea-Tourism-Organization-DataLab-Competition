@@ -48,6 +48,11 @@ test("home mobile 화면", async ({ page }) => {
 	await expect(
 		page.getByRole("heading", { name: "미니 대한민국", level: 1 }),
 	).toBeVisible();
+	// 390폭은 패널을 탭으로 접는다(T-411b) — 목록 탭을 열어 확인한다.
+	await page
+		.getByRole("navigation", { name: "미니 대한민국 정보" })
+		.getByRole("button", { name: "행사 목록" })
+		.click();
 	await expect(page.getByRole("heading", { name: "행사 목록" })).toBeVisible();
   await page.screenshot({
     path: resolve(output, "T-401-home-mobile.png"),

@@ -73,7 +73,7 @@ test("연출 열차와 고른 행사 위 고래 봇", async ({ page }) => {
 		await page.evaluate(() => window.__crowdcastTrainPosition?.()),
 	).toEqual(first);
 	await expect(page.locator(".scene-legend")).toContainText(
-		"열차·차량·봇 움직임은 연출 — 실제 운행·교통량이 아님",
+		"열차·차량·봇·인형 움직임은 연출 — 실제 운행·교통량이 아니에요",
 	);
 	await page.screenshot({ path: resolve(output, "T-434a-s1-day.png") });
 	await page.locator(".festival-list__pick").first().click();

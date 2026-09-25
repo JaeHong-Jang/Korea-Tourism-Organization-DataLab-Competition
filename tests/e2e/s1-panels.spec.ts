@@ -158,7 +158,7 @@ test("주간 브러시 기간 선택과 키보드 핸들", async ({ page }) => {
 test("SVG 대체 지도에서 선택과 필터", async ({ page }) => {
 	await page.goto(`${origin}/?sceneFixture=1&forceSvg=1&theme=day&at=${clock}`);
 	await expect(
-		page.getByRole("img", {
+		page.getByRole("group", {
 			name: "행사와 시군구를 선택할 수 있는 SVG 전국 지도",
 		}),
 	).toBeVisible();
