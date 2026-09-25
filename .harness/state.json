@@ -432,8 +432,9 @@
    "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(교차 리뷰는 전체 QA)"
   },
   "T-430b": {
-   "status": "running",
-   "updated": "2026-09-25T04:54:09.475Z"
+   "status": "done",
+   "updated": "2026-09-25T05:06:07.978Z",
+   "evidence": "구현 우선 모드 — G1·G2(web 156) 통과, 펫 스크린샷 확인"
   },
   "T-434a": {
    "status": "running",
@@ -1359,6 +1360,12 @@
    "id": "T-406",
    "status": "done",
    "evidence": "구현 우선 모드 — G1·G2 통과(web 152), develop 73aa3fe"
+  },
+  {
+   "at": "2026-09-25T05:06:07.978Z",
+   "id": "T-430b",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2(web 156) 통과, 펫 스크린샷 확인"
   }
  ]
 }
