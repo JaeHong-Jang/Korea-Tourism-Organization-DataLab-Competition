@@ -9,7 +9,7 @@ from crowdcast.api.contract import validate
 from crowdcast.data.call_ledger import CallLimitReached
 from crowdcast.pipeline import __main__ as cli
 from crowdcast.pipeline import stages
-from pipeline_fixtures import latest_record, write_features
+from pipeline_fixtures import latest_record, write_features, write_model
 
 
 # 선택 범위와 없는 모듈을 구분하고 labels부터 실행할 때 fetch를 부르지 않는다.
@@ -109,6 +109,8 @@ def test_dry_preserves_all_inputs_and_writes_only_records(
     pipeline_root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # batch dry 검사는 사용 모델 포인터·카드를 입력으로 요구하므로 발행된 모델이 있는 상태에서 시작한다.
+    write_model()
     before = {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in pipeline_root.rglob("*") if p.is_file()}
 
     # dry에서 실행 경로에 도달하면 테스트 자체를 실패시킨다.
