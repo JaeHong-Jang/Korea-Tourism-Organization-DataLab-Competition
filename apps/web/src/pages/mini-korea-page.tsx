@@ -1,30 +1,21 @@
 // 미니 대한민국 장면과 그 위에 놓일 필터·목록·타임라인 자리를 둔다.
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Layers, Maximize } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { MiniKoreaCanvas } from "../components/scene";
 import { crowdScale } from "../components/scene/crowd-scale";
-import { GradeMark } from "../components/scene/grade-mark";
 import { SceneLegend } from "../components/scene/scene-legend";
 import { Button } from "../components/ui/button";
 import { FestivalFiltersPanel } from "../features/festival-filters/festival-filters";
 import { FestivalList } from "../features/festival-list/festival-list";
 import { sigunguPeaks } from "../features/mini-korea/data-mode";
-import { DataModeToggle } from "../features/mini-korea/data-mode-toggle";
 import { FestivalSummaryPanel } from "../features/mini-korea/festival-summary";
 import { HonestNotices } from "../features/mini-korea/honest-notices";
 import "../features/mini-korea/mini-korea.css";
 import { KpiStrip } from "../features/kpi-timeline/kpi-strip";
 import { WeeklyTimeline } from "../features/kpi-timeline/weekly-timeline";
-import { MapLibreMap } from "../features/map-2d/maplibre-map";
 import { SvgKoreaMap } from "../features/map-2d/svg-korea-map";
-import {
-  type MapView,
-  preferredView,
-  rememberView,
-} from "../features/map-2d/view-preference";
-import { ViewControls } from "../features/map-3d/view-controls";
 import { useUpcomingFestivals } from "../lib/festivals/use-upcoming-festivals";
 import { useSelectionStore } from "../lib/selection-store";
 // 장면이 화면을 차지하고 부가 정보는 가장자리에 머물게 한다(필터 결과를 판·목록·KPI가 함께 쓴다).
@@ -44,9 +35,6 @@ export function MiniKoreaPage() {
   const [mobilePanel, setMobilePanel] = useState<
     "filter" | "list" | "timeline" | "legend"
   >("filter");
-  const [view, setView] = useState<MapView>(() =>
-    preferredView(location.search),
-  );
   const selected =
     festivals.find((festival) => festival.eventId === selectedId) ?? null;
   const totals = useMemo(() => sigunguPeaks(festivals), [festivals]);
@@ -89,25 +77,10 @@ export function MiniKoreaPage() {
       return false;
     }
   });
+  // 지도는 미니어처 하나만 두고 WebGL2가 없는 기기에서만 간단한 지도로 대신한다.
   const svgMode =
-    view === "svg" ||
     !webglAvailable ||
     new URLSearchParams(location.search).get("forceSvg") === "1";
-
-  // 주소 이동과 브라우저 뒤로 가기에서도 저장한 보기 선택을 복원한다.
-  useEffect(() => {
-    setView(preferredView(location.search));
-  }, [location.search]);
-
-  // 현재 필터·데모 주소를 보존한 채 보기만 바꾼다.
-  const changeView = (next: MapView) => {
-    const query = new URLSearchParams(location.search);
-    setView(next);
-    rememberView(next);
-    query.delete("forceSvg");
-    query.set("view", next);
-    navigate({ pathname: location.pathname, search: query.toString() });
-  };
 
   return (
     <div className="scene-page" data-mobile-panel={mobilePanel}>
@@ -120,6 +93,11 @@ export function MiniKoreaPage() {
         onPointerDown={(event) => {
           if (event.target instanceof HTMLCanvasElement)
             event.currentTarget.focus();
+        }}
+        // 휠 버튼 끌기는 회전이므로 브라우저 자동 스크롤이 끼어들지 않게 한다.
+        onMouseDown={(event) => {
+          if (event.button === 1 && event.target instanceof HTMLCanvasElement)
+            event.preventDefault();
         }}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
@@ -144,12 +122,6 @@ export function MiniKoreaPage() {
         </h1>
         {svgMode ? (
           <SvgKoreaMap festivals={festivals} />
-        ) : view !== "miniature" ? (
-          <MapLibreMap
-            festivals={festivals}
-            overviewRevision={overviewRevision}
-            mode={view === "top" ? "top" : "3d"}
-          />
         ) : (
           <MiniKoreaCanvas
             festivals={festivals}
@@ -160,25 +132,34 @@ export function MiniKoreaPage() {
           />
         )}
         {!svgMode && (
-          <button
-            type="button"
-            className="scene-overview"
-            onClick={() => {
-              selectFestival(null);
-              selectSigungu(null);
-              setOverviewRevision((value) => value + 1);
-            }}
+          <div
+            className="scene-map-tools"
+            role="toolbar"
+            aria-label="지도 도구"
           >
-            전국 보기
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                selectFestival(null);
+                selectSigungu(null);
+                setOverviewRevision((value) => value + 1);
+              }}
+            >
+              <Maximize size={16} aria-hidden="true" />
+              전국 보기
+            </button>
+            <button
+              type="button"
+              className="data-mode-toggle"
+              aria-pressed={dataMode}
+              onClick={() => changeDataMode(!dataMode)}
+            >
+              <Layers size={16} aria-hidden="true" />
+              데이터 모드
+            </button>
+          </div>
         )}
-        <ViewControls
-          view={view}
-          svgMode={svgMode}
-          webglAvailable={webglAvailable}
-          onChange={changeView}
-        />
-        {!svgMode && view === "miniature" && (
+        {!svgMode && (
           <p className="scene-mobile-scale">
             인형 1개 = {scale.peoplePerDoll.toLocaleString("ko-KR")}명 ·
             움직임은 연출
@@ -221,52 +202,20 @@ export function MiniKoreaPage() {
           <FestivalFiltersPanel all={all} />
         </FeaturePanel>
         <div className="scene-legend-panel">
-          {!svgMode && view === "miniature" ? (
-            <SceneLegend
-              peoplePerDoll={scale.peoplePerDoll}
-              capExceeded={scale.capExceeded}
-              festivals={festivals}
-              dataMode={dataMode}
-              totals={totals}
-              controls={
-                <DataModeToggle enabled={dataMode} onChange={changeDataMode} />
-              }
-              notices={
-                <HonestNotices festivals={festivals} fixture={fixture} />
-              }
-            />
-          ) : (
-            <div className="scene-svg-notices">
-              {svgMode && (
-                <p>
-                  이 기기에서는 간단한 지도로 보여 드려요. 행사 선택은
-                  목록에서도 할 수 있어요.
-                </p>
-              )}
-              <DataModeToggle
-                enabled={false}
-                onChange={changeDataMode}
-                disabled
-              />
-              <p>
-                {svgMode ? "SVG 지도" : "실제 지도"}에서는 데이터 모드를 사용할
-                수 없어요.
-              </p>
-              <fieldset className="scene-legend__grades">
-                <legend className="sr-only">행사 등급 범례</legend>
-                {[1, 2, 3, 4].map((level) => (
-                  <span className="scene-legend__grade" key={level}>
-                    <span
-                      className="scene-legend__flag"
-                      style={{ background: `var(--level-${level})` }}
-                    />
-                    <GradeMark level={level} />
-                  </span>
-                ))}
-              </fieldset>
-              <HonestNotices festivals={festivals} fixture={fixture} />
-            </div>
+          {svgMode && (
+            <p className="scene-svg-notices">
+              이 기기에서는 간단한 지도로 보여 드려요. 행사 선택은 목록에서도 할
+              수 있어요.
+            </p>
           )}
+          <SceneLegend
+            peoplePerDoll={scale.peoplePerDoll}
+            capExceeded={scale.capExceeded}
+            festivals={festivals}
+            dataMode={dataMode && !svgMode}
+            totals={totals}
+            notices={<HonestNotices festivals={festivals} fixture={fixture} />}
+          />
         </div>
       </div>
       <FeaturePanel

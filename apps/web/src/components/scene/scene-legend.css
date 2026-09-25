@@ -5,6 +5,9 @@
 .scene-legend__grade, .scene-grade { display: inline-flex; align-items: center; gap: var(--space-1); white-space: nowrap; }
 .scene-legend__flag { width: 11px; height: 15px; border-left: 2px solid var(--ink); clip-path: polygon(0 0, 100% 0, 100% 70%, 0 100%); }
 .scene-legend__note { color: var(--ink-2); }
+.scene-legend__more summary { width: fit-content; color: var(--ink-2); font-size: var(--text-caption); cursor: pointer; }
+.scene-legend__more[open] { display: grid; gap: var(--space-2); font-size: var(--text-caption); }
+.scene-legend__more p { margin: 0; }
 .scene-legend__data { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-1) var(--space-2); min-width: 0; margin: 0; padding: 0; border: 0; font-size: var(--text-caption); }
 .scene-legend__data-row { display: inline-flex; align-items: center; gap: var(--space-1); white-space: nowrap; }
 .scene-legend__data > .scene-legend__note { grid-column: 1 / -1; }
