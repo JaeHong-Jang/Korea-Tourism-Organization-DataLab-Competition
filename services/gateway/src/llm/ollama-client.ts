@@ -4,6 +4,9 @@ import { withRequestDeadline } from "../clients/request-deadline.js";
 import { replayExtraction } from "./fake-llm.js";
 import { readLlmSettings } from "./models.js";
 
+// 전송 성공 뒤 출력이 미완결인 경우를 HTTP 실패와 구분한다
+export class LlmSchemaError extends Error {}
+
 export type LlmCompletion = {
   content: string;
   metrics: {
@@ -84,7 +87,7 @@ export function createLlmClient(options: LlmOptions = {}) {
         response.message?.tool_calls?.length ||
         typeof response.message?.content !== "string"
       ) {
-        throw new Error("LLM 응답이 완결된 필드 추출이 아닙니다");
+        throw new LlmSchemaError("LLM 응답이 완결된 필드 추출이 아닙니다");
       }
       return {
         content: response.message.content,

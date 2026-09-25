@@ -2,16 +2,14 @@
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import masterIds from "@crowdcast/contracts/jsonld/master-ids.json";
-// @ts-expect-error 계약 무결성 실행기는 JavaScript로 배포된다
-import * as integrity from "@crowdcast/contracts/rules/integrity.mjs";
 // @ts-expect-error 계약의 SSE 순서 실행기는 JavaScript로 배포된다
 import { sequenceProblems } from "@crowdcast/contracts/rules/sse-sequence.mjs";
 import type { SseEvent } from "@crowdcast/contracts/types";
 import { Hono } from "hono";
-import { afterEach, expect } from "vitest";
+import { afterEach, expect, vi } from "vitest";
 import { readConfig } from "../src/config.js";
 import { contractRegistry } from "../src/contract/registry.js";
+import type { SessionFacts } from "../src/contract/session-facts.js";
 import { createTeamSessionsRoute } from "../src/routes/team-sessions.js";
 import type {
   DraftAnswer,
@@ -19,6 +17,7 @@ import type {
 } from "../src/team/analysis/draft-answer.js";
 import { fakeForecastFetch } from "../src/team/runtime/fake-forecast.js";
 import type { TeamOptions } from "../src/team/runtime/settings.js";
+import { knowledgeFixture } from "./knowledge-fixture.js";
 
 export const fullText =
   "2026년 10월 18일 19~21시 인천 중구 영종 씨사이드파크에서 영종 불꽃축제를 열어요. 무료이고 주최는 인천 중구청입니다. 예산 2억원, 폭죽을 사용해요.";
@@ -49,11 +48,12 @@ export const answer: DraftAnswer = {
 };
 const directories: string[] = [];
 afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
   for (const directory of directories.splice(0))
     rmSync(directory, { recursive: true, force: true });
 });
 
-type Loaded = { schema: string; doc: unknown };
 export type Call = { url: URL; body: unknown; signal?: AbortSignal | null };
 type Options = TeamOptions & {
   override?: (call: Call) => Promise<Response | undefined>;
@@ -61,12 +61,11 @@ type Options = TeamOptions & {
 
 // 실제 계약 참조 검사로 가짜 knowledge의 잘못된 적재 순서도 실패시킨다
 export function teamFixture(options: Options = {}) {
+  vi.setSystemTime(new Date("2026-09-25T03:00:00Z"));
   const traceDirectory = mkdtempSync(join(tmpdir(), "crowdcast-team-"));
   directories.push(traceDirectory);
   const calls: Call[] = [];
-  const sessions = new Map<string, Loaded[]>();
-  const revisions = new Map<string, number>();
-  const master = integrity.masterSets(masterIds, ["mr-v0-1-0"]);
+  const knowledge = knowledgeFixture();
   const fetcher: typeof fetch = async (input, init) => {
     const url = new URL(String(input));
     const body = init?.body ? JSON.parse(String(init.body)) : undefined;
@@ -74,52 +73,10 @@ export function teamFixture(options: Options = {}) {
     calls.push(call);
     const override = await options.override?.(call);
     if (override) return override;
-    if (url.pathname === "/v1/master/version")
-      return Response.json({ masterVersion: 7 });
-    const match = url.pathname.match(
-      /^\/v1\/sessions\/(s-[^/]+)\/(facts|validate)$/,
+    return (
+      knowledge(url, body as SessionFacts | undefined) ??
+      fakeForecastFetch(input, init)
     );
-    if (!match) return fakeForecastFetch(input, init);
-    const [, id, action] = match;
-    const loaded = sessions.get(id) ?? [];
-    let revision = revisions.get(id) ?? 0;
-    if (action === "facts") {
-      const problems = body.items.flatMap((doc: unknown) =>
-        integrity.refProblems(
-          doc,
-          body.schema,
-          master,
-          integrity.sessionScope(id, loaded, revision),
-        ),
-      );
-      expect(problems).toEqual([]);
-      // 동일 내용 재적재의 revision은 실제 knowledge와 같은 계약 규칙을 쓴다
-      if (
-        body.items.some((doc: unknown) =>
-          integrity.changesContent(
-            integrity.sessionScope(id, loaded, revision),
-            body.schema,
-            doc,
-          ),
-        )
-      )
-        revision++;
-      loaded.push(
-        ...body.items.map((doc: unknown) => ({ schema: body.schema, doc })),
-      );
-      sessions.set(id, loaded);
-      revisions.set(id, revision);
-      return Response.json({ revision });
-    }
-    expect(url.searchParams.get("revision")).toBe(String(revision));
-    expect(url.searchParams.get("masterVersion")).toBe("7");
-    return Response.json({
-      gate: "A",
-      passed: true,
-      revision,
-      masterVersion: 7,
-      violations: [],
-    });
   };
   const app = new Hono().route(
     "/api/team/sessions",
@@ -229,6 +186,5 @@ export function validSequence(events: SseEvent[]) {
   expect(sequenceProblems(events, { mode: "new" })).toEqual([]);
   expect(events.at(-1)).toMatchObject({
     event: "done",
-    data: { forecastId: null },
   });
 }

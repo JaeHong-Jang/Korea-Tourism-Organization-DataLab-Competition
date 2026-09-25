@@ -3,7 +3,7 @@ import { RequestTimeoutError } from "../../clients/request-deadline.js";
 import { ServiceHttpError } from "../../clients/request-json.js";
 import type { TeamMessage } from "../analysis/draft-answer.js";
 import type { Deadline } from "../lead/deadline.js";
-import { AnalysisGateError } from "../lead/gates.js";
+import { AnalysisGateError, ExplanationGateError } from "../lead/gates.js";
 import { newForecast } from "../lead/playbooks.js";
 import type { EventWriter } from "./events.js";
 import { createExecutor } from "./executor.js";
@@ -12,6 +12,11 @@ import type { TeamSettings } from "./settings.js";
 
 // 원문 예외 대신 계약 오류 코드와 안전한 안내 문구만 전송한다
 function errorCard(error: unknown) {
+  if (error instanceof ExplanationGateError)
+    return {
+      code: "SERVICE_UNAVAILABLE" as const,
+      message: "설명 문장을 검증하지 못했어요",
+    };
   if (error instanceof RequestTimeoutError)
     return {
       code: "DEADLINE_EXCEEDED" as const,
@@ -41,6 +46,7 @@ export async function runRequest(
   disconnected: AbortSignal,
   deadline: Deadline,
 ) {
+  const previousForecastId = session.forecastId;
   const cancel = () => deadline.abort(disconnected.reason);
   disconnected.addEventListener("abort", cancel, { once: true });
   if (disconnected.aborted) cancel();
@@ -65,7 +71,13 @@ export async function runRequest(
     await writer.emit("error", errorCard(error));
   } finally {
     try {
-      await writer.emit("done", { sessionId: session.id, forecastId: null });
+      await writer.emit("done", {
+        sessionId: session.id,
+        forecastId:
+          session.forecastId !== previousForecastId
+            ? (session.forecastId ?? null)
+            : null,
+      });
     } finally {
       deadline.dispose();
       disconnected.removeEventListener("abort", cancel);

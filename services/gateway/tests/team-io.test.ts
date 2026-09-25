@@ -46,7 +46,7 @@ describe("기록·전송 마감", () => {
     const steps = await (
       await harness.app.request(`/api/team/sessions/${id}/steps`)
     ).json();
-    expect(steps).toHaveLength(7);
+    expect(steps).toHaveLength(14);
   });
 
   // 응답을 읽지 않는 연결의 역압력도 마감에 끊고 새 요청을 허용한다
