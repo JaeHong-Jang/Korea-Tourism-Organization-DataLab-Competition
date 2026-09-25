@@ -1,8 +1,11 @@
 // 영종 발행 스냅샷의 문장·근거 경로와 출처 합치기를 검증한다.
 import type { ForecastReport } from "@crowdcast/contracts/types";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import fixture from "../../../../../packages/contracts/fixtures/forecast-report/valid-yeongjong.json";
-import { buildEvidenceMap, filterEvidenceMap } from "./graph-data";
+import { cautions, EvidenceBrief, sourceCards } from "./evidence-brief";
+import { buildEvidenceMap } from "./graph-data";
 
 const report = fixture as unknown as ForecastReport;
 
@@ -51,27 +54,42 @@ describe("발행 스냅샷 근거 지도", () => {
     expect(map.datalabClaimCount).toBe(2);
   });
 
-  // 종류 필터는 선택되지 않은 근거와 고립된 문장만 숨기고 좌표용 ID는 보존한다.
-  it("선택한 종류의 근거와 연결 경로만 남긴다", () => {
-    const map = buildEvidenceMap(report);
-    const filtered = filterEvidenceMap(map, ["rule"]);
+  // 출처 카드는 같은 원문을 한 장으로 묶고, 주의점은 가정·통과 못 한 검사·검증 한계만 모은다.
+  it("출처를 문서 단위로 묶고 주의할 점을 가려낸다", () => {
+    const { cards } = sourceCards(report);
     expect(
-      filtered.nodes.filter((node) => node.kind === "evidence"),
-    ).toHaveLength(2);
-    expect(filtered.nodes.filter((node) => node.kind === "claim")).toHaveLength(
-      1,
+      cards.some(
+        (card) => card.id === "document:clause:law-disaster-act-enf-73-9",
+      ),
+    ).toBe(true);
+    expect(new Set(cards.map((card) => card.id)).size).toBe(cards.length);
+    expect(cards.every((card) => card.numbers.length > 0)).toBe(true);
+    for (const item of cautions(report))
+      expect(
+        !item.evidence ||
+          item.evidence.kind === "assumption" ||
+          item.evidence.checkResult?.passed === false,
+      ).toBe(true);
+  });
+
+  // 근거 화면은 판정 흐름·두 칸·문장·출처 순서로 그린다.
+  it("판정부터 출처까지 한 화면에 그린다", () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <EvidenceBrief
+          report={report}
+          onOpen={() => {}}
+          onViewClaim={() => {}}
+        />
+      </MemoryRouter>,
     );
-    expect(
-      filtered.nodes.some(
-        (node) => node.id === "document:clause:law-disaster-act-enf-73-9",
-      ),
-    ).toBe(true);
-    expect(
-      filtered.edges.every(
-        (edge) =>
-          filtered.nodes.some((node) => node.id === edge.source) &&
-          filtered.nodes.some((node) => node.id === edge.target),
-      ),
-    ).toBe(true);
+    for (const text of [
+      "판정 흐름",
+      "판정을 받치는 근거",
+      "주의할 점",
+      "문장별 근거",
+      "근거와 출처",
+    ])
+      expect(html).toContain(text);
   });
 });
