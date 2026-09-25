@@ -5,6 +5,26 @@ import { expect, test } from "@playwright/test";
 
 const screens = resolve(process.cwd(), "../../reports/figures/screens");
 
+// 가짜 눈 예보와 낮 슬라이더가 함께 적용된 행사장 견본을 캡처한다.
+test("행사장 눈·낮 예보와 견본 시간 문구", async ({ page }) => {
+	await page.route("**/api/weather?**", (route) => {
+		const url = new URL(route.request().url());
+		return route.fulfill({ json: {
+			lat: Number(url.searchParams.get("lat")), lng: Number(url.searchParams.get("lng")),
+			at: url.searchParams.get("at"), sky: "흐림", pty: "눈", temp: 2,
+			pop: 70, source: "단기예보", fetchedAt: url.searchParams.get("at"),
+		} });
+	});
+	await page.setViewportSize({ width: 1366, height: 768 });
+	await page.goto("/dev/venue/yeongjong?sceneQuality=high&venueHour=12");
+	await expect(page.locator("html")).toHaveAttribute("data-venue-ready", "true", { timeout: 45_000 });
+	await expect(page.locator(".venue-3d__heading span")).toContainText("낮 · 눈");
+	await expect(page.locator(".venue-3d__time")).toContainText("견본은 개최 시간 없음");
+	await expect(page.locator(".venue-3d__honest")).toContainText("날씨 효과 = 기상청 예보 기반 연출");
+	mkdirSync(screens, { recursive: true });
+	await page.screenshot({ path: resolve(screens, "T-435-venue-snow.png") });
+});
+
 // 고정된 화면 크기와 시각으로 세 장소의 낮·밤 캡처를 남긴다.
 for (const key of ["yeongjong", "hangang", "suwon"] as const) {
   test(`${key} 타일 장면과 낮·밤`, async ({ page }) => {

@@ -1,21 +1,50 @@
 // 예보 규모에 비례하는 블록 인형을 행사 모형 주변에 정적으로 배치한다.
+import { useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
   Color,
+  ConeGeometry,
   DoubleSide,
   type InstancedMesh,
   MeshBasicMaterial,
   Object3D,
 } from "three";
 import { dollFarGeometry } from "../crowd/doll-geometry";
+import {
+  addWalkPhases,
+  enableWalking,
+  walkingTime,
+} from "../crowd/walk-material";
 import { sceneColor } from "../quality";
 
 // 황금각 배열은 인형 수가 바뀌어도 기존 인형 자리를 유지한다.
-export function VenueDolls({ count }: { count: number }) {
+export function VenueDolls({
+  count,
+  reducedMotion = false,
+  rain = false,
+}: {
+  count: number;
+  reducedMotion?: boolean;
+  rain?: boolean;
+}) {
   const mesh = useRef<InstancedMesh>(null);
-  const geometry = useMemo(dollFarGeometry, []);
+  const umbrellas = useRef<InstancedMesh>(null);
+  const geometry = useMemo(() => {
+    const result = dollFarGeometry();
+    addWalkPhases(result, count);
+    return result;
+  }, [count]);
+  const umbrellaGeometry = useMemo(() => new ConeGeometry(2.2, 1, 7), []);
+  const umbrellaMaterial = useMemo(
+    () =>
+      new MeshBasicMaterial({
+        color: sceneColor("model-stage"),
+        side: DoubleSide,
+      }),
+    [],
+  );
   const material = useMemo(
-    () => new MeshBasicMaterial({ side: DoubleSide }),
+    () => enableWalking(new MeshBasicMaterial({ side: DoubleSide })),
     [],
   );
   const object = useMemo(() => new Object3D(), []);
@@ -44,25 +73,48 @@ export function VenueDolls({ count }: { count: number }) {
       object.updateMatrix();
       mesh.current.setMatrixAt(index, object.matrix);
       mesh.current.setColorAt(index, colors[index % colors.length]);
+      if (rain && umbrellas.current && index < Math.min(count, 40)) {
+        object.position.y = 2.6;
+        object.scale.setScalar(1);
+        object.updateMatrix();
+        umbrellas.current.setMatrixAt(index, object.matrix);
+      }
     }
     mesh.current.instanceMatrix.needsUpdate = true;
     if (mesh.current.instanceColor)
       mesh.current.instanceColor.needsUpdate = true;
-  }, [count, object, colors]);
+    if (umbrellas.current) umbrellas.current.instanceMatrix.needsUpdate = true;
+  }, [count, object, colors, rain]);
+
+  // 인형별 위상은 GPU가 읽고 프레임마다 시간 숫자만 바꾼다.
+  useFrame(({ clock }) =>
+    walkingTime(material, clock.elapsedTime, reducedMotion),
+  );
 
   // 장면 교체 시 자체 형상과 재료를 해제한다.
   useEffect(
     () => () => {
       geometry.dispose();
       material.dispose();
+      umbrellaGeometry.dispose();
+      umbrellaMaterial.dispose();
     },
-    [geometry, material],
+    [geometry, material, umbrellaGeometry, umbrellaMaterial],
   );
   return (
-    <instancedMesh
-      ref={mesh}
-      args={[geometry, material, count]}
-      frustumCulled={false}
-    />
+    <group>
+      <instancedMesh
+        ref={mesh}
+        args={[geometry, material, count]}
+        frustumCulled={false}
+      />
+      {rain && count > 0 && (
+        <instancedMesh
+          ref={umbrellas}
+          args={[umbrellaGeometry, umbrellaMaterial, Math.min(count, 40)]}
+          frustumCulled={false}
+        />
+      )}
+    </group>
   );
 }

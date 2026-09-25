@@ -28,6 +28,16 @@ export type VenueTiles = {
 
 const archives = new Map<VenueKey, PMTiles>();
 
+// 역 이름만 있는 POI와 출입구·승강기 이름은 철도역 목록에서 제외한다.
+export function isStationName(name: string): boolean {
+  const normalized = name.trim();
+  return (
+    normalized.length > 1 &&
+    normalized !== "역" &&
+    !/엘리베이터|출입구|출구|입구|승강기/i.test(normalized)
+  );
+}
+
 // 역점은 해당 타일이 소유한 좌표만 받아 중복 라벨을 막는다.
 function insideTile(point: Point, extent: number): boolean {
   return (
@@ -179,22 +189,18 @@ export function readVenueTile(
   if (pois)
     for (let index = 0; index < pois.length; index++) {
       const feature = pois.feature(index);
-      if (
-        feature.type !== 1 ||
-        !["station", "subway_entrance"].includes(
-          String(feature.properties.kind),
-        )
-      )
-        continue;
+      if (feature.type !== 1 || feature.properties.kind !== "station") continue;
+      const name = String(
+        feature.properties["name:ko"] ?? feature.properties.name ?? "",
+      );
+      if (!isStationName(name)) continue;
       const point = feature.loadGeometry()[0]?.[0];
       if (!point || !insideTile([point.x, point.y], pois.extent)) continue;
       const projected = project([point.x, point.y]);
       if (nearby(projected))
         into.stations.push({
           point: projected,
-          name: String(
-            feature.properties["name:ko"] ?? feature.properties.name ?? "역",
-          ),
+          name,
         });
     }
 }

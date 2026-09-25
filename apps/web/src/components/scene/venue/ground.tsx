@@ -10,22 +10,33 @@ import {
 } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { sceneColor } from "../quality";
+import { clipPolygon, clipSegment } from "./clip";
+import type { Point } from "./coordinates";
 import type { VenueArea, VenueLine, VenueTiles } from "./tiles";
 
 // 각 도로 선분을 폭을 가진 사각형으로 만들고 한 버퍼에 담는다.
 function stripGeometry(lines: VenueLine[], y: number): BufferGeometry {
   const positions: number[] = [];
   for (const { from, to, width } of lines) {
-    const dx = to[0] - from[0],
-      dz = to[1] - from[1];
+    const limit = 1200 - width / 2;
+    const bounded = clipSegment(
+      [from[0] + limit, from[1] + limit],
+      [to[0] + limit, to[1] + limit],
+      limit * 2,
+    );
+    if (!bounded) continue;
+    const start: Point = [bounded[0][0] - limit, bounded[0][1] - limit];
+    const end: Point = [bounded[1][0] - limit, bounded[1][1] - limit];
+    const dx = end[0] - start[0],
+      dz = end[1] - start[1];
     const length = Math.hypot(dx, dz);
     if (length < 0.1) continue;
     const ox = ((-dz / length) * width) / 2,
       oz = ((dx / length) * width) / 2;
-    const a = [from[0] + ox, y, from[1] + oz],
-      b = [from[0] - ox, y, from[1] - oz];
-    const c = [to[0] + ox, y, to[1] + oz],
-      d = [to[0] - ox, y, to[1] - oz];
+    const a = [start[0] + ox, y, start[1] + oz],
+      b = [start[0] - ox, y, start[1] - oz];
+    const c = [end[0] + ox, y, end[1] + oz],
+      d = [end[0] - ox, y, end[1] - oz];
     positions.push(...a, ...b, ...c, ...b, ...d, ...c);
   }
   const geometry = new BufferGeometry();
@@ -45,15 +56,20 @@ function areaGeometry(
   const pieces: BufferGeometry[] = [];
   for (const area of areas) {
     if (area.kind !== kind || area.points.length < 3) continue;
+    const bounded = clipPolygon(
+      area.points.map(([x, z]) => [x + 1200, z + 1200]),
+      2400,
+    ).map(([x, z]) => [x - 1200, z - 1200] as Point);
+    if (bounded.length < 3) continue;
     const shape = new Shape();
-    area.points.forEach(([x, z], index) => {
+    bounded.forEach(([x, z], index) => {
       if (index === 0) shape.moveTo(x, -z);
       else shape.lineTo(x, -z);
     });
     shape.closePath();
     const geometry = new ShapeGeometry(shape);
     geometry.rotateX(-Math.PI / 2);
-    geometry.translate(0, kind === "water" ? 0.09 : 0.07, 0);
+    geometry.translate(0, kind === "water" ? 0.7 : 0.4, 0);
     pieces.push(geometry);
   }
   const merged = pieces.length ? mergeGeometries(pieces, false) : null;
@@ -64,13 +80,19 @@ function areaGeometry(
 }
 
 // 지면은 건물과 달리 그림자 계산 없이 색 토큰으로만 재료를 만든다.
-export function VenueGround({ tiles }: { tiles: VenueTiles }) {
-  const road = useMemo(() => stripGeometry(tiles.roads, 0.14), [tiles]);
+export function VenueGround({
+  tiles,
+  wet = false,
+}: {
+  tiles: VenueTiles;
+  wet?: boolean;
+}) {
+  const road = useMemo(() => stripGeometry(tiles.roads, 1), [tiles]);
   const rail = useMemo(
     () =>
       stripGeometry(
         tiles.rails.map((line) => ({ ...line, width: 3 })),
-        0.2,
+        1.25,
       ),
     [tiles],
   );
@@ -85,7 +107,8 @@ export function VenueGround({ tiles }: { tiles: VenueTiles }) {
       road: new MeshStandardMaterial({
         color: sceneColor("model-stage"),
         side: DoubleSide,
-        roughness: 1,
+        roughness: wet ? 0.28 : 1,
+        metalness: wet ? 0.26 : 0,
       }),
       rail: new MeshStandardMaterial({
         color: sceneColor("model-metal"),
@@ -95,15 +118,22 @@ export function VenueGround({ tiles }: { tiles: VenueTiles }) {
       water: new MeshStandardMaterial({
         color: sceneColor("sea"),
         side: DoubleSide,
-        roughness: 0.8,
+        roughness: wet ? 0.2 : 0.8,
+        metalness: wet ? 0.3 : 0,
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -2,
       }),
       park: new MeshStandardMaterial({
         color: sceneColor("land-2"),
         side: DoubleSide,
         roughness: 1,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
       }),
     }),
-    [],
+    [wet],
   );
 
   // 타일 자료 교체와 언마운트 때 그 자료의 지면 버퍼를 반환한다.
@@ -131,11 +161,11 @@ export function VenueGround({ tiles }: { tiles: VenueTiles }) {
     <group>
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0, 0]}
+        position={[0, -1.5, 0]}
         material={materials.land}
         receiveShadow
       >
-        <planeGeometry args={[2500, 2500]} />
+        <planeGeometry args={[2400, 2400]} />
       </mesh>
       {park && <mesh geometry={park} material={materials.park} />}
       {water && <mesh geometry={water} material={materials.water} />}

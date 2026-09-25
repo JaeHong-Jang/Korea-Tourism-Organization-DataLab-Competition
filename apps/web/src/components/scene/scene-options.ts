@@ -1,0 +1,52 @@
+// WebGL 가능 여부와 진단 URL·모션 선호를 장면 밖에서 읽는다.
+import { useEffect, useState } from "react";
+import type { SceneQuality } from "./quality";
+
+// WebGL2가 없으면 로딩을 시작하지 않고 같은 자리에 안내한다.
+export function hasWebGl2(): boolean {
+  try {
+    return Boolean(document.createElement("canvas").getContext("webgl2"));
+  } catch {
+    return false;
+  }
+}
+
+// 잠든 탭과 움직임 줄이기 설정을 브라우저 변경 이벤트와 동기화한다.
+export function useScenePreferences() {
+  const [visible, setVisible] = useState(!document.hidden);
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onVisibility = () => setVisible(!document.hidden);
+    const onMotion = () => setReducedMotion(query.matches);
+    document.addEventListener("visibilitychange", onVisibility);
+    query.addEventListener("change", onMotion);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      query.removeEventListener("change", onMotion);
+    };
+  }, []);
+  return { visible, reducedMotion };
+}
+
+// 성능 계측 URL만 품질을 고정하고 일반 화면은 자동 감지를 유지한다.
+export function readSceneOptions() {
+  const search = new URLSearchParams(window.location.search);
+  const measure = search.get("sceneMeasure") === "1";
+  const value = search.get("sceneQuality");
+  const fixedQuality: SceneQuality | null = measure
+    ? "high"
+    : value === "high" || value === "medium" || value === "low"
+      ? value
+      : null;
+  return {
+    measure,
+    debug: search.get("sceneDiagnostic") === "1",
+    fixedQuality,
+    focusCode: search.get("sceneFocus"),
+    motion: search.get("sceneMotion") !== "0",
+    t435: search.get("sceneT435") !== "0",
+  };
+}

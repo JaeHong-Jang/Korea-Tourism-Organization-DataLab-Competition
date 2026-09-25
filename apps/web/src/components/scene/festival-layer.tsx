@@ -12,9 +12,11 @@ import type { useScene } from "./use-scene";
 export function FestivalLayer({
   scene,
   center,
+  reducedMotion = false,
 }: {
   scene: ReturnType<typeof useScene>;
   center: [number, number];
+  reducedMotion?: boolean;
 }) {
   const selectedId = useSelectionStore((state) => state.selectedFestivalId);
   const selectFestival = useSelectionStore((state) => state.selectFestival);
@@ -44,6 +46,7 @@ export function FestivalLayer({
         placed={scene.placed}
         counts={scene.scale.counts}
         center={center}
+        reducedMotion={reducedMotion}
       />
       <NameTags
         placed={scene.placed}

@@ -16,6 +16,24 @@ const card = JSON.parse(
 	),
 );
 
+// 비 오는 밤의 API 응답이 헤더와 3D 장면에 함께 적용되는지 캡처한다.
+test("현재 비·밤 날씨 칩과 장면", async ({ page }) => {
+	await page.route("**/api/weather?**", (route) => {
+		const url = new URL(route.request().url());
+		return route.fulfill({ json: {
+			lat: Number(url.searchParams.get("lat")), lng: Number(url.searchParams.get("lng")),
+			at: url.searchParams.get("at"), sky: "흐림", pty: "비", temp: 18,
+			pop: 80, source: "초단기실황", fetchedAt: url.searchParams.get("at"),
+		} });
+	});
+	await page.setViewportSize({ width: 1366, height: 768 });
+	await page.goto(`/?sceneFixture=1&theme=night&sceneQuality=high&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`);
+	await expect(page.locator(".weather-chip--forecast")).toContainText("서울 18° 비 · 밤");
+	await expect(page.locator("html")).toHaveAttribute("data-scene-ready", "true", { timeout: 45_000 });
+	await expect(page.locator(".scene-legend")).toContainText("날씨 효과 = 기상청 예보 기반 연출");
+	await page.screenshot({ path: resolve(output, "T-435-s1-rain-night.png") });
+});
+
 // 움직임 줄이기에서도 장면의 열차·봇 표시와 선택 해제를 확인한다.
 test("연출 열차와 고른 행사 위 고래 봇", async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });

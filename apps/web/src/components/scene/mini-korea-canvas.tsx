@@ -5,13 +5,17 @@ import { Canvas } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
 import type { Topology } from "topojson-specification";
 import { useSelectionStore } from "../../lib/selection-store";
+import { useTheme } from "../../lib/theme/theme-provider";
 import { Board } from "./board";
 import { CameraRig } from "./camera-rig";
+import { Fireworks } from "./effects/fireworks";
+import { SceneEffects } from "./effects/scene-effects";
 import { FestivalLayer } from "./festival-layer";
 import { buildLandModelForData, LandTiles } from "./land-tiles";
 import { RoadTraffic } from "./motion/road-traffic";
 import { Trains } from "./motion/trains";
 import { WhaleBots } from "./motion/whale-bots";
+import { ForecastOffice } from "./office/forecast-office";
 import {
   qualityDpr,
   type SceneQuality,
@@ -19,39 +23,19 @@ import {
   shiftQuality,
 } from "./quality";
 import { FrameSignal, QualityControl } from "./scene-diagnostics";
+import {
+  hasWebGl2,
+  readSceneOptions,
+  useScenePreferences,
+} from "./scene-options";
 import { SunLight } from "./sun-light";
 import { type SceneScale, useScene } from "./use-scene";
+import { weatherEffects } from "./weather/state";
+import { useSceneWeather } from "./weather/use-scene-weather";
+import { WeatherScene } from "./weather/weather-scene";
+import { WetHighlights } from "./weather/wet-highlights";
 
 const EMPTY_TOTALS = new Map<string, number>();
-
-// WebGL2가 없으면 로딩을 시작하지 않고 같은 자리에 안내한다.
-function hasWebGl2(): boolean {
-  try {
-    return Boolean(document.createElement("canvas").getContext("webgl2"));
-  } catch {
-    return false;
-  }
-}
-
-// 잠든 탭과 움직임 줄이기 설정을 브라우저 변경 이벤트와 동기화한다.
-function useScenePreferences() {
-  const [visible, setVisible] = useState(!document.hidden);
-  const [reducedMotion, setReducedMotion] = useState(
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onVisibility = () => setVisible(!document.hidden);
-    const onMotion = () => setReducedMotion(query.matches);
-    document.addEventListener("visibilitychange", onVisibility);
-    query.addEventListener("change", onMotion);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
-      query.removeEventListener("change", onMotion);
-    };
-  }, []);
-  return { visible, reducedMotion };
-}
 
 // 경계 로딩과 실패를 분리하고 선택 코드를 시도 필터에 연결한다.
 export function MiniKoreaCanvas({
@@ -72,26 +56,9 @@ export function MiniKoreaCanvas({
   const [quality, setQuality] = useState<SceneQuality>("high");
   const [regressFactor, setRegressFactor] = useState(1);
   const [showLand, setShowLand] = useState(true);
-  const diagnostics = useMemo(() => {
-    const search = new URLSearchParams(window.location.search);
-    const measure = search.get("sceneMeasure") === "1";
-    const debug = search.get("sceneDiagnostic") === "1";
-    const value = search.get("sceneQuality");
-    const fixedQuality: SceneQuality | null = measure
-      ? "high"
-      : value === "high" || value === "medium" || value === "low"
-        ? (value as SceneQuality)
-        : null;
-    const focusCode = search.get("sceneFocus");
-    return {
-      measure,
-      debug,
-      fixedQuality,
-      focusCode,
-      motion: search.get("sceneMotion") !== "0",
-    };
-  }, []);
+  const diagnostics = useMemo(readSceneOptions, []);
   const activeQuality = diagnostics.fixedQuality ?? quality;
+  const t435 = diagnostics.t435;
   const scene = useScene(
     festivals,
     activeQuality,
@@ -111,6 +78,8 @@ export function MiniKoreaCanvas({
   const { visible, reducedMotion } = useScenePreferences();
   const picked = useSelectionStore((state) => state.selectedSigunguCode);
   const selectedId = useSelectionStore((state) => state.selectedFestivalId);
+  const { at, sky } = useTheme();
+  const weather = useSceneWeather(festivals, selectedId, at);
   const selectFestival = useSelectionStore((state) => state.selectFestival);
   const selectSigungu = useSelectionStore((state) => state.selectSigungu);
   const setFilters = useSelectionStore((state) => state.setFilters);
@@ -243,6 +212,31 @@ export function MiniKoreaCanvas({
           depth={depth}
         />
         <Board center={center} width={width} depth={depth} />
+        {t435 && (
+          <WeatherScene
+            weather={weather}
+            quality={activeQuality}
+            reducedMotion={reducedMotion}
+            center={center}
+            span={Math.max(width, depth)}
+          />
+        )}
+        {t435 &&
+          weatherEffects(weather, activeQuality).wetGround &&
+          scene.placed[0] && (
+            <WetHighlights
+              center={[scene.placed[0].x, scene.placed[0].z]}
+              y={11}
+              radius={13}
+              count={8}
+            />
+          )}
+        {t435 && (
+          <ForecastOffice
+            x={center[0] - width / 2 + 38}
+            z={center[1] - depth / 2 + 38}
+          />
+        )}
         {showLand && <LandTiles model={model} onPick={onPick} />}
         {diagnostics.motion && !dataMode && (
           <Trains
@@ -253,7 +247,24 @@ export function MiniKoreaCanvas({
         {diagnostics.motion && !dataMode && (
           <RoadTraffic quality={activeQuality} reducedMotion={reducedMotion} />
         )}
-        <FestivalLayer scene={scene} center={center} />
+        <FestivalLayer
+          scene={scene}
+          center={center}
+          reducedMotion={reducedMotion || !t435}
+        />
+        {t435 &&
+          sky === "night" &&
+          scene.placed
+            .filter(({ festival }) => festival.type.includes("불꽃"))
+            .slice(0, 3)
+            .map(({ festival, x, y, z }) => (
+              <Fireworks
+                key={festival.eventId}
+                position={[x, y + 36, z]}
+                quality={activeQuality}
+                reducedMotion={reducedMotion}
+              />
+            ))}
         {diagnostics.motion && (
           <WhaleBots
             selected={
@@ -281,6 +292,7 @@ export function MiniKoreaCanvas({
           measure={diagnostics.measure}
           diagnostic={diagnostics.debug}
         />
+        {t435 && <SceneEffects quality={activeQuality} />}
       </Canvas>
     </section>
   );
