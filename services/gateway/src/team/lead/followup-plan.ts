@@ -1,14 +1,64 @@
 // 발행 문장으로 구성한 계획을 저장하고 같은 예보의 기존 초안과 다운로드 링크를 돌려준다
+import type { ForecastReport } from "@crowdcast/contracts/types";
 import { createRecordsClient } from "../../clients/records-client.js";
 import { ServiceHttpError } from "../../clients/request-json.js";
 import { planWriter } from "../report/plan-writer.js";
 import type { EventWriter } from "../runtime/events.js";
-import type { Executor } from "../runtime/executor.js";
+import { createExecutor, type Executor } from "../runtime/executor.js";
 import type { TeamSession } from "../runtime/sessions.js";
 import type { TeamSettings } from "../runtime/settings.js";
 import type { Deadline } from "./deadline.js";
 
-// 저장·충돌 조회 전체를 한 마감으로 묶고 성공한 초안에만 링크를 보낸다
+// 상담 유무와 관계없이 같은 팀원으로 배치·저장하고 충돌 시 최초 초안을 재사용한다
+export async function savePublishedPlan(ctx: {
+  report: ForecastReport;
+  execute?: Executor;
+  deadline: Deadline;
+  settings: TeamSettings;
+}) {
+  const { report, deadline, settings } = ctx;
+  // 세션 없는 호출은 이벤트 전송·기록 없이 기존 팀원 실행기의 예산과 배치 규칙을 쓴다
+  const execute =
+    ctx.execute ??
+    createExecutor(report.sessionId, settings, deadline, {
+      emit: async () => {},
+    });
+  const draft = await execute(
+    planWriter,
+    report,
+    "발행 문장을 계획 초안에 배치해요.",
+    2,
+  );
+  const timeoutMs = deadline.budget(5_000, 2);
+  const saved = await deadline.run(timeoutMs, async (signal) => {
+    const records = createRecordsClient({
+      baseUrl: settings.config.services.records,
+      fetch: settings.fetcher,
+      signal,
+      timeoutMs,
+    });
+    try {
+      return await records.savePlan(draft);
+    } catch (error) {
+      if (!(error instanceof ServiceHttpError) || error.status !== 409)
+        throw error;
+      return records.getPlan(draft.id);
+    }
+  });
+
+  // 같은 계획 id라도 다른 예보·행사·세션의 저장 응답은 반환하지 않는다
+  if (
+    saved.id !== draft.id ||
+    saved.forecastId !== draft.forecastId ||
+    saved.eventId !== draft.eventId ||
+    saved.sessionId !== draft.sessionId
+  )
+    throw new Error("저장된 계획의 예보 범위가 다릅니다");
+  deadline.check();
+  return saved;
+}
+
+// 성공한 초안만 상담에 연결하고 기존 후속 스트림의 안내를 유지한다
 export async function draftPublishedPlan(ctx: {
   session: TeamSession;
   execute: Executor;
@@ -26,36 +76,12 @@ export async function draftPublishedPlan(ctx: {
     return;
   }
   try {
-    const draft = await execute(
-      planWriter,
-      published.report,
-      "발행 문장을 계획 초안에 배치해요.",
-      2,
-    );
-    const timeoutMs = deadline.budget(5_000, 2);
-    const saved = await deadline.run(timeoutMs, async (signal) => {
-      const records = createRecordsClient({
-        baseUrl: settings.config.services.records,
-        fetch: settings.fetcher,
-        signal,
-        timeoutMs,
-      });
-      try {
-        return await records.savePlan(draft);
-      } catch (error) {
-        if (!(error instanceof ServiceHttpError) || error.status !== 409)
-          throw error;
-        return records.getPlan(draft.id);
-      }
+    const saved = await savePublishedPlan({
+      report: published.report,
+      execute,
+      deadline,
+      settings,
     });
-    if (
-      saved.id !== draft.id ||
-      saved.forecastId !== draft.forecastId ||
-      saved.eventId !== draft.eventId ||
-      saved.sessionId !== draft.sessionId
-    )
-      throw new Error("저장된 계획의 예보 범위가 다릅니다");
-    deadline.check();
     published.planId = saved.id;
   } catch (error) {
     // 검증 거부 이유는 서버 로그에만 두고 화면에는 재시도 가능한 안내를 보낸다
