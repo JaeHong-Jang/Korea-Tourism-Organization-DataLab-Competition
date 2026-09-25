@@ -2,10 +2,17 @@
 
 from fastapi import FastAPI
 
-from crowdcast.api.routes import health
+from crowdcast.api.routes import backtest, baseline, geocode, health, model_card, predict, similar, whatif
 from crowdcast.config import get_settings
 
 # 서비스 메타데이터와 상태 확인 라우트를 등록한다.
 settings = get_settings()
 app = FastAPI(title=settings.service_name, version=settings.version)
 app.include_router(health.router)
+app.include_router(geocode.router)
+app.include_router(baseline.router)
+app.include_router(similar.router)
+app.include_router(model_card.router)
+app.include_router(backtest.router)
+app.include_router(predict.router)
+app.include_router(whatif.router)
