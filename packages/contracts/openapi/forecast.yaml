@@ -158,6 +158,25 @@ paths:
             application/json:
               schema:
                 $ref: ../schemas/region-baseline.schema.json
+  /v1/festivals/upcoming/{eventId}/event:
+    get:
+      summary: 일괄 예보가 쓴 행사 입력 그대로(목록에서 고른 행사로 상담을 시작할 때 — 결과가 대시보드 숫자와 같게)
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^e-[a-z0-9][a-z0-9_.:-]{1,120}$
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/event.schema.json
+        "404":
+          description: 다가오는 일괄 예보에 없는 행사
   /v1/images/{eventId}:
     get:
       summary: 행사 대표 이미지(TourAPI firstimage를 받아 둔 로컬 캐시만 — 요청마다 외부 호출 없음)
