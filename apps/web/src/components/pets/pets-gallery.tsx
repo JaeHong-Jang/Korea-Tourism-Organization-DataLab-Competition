@@ -4,9 +4,9 @@ import { PET_AGENT_IDS, PetAvatar } from "./pet-avatar";
 
 const STATES: { state: AgentStatus["state"]; title: string }[] = [
   { state: "idle", title: "대기 · 깜빡임" },
-  { state: "working", title: "작업 · 살짝 통통" },
+  { state: "working", title: "작업 · 살짝 통통 + 물 분수" },
   { state: "done", title: "완료 · 눈웃음" },
-  { state: "waiting", title: "보류 · 손 들기" },
+  { state: "waiting", title: "보류 · 지느러미 들기" },
   { state: "error", title: "오류 · 엑스 눈" },
 ];
 
