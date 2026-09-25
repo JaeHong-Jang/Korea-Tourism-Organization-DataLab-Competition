@@ -184,7 +184,7 @@ paths:
               schema:
                 $ref: ../schemas/plan.schema.json
     put:
-      summary: 초안 수정(P1)
+      summary: 초안 수정(P1, T-408) — 섹션의 notes(작성자 메모)만 바꿀 수 있다. key·title·status·claimIds·body·lockedFields가 저장본과 하나라도 다르면 422
       parameters:
         - name: id
           in: path

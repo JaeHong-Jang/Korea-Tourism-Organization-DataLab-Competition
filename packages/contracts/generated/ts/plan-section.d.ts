@@ -31,4 +31,8 @@ export type PlanSection = {
     value: string;
     quantityId: string;
   }[];
+  /**
+   * 작성자 메모(T-408 편집기) — 근거 없는 사용자 글. body·claimIds·lockedFields와 따로 저장하고, 화면·docx에서 '작성자 메모(근거 없음)'로 발행 문장과 구분한다. 없으면 빈 메모
+   */
+  notes?: string;
 };
