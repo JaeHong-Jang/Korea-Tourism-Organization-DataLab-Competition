@@ -67,8 +67,10 @@ test("S5 저장 행사에서 공유된 읽기 전용 예보서까지", async ({
 	).toBeVisible();
 	await page.screenshot({ path: resolve(screens, "T-409-list.png") });
 	await page.getByRole("button", { name: "재예보", exact: true }).click();
-	await expect(page.getByText("18,500", { exact: false })).toBeVisible();
-	await expect(page.getByText("46,000", { exact: false })).toBeVisible();
+	// 변화 카드 안의 숫자만 본다(같은 숫자가 이력 타임라인에도 나온다).
+	const change = page.locator(".my-events-reforecast-card");
+	await expect(change.getByText("18,500", { exact: false })).toBeVisible();
+	await expect(change.getByText("46,000", { exact: false })).toBeVisible();
 	await expect(
 		page.getByRole("list").getByRole("link", { name: /18,500/ }),
 	).toBeVisible();
@@ -80,7 +82,7 @@ test("S5 저장 행사에서 공유된 읽기 전용 예보서까지", async ({
 	await page.getByLabel("출처").selectOption("사후집계");
 	await page.getByLabel("범위").selectOption("행사장");
 	await page.getByRole("button", { name: "실측 저장" }).click();
-	await expect(page.getByText("실측 입력됨")).toBeVisible();
+	await expect(page.getByRole("cell", { name: "실측 입력됨" })).toBeVisible();
 	expect(actualBody).toMatchObject({
 		eventId: event.id,
 		actual: {
