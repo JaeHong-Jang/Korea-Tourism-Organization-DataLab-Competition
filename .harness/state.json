@@ -136,7 +136,8 @@
    "evidence": "develop 병합, forecast 1115, 계약 오류 0, gateway 744, 실사용 게이트 A 통과, sol PASS"
   },
   "T-205": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T00:21:05.419Z"
   },
   "T-206": {
    "status": "todo"
@@ -198,7 +199,9 @@
    "evidence": "피드백 2회(S04·fake 제한·되묻기 3개·위험 확인·마감·병합 규칙), sol 교차 리뷰 PASS, develop 병합 뒤 gateway 276·build·lint, 수동 확인 실제 Ollama·knowledge"
   },
   "T-304": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T00:21:07.767Z",
+   "note": "1회차 BLOCKED(숫자 규칙·규칙 상수·런타임 경로) → 오케스트레이터 결정, 1회차 재디스패치"
   },
   "T-305": {
    "status": "todo"
@@ -287,8 +290,9 @@
    "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
   },
   "T-407": {
-   "status": "running",
-   "updated": "2026-09-24T23:09:09.473Z"
+   "status": "done",
+   "updated": "2026-09-25T00:31:37.381Z",
+   "evidence": "develop 병합, web 137·build, astra PASS, 스크린샷 확인"
   },
   "T-431": {
    "status": "done",
@@ -1047,6 +1051,22 @@
    "id": "T-204",
    "status": "done",
    "evidence": "develop 병합, forecast 1115, 계약 오류 0, gateway 744, 실사용 게이트 A 통과, sol PASS"
+  },
+  {
+   "at": "2026-09-25T00:21:05.419Z",
+   "id": "T-205",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T00:21:07.767Z",
+   "id": "T-304",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T00:31:37.381Z",
+   "id": "T-407",
+   "status": "done",
+   "evidence": "develop 병합, web 137·build, astra PASS, 스크린샷 확인"
   }
  ]
 }
