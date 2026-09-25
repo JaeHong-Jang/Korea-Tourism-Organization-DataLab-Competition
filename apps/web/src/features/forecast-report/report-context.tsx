@@ -1,4 +1,5 @@
 // 유사 행사와 평시, 구성·시간대 자료를 있을 때만 보여 준다.
+// biome-ignore-all lint/a11y/noNoninteractiveTabindex: 표의 가로 스크롤 영역에 키보드 초점을 준다.
 import type { ForecastReport } from "@crowdcast/contracts/types";
 import { EvidenceChip } from "../../components/common/evidence-chip";
 import { formatSnapshotQuantity } from "../../lib/format";
@@ -64,7 +65,12 @@ export function ReportContext({
               {report.baseline.sigunguName} · {report.baseline.period.from} ~{" "}
               {report.baseline.period.to}
             </p>
-            <div className="report-table-scroll">
+            {/* 좁은 화면에서도 요일별 표를 키보드로 끝까지 읽게 한다. */}
+            <section
+              className="report-table-scroll"
+              aria-label="요일별 평시 방문객 표, 좌우로 스크롤"
+              tabIndex={0}
+            >
               <table>
                 <caption>요일별 평시 방문객 · 명/일</caption>
                 <thead>
@@ -86,7 +92,7 @@ export function ReportContext({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </section>
             {evidence.get(report.baseline.evidenceId) && (
               <EvidenceChip
                 evidence={evidence.get(report.baseline.evidenceId)}

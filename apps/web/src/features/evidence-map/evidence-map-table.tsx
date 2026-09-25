@@ -1,4 +1,5 @@
 // 그래프와 같은 문장·근거·출처·문서를 읽기 쉬운 표로 펼친다.
+// biome-ignore-all lint/a11y/noNoninteractiveTabindex: 표의 가로 스크롤 영역에 키보드 초점을 준다.
 import type { Evidence, ForecastReport } from "@crowdcast/contracts/types";
 import { evidenceNumber } from "../../components/common/evidence-number";
 import type { OpenEvidence } from "../forecast-report/report-claims";
@@ -36,7 +37,11 @@ export function EvidenceMapTable({
 
   // 그래프 밖에서도 카드 번호와 원문 링크를 같은 자료에서 찾는다.
   return (
-    <div className="evidence-map-table-wrap">
+    <section
+      className="evidence-map-table-wrap"
+      aria-label="근거 연결 표, 좌우로 스크롤"
+      tabIndex={0}
+    >
       <table className="evidence-map-table">
         <caption>발행 문장부터 데이터셋·문서까지의 근거 연결</caption>
         <thead>
@@ -92,7 +97,7 @@ export function EvidenceMapTable({
           })}
         </tbody>
       </table>
-    </div>
+    </section>
   );
 }
 

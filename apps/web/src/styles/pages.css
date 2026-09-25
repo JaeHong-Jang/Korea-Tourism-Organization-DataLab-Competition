@@ -149,7 +149,7 @@
 .team-gates details { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); font-size: var(--text-caption); }
 .team-gates summary { cursor: pointer; }
 .team-gates ul { padding-left: var(--space-4); }
-.team-steps { position: relative; margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.team-steps { position: absolute; z-index: var(--z-sheet); inset: 0; max-height: 100%; overflow: auto; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-float); }
 .team-steps__head { display: flex; justify-content: space-between; }
 .team-steps button { padding: var(--space-1) var(--space-2); }
 .team-steps ul { padding-left: var(--space-4); }

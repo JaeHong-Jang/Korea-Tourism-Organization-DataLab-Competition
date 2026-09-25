@@ -38,7 +38,29 @@ function InsightResult({ insight }: { insight: Insight }) {
         {insight.comparablePairs != null &&
           ` · 비교 ${insight.comparablePairs}쌍`}
       </small>
-      <p>근거: {source.map((item) => item.title).join(" · ")}</p>
+      <details className="source-tip">
+        <summary>ⓘ 근거</summary>
+        <ul>
+          {source.map((item) => (
+            <li key={item.id}>
+              {item.title}
+              {item.source?.accessUrl && (
+                <>
+                  {" "}
+                  ·{" "}
+                  <a
+                    href={item.source.accessUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    원문 보기
+                  </a>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      </details>
       <button type="button" onClick={copy}>
         서식4용 문장 복사
       </button>

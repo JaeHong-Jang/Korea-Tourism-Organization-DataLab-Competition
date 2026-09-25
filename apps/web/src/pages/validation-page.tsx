@@ -22,7 +22,7 @@ export function ValidationPage() {
   const scores = useContract(getScores);
   const model = useContract(getModelCard);
   return (
-    <div className="page-wrap regular-page">
+    <div className="page-wrap regular-page validation-page">
       <PageHeading
         eyebrow="S6 · 결과를 다시 확인해요"
         title="검증"

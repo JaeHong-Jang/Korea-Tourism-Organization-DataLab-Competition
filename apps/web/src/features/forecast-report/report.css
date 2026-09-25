@@ -1,6 +1,6 @@
 /* 발행 예보서를 문서 폭으로 두고 근거 카드는 읽는 자리 옆에 둔다. */
 .forecast-page { padding-block: var(--space-8) var(--space-14); }
-.document-layout { display: grid; grid-template-columns: minmax(0, 880px) minmax(300px, 360px); gap: var(--space-10); align-items: start; }
+.document-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: var(--space-10); align-items: start; }
 .document-main { min-width: 0; }
 .document-sheet { padding: var(--space-8); border-radius: var(--radius-input); }
 .document-sheet .feature-panel__heading + p { margin-bottom: var(--space-6); }
@@ -45,6 +45,9 @@
 
 /* 좁은 화면에서는 근거 목록을 문서 아래로 보내고 수치를 한 줄씩 놓는다. */
 @media (max-width: 900px) {
+  .page-title-row { align-items: flex-start; flex-direction: column; }
+  .report-toolbar { justify-content: flex-start; max-width: 100%; }
+  .report-toolbar [role="status"] { text-align: left; }
   .document-layout { grid-template-columns: 1fr; }
   .evidence-drawer { position: static; max-height: none; }
 }

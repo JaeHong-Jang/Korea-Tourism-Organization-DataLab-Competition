@@ -93,7 +93,7 @@ it("실행 단계를 펼칠 수 있고 실패를 강조한다", () => {
   expect(markup).toContain("단계 펼치기");
   expect(
     renderToStaticMarkup(<RunList state={{ phase: "ready", value: [] }} />),
-  ).toContain("crowdcast pipeline run");
+  ).toContain("새로고침");
 });
 
 // 평가가 비었거나 실행 요청만 오류여도 최신성 카드 값은 남는다.

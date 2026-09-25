@@ -5,135 +5,135 @@ import { expect, type Page, test } from "@playwright/test";
 
 const screens = resolve(process.cwd(), "../../reports/figures/screens");
 const run = JSON.parse(
-	readFileSync(
-		resolve(
-			process.cwd(),
-			"../../packages/contracts/fixtures/pipeline-run/valid-running.json",
-		),
-		"utf8",
-	),
+  readFileSync(
+    resolve(
+      process.cwd(),
+      "../../packages/contracts/fixtures/pipeline-run/valid-running.json",
+    ),
+    "utf8",
+  ),
 );
 const status = JSON.parse(
-	readFileSync(
-		resolve(
-			process.cwd(),
-			"../../packages/contracts/fixtures/ops-status/valid-example.json",
-		),
-		"utf8",
-	),
+  readFileSync(
+    resolve(
+      process.cwd(),
+      "../../packages/contracts/fixtures/ops-status/valid-example.json",
+    ),
+    "utf8",
+  ),
 );
 const failed = {
-	...run,
-	runId: "run-20260928-0300",
-	startedAt: "2026-09-28T03:00:00+09:00",
-	finishedAt: "2026-09-28T03:02:00+09:00",
-	status: "failed",
-	summary: "수집 게이트 실패",
-	stages: [
-		{
-			...run.stages[0],
-			status: "failed",
-			gate: { passed: false, message: "결측률 초과" },
-		},
-	],
+  ...run,
+  runId: "run-20260928-0300",
+  startedAt: "2026-09-28T03:00:00+09:00",
+  finishedAt: "2026-09-28T03:02:00+09:00",
+  status: "failed",
+  summary: "수집 게이트 실패",
+  stages: [
+    {
+      ...run.stages[0],
+      status: "failed",
+      gate: { passed: false, message: "결측률 초과" },
+    },
+  ],
 };
 
 // 실행·상태 엔드포인트는 서로 독립적으로 실패하게 구성한다.
 async function fakeOps(
-	page: Page,
-	runs: unknown,
-	ops = status,
-	runsCode = 200,
+  page: Page,
+  runs: unknown,
+  ops = status,
+  runsCode = 200,
 ) {
-	await page.route("**/api/ops/runs", (route) =>
-		route.fulfill({
-			status: runsCode,
-			contentType: "application/json",
-			body: JSON.stringify(runs),
-		}),
-	);
-	await page.route("**/api/ops/status", (route) =>
-		route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify(ops),
-		}),
-	);
+  await page.route("**/api/ops/runs", (route) =>
+    route.fulfill({
+      status: runsCode,
+      contentType: "application/json",
+      body: JSON.stringify(runs),
+    }),
+  );
+  await page.route("**/api/ops/status", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(ops),
+    }),
+  );
 }
 
 // 최신 실행을 펼쳐 실패 게이트와 해시 복사, 평가·최신성 값을 확인한다.
 test("S8 실행 상세와 운영 상태", async ({ page, context }) => {
-	await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-	await fakeOps(page, [run, failed]);
-	await page.goto("/ops?theme=day");
-	const rows = page.locator(".ops-run");
-	await expect(rows).toHaveCount(2);
-	await expect(rows.first()).toContainText("수집 게이트 실패");
-	await rows.first().getByText("단계 펼치기").click();
-	await expect(rows.first().locator(".ops-stage--failed")).toContainText(
-		"결측률 초과",
-	);
-	await rows
-		.first()
-		.getByRole("button", { name: /해시 복사/ })
-		.click();
-	await expect(
-		rows.first().locator(".ops-artifacts [role=status]"),
-	).toContainText("복사했어요");
-	expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-		run.stages[0].artifacts[0].sha256,
-	);
-	await expect(page.locator('[data-feature="M8-F2"]')).toContainText(
-		"근거 없는 발행",
-	);
-	await expect(page.locator('[data-feature="M8-F3"]')).toContainText(
-		"마지막 수집",
-	);
-	await page.screenshot({
-		path: resolve(screens, "T-410-ops.png"),
-		fullPage: true,
-	});
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await fakeOps(page, [run, failed]);
+  await page.goto("/ops?theme=day");
+  const rows = page.locator(".ops-run");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first()).toContainText("수집 게이트 실패");
+  await rows.first().getByText("단계 펼치기").click();
+  await expect(rows.first().locator(".ops-stage--failed")).toContainText(
+    "결측률 초과",
+  );
+  await rows
+    .first()
+    .getByRole("button", { name: /해시 복사/ })
+    .click();
+  await expect(
+    rows.first().locator(".ops-artifacts [role=status]"),
+  ).toContainText("복사했어요");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    run.stages[0].artifacts[0].sha256,
+  );
+  await expect(page.locator('[data-feature="M8-F2"]')).toContainText(
+    "근거 없는 발행",
+  );
+  await expect(page.locator('[data-feature="M8-F3"]')).toContainText(
+    "마지막 수집",
+  );
+  await page.screenshot({
+    path: resolve(screens, "T-410-ops.png"),
+    fullPage: true,
+  });
 });
 
 // 실행 상류만 실패하면 평가와 최신성은 정상 데이터를 그대로 보여 준다.
 test("S8 상류 오류는 실행 카드에만 나타난다", async ({ page }) => {
-	await fakeOps(page, {}, status, 503);
-	await page.goto("/ops");
-	await expect(page.locator('[data-feature="M8-F1"]')).toContainText(
-		"API 요청 실패: 503",
-	);
-	await expect(page.locator('[data-feature="M8-F2"]')).toContainText("24건");
-	await expect(page.locator('[data-feature="M8-F3"]')).toContainText("v0.1.0");
+  await fakeOps(page, {}, status, 503);
+  await page.goto("/ops");
+  await expect(page.locator('[data-feature="M8-F1"]')).toContainText(
+    "실행 기록을 확인할 수 없어요",
+  );
+  await expect(page.locator('[data-feature="M8-F2"]')).toContainText("24건");
+  await expect(page.locator('[data-feature="M8-F3"]')).toContainText("v0.1.0");
 });
 
 // 실행 목록이 비면 펫과 실행 명령을 남기고 계약 오류는 수치를 막는다.
 test("S8 빈 실행과 계약 오류", async ({ page }) => {
-	await fakeOps(page, []);
-	await page.goto("/ops");
-	await expect(page.locator('[data-feature="M8-F1"]')).toContainText(
-		"crowdcast pipeline run",
-	);
-	await fakeOps(page, [{ ...run, status: "unknown" }]);
-	await page.reload();
-	await expect(page.locator('[data-feature="M8-F1"]')).toContainText(
-		"API 계약 불일치",
-	);
-	await expect(page.locator('[data-feature="M8-F2"]')).toContainText(
-		"근거 없는 발행",
-	);
+  await fakeOps(page, []);
+  await page.goto("/ops");
+  await expect(page.locator('[data-feature="M8-F1"]')).toContainText(
+    "새로고침",
+  );
+  await fakeOps(page, [{ ...run, status: "unknown" }]);
+  await page.reload();
+  await expect(page.locator('[data-feature="M8-F1"]')).toContainText(
+    "실행 기록을 확인할 수 없어요",
+  );
+  await expect(page.locator('[data-feature="M8-F2"]')).toContainText(
+    "근거 없는 발행",
+  );
 });
 
 // 평가 필드만 깨진 상태 응답은 최신성의 유효한 값까지 숨기지 않는다.
 test("S8 평가 계약 오류는 최신성 카드에 영향을 주지 않는다", async ({
-	page,
+  page,
 }) => {
-	await fakeOps(page, [run], {
-		...status,
-		evals: { ...status.evals, cases: "24" },
-	});
-	await page.goto("/ops");
-	await expect(page.locator('[data-feature="M8-F2"]')).toContainText(
-		"API 계약 불일치",
-	);
-	await expect(page.locator('[data-feature="M8-F3"]')).toContainText("v0.1.0");
+  await fakeOps(page, [run], {
+    ...status,
+    evals: { ...status.evals, cases: "24" },
+  });
+  await page.goto("/ops");
+  await expect(page.locator('[data-feature="M8-F2"]')).toContainText(
+    "평가 결과를 확인할 수 없어요",
+  );
+  await expect(page.locator('[data-feature="M8-F3"]')).toContainText("v0.1.0");
 });

@@ -102,7 +102,7 @@ export function ConsultPage() {
             )}
             {error && (
               <ErrorState
-                message={error}
+                message="상담을 이어가지 못했어요. 같은 내용을 다시 보내 주세요."
                 action={
                   <Button
                     type="button"

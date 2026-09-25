@@ -2,6 +2,7 @@
 import type { ForecastCard } from "@crowdcast/contracts/types";
 import { Link } from "react-router-dom";
 import { RangeBar } from "../../components/charts/range-bar";
+import { EmptyState } from "../../components/common/empty-state";
 import { KeyNumber } from "../../components/common/key-number";
 import { LevelBadge } from "../../components/common/level-badge";
 import { Button } from "../../components/ui/button";
@@ -31,43 +32,35 @@ export function ForecastPreview({
           </p>
         </>
       ) : (
-        <p className="consult-muted">
-          검증팀이 숫자를 확인하면 여기에 예보가 나타나요.
-        </p>
+        <EmptyState
+          message="검증팀이 숫자를 확인하면 여기에 예보가 나타나요."
+          action={
+            <button
+              type="button"
+              onClick={() => document.getElementById("consult-text")?.focus()}
+            >
+              행사 설명하기
+            </button>
+          }
+        />
       )}
-      <div className="consult-preview__actions">
-        {forecastId ? (
+      {forecastId && (
+        <div className="consult-preview__actions">
           <Button asChild variant="outline">
-            <Link to={`/f/${encodeURIComponent(forecastId)}`}>전체 예보서</Link>
+            <Link to={`/f/${encodeURIComponent(forecastId)}`}>예보서 보기</Link>
           </Button>
-        ) : (
-          <Button variant="outline" disabled>
-            전체 예보서
-          </Button>
-        )}
-        {forecastId ? (
           <Button asChild variant="outline">
-            <Link to={`/f/${encodeURIComponent(forecastId)}?tab=plan`}>
+            <Link to={`/f/${encodeURIComponent(forecastId)}/plan`}>
               계획 초안 받기
             </Link>
           </Button>
-        ) : (
-          <Button variant="outline" disabled>
-            계획 초안 받기
-          </Button>
-        )}
-        {forecastId ? (
           <Button asChild variant="outline">
             <Link to={`/my?forecastId=${encodeURIComponent(forecastId)}`}>
               저장
             </Link>
           </Button>
-        ) : (
-          <Button variant="outline" disabled>
-            저장
-          </Button>
-        )}
-      </div>
+        </div>
+      )}
       {!forecastId && <p className="consult-muted">검증팀 발행 뒤에 열려요.</p>}
     </div>
   );

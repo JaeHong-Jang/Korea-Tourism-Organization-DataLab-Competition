@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ErrorState } from "../components/common/error-state";
 import { FeaturePanel } from "../components/common/feature-panel";
+import { LoadingState } from "../components/common/loading-state";
 import { PageHeading } from "../components/common/page-heading";
 import {
   ReportDrawer,
@@ -68,10 +69,15 @@ export function ForecastPage() {
     setTab(next);
   };
   const onTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
     const step = event.key === "ArrowRight" ? 1 : TABS.length - 1;
-    const next = TABS[(TABS.indexOf(tab) + step) % TABS.length];
+    const next =
+      event.key === "Home"
+        ? TABS[0]
+        : event.key === "End"
+          ? (TABS.at(-1) ?? TABS[0])
+          : TABS[(TABS.indexOf(tab) + step) % TABS.length];
     chooseTab(next);
     document.getElementById(`forecast-tab-${next}`)?.focus();
   };
@@ -86,9 +92,11 @@ export function ForecastPage() {
         {state.status === "ready" && <ReportToolbar report={state.report} />}
       </div>
       {state.status === "loading" && (
-        <p role="status">발행된 예보서를 불러오고 있어요.</p>
+        <LoadingState message="발행된 예보서를 불러오고 있어요." />
       )}
-      {state.status === "error" && <ErrorState message={state.error} />}
+      {state.status === "error" && (
+        <ErrorState message="예보서를 열지 못했어요. 잠시 뒤 다시 시도해 주세요." />
+      )}
       {state.status === "ready" && (
         <>
           <div

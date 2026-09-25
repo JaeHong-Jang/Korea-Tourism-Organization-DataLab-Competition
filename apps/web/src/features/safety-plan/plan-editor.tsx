@@ -40,7 +40,12 @@ export function PlanEditor({
   const select = (key: string) => {
     setActive(key);
     const heading = document.getElementById(`plan-heading-${key}`);
-    heading?.scrollIntoView({ behavior: "smooth", block: "start" });
+    heading?.scrollIntoView({
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+        ? "auto"
+        : "smooth",
+      block: "start",
+    });
     heading?.focus();
   };
   const saveLabel =

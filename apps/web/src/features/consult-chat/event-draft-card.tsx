@@ -1,6 +1,7 @@
 // 행사 초안의 확정 값과 질문 대기 항목을 읽기 전용 칩으로 보여 준다.
 import type { EventDraft } from "@crowdcast/contracts/types";
 import { useState } from "react";
+import { EmptyState } from "../../components/common/empty-state";
 import { Button } from "../../components/ui/button";
 
 const fields: { key: keyof EventDraft; label: string }[] = [
@@ -62,9 +63,17 @@ export function EventDraftCard({
   const [notice, setNotice] = useState(false);
   if (!draft)
     return (
-      <p className="consult-muted">
-        행사 내용을 보내면 확인한 항목이 여기에 모여요.
-      </p>
+      <EmptyState
+        message="행사 내용을 보내면 확인한 항목이 여기에 모여요."
+        action={
+          <button
+            type="button"
+            onClick={() => document.getElementById("consult-text")?.focus()}
+          >
+            행사 설명하기
+          </button>
+        }
+      />
     );
   return (
     <div>

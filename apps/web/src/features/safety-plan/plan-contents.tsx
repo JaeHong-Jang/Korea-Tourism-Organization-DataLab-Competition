@@ -11,6 +11,28 @@ export function PlanContents({
   active: string;
   onSelect: (key: string) => void;
 }) {
+  // 목차 안에서 방향키로 이웃 섹션을 찾고 Enter·Space로 선택한다.
+  const onKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    const next =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? sections.length - 1
+          : event.key === "ArrowDown"
+            ? (index + 1) % sections.length
+            : event.key === "ArrowUp"
+              ? (index + sections.length - 1) % sections.length
+              : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    event.currentTarget
+      .closest("ol")
+      ?.querySelectorAll<HTMLButtonElement>("button")
+      [next]?.focus();
+  };
   return (
     <nav className="plan-contents" aria-label="계획 초안 목차">
       <h2>목차</h2>
@@ -22,6 +44,7 @@ export function PlanContents({
               type="button"
               className={active === section.key ? "is-active" : ""}
               aria-current={active === section.key ? "location" : undefined}
+              onKeyDown={(event) => onKeyDown(event, index)}
               onClick={() => onSelect(section.key)}
             >
               <span>

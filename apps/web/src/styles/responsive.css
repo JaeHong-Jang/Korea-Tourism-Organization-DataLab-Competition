@@ -50,6 +50,10 @@
   .scene-id { top: var(--space-4); left: var(--space-4); }
   .scene-cta { top: var(--space-4); left: auto; right: var(--space-4); transform: none; }
   .document-sheet { padding: var(--space-5); min-height: 430px; }
+  .feature-panel { padding: var(--space-4); }
+  .validation-svg-wrap, .ops-table-scroll, .validation-table-scroll, .evidence-map-table-wrap, .report-table-scroll { max-width: 100%; }
+  .forecast-tabs { overflow-x: auto; }
+  .forecast-tabs button { flex: none; }
   .document-tabs { grid-template-columns: 1fr; }
   .plan-layout { grid-template-columns: 1fr; }
   .plan-layout > * { min-height: 230px; }

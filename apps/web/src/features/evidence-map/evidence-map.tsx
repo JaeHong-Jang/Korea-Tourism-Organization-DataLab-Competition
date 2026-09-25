@@ -11,6 +11,7 @@ import { evidenceKinds } from "../../components/common/evidence-chip";
 import { evidenceNumber } from "../../components/common/evidence-number";
 import type { OpenEvidence } from "../forecast-report/report-claims";
 import { EvidenceMapTable, mapEvidenceKinds } from "./evidence-map-table";
+import { focusEvidenceKind } from "./filter-keyboard";
 import {
   buildEvidenceMap,
   connectedPath,
@@ -45,6 +46,9 @@ export function EvidenceMap({
   const [layoutError, setLayoutError] = useState(false);
   const [selectedKinds, setSelectedKinds] =
     useState<Evidence["kind"][]>(mapEvidenceKinds);
+  const [focusedKind, setFocusedKind] = useState<Evidence["kind"]>(
+    mapEvidenceKinds[0],
+  );
   const [table, setTable] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
@@ -211,7 +215,15 @@ export function EvidenceMap({
               key={kind}
               type="button"
               aria-pressed={selectedKinds.includes(kind)}
-              onClick={() => toggleKind(kind)}
+              tabIndex={focusedKind === kind ? 0 : -1}
+              onFocus={() => setFocusedKind(kind)}
+              onKeyDown={(event) =>
+                focusEvidenceKind(event, kind, setFocusedKind)
+              }
+              onClick={() => {
+                setFocusedKind(kind);
+                toggleKind(kind);
+              }}
             >
               <Icon size={15} aria-hidden="true" />
               {label}

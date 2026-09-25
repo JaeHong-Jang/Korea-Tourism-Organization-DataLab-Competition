@@ -2,9 +2,9 @@
 .map-2d, .map-2d__canvas { position: absolute; inset: 0; }
 .map-2d { background: var(--surface-sunken); }
 .map-2d__hint, .map-2d__status, .map-2d__overzoom { position: absolute; z-index: 1; margin: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); font-size: var(--text-caption); }
-.map-2d__hint { left: var(--space-4); bottom: var(--space-2); }
+.map-2d__hint { top: calc(var(--space-8) + var(--space-14) + var(--space-4)); left: 50%; bottom: auto; width: max-content; max-width: min(32ch, calc(100% - 2 * var(--space-4))); transform: translateX(-50%); }
 .map-2d__status { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.map-2d__overzoom { right: var(--space-4); bottom: var(--space-2); }
+.map-2d__overzoom { top: calc(var(--space-8) + var(--space-14) + var(--space-14) + var(--space-1)); left: 50%; right: auto; bottom: auto; width: max-content; max-width: calc(100% - 2 * var(--space-4)); transform: translateX(-50%); }
 .map-2d__popup { display: grid; gap: var(--space-1); color: var(--ink); font-family: var(--font-sans); font-size: var(--text-caption); }
 .map-2d .maplibregl-popup-content { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-input); box-shadow: var(--shadow-float); }
 .map-2d .maplibregl-popup-tip { border-top-color: var(--surface); }
@@ -16,3 +16,8 @@
 .scene-view-toggle button:disabled { opacity: .5; cursor: not-allowed; }
 .map-2d .maplibregl-ctrl-group button { color: var(--ink); }
 @media (max-width: 1024px) { .scene-overview.scene-view-toggle { left: calc(var(--space-4) + 124px); } }
+/* 휴대전화에서는 두 안내를 떠 있는 필터보다 위에 쌓는다. */
+@media (max-width: 640px) {
+  .map-2d__hint { top: calc(var(--space-14) + var(--space-14) + var(--space-14) + var(--space-3)); }
+  .map-2d__overzoom { top: calc(var(--space-14) + var(--space-14) + var(--space-14) + var(--space-14) + var(--space-10) + var(--space-2)); }
+}
