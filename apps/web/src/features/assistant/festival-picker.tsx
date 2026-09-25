@@ -41,12 +41,13 @@ export function FestivalPicker({
           .slice(0, 8)
       : [];
   return (
-    <section className="assistant-picker" aria-label="다가오는 행사에서 고르기">
+    <section className="assistant-picker" aria-label="행사 검색(패널)">
       <label htmlFor="assistant-festival-search">
         다가오는 행사에서 고르기
       </label>
       <input
         id="assistant-festival-search"
+        aria-label="다가오는 행사에서 고르기(패널)"
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}

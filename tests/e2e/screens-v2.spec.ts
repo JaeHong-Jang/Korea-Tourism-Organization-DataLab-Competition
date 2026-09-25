@@ -7,6 +7,7 @@ import {
   consultExample,
   routeScreensV2,
 } from "./fixtures/screens-v2-routes";
+import { sendConsultDescription } from "./fixtures/start-consult";
 
 const output = resolve(process.cwd(), "../../reports/figures/screens/v2");
 const sizes = [
@@ -118,10 +119,10 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
   }
   if (scene.screen === "s2") {
     await expect(
-      page.getByRole("button", { name: consultExample }),
+      page.getByRole("complementary", { name: "고래 봇 대화" }),
     ).toBeVisible();
     if (scene.state !== "start") {
-      await page.getByRole("button", { name: consultExample }).click();
+      await sendConsultDescription(page, consultExample);
       await expect(page.locator(".key-number strong").first()).toBeVisible();
       await expect(
         page.getByRole("button", { name: "일요일이면?" }),

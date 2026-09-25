@@ -5,6 +5,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 import { backtest } from "../../apps/web/src/features/validation/__tests__/validation-fixtures";
 import { planFixture } from "./fixtures/plan-yeongjong";
+import { sendConsultDescription } from "./fixtures/start-consult";
 
 const root = resolve(process.cwd(), "../../");
 const screens = resolve(root, "reports/figures/screens");
@@ -262,7 +263,10 @@ test("S2 상담 시작과 완료", async ({ page }) => {
 	await routeFixtures(page);
 	await page.goto("/consult?theme=day");
 	await checkAxe(page);
-	await page.getByRole("button", { name: /영종 씨사이드파크에서/ }).click();
+	await sendConsultDescription(
+		page,
+		"10월 18일 19시부터 21시까지 영종 씨사이드파크에서 인천 중구가 여는 불꽃축제를 해요",
+	);
 	await expect(page.locator(".key-number strong").first()).toBeVisible();
 	const member = page.getByRole("button", { name: "받아쓰기 작업 기록 열기" });
 	await member.click();

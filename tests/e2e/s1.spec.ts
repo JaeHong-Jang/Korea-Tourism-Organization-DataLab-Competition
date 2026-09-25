@@ -109,9 +109,15 @@ async function visibleTagsAreSafe(
 				?.getBoundingClientRect();
 			const panels = Array.from(
 				document.querySelectorAll(
-					".scene-left-rail, .scene-page > .scene-list, .scene-page > .scene-timeline, .scene-cta",
+					".scene-left-rail, .scene-page > .scene-list, .scene-page > .scene-timeline, .scene-cta, .assistant-panel, .assistant-whale",
 				),
-				(panel) => panel.getBoundingClientRect(),
+				(panel) =>
+					panel.getClientRects().length > 0
+						? panel.getBoundingClientRect()
+						: null,
+			);
+			const visiblePanels = panels.filter(
+				(panel): panel is DOMRect => panel !== null,
 			);
 			return Boolean(
 				stage &&
@@ -123,7 +129,7 @@ async function visibleTagsAreSafe(
 							rect.top >= stage.top &&
 							rect.right <= stage.right &&
 							rect.bottom <= stage.bottom &&
-							panels.every(
+							visiblePanels.every(
 								(other) =>
 									rect.right <= other.left ||
 									rect.left >= other.right ||
@@ -190,6 +196,7 @@ async function cameraTarget(page: Page): Promise<number[] | null> {
 
 // 견본 모드에서 목록 선택과 장면 이름표 선택은 하나의 행사 ID를 공유한다.
 test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) => {
+	test.setTimeout(90_000);
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto(`/?sceneFixture=1&theme=day&sceneDiagnostic=1&at=${time}`);

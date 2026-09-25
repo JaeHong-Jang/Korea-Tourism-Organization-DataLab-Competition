@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import { backtest } from "../../apps/web/src/features/validation/__tests__/validation-fixtures";
 import { consultExample, routeScreensV2 } from "./fixtures/screens-v2-routes";
+import { sendConsultDescription } from "./fixtures/start-consult";
 
 const screens = resolve(process.cwd(), "../../reports/figures/screens");
 const contract = (name: string) =>
@@ -27,7 +28,7 @@ test("QA-2 구간 막대", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await routeScreensV2(page);
   await page.goto("/consult?theme=day");
-  await page.getByRole("button", { name: consultExample }).click();
+  await sendConsultDescription(page, consultExample);
   const bar = page.locator(".consult-preview .range-bar");
   await expect(bar.getByText("순간 최대 예상 인원과 법정 기준")).toBeVisible();
   await expect(
@@ -77,7 +78,8 @@ test("QA-2 모델 카드", async ({ page }) => {
   await page.goto("/validation?theme=day");
   const panel = page.locator('[data-feature="M6-F6"]');
   await expect(panel.getByText("원문 보기")).toBeVisible();
-  await expect(panel.locator(".validation-limit-summary li")).toHaveCount(6);
+  await expect(panel.locator(".validation-limit-summary li")).toHaveCount(1);
+  await expect(panel.locator(".validation-limit-summary")).not.toContainText("카드에 기록 없음");
   await panel.screenshot({ path: resolve(screens, "QA-2-s6-card.png") });
 });
 

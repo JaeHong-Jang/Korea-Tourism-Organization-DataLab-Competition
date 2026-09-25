@@ -127,7 +127,12 @@ it("움직임 줄이기에서는 3D 캔버스를 쓰지 않는다", () => {
     removeEventListener: () => {},
   }));
   const markup = renderToStaticMarkup(
-    <FloatingWhale working={false} published={false} onClick={() => {}} />,
+    <FloatingWhale
+      working={false}
+      published={false}
+      panelOpen={false}
+      onClick={() => {}}
+    />,
   );
   expect(markup).toContain("<svg");
   expect(markup).not.toContain("<canvas");

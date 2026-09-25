@@ -75,7 +75,7 @@ test("봇에서 행사 선택 뒤 예보서 미리보기", async ({ page }) => {
     page.getByRole("complementary", { name: "고래 봇 대화" }),
   ).toBeVisible();
   await page.screenshot({ path: resolve(screenshots, "T-442-panel.png") });
-  await page.getByLabel("다가오는 행사에서 고르기").fill("영종");
+  await page.getByRole("searchbox", { name: "다가오는 행사에서 고르기(패널)" }).fill("영종");
   await page
     .getByRole("button", { name: /영종 씨사이드파크 불꽃축제/ })
     .last()

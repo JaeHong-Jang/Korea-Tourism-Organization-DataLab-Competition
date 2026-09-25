@@ -11,6 +11,8 @@ type BoundsCache = {
   value: PanelBounds;
   listeners: Set<(bounds: PanelBounds) => void>;
   observer: ResizeObserver;
+  changes: MutationObserver;
+  cleanup: () => void;
 };
 
 const caches = new WeakMap<HTMLElement, BoundsCache>();
@@ -23,16 +25,26 @@ export function observePanelBounds(
   let cache = caches.get(stage);
   if (!cache) {
     const page = stage.closest(".scene-page");
-    const panels = page
+    const scenePanels = page
       ? Array.from(
           page.querySelectorAll<HTMLElement>(
             ".scene-left-rail, .scene-list, .scene-timeline, .scene-cta, .scene-overview",
           ),
         )
       : [];
+    const assistant = document.querySelector<HTMLElement>(".assistant-shell");
+    const observed = new Set<HTMLElement>();
     const listeners = new Set<(bounds: PanelBounds) => void>();
+
+    // 장면 밖에 포털처럼 붙는 고래와 상담 서랍도 같은 좌표계로 옮긴다.
     const measure = () => {
       const rect = stage.getBoundingClientRect();
+      const panels = [
+        ...scenePanels,
+        ...document.querySelectorAll<HTMLElement>(
+          ".assistant-panel, .assistant-whale",
+        ),
+      ].filter((panel) => panel.getClientRects().length > 0);
       const value = {
         width: rect.width,
         height: rect.height,
@@ -51,15 +63,43 @@ export function observePanelBounds(
       for (const receive of listeners) receive(value);
     };
     const observer = new ResizeObserver(measure);
-    observer.observe(stage);
-    for (const panel of panels) observer.observe(panel);
+    const observe = () => {
+      for (const panel of [
+        stage,
+        ...scenePanels,
+        ...document.querySelectorAll<HTMLElement>(
+          ".assistant-panel, .assistant-whale",
+        ),
+      ]) {
+        if (!observed.has(panel)) {
+          observer.observe(panel);
+          observed.add(panel);
+        }
+      }
+      measure();
+    };
+    const changes = new MutationObserver(observe);
+    if (assistant)
+      changes.observe(assistant, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["class", "style"],
+      });
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
     cache = {
       value: { width: 0, height: 0, blockers: [] },
       listeners,
       observer,
+      changes,
+      cleanup: () => {
+        window.removeEventListener("resize", measure);
+        window.removeEventListener("scroll", measure, true);
+      },
     };
     caches.set(stage, cache);
-    measure();
+    observe();
   }
   cache.listeners.add(listener);
   listener(cache.value);
@@ -67,6 +107,8 @@ export function observePanelBounds(
     cache.listeners.delete(listener);
     if (cache.listeners.size === 0) {
       cache.observer.disconnect();
+      cache.changes.disconnect();
+      cache.cleanup();
       caches.delete(stage);
     }
   };
