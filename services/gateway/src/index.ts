@@ -11,10 +11,19 @@ const server = serve({
   port: config.port,
 });
 
-// 개발 실행기 종료나 재시작 시 리스너와 유휴 연결을 닫는다
+// 재시작(tsx watch) 때 이전 프로세스가 아직 포트를 잡고 있으면 잠시 뒤 다시 연다(최대 20번, 0.3초 간격)
+let retries = 0;
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code !== "EADDRINUSE" || retries >= 20) throw error;
+  retries++;
+  setTimeout(() => server.listen(config.port, "127.0.0.1"), 300);
+});
+
+// 개발 실행기 종료나 재시작 시 리스너와 연결을 닫고 프로세스를 끝내 포트를 바로 돌려준다
 function stopServer() {
-  server.close();
+  server.close(() => process.exit(0));
   if ("closeAllConnections" in server) server.closeAllConnections();
+  setTimeout(() => process.exit(0), 1000).unref();
 }
 process.once("SIGINT", stopServer);
 process.once("SIGTERM", stopServer);

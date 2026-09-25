@@ -48,3 +48,5 @@
 .page-heading p { margin: 0; color: var(--ink-2); font-size: var(--text-ui); }
 .page-title-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); }
 .dev-buttons { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+/* 개발 서버 실시간 반영 알림(배포 빌드에는 없음) */
+.live-update-pill { position: fixed; z-index: var(--z-popover); left: 50%; bottom: var(--space-4); margin: 0; padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); font-size: var(--text-sm); font-weight: 600; transform: translateX(-50%); }

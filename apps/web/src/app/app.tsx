@@ -1,6 +1,7 @@
 // 공용 헤더와 각 화면의 주소를 연결한다.
 import type { MouseEvent } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { LiveUpdatePill } from "../components/common/live-update-pill";
 import { SiteHeader } from "../components/common/site-header";
 import { AssistantShell } from "../features/assistant/assistant-shell";
 import {
@@ -78,6 +79,7 @@ function AppLayout() {
         </Routes>
       </main>
       <AssistantShell />
+      <LiveUpdatePill />
       <footer className="site-footer">
         참고용 예보예요. 최종 판단은 담당자가 해 주세요.
       </footer>
