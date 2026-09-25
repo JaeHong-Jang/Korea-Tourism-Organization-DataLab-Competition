@@ -14,6 +14,7 @@ import {
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
+import { tileStep } from "../../features/mini-korea/data-mode";
 import { projectKorea } from "./projection";
 import { sceneColor } from "./quality";
 
@@ -86,6 +87,14 @@ export function codeForFace(
 
 // 252개 피처를 색상 속성이 있는 17개 시도 메시로 합친다.
 export function buildLandModel(topology: Topology): LandModel {
+  return buildLandModelForData(topology, null);
+}
+
+// 데이터 모드에서는 같은 시군구의 예보 중앙값 합으로 색과 타일 높이를 만든다.
+export function buildLandModelForData(
+  topology: Topology,
+  totals: Map<string, number> | null,
+): LandModel {
   const collection = Object.values(topology.objects)[0] as
     | GeometryCollection<SigunguProperties>
     | undefined;
@@ -119,13 +128,22 @@ export function buildLandModel(topology: Topology): LandModel {
     (_, index) => new Color(sceneColor(`land-${index + 1}`)),
   );
   const edgeColor = new Color(sceneColor("land-edge"));
+  const maximum = totals ? Math.max(0, ...totals.values()) : 0;
 
   // 피처별 중심점과 버텍스 색을 기록한 뒤 시도별 병합 목록에 넣는다.
   regions.features.forEach((region, index) => {
     const { sgg: code, sidonm: sido } = region.properties;
     const geometry = regionGeometry(region);
+    const step = tileStep(totals?.get(code) ?? 0, maximum);
+    if (totals) geometry.scale(1, 1, step);
     const positions = geometry.getAttribute("position");
-    const color = palette[index % palette.length];
+    const color = totals
+      ? new Color(
+          getComputedStyle(document.documentElement)
+            .getPropertyValue(`--seq-${step}`)
+            .trim(),
+        )
+      : palette[index % palette.length];
     const colors = new Float32Array(positions.count * 3);
     // 윗면은 지역색, 옆면은 토큰의 흙 가장자리 색으로 칠한다.
     for (const group of geometry.groups) {

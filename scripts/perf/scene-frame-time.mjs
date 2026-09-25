@@ -10,6 +10,21 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const output = join(root, "reports/figures/perf");
 const configured = existsSync(join(root, ".env")) ? parseEnv(readFileSync(join(root, ".env"), "utf8")) : {};
 const model = process.env.OLLAMA_MODEL_FAST ?? configured.OLLAMA_MODEL_FAST ?? "qwen3:4b-instruct-2507-q4_K_M";
+const festivalCard = JSON.parse(readFileSync(join(root, "packages/contracts/fixtures/festival-summary/valid-card.json"), "utf8"));
+
+// 실제 규모의 행사 211건을 국내 좌표와 계약 필드로 만들어 같은 브라우저 실행에서 잰다.
+function festivalScale211() {
+  const codes = ["11110", "26110", "28110", "41111", "50110", "51110"];
+  return Array.from({ length: 211 }, (_, index) => ({
+    ...festivalCard,
+    eventId: `e-scene-scale-${index + 1}`,
+    forecastId: `f-scene-scale-${index + 1}`,
+    name: `견본 행사 ${index + 1}`,
+    sigunguCode: codes[index % codes.length],
+    lat: 33.5 + (index % 17) * 0.26,
+    lng: 126.1 + Math.floor(index / 17) * 0.23,
+  }));
+}
 
 // 개발 서버와 같은 순서로 .env, WSL 게이트웨이, 로컬 주소를 시도한다.
 function ollamaCandidates() {
@@ -81,11 +96,13 @@ async function runDictation(host) {
 }
 
 // 품질과 DPR을 높음·1로 고정한 R3F 프레임과 Chromium 메모리를 읽는다.
-async function measure(browser, ollamaHost, fixture = false) {
+async function measure(browser, ollamaHost, fixture = false, festivalCount = 0) {
   const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   const page = await context.newPage();
+  if (festivalCount === 211) await page.route("**/api/festivals", (route) => route.fulfill({ json: festivalScale211() }));
   await page.goto(`http://127.0.0.1:5185/?theme=day&at=2025-10-18T13:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}`);
   await page.waitForFunction(() => document.documentElement.dataset.sceneReady === "true", { timeout: 30000 });
+  if (festivalCount || fixture) await page.waitForFunction((expected) => document.querySelectorAll(".festival-list__items li").length === expected, festivalCount || 30, { timeout: 30000 });
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const renderer = await page.evaluate(() => {
     const canvas = document.querySelector("canvas");
@@ -106,6 +123,7 @@ async function measure(browser, ollamaHost, fixture = false) {
     heapTotal: performance.memory?.totalJSHeapSize ?? null,
     quality: document.documentElement.dataset.sceneQuality ?? null,
     dolls: Number(document.documentElement.dataset.sceneDollCount ?? 0),
+    festivals: document.querySelectorAll(".festival-list__items li").length,
     render: window.__crowdcastSceneRender?.() ?? null,
     actualDpr: (() => {
       const canvas = document.querySelector("canvas");
@@ -119,6 +137,7 @@ async function measure(browser, ollamaHost, fixture = false) {
     quality: metrics.quality,
     actual_dpr: metrics.actualDpr,
     dolls: metrics.dolls,
+    festivals: metrics.festivals,
     draw_calls: metrics.render?.calls ?? null,
     triangles: metrics.render?.triangles ?? null,
     renderer,
@@ -140,7 +159,29 @@ const server = await startServer();
 let browser;
 try {
   browser = await chromium.launch({ args: ["--enable-gpu", "--use-gl=egl", "--enable-precise-memory-info", "--enable-unsafe-swiftshader"] });
-  if (process.argv.includes("--t432")) {
+  if (process.argv.includes("--t433")) {
+    const t432Condition = await measure(browser, null, true);
+    const actualScale = await measure(browser, null, false, 211);
+    if (t432Condition.festivals !== 30 || actualScale.festivals !== 211) throw new Error(`행사 조건 불일치: ${t432Condition.festivals}건 / ${actualScale.festivals}건`);
+    const report = {
+      task: "T-433", viewport: "1366x768", quality: "high (고정)", seconds_per_case: 30,
+      t432_condition: t432Condition, festivals_211: actualScale,
+      p50_ratio: actualScale.p50_ms / t432Condition.p50_ms,
+      p95_ratio: actualScale.p95_ms / t432Condition.p95_ms,
+    };
+    mkdirSync(output, { recursive: true });
+    writeFileSync(join(output, "T-433-frame-time.json"), `${JSON.stringify(report, null, 2)}\n`);
+    writeFileSync(join(output, "T-433-frame-time.md"), [
+      "# T-433 행사 211건 프레임 시간", "",
+      `- 조건: Chromium ${browser.version()}, ${report.viewport}, high, 각 30초`,
+      `- 렌더러: ${actualScale.renderer}${actualScale.software_renderer ? " (소프트웨어 렌더러)" : ""}`, "",
+      "| 조건 | p50 | p95 | draw calls | triangles |", "| --- | ---: | ---: | ---: | ---: |",
+      `| 같은 실행의 T-432 견본 30건 | ${t432Condition.p50_ms?.toFixed(2)}ms | ${t432Condition.p95_ms?.toFixed(2)}ms | ${t432Condition.draw_calls} | ${t432Condition.triangles} |`,
+      `| 행사 211건 | ${actualScale.p50_ms?.toFixed(2)}ms | ${actualScale.p95_ms?.toFixed(2)}ms | ${actualScale.draw_calls} | ${actualScale.triangles} |`,
+      `- 비율: p50 ${report.p50_ratio.toFixed(2)}배, p95 ${report.p95_ratio.toFixed(2)}배`, "",
+    ].join("\n"));
+    console.log(`행사 211건 / T-432 조건: p50 ${report.p50_ratio.toFixed(2)}배, p95 ${report.p95_ratio.toFixed(2)}배`);
+  } else if (process.argv.includes("--t432")) {
     const sameRunBaseline = await measure(browser, null, false);
     const crowd = await measure(browser, null, true);
     if (crowd.dolls !== 2000) throw new Error(`인형 2,000개 조건 불일치: ${crowd.dolls}개`);

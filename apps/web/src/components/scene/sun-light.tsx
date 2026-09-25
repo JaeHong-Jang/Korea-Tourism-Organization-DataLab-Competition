@@ -40,7 +40,7 @@ export function SunLight({
   // 장면 밝기는 해 상태별로 조절하고 헤더와 같은 상태를 캡처에 기록한다.
   useEffect(() => {
     document.documentElement.dataset.sceneSky = sky;
-    gl.toneMappingExposure = sky === "night" ? 1.65 : 1.25;
+    gl.toneMappingExposure = sky === "night" ? 1.12 : 1.25;
     return () => {
       delete document.documentElement.dataset.sceneSky;
     };

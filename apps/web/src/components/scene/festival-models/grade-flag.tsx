@@ -48,10 +48,10 @@ export function GradeFlags({ placed }: { placed: PlacedFestival[] }) {
     const flag = flags.current;
     if (!pole || !flag) return;
     const matrix = new Matrix4();
-    placed.forEach(({ festival, x, z }, index) => {
-      matrix.makeTranslation(x + 2.35, LAND_BASE_Y + 4.4, z);
+    placed.forEach(({ festival, x, y, z }, index) => {
+      matrix.makeTranslation(x + 2.35, LAND_BASE_Y + y + 4.4, z);
       pole.setMatrixAt(index, matrix);
-      matrix.makeTranslation(x + 2.9, LAND_BASE_Y + 5.5, z);
+      matrix.makeTranslation(x + 2.9, LAND_BASE_Y + y + 5.5, z);
       flag.setMatrixAt(index, matrix);
       flag.setColorAt(
         index,
