@@ -1,4 +1,6 @@
 // 발행 문장을 검사 맥락으로 재사용하고 새 설명만 게이트 B와 발행에 넘긴다
+
+import type { ForecastReport } from "@crowdcast/contracts/types";
 import { ServiceHttpError } from "../../clients/request-json.js";
 import { whyExplainer } from "../report/why-templates.js";
 import type { EventWriter } from "../runtime/events.js";
@@ -43,14 +45,16 @@ export async function explainWhy(
   writer: EventWriter,
   deadline: Deadline,
   settings: TeamSettings,
+  explainer = whyExplainer,
+  context?: ForecastReport,
 ) {
   const published = session.published;
   if (!published) throw new ExplanationGateError("발행 묶음이 없습니다");
   const client = knowledgeClient(settings, deadline);
   await rejectPending(session, client);
-  const { report } = published;
+  const report = context ?? published.report;
   const drafts = await execute(
-    whyExplainer,
+    explainer,
     report,
     "예보의 이유를 근거에서 찾아요.",
   );

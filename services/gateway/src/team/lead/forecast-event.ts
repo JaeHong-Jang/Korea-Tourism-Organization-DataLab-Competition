@@ -21,9 +21,10 @@ export async function forecastEvent(
   deadline: Deadline,
   settings: TeamSettings,
   today: string,
+  prediction: typeof forecaster = forecaster,
 ) {
   const { forecast, revision } = await execute(
-    forecaster,
+    prediction,
     { event, today },
     "행사 예측과 판정을 요청해요.",
     2,

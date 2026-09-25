@@ -36,7 +36,12 @@ afterEach(() => {
 // 생성 시각만 게이트웨이가 만들고 나머지 값은 검증된 원문에서 가져온다
 it("운영 상태를 모델 카드·최신성·그래프·평가로 조립한다", async () => {
   const fetcher = fakeUpstreams(opsBodies);
-  const route = createOpsRoute(proxyConfig, fetcher, async () => ops.evals);
+  const route = createOpsRoute(
+    proxyConfig,
+    fetcher,
+    async () => ops.evals,
+    async () => "미검증",
+  );
   const response = await route.request("/status");
   const result = await response.json();
   expect(response.status).toBe(200);
@@ -51,6 +56,7 @@ it("운영 상태를 모델 카드·최신성·그래프·평가로 조립한다
       modelVersion: modelCard.modelVersion,
       trainRange: modelCard.trainRange,
       createdAt: modelCard.createdAt,
+      verdict: "미검증",
     },
   });
   expect(fetcher).toHaveBeenCalledTimes(3);

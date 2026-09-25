@@ -21,6 +21,8 @@ export type ForecastSnapshot = {
   card: ForecastCard;
   draft: EventDraft | null;
   request: string;
+  // 이 카드를 받은 요청 — 그 요청의 스트림이 검사에 걸리면 카드를 거둔다
+  messageId: string;
 };
 
 // 검증된 스트림 이벤트만 상담 상태에 반영한다.
@@ -95,6 +97,7 @@ export function useConsultSession() {
                   card: next,
                   draft: draftRef.current,
                   request: lastMessage.current?.text ?? "",
+                  messageId: requestId.current ?? "",
                 },
               ],
         );
@@ -175,6 +178,10 @@ export function useConsultSession() {
         setSent((current) => current.filter((item) => item.id !== messageId));
         setReplyError("답을 확인해 주세요. 고쳐서 다시 보내 주세요.");
       } else {
+        // 순서·형식 검사에 걸린 스트림의 숫자 카드는 보이지 않게 거둔다(오류 카드가 우선)
+        setForecasts((current) =>
+          current.filter((item) => item.messageId !== messageId),
+        );
         setError(
           cause instanceof Error ? cause.message : "상담 연결을 확인해 주세요.",
         );

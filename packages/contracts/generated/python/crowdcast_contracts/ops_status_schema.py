@@ -3,11 +3,17 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import common_schema
+
+
+class Verdict(Enum):
+    통과 = '통과'
+    미검증 = '미검증'
 
 
 class Model(BaseModel):
@@ -18,6 +24,7 @@ class Model(BaseModel):
     modelVersion: str
     trainRange: common_schema.Period
     createdAt: common_schema.Datetime
+    verdict: Annotated[Verdict | None, Field(description='사용 모델 검증 상태(선택 — promoted.json의 verdict)')] = None
 
 
 class Freshness(BaseModel):
@@ -41,6 +48,45 @@ class GraphStats(BaseModel):
     sessionTriples: Annotated[int, Field(ge=0)]
 
 
+class Checks(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    passed: Annotated[int, Field(ge=0)]
+    total: Annotated[int, Field(ge=0)]
+
+
+class Forecast(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    n: Annotated[int, Field(ge=0)]
+    p50: float | None
+    p95: float | None
+
+
+class PublishedDone(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    n: Annotated[int, Field(ge=0)]
+    p50: float | None
+    p95: float | None
+
+
+class LatencySeconds(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    forecast: Forecast
+    publishedDone: PublishedDone
+
+
+class Mode(Enum):
+    live = 'live'
+    fake = 'fake'
+
+
 class EvalSummary(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -51,6 +97,14 @@ class EvalSummary(BaseModel):
     unsupportedPublished: Annotated[int, Field(description='근거 없이 발행된 문장 수(0이어야 통과)', ge=0)]
     numberMismatch: Annotated[int, Field(description='화면 숫자와 수치 노드가 다른 건수(0이어야 통과)', ge=0)]
     passed: bool
+    checks: Annotated[
+        dict[str, Checks] | None,
+        Field(description='항목별 통과/전체(선택 — 평가 결과 파일의 summary.checks 그대로, 예: sequence·evidence·numbers·ask)'),
+    ] = None
+    latencySeconds: Annotated[
+        LatencySeconds | None, Field(description='지연(초, 선택): 첫 요청 → forecast 카드, → 발행 done(되묻기 왕복 제외)')
+    ] = None
+    mode: Annotated[Mode | None, Field(description='실제 서비스 실행인지 가짜 서비스 실행인지(선택)')] = None
 
 
 class OpsStatus(BaseModel):

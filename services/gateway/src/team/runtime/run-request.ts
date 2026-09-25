@@ -7,6 +7,7 @@ import type { Deadline } from "../lead/deadline.js";
 import { followup } from "../lead/followups.js";
 import { AnalysisGateError, ExplanationGateError } from "../lead/gates.js";
 import { newForecast } from "../lead/playbooks.js";
+import { isInitialWhatif } from "../whatif/intent.js";
 import type { EventWriter } from "./events.js";
 import { createExecutor } from "./executor.js";
 import type { TeamSession } from "./sessions.js";
@@ -50,21 +51,39 @@ export async function runRequest(
 ) {
   const previousForecastId = session.forecastId;
   const isFollowup = session.completed;
+  let newMode = !isFollowup;
   const today = koreanToday();
   const cancel = () => deadline.abort(disconnected.reason);
   disconnected.addEventListener("abort", cancel, { once: true });
   if (disconnected.aborted) cancel();
   try {
-    const execute = createExecutor(session.id, settings, deadline, writer);
+    const execute = createExecutor(
+      session.published?.report.sessionId ?? session.id,
+      settings,
+      deadline,
+      writer,
+    );
     if (isFollowup) {
       await followup(
         session,
-        message.text,
+        message,
         execute,
         writer,
         deadline,
         settings,
+        today,
+        () => {
+          newMode = true;
+        },
       );
+      return;
+    }
+    // 예보가 없는 조건 질문에는 받아쓰기·추정 없이 선행 작업을 안내한다
+    if (!message.answer && isInitialWhatif(message.text)) {
+      await writer.emit("error", {
+        code: "OUT_OF_SCOPE",
+        message: "먼저 예보를 만들어요",
+      });
       return;
     }
     // 발행 전의 단독 저장 명령만 안내하고 되묻기 답은 기존 분석으로 이어 간다
@@ -103,7 +122,7 @@ export async function runRequest(
     try {
       await writer.emit("done", {
         sessionId: session.id,
-        forecastId: isFollowup
+        forecastId: !newMode
           ? (previousForecastId ?? null)
           : session.forecastId !== previousForecastId
             ? (session.forecastId ?? null)

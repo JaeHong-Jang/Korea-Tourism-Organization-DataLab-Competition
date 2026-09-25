@@ -17,6 +17,6 @@ export function ContractMessage({
   if (state.status === "loading") return <LoadingState />;
   if (state.status === "empty") return <EmptyState message={empty} />;
   return (
-    <ErrorState message="자료를 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요." />
+    <ErrorState message="자료 형식을 확인할 수 없어요. 잠시 뒤 다시 확인해 주세요." />
   );
 }

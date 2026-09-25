@@ -1,8 +1,14 @@
 // 실제 라우트를 통과한 가짜 스트림과 변조 스트림으로 평가기의 오탐·누락을 검사한다
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Claim, ForecastCard } from "@crowdcast/contracts/types";
 import { beforeAll, describe, expect, it } from "vitest";
-import { scenarioOptions } from "../evals/run-scenario-eval.js";
+import {
+  runScenarioEval,
+  scenarioOptions,
+} from "../evals/run-scenario-eval.js";
 import {
   loadScenarios,
   materializeScenario,
@@ -42,15 +48,15 @@ function publishedSample() {
 }
 
 describe("시나리오 평가", () => {
-  it("20개를 실제 게이트웨이 SSE로 실행하고 후속은 앞 발행 세션을 쓴다", () => {
+  it("23개를 실제 게이트웨이 SSE로 실행하고 후속은 앞 발행 세션을 쓴다", () => {
     const scores = cases.map((item, index) =>
       scoreScenario(item, samples[index]),
     );
     expect(scores.flatMap((score) => score.problems)).toEqual([]);
     const summary = summarizeScenarios(scores);
     expect(summary).toMatchObject({
-      total: 20,
-      passed: 20,
+      total: 23,
+      passed: 23,
       numberMismatches: 0,
       unlinkedClaims: 0,
       llmCalls: 0,
@@ -58,8 +64,8 @@ describe("시나리오 평가", () => {
     expect(summary.claims).toBeGreaterThan(0);
     expect(samples[15].sessionId).toBe(samples[0].sessionId);
     expect(samples[17].sessionId).toBe(samples[2].sessionId);
-    expect(summary.latency.forecast.n).toBe(9);
-    expect(summary.latency.publishedDone.n).toBe(10);
+    expect(summary.latency.forecast.n).toBe(12);
+    expect(summary.latency.publishedDone.n).toBe(13);
   });
 
   it("게이트웨이의 number 통과 표시가 있어도 변조된 rendered를 독립 검산한다", () => {
@@ -138,7 +144,7 @@ describe("시나리오 평가", () => {
       },
       "http://127.0.0.1",
     );
-    expect(failed).toHaveLength(20);
+    expect(failed).toHaveLength(23);
     expect(
       failed.every(
         (sample, index) => !scoreScenario(cases[index], sample).passed,
@@ -178,9 +184,32 @@ describe("시나리오 평가", () => {
     expect(() => scenarioOptions([])).toThrow("--base");
   });
 
+  // 가짜 실행의 전체 결과를 별도 최신 파일에 쓰고 임시 파일을 남기지 않는다
+  it("시나리오 실행이 최신 평가를 원자 갱신하며 fake 모드를 기록한다", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "crowdcast-scenario-latest-"),
+    );
+    const latestFile = join(directory, "latest.json");
+    try {
+      const artifact = await runScenarioEval(
+        ["--fake", "--out", join(directory, "scenario.json")],
+        latestFile,
+      );
+      const latest = JSON.parse(await readFile(latestFile, "utf8"));
+      expect(latest).toEqual({ ...artifact, mode: "fake" });
+      expect(await readdir(directory)).toEqual([
+        "latest.json",
+        "scenario.json",
+        "scenario.md",
+      ]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("사례 중복·20개 구성과 자료 경계 날짜를 검증한다", async () => {
     const { contents, cases: definitions } = await loadScenarios();
-    expect(readScenarios(contents)).toHaveLength(20);
+    expect(readScenarios(contents)).toHaveLength(23);
     expect(() =>
       readScenarios(`${contents}${contents.split("\n")[0]}`),
     ).toThrow("20개");

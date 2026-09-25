@@ -256,7 +256,7 @@ for (const name of [
 		);
 		await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
 		await page.getByRole("button", { name: example }).click();
-		await expect(page.getByRole("alert")).toContainText("SSE 순서 위반");
+		await expect(page.getByRole("alert")).toContainText("순서 검사");
 		await expect(page.locator(".key-number strong")).toHaveCount(0);
 	});
 }
@@ -279,5 +279,5 @@ test("계약 위반 SSE 오류 카드", async ({ page }) => {
 	);
 	await page.goto("/consult?theme=day&at=2026-10-18T12:00+09:00");
 	await page.getByRole("button", { name: example }).click();
-	await expect(page.getByRole("alert")).toContainText("SSE 계약 위반");
+	await expect(page.getByRole("alert")).toContainText("형식 검사");
 });

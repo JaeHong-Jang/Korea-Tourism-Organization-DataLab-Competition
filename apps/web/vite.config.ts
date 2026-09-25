@@ -9,7 +9,8 @@ export default defineConfig({
   worker: { format: "es" },
   server: {
     proxy: {
-      "/api": "http://127.0.0.1:8787",
+      // e2e는 CROWDCAST_GATEWAY_URL로 닫힌 포트를 넘겨 떠 있는 실제 게이트웨이에 붙지 않는다
+      "/api": process.env.CROWDCAST_GATEWAY_URL ?? "http://127.0.0.1:8787",
     },
   },
 });

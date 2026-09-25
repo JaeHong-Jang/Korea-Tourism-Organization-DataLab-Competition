@@ -71,11 +71,17 @@ it("두 번째 카드의 조건·수치·예보서 링크를 비교한다", () =
   const markup = renderToStaticMarkup(
     <MemoryRouter>
       <ForecastComparison
-        original={{ card, draft, request: "영종 씨사이드파크 불꽃축제" }}
+        original={{
+          card,
+          draft,
+          request: "영종 씨사이드파크 불꽃축제",
+          messageId: "m-1",
+        }}
         changed={{
           card: changed,
           draft: { ...draft, startsAt: "2025-10-19T19:00:00+09:00" },
           request: "일요일이면?",
+          messageId: "m-2",
         }}
         forecastId={changed.id}
       />

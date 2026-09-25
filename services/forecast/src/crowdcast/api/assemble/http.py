@@ -11,6 +11,7 @@ from crowdcast import paths
 from crowdcast.analytics.baseline import NoCompleteWindow
 from crowdcast.api.assemble.artifacts import Unavailable
 from crowdcast.api.assemble.identity import canonical
+from crowdcast.api.assemble.weather_lookup import REQUEST_WEATHER
 from crowdcast.api.contract import _validators, validate
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -73,9 +74,14 @@ def event_input(value: dict[str, Any]) -> dict[str, Any]:
 async def response(path: str, calculation: Callable[[], Any]) -> JSONResponse:
     # JSON 응답의 유한성도 전송 전에 확인한다.
     def calculate() -> Any:
-        value = calculation()
-        endpoint_validator(path, "response").validate(value)
-        return json.loads(canonical(value))
+        # 요청 스레드 안에서만 날씨를 켜고 오류가 나도 배치·다른 요청에 상태를 남기지 않는다.
+        token = REQUEST_WEATHER.set(path == "/v1/predict")
+        try:
+            value = calculation()
+            endpoint_validator(path, "response").validate(value)
+            return json.loads(canonical(value))
+        finally:
+            REQUEST_WEATHER.reset(token)
 
     try:
         value = await run_in_threadpool(calculate)
