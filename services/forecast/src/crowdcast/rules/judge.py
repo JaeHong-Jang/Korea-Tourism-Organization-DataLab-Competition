@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 
 from crowdcast.rules import checklist
 from crowdcast.rules.evidence import rule_evidence, rule_settings
+from crowdcast.rules.peak import round_people
 
 
 # 계약 판정과 예보의 확률·근거 필드를 묶어 API 조립 단계로 넘긴다.
@@ -101,7 +102,7 @@ def judge(
     interval_display = None
     if basis == "구간":
         p10, p90 = np.quantile(values, [0.1, 0.9])
-        interval_display = settings["interval_display"].format(p10=float(p10), p90=float(p90))
+        interval_display = settings["interval_display"].format(p10=round_people(p10), p90=round_people(p90))
         probabilities = [{**item, "display": interval_display} for item in probabilities]
 
     # 고정 템플릿 사유마다 조항과 입력을 가진 근거 조각을 하나씩 붙인다.
@@ -117,7 +118,7 @@ def judge(
         rule = settings["rules"][rule_id]
         text = rule[text_key]
         if interval_display is not None:
-            text = f"{rule.get('interval_' + text_key, text)} {interval_display}"
+            text = rule.get("interval_" + text_key, text)
         fragment = rule_evidence(rule_id, inputs, text=text)
         reasons.append(
             {

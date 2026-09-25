@@ -24,6 +24,7 @@ from crowdcast.api.assemble.model import current_model
 from crowdcast.api.contract import validate
 from crowdcast.data.events import contract_event
 from crowdcast.features.availability import publication_date
+from crowdcast.rules import evidence, peak
 from fastapi import HTTPException
 
 # 빈 실행도 같은 열과 자료형을 갖도록 계약 요약과 내부 감사 열을 고정한다.
@@ -42,20 +43,19 @@ AUDIT_SCHEMA = {
 WINDOW_START, WINDOW_END = date(2026, 9, 29), date(2026, 11, 30)
 
 
-# 행사 행 순서에 무관한 입력 해시와 실제 기준일·관측 파일·모델을 하나의 실행으로 식별한다.
+# 입력·기준일·모델과 실제 계산에 쓰는 캐시된 설정을 정렬 JSON의 SHA-256으로 식별한다.
 def run_identifier(frame: pl.DataFrame, start: date, end: date, pointer: dict[str, Any]) -> str:
     rows = sorted(frame.select(sorted(frame.columns)).write_ndjson().splitlines())
     hashes = {"events": sha256("\n".join(rows).encode()).hexdigest()}
-    for name in ("labels", "region_daily"):
-        path = paths.PROCESSED / f"{name}.parquet"
+    for path in (paths.PROCESSED / f"{name}.parquet" for name in ("labels", "region_daily")):
         if path.exists():
             with path.open("rb") as stream:
-                hashes[name] = file_digest(stream, "sha256").hexdigest()
+                hashes[path.name] = file_digest(stream, "sha256").hexdigest()
     days = frame.filter(pl.col("start").is_between(start, end))["start"].unique().to_list()
     cutoffs = sorted({cutoff({"startsAt": f"{day}T00:00:00+09:00"}).isoformat() for day in days})
-    model = {key: pointer[key] for key in ("modelVersion", "runId", "verdict")}
-    return identifier("batch", {"inputs": hashes, "from": str(start), "to": str(end),
-                                "asOf": cutoffs, "model": model})
+    return identifier("batch", {"inputs": hashes, "from": str(start), "to": str(end), "asOf": cutoffs,
+                                "model": {key: pointer[key] for key in ("modelVersion", "runId", "verdict")},
+                                "settings": {"rules": evidence.rule_settings(), "peak": peak._profiles()}})
 
 
 # 세 임시 파일과 복구본을 먼저 준비하고 교체 도중 실패하면 직전 발행 상태로 되돌린다.

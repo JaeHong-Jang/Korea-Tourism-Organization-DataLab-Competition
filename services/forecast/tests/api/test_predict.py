@@ -10,6 +10,7 @@ from crowdcast import paths
 from crowdcast.api.assemble import inputs, observations
 from crowdcast.api.assemble.model import current_model, load_model
 from crowdcast.api.contract import validate
+from crowdcast.rules.peak import round_people
 from fastapi.testclient import TestClient
 
 
@@ -170,7 +171,7 @@ def test_simple_primary_model(client: TestClient, forecast_data: Path, event: di
     result = client.post("/v1/predict", json=event).json()
     model, _ = current_model()
     frame = observations.feature_frame(event, inputs.cutoff(event), model.card["features"])
-    assert result["dailyMean"]["p50"] == model.simple.predict(frame)[0][1]
+    assert result["dailyMean"]["p50"] == round_people(model.simple.predict(frame)[0][1])
     assert result["factors"] == []
     assert result["judgment"]["basis"] == "구간"
     assert all("표본 한계로 구간 기준 표시" in row["display"] for row in result["probabilities"])

@@ -16,6 +16,18 @@ from crowdcast.api.assemble.profile import composition
 from crowdcast.data.crosswalk import CODE_CHANGE_DATE
 from crowdcast.models.distribution import distribution
 from crowdcast.rules.evidence import assumption_evidence
+from crowdcast.rules.peak import round_people
+
+
+# API의 사람 수만 정수로 복사해 원본 표본·모델 출력과 다른 단위의 수치를 보존한다.
+def people_quantity(quantity: dict[str, Any]) -> dict[str, Any]:
+    if quantity["unit"] not in {"명", "명/일"}:
+        return dict(quantity)
+    return {
+        **quantity,
+        **{key: round_people(quantity[key]) if quantity[key] is not None else None
+           for key in ("value", "p10", "p50", "p90")},
+    }
 
 
 # 임시공휴일 제외는 정본에 등록된 가정만 사용한다.
@@ -80,8 +92,8 @@ def predict(event: dict[str, Any]) -> dict[str, Any]:
         "asOf": as_of.isoformat(),
         "createdAt": f"{as_of.isoformat()}T00:00:00+09:00",
         "modelVersion": pointer["modelVersion"],
-        "dailyMean": daily,
-        "peakConcurrent": peak.quantity(identifier("q", [forecast_id, "peakConcurrent"])),
+        "dailyMean": people_quantity(daily),
+        "peakConcurrent": people_quantity(peak.quantity(identifier("q", [forecast_id, "peakConcurrent"]))),
         "probabilities": judgment.probabilities,
         "judgment": judgment.judgment,
         "observations": observed,

@@ -3,6 +3,7 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from functools import lru_cache
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -14,6 +15,11 @@ from scipy.special import ndtri
 
 from crowdcast.paths import REPO_ROOT
 from crowdcast.rules.evidence import assumption_evidence
+
+
+# 인원 표시에만 0.5 올림을 적용하고 모델 분위수와 판정 표본은 그대로 둔다.
+def round_people(value: float) -> int:
+    return int(Decimal(str(value)).to_integral_value(rounding=ROUND_HALF_UP))
 
 
 # 한 번 생성한 최종 표본을 판정과 표시 수치에 함께 사용한다.
