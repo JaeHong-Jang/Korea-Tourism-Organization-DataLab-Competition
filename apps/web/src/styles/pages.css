@@ -200,6 +200,10 @@
 
 /* 산점도는 같은 로그 척도와 표 전환을 제공하며 점 모양도 범례에 적는다. */
 .validation-chart-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--text-sm); }
+.validation-legend i { font-style: normal; }
+.validation-legend--goldA i { color: var(--cat-1); }
+.validation-legend--goldB i { color: var(--cat-2); }
+.validation-legend--silver i { color: var(--cat-3); }
 .validation-chart-tools button, .insight-result button { padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--link); cursor: pointer; }
 .validation-quadrant-wrap { display: grid; gap: var(--space-2); }
 .validation-quadrants { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin: 0; }
@@ -210,9 +214,9 @@
 .validation-svg-wrap svg { display: block; width: 100%; min-width: 600px; height: auto; }
 .validation-svg-wrap text { fill: var(--ink-2); font-size: 12px; }
 .validation-svg-wrap .validation-point text { font-size: 15px; cursor: help; }
-.validation-svg-wrap .validation-point--goldA text { fill: var(--level-4); }
-.validation-svg-wrap .validation-point--goldB text { fill: var(--level-3); }
-.validation-svg-wrap .validation-point--silver text { fill: var(--level-2); }
+.validation-svg-wrap .validation-point--goldA text { fill: var(--cat-1); }
+.validation-svg-wrap .validation-point--goldB text { fill: var(--cat-2); }
+.validation-svg-wrap .validation-point--silver text { fill: var(--cat-3); }
 .validation-axis { stroke: var(--ink-2); stroke-width: 1; }
 .validation-diagonal { stroke: var(--line); stroke-width: 2; stroke-dasharray: 5 4; }
 .validation-whisker { stroke: var(--brand); stroke-width: 2; }
@@ -240,6 +244,9 @@
 .insight-result strong { font-size: var(--text-section); }
 .insight-result:first-child { padding: var(--space-8); }
 .insight-result:first-child strong { font-size: var(--text-title); }
+.insight-result--state { background: var(--surface); }
+.insight-result--state > div { display: grid; justify-items: start; gap: var(--space-2); }
+.insight-result--state .pet-avatar { margin: 0; }
 .feature-panel.insights-main .insight-result h3, .feature-panel.insights-main .insight-result p { margin: 0; }
 .insight-result small { color: var(--ink-2); }
 @media (max-width: 1024px) { .validation-layout > .feature-panel, .insights-layout > .feature-panel { grid-column: span 12; } .validation-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

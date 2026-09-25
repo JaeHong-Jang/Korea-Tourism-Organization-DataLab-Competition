@@ -61,7 +61,19 @@ export function PredictionScatter({
   return (
     <div className="validation-content">
       <div className="validation-chart-tools">
-        <span>● 실버 · ■ 골드 B · ◆ 골드 A</span>
+        <span className="validation-legend">
+          <span className="validation-legend--silver">
+            <i aria-hidden="true">●</i> 실버
+          </span>{" "}
+          ·{" "}
+          <span className="validation-legend--goldB">
+            <i aria-hidden="true">■</i> 골드 B
+          </span>{" "}
+          ·{" "}
+          <span className="validation-legend--goldA">
+            <i aria-hidden="true">◆</i> 골드 A
+          </span>
+        </span>
         <button
           type="button"
           onClick={() => setView(view === "chart" ? "table" : "chart")}

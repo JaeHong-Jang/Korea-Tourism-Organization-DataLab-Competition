@@ -13,6 +13,15 @@ const usageDatasets = JSON.parse(
     "utf8",
   ),
 ) as { datasetId: string; title: string; datalabMenu: string | null }[];
+const insightEvidence = JSON.parse(
+  readFileSync(
+    resolve(
+      process.cwd(),
+      "../../packages/contracts/fixtures/evidence/valid-data.json",
+    ),
+    "utf8",
+  ),
+);
 const backtest = {
   runId: "bt-v1-064e60073a7411037212",
   modelRunId: "mr-v1-064e60073a7411037212",
@@ -237,6 +246,107 @@ test("S7 빈 상태", async ({ page }) => {
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({
     path: resolve(output, "T-407-s7.png"),
+    fullPage: true,
+  });
+});
+
+// 산점도 점과 글자 범례는 같은 범주형 토큰을 쓰며 판정 토큰을 재사용하지 않는다.
+test("T-407b S6 산점도 범주 색", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await fakeGateway(page);
+  await page.route("**/api/validation/backtest", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ...backtest,
+        points: [
+          ...backtest.points,
+          { ...backtest.points[0], eventId: "e-2025-gold-b", tier: "goldB" },
+        ],
+      }),
+    }),
+  );
+  await page.goto("/validation?theme=day");
+  await expect(page.locator(".validation-point--goldA")).toHaveCount(1);
+  const colors = await page.evaluate(() => {
+    return (["goldA", "goldB", "silver"] as const).map((tier, index) => {
+      const point = document.querySelector(`.validation-point--${tier} text`);
+      const legend = document.querySelector(`.validation-legend--${tier} i`);
+      if (!point || !legend) throw new Error(`${tier} 산점도 범례 없음`);
+      const expected = (() => {
+        const swatch = document.createElement("span");
+        swatch.style.color = `var(--cat-${index + 1})`;
+        document.body.append(swatch);
+        const value = getComputedStyle(swatch).color;
+        swatch.remove();
+        return value;
+      })();
+      return {
+        expected,
+        point: getComputedStyle(point).fill,
+        legend: getComputedStyle(legend).color,
+      };
+    });
+  });
+  for (const color of colors) {
+    expect(color.point).toBe(color.expected);
+    expect(color.legend).toBe(color.expected);
+  }
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({
+    path: resolve(output, "T-407b-s6.png"),
+    fullPage: true,
+  });
+});
+
+// I1 계약 실패를 주입해도 계약을 통과한 I2의 수치와 복사 행동은 남는다.
+test("T-407b S7 I1 실패 뒤 I2 표시", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await fakeGateway(page);
+  await page.route("**/api/insights/I1", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: "{broken",
+    }),
+  );
+  await page.route("**/api/insights/I2", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        key: "I2",
+        title: "인천 중구 평시 방문",
+        headline: {
+          value: 14500,
+          unit: "명/일",
+          text: "방문자 수를 비교했어요.",
+        },
+        sampleSize: 86,
+        comparablePairs: 1,
+        period: { from: "2025-01-01", to: "2025-12-31" },
+        series: [],
+        evidenceIds: [insightEvidence.id],
+        evidence: [insightEvidence],
+        computedAt: "2026-09-27T12:00:00+09:00",
+      }),
+    }),
+  );
+  await page.goto("/insights?theme=day");
+  await expect(page.locator('[data-insight="I1"]')).toContainText(
+    "자료 형식을 확인할 수 없어요",
+  );
+  await expect(page.locator('[data-insight="I2"]')).toContainText(
+    "14,500명/일",
+  );
+  await expect(page.locator('[data-insight="I2"]')).toContainText("표본 86건");
+  await expect(page.locator('[data-insight="I2"] button')).toHaveText(
+    "서식4용 문장 복사",
+  );
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({
+    path: resolve(output, "T-407b-s7.png"),
     fullPage: true,
   });
 });
