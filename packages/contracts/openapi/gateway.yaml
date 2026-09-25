@@ -279,6 +279,29 @@ paths:
           description: 발행 예보서 스냅샷 없음
         "502":
           description: records가 계획을 거부(plan_rejected)
+  /api/events/{id}/reforecast:
+    post:
+      summary: 저장한 행사를 상담 없이 다시 예보·검증·발행하고 직전 발행 스냅샷과 비교(M5-F3, T-409). 추출·되묻기 없이 저장된 행사 입력으로 예보관 → 게이트 A → 보고팀 → 게이트 B → 발행을 거치고, 새 스냅샷을 records events/{id}/snapshots에 더한다(이전 스냅샷은 그대로). 게이트 실패면 발행하지 않는다
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^e-
+      responses:
+        "200":
+          description: 새 발행 스냅샷과 비교
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/reforecast-result.schema.json
+        "404":
+          description: 저장한 행사 없음
+        "409":
+          description: 게이트 실패로 발행하지 않음(code·message에 이유)
+        "503":
+          description: 하위 서비스 연결 실패
   /api/plans/{id}:
     get:
       summary: 계획 초안(records 프록시, T-306)

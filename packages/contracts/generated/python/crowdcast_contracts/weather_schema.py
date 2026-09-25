@@ -47,3 +47,7 @@ class Weather(BaseModel):
     pop: Annotated[int | None, Field(ge=0, le=100)]
     source: Source
     fetchedAt: common_schema.Datetime | None
+    tempMin: Annotated[
+        float | None, Field(description='그날 최저기온(℃) — 단기예보 TMN·중기예보 도시 기온. 시각 기온(temp)과 따로, 없으면 null')
+    ] = None
+    tempMax: Annotated[float | None, Field(description='그날 최고기온(℃) — 단기예보 TMX·중기예보 도시 기온. 없으면 null')] = None

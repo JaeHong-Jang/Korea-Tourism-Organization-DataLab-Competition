@@ -23,6 +23,7 @@ export type { PipelineRun } from "./pipeline-run";
 export type { PlanSection } from "./plan-section";
 export type { Plan } from "./plan";
 export type { PreregistrationScores } from "./preregistration-scores";
+export type { ReforecastResult } from "./reforecast-result";
 export type { RegionBaseline } from "./region-baseline";
 export type { SimilarEvent } from "./similar-event";
 export type { SseEvent } from "./sse-event";

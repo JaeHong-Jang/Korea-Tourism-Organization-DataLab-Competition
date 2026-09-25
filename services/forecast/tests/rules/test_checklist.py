@@ -162,7 +162,12 @@ def test_all_checks_have_registered_evidence(
         hazards=["차량진입", "수면", "산", "야간조명부족", "불", "폭죽", "단일출입구", "무대밀집"],
     )
     result = build(daytime_event)
-    expected = {rule_id for rule_id in master_ids["rules"] if rule_id.startswith("rule-check-")}
+    expected = {
+        rule_id
+        for rule_id in master_ids["rules"]
+        if rule_id.startswith("rule-check-")
+        and "level_min" not in rule_settings()["rules"][rule_id]["conditions"]
+    }
     assert len(result.checklist) == len(result.evidence) == len(expected) == 7
     assert {item["ruleId"] for item in result.checklist} == expected
     assert len({item["id"] for item in result.checklist}) == 7

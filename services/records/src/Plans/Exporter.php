@@ -70,18 +70,25 @@ final class Exporter
             $section->addText($heading, $headingFont, 'PlanHeading');
             if ($planSection['claimIds'] === []) {
                 $section->addText('담당자가 내용을 검토하고 필요한 사항을 작성해 주세요.', $bodyFont, 'PlanParagraph');
-                continue;
-            }
-            foreach ($planSection['claimIds'] as $claimId) {
-                $claim = $claims[$claimId];
-                $run = $section->addTextRun('PlanParagraph');
-                $run->addText($claim['rendered'], $bodyFont);
-                foreach ($claim['evidenceIds'] as $evidenceId) {
-                    if (!isset($evidence[$evidenceId])) {
-                        throw new RuntimeException("스냅샷 근거가 없습니다: {$evidenceId}");
+            } else {
+                foreach ($planSection['claimIds'] as $claimId) {
+                    $claim = $claims[$claimId];
+                    $run = $section->addTextRun('PlanParagraph');
+                    $run->addText($claim['rendered'], $bodyFont);
+                    foreach ($claim['evidenceIds'] as $evidenceId) {
+                        if (!isset($evidence[$evidenceId])) {
+                            throw new RuntimeException("스냅샷 근거가 없습니다: {$evidenceId}");
+                        }
+                        $note = $run->addFootnote();
+                        $note->addText((new EvidenceLabel())->format($evidence[$evidenceId], $report), $tableFont, 'PlanTable');
                     }
-                    $note = $run->addFootnote();
-                    $note->addText((new EvidenceLabel())->format($evidence[$evidenceId], $report), $tableFont, 'PlanTable');
+                }
+            }
+            // 작성자 메모는 근거 각주 없이 별도 소제목 아래 원문으로 싣는다
+            if (($planSection['notes'] ?? '') !== '') {
+                $section->addText('작성자 메모(근거 없음)', $tableFont, 'PlanTable');
+                foreach (explode("\n", $planSection['notes']) as $line) {
+                    $section->addText($line, $bodyFont, 'PlanParagraph');
                 }
             }
         }

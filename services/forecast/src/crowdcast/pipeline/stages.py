@@ -134,6 +134,9 @@ def command(entry: str, args: list[str] | None = None) -> tuple[int, str]:
         text=True,
         check=False,
     )
+    # 일괄 예보 성공 뒤에 저장형 인사이트를 계산하고 실패 종료 코드도 전파한다.
+    if result.returncode == 0 and module == "crowdcast.analytics.upcoming":
+        return command("crowdcast.analytics.insights")
     detail = safe_error(RuntimeError(result.stdout + "\n" + result.stderr)).strip().replace("\n", " ")
     return result.returncode, detail
 

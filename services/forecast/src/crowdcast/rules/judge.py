@@ -131,8 +131,8 @@ def judge(
         )
         evidence.append(fragment)
 
-    # 규모 외 점검은 모든 등급에서 생성하고 대규모 사전 협의에는 판정 근거를 재사용한다.
-    checks = checklist.build(event, weather)
+    # 최종 등급으로 계획 점검을 켜고 기존 위험 점검·대규모 협의 근거는 유지한다.
+    checks = checklist.build(event, weather, level=level)
     evidence.extend(checks.evidence)
     if level == 4:
         traffic = settings["rules"]["rule-internal-5000"]["checklist"]

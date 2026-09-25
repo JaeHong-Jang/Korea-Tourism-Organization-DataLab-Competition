@@ -36,18 +36,25 @@ final class Repository
         }
         $sections = $this->db->prepare('SELECT * FROM plan_sections WHERE plan_id = :id ORDER BY position');
         $sections->execute(['id' => $id]);
+        $notes = $this->db->prepare('SELECT section_key, notes FROM plan_section_notes WHERE plan_id = :id');
+        $notes->execute(['id' => $id]);
+        $notesByKey = $notes->fetchAll(PDO::FETCH_KEY_PAIR);
         $plan = [
             'id' => $row['id'], 'forecastId' => $row['forecast_id'], 'eventId' => $row['event_id'],
             'sessionId' => $row['session_id'], 'title' => $row['title'], 'createdAt' => $row['created_at'],
             'updatedAt' => $row['updated_at'], 'watermark' => $row['watermark'], 'sections' => [],
         ];
         foreach ($sections->fetchAll(PDO::FETCH_ASSOC) as $section) {
-            $plan['sections'][] = [
+            $item = [
                 'key' => $section['section_key'], 'title' => $section['title'], 'status' => $section['status'],
                 'claimIds' => json_decode($section['claim_ids_json'], true, 512, JSON_THROW_ON_ERROR),
                 'body' => $section['body'],
                 'lockedFields' => json_decode($section['locked_fields_json'], true, 512, JSON_THROW_ON_ERROR),
             ];
+            if (array_key_exists($section['section_key'], $notesByKey)) {
+                $item['notes'] = $notesByKey[$section['section_key']];
+            }
+            $plan['sections'][] = $item;
         }
         return $plan;
     }
@@ -60,6 +67,7 @@ final class Repository
         try {
             $this->writeHeader($plan, false);
             $this->writeSections($plan);
+            $this->writeNotes($plan);
             $this->db->commit();
         } catch (Throwable $error) {
             $this->db->rollBack();
@@ -94,6 +102,7 @@ final class Repository
             $delete = $this->db->prepare('DELETE FROM plan_sections WHERE plan_id = :id');
             $delete->execute(['id' => $plan['id']]);
             $this->writeSections($plan);
+            $this->writeNotes($plan);
             $this->db->commit();
             return true;
         } catch (Throwable $error) {
@@ -138,6 +147,24 @@ final class Repository
                 'body' => $section['body'],
                 'locked' => json_encode($section['lockedFields'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
             ]);
+        }
+    }
+
+    // 메모가 없는 섹션은 행을 만들지 않아 기존 계획 응답 형식을 보존한다
+    /** @param array<string, mixed> $plan */
+    private function writeNotes(array $plan): void
+    {
+        $delete = $this->db->prepare('DELETE FROM plan_section_notes WHERE plan_id = :id');
+        $delete->execute(['id' => $plan['id']]);
+        $insert = $this->db->prepare(
+            'INSERT INTO plan_section_notes (plan_id, section_key, notes) VALUES (:plan, :key, :notes)'
+        );
+        foreach ($plan['sections'] as $section) {
+            if (array_key_exists('notes', $section)) {
+                $insert->execute([
+                    'plan' => $plan['id'], 'key' => $section['key'], 'notes' => $section['notes'],
+                ]);
+            }
         }
     }
 }
