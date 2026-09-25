@@ -1,4 +1,5 @@
 // 단일 규칙·모호한 LLM 분류·안내 경로를 실제 SSE와 작업 기록으로 확인한다
+
 import { expect, it } from "vitest";
 import {
   classificationResponse,
@@ -6,6 +7,7 @@ import {
   isClassification,
   validFollowup,
 } from "./followup-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 
 // 새 행사를 요청하는 안내 경로는 기존 예보 id를 보존한다
 it.each([
@@ -17,17 +19,19 @@ it.each([
 ])("%s는 %s 규칙으로 안내한다", async (text, intent, message) => {
   const harness = followupFixture();
   const { id, forecastId } = await harness.publish();
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text });
   validFollowup(events, forecastId);
   expect(
     events.find((event) => event.event === "agent_step")?.data,
   ).toMatchObject({ note: `요청 분류: ${intent} (규칙)`, usedLlm: false });
-  expect(events.at(-2)).toMatchObject({
+  expect(withoutReplyEvents(events).at(-2)).toMatchObject({
     event: "error",
     data: { code: "OUT_OF_SCOPE", message },
   });
-  expect(harness.calls.slice(before)).toHaveLength(0);
+  expect(
+    harness.calls.filter((call) => !isReplyCall(call)).slice(before),
+  ).toHaveLength(0);
 });
 
 // 단어가 없는 날씨 질문과 충돌하는 키워드는 스키마를 강제해 한 번만 분류한다
@@ -40,10 +44,13 @@ it.each([
       isClassification(call) ? classificationResponse(intent) : undefined,
   });
   const { id, forecastId } = await harness.publish();
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text });
   validFollowup(events, forecastId);
-  const calls = harness.calls.slice(before).filter(isClassification);
+  const calls = harness.calls
+    .filter((call) => !isReplyCall(call))
+    .slice(before)
+    .filter(isClassification);
   expect(calls).toHaveLength(1);
   expect(calls[0].body).toMatchObject({
     format: {
@@ -61,7 +68,7 @@ it.each([
   ).toMatchObject({ note: `요청 분류: ${intent} (LLM)`, usedLlm: true });
   expect(JSON.stringify(events)).not.toContain(text);
   if (intent === "out_of_scope")
-    expect(events.at(-2)?.data).toMatchObject({
+    expect(withoutReplyEvents(events).at(-2)?.data).toMatchObject({
       code: "OUT_OF_SCOPE",
       message: expect.stringContaining(
         "이유·근거 설명, 예보서 저장, 계획 초안",
@@ -86,18 +93,23 @@ it.each(["error", "enum", "json"])(
       },
     });
     const { id, forecastId } = await harness.publish();
-    const before = harness.calls.length;
+    const before = harness.calls.filter((call) => !isReplyCall(call)).length;
     const events = await harness.message(id, {
       text: "이유와 저장을 같이 부탁해",
     });
     validFollowup(events, forecastId);
-    expect(harness.calls.slice(before).filter(isClassification)).toHaveLength(
-      1,
-    );
+    expect(
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .slice(before)
+        .filter(isClassification),
+    ).toHaveLength(1);
     expect(
       events.find((event) => event.event === "agent_step")?.data,
     ).toMatchObject({ note: "요청 분류: out_of_scope (LLM)" });
-    expect(events.at(-2)?.data).toMatchObject({ code: "OUT_OF_SCOPE" });
+    expect(withoutReplyEvents(events).at(-2)?.data).toMatchObject({
+      code: "OUT_OF_SCOPE",
+    });
     expect(JSON.stringify(events)).not.toContain("원문을 로그");
   },
 );
@@ -114,7 +126,7 @@ it("분류는 3초 시간 초과 뒤 범위 밖으로 끝난다", async () => {
     },
   });
   const { id, forecastId } = await harness.publish();
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const start = performance.now();
   const events = await harness.message(id, {
     text: "이유를 설명하고 저장해 줘",
@@ -122,9 +134,18 @@ it("분류는 3초 시간 초과 뒤 범위 밖으로 끝난다", async () => {
   validFollowup(events, forecastId);
   expect(performance.now() - start).toBeLessThan(3_700);
   expect(signal?.aborted).toBe(true);
-  expect(harness.calls.slice(before).filter(isClassification)).toHaveLength(1);
   expect(
-    events.filter((event) => event.event === "agent_step").at(-1)?.data,
+    harness.calls
+      .filter((call) => !isReplyCall(call))
+      .slice(before)
+      .filter(isClassification),
+  ).toHaveLength(1);
+  expect(
+    withoutReplyEvents(events)
+      .filter((event) => event.event === "agent_step")
+      .at(-1)?.data,
   ).toMatchObject({ note: "요청 분류: out_of_scope (LLM)" });
-  expect(events.at(-2)?.data).toMatchObject({ code: "OUT_OF_SCOPE" });
+  expect(withoutReplyEvents(events).at(-2)?.data).toMatchObject({
+    code: "OUT_OF_SCOPE",
+  });
 });

@@ -1,6 +1,8 @@
 // 잘못된 입력·동시 요청·지역 모호성이 세션과 그래프를 오염시키지 않는지 확인한다
+
 import { setTimeout as delay } from "node:timers/promises";
 import { describe, expect, it } from "vitest";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { fullText, teamFixture, validSequence } from "./team-fixture.js";
 
 describe("상담 요청 경계", () => {
@@ -19,7 +21,7 @@ describe("상담 요청 경계", () => {
       { method: "POST", headers: { "content-type": "application/json" }, body },
     );
     expect(response.status).toBe(400);
-    expect(harness.calls).toEqual([]);
+    expect(harness.calls.filter((call) => !isReplyCall(call))).toEqual([]);
   });
 
   // 외부가 만든 식별자를 파일 경로로 사용하지 않는다
@@ -36,7 +38,7 @@ describe("상담 요청 경계", () => {
     expect(
       (await harness.app.request("/api/team/sessions/s-unknown/steps")).status,
     ).toBe(404);
-    expect(harness.calls).toEqual([]);
+    expect(harness.calls.filter((call) => !isReplyCall(call))).toEqual([]);
   });
 
   // 첫 스트림이 끝나기 전에는 동일 세션 작업을 추가하지 않는다
@@ -112,13 +114,16 @@ describe("상담 요청 경계", () => {
     await reading;
     await delay(25);
     expect(
-      harness.calls.find((call) => call.url.pathname === "/v1/geocode")?.signal
-        ?.aborted,
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .find((call) => call.url.pathname === "/v1/geocode")?.signal?.aborted,
     ).toBe(true);
     release();
     await delay(25);
     expect(
-      harness.calls.some((call) => call.url.pathname.endsWith("/facts")),
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .some((call) => call.url.pathname.endsWith("/facts")),
     ).toBe(false);
   });
 
@@ -155,7 +160,9 @@ describe("상담 요청 경계", () => {
       options: [{ value: "28110" }, { value: "11140" }],
     });
     expect(
-      harness.calls.some((call) => call.url.pathname.endsWith("/facts")),
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .some((call) => call.url.pathname.endsWith("/facts")),
     ).toBe(false);
     const resumed = await harness.message(id, {
       text: "인천 중구",
@@ -175,12 +182,14 @@ describe("상담 요청 경계", () => {
     });
     const events = await harness.message(await harness.prepare());
     validSequence(events);
-    expect(events.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(events).at(-2)).toMatchObject({
       event: "ask",
       data: { field: "venueText", options: [] },
     });
     expect(
-      harness.calls.some((call) => call.url.pathname.endsWith("/facts")),
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .some((call) => call.url.pathname.endsWith("/facts")),
     ).toBe(false);
   });
 });

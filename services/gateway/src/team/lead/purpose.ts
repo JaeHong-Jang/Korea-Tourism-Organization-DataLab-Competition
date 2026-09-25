@@ -19,13 +19,13 @@ const validatePurpose = contractRegistry.compile<{ purpose: Purpose }>(
 export function rulePurpose(text: string): Purpose {
   if (/열어요|열려고|준비|개최|주최|여는\s*쪽/.test(text)) return "new";
   if (
-    /해요/.test(text) &&
+    /(?:행사|축제|공연|쇼|불꽃놀이|콘서트)(?:를|을)?\s*해요/.test(text) &&
     /\d+\s*(?:월|일)|오늘|내일|주말/.test(text) &&
     /에서/.test(text)
   )
     return "new";
   if (
-    /가고\s*싶|갈\s*만한|가\s*볼|추천|어디|구경|놀러|이번\s*주말|데이트|덜\s*붐비|한적한/.test(
+    /가고\s*싶|갈\s*만한|가\s*볼|추천|어디|구경|놀러|이번\s*주말|데이트|덜\s*붐비|한적한|가까운|가까이|근처|주변|여기서/.test(
       text,
     )
   )

@@ -1,9 +1,11 @@
 // 실제 상담 SSE에서 방문객 분류·목록·빈 결과와 목적 선택 재개를 검사한다
+
 // @ts-expect-error 정본 순서 판정기는 JavaScript로 제공된다
 import { sequenceProblems } from "@crowdcast/contracts/rules/sse-sequence.mjs";
 import { expect, it } from "vitest";
 import type { Recommendation } from "../src/team/recommend/conditions.js";
 import { festival } from "./proxy-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { teamFixture } from "./team-fixture.js";
 
 const summary = {
@@ -34,9 +36,11 @@ it("방문객에게 최대 열 개와 원래 전체 수를 보내며 recommend �
   expect(data.items).toHaveLength(10);
   expect(data.total).toBe(12);
   expect(data.items[0].summary).toEqual(summaries[0]);
-  expect(harness.calls.map((call) => call.url.pathname)).toEqual([
-    "/v1/festivals/upcoming",
-  ]);
+  expect(
+    harness.calls
+      .filter((call) => !isReplyCall(call))
+      .map((call) => call.url.pathname),
+  ).toEqual(["/v1/festivals/upcoming"]);
 });
 
 // 빈 결과는 한 번만 넓히며 넓힌 뒤에도 없는 경우 정상 빈 목록과 안내를 보낸다
@@ -59,7 +63,11 @@ it.each([false, true])("기간 확장 뒤 결과 존재=%s", async (found) => {
   expect(data.total).toBe(found ? 1 : 0);
   expect(data.note).toContain("기간을 넓혀");
   if (!found) expect(data.note).toContain("조건에 맞는 행사가 없어요");
-  expect(harness.calls[1].url.searchParams.get("to")).toBe("2026-11-25");
+  expect(
+    harness.calls
+      .filter((call) => !isReplyCall(call))[1]
+      .url.searchParams.get("to"),
+  ).toBe("2026-11-25");
 });
 
 // LLM이 없을 때도 목적 질문 하나만 하고 원래 검색어를 보존한 채 선택으로 재개한다
@@ -84,7 +92,9 @@ it("애매한 목적은 두 버튼으로 묻고 방문객 선택 뒤 원문으�
     },
   ]);
   expect(first.some((event) => event.event === "event_card")).toBe(false);
-  expect(first.filter((event) => event.event === "agent_step")).toHaveLength(1);
+  expect(
+    withoutReplyEvents(first).filter((event) => event.event === "agent_step"),
+  ).toHaveLength(1);
   const selected = await harness.message(id, { text: "가 볼 행사를 찾아요" });
   expect(sequenceProblems(selected, { mode: "recommend" })).toEqual([]);
   expect(

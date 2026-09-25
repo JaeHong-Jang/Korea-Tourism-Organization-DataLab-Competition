@@ -9,6 +9,8 @@ import { followup } from "../lead/followups.js";
 import { AnalysisGateError, ExplanationGateError } from "../lead/gates.js";
 import { newForecast } from "../lead/playbooks.js";
 import { rulePurpose } from "../lead/purpose.js";
+import { emitReply } from "../lead/reply.js";
+import { collectReplyFacts } from "../lead/reply-facts.js";
 import { selectedEvent } from "../lead/selected-event.js";
 import { startConsultation } from "../lead/start.js";
 import { recommendFestivals } from "../recommend/run.js";
@@ -63,13 +65,15 @@ export async function runRequest(
   const cancel = () => deadline.abort(disconnected.reason);
   disconnected.addEventListener("abort", cancel, { once: true });
   if (disconnected.aborted) cancel();
+  const reply = collectReplyFacts(writer);
+  writer = reply.writer;
+  const execute = createExecutor(
+    session.published?.report.sessionId ?? session.id,
+    settings,
+    deadline,
+    writer,
+  );
   try {
-    const execute = createExecutor(
-      session.published?.report.sessionId ?? session.id,
-      settings,
-      deadline,
-      writer,
-    );
     // 행사 선택은 원문의 분류·추출보다 우선하며 기존 발행본이 있어도 새 예보다
     if (message.eventId) {
       newMode = true;
@@ -90,7 +94,8 @@ export async function runRequest(
         !ruleIntents(message.text).some((intent) =>
           ["why", "save", "draft", "whatif"].includes(intent),
         )) &&
-      rulePurpose(message.text) === "recommend" &&
+      (rulePurpose(message.text) === "recommend" ||
+        (message.near && rulePurpose(message.text) !== "new")) &&
       !message.answer
     ) {
       recommendation = true;
@@ -101,6 +106,7 @@ export async function runRequest(
         writer,
         deadline,
         settings,
+        message.near,
       );
       return;
     }
@@ -171,6 +177,7 @@ export async function runRequest(
     await writer.emit("error", errorCard(error));
   } finally {
     try {
+      await emitReply(reply.facts, execute, writer, deadline);
       await writer.emit("done", {
         sessionId: session.id,
         forecastId: recommendation

@@ -6,6 +6,7 @@ import type { AgentStep, GateReport } from "@crowdcast/contracts/types";
 import { describe, expect, it } from "vitest";
 import { contractRegistry } from "../src/contract/registry.js";
 import { ANALYSIS_SHAPES } from "../src/team/lead/gates.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import {
   answer,
   fullText,
@@ -21,6 +22,7 @@ describe("새 예보 스트림", () => {
     const events = await harness.message(id);
     validSequence(events);
     const facts = harness.calls
+      .filter((call) => !isReplyCall(call))
       .filter((call) => call.url.pathname.endsWith("/facts"))
       .map((call) => call.body as { schema: string; items: unknown[] });
     expect(facts[0].schema).toBe("event");
@@ -56,23 +58,26 @@ describe("새 예보 스트림", () => {
       revision: 4,
       masterVersion: 7,
     });
-    const validation = harness.calls.find((call) =>
-      call.url.pathname.endsWith("/validate"),
-    );
+    const validation = harness.calls
+      .filter((call) => !isReplyCall(call))
+      .find((call) => call.url.pathname.endsWith("/validate"));
     expect(validation?.url.searchParams.get("shapes")).toBe(ANALYSIS_SHAPES);
     expect(validation?.url.searchParams.get("shapes")).toBe(
       "S03,S04,S05,S06,S07,S08,S09",
     );
     expect(
       harness.calls
+        .filter((call) => !isReplyCall(call))
         .find((call) => call.url.pathname === "/v1/baseline")
         ?.url.searchParams.get("before"),
     ).toBe("2026-09-25");
     expect(
-      harness.calls.some(
-        (call) =>
-          call.url.port === "8030" || call.url.pathname.endsWith("/publish"),
-      ),
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .some(
+          (call) =>
+            call.url.port === "8030" || call.url.pathname.endsWith("/publish"),
+        ),
     ).toBe(true);
 
     // API 기록과 JSONL 기록은 스트림의 실제 작업 결과와 같아야 한다
@@ -91,6 +96,8 @@ describe("새 예보 스트림", () => {
       "dictation",
       "explainer",
       "forecaster",
+      "lead",
+      "lead",
       "lead",
       "lead",
       "local-guide",
@@ -136,7 +143,11 @@ describe("새 예보 스트림", () => {
     const events = await harness.message(await harness.prepare());
     validSequence(events);
     expect(events.some((event) => event.event === "forecast")).toBe(true);
-    expect(harness.calls.some((call) => call.url.port === "8010")).toBe(false);
+    expect(
+      harness.calls
+        .filter((call) => !isReplyCall(call))
+        .some((call) => call.url.port === "8010"),
+    ).toBe(false);
     expect(JSON.stringify(events)).toContain("계약 예시");
   });
 
@@ -149,7 +160,7 @@ describe("새 예보 스트림", () => {
     });
     validSequence(initial);
     expect(initial.some((event) => event.event === "ask")).toBe(true);
-    expect(harness.calls).toEqual([]);
+    expect(harness.calls.filter((call) => !isReplyCall(call))).toEqual([]);
     const resumed = await harness.message(id, {
       text: "행사 정보 확인",
       answer,
@@ -180,7 +191,7 @@ describe("새 예보 스트림", () => {
         .map((event) => (event.data as { field: string }).field),
     ).not.toContain("name");
     expect(events.some((event) => event.event === "forecast")).toBe(false);
-    expect(harness.calls).toEqual([]);
+    expect(harness.calls.filter((call) => !isReplyCall(call))).toEqual([]);
   });
 
   // 묻지 않은 answer는 적용하지 않고 새 예보 모드에서 조건을 확인한다
@@ -190,18 +201,20 @@ describe("새 예보 스트림", () => {
     const published = await harness.message(id);
     const done = published.at(-1)?.data as { forecastId: string };
     expect(done.forecastId).toEqual(expect.any(String));
-    const count = harness.calls.length;
+    const count = harness.calls.filter((call) => !isReplyCall(call)).length;
     const events = await harness.message(id, {
       text: "날짜 변경",
       answer: { startsAt: "2026-10-19T19:00:00+09:00" },
     });
     validSequence(events);
-    expect(events.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(events).at(-2)).toMatchObject({
       event: "ask",
       data: {
         field: "startsAt",
       },
     });
-    expect(harness.calls).toHaveLength(count);
+    expect(harness.calls.filter((call) => !isReplyCall(call))).toHaveLength(
+      count,
+    );
   });
 });
