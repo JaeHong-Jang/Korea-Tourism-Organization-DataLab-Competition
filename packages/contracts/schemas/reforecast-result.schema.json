@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/reforecast-result.schema.json",
+  "title": "재예보 결과",
+  "description": "M5-F3(T-409): 저장한 행사를 상담 없이 다시 예보·검증·발행한 결과와 직전 발행 스냅샷과의 비교. 숫자는 두 스냅샷의 forecast 값 그대로(재계산 없음). 새 스냅샷 전체는 GET /api/forecasts/{forecastId}",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "forecastId",
+    "previousForecastId",
+    "publishedAt",
+    "level",
+    "peakConcurrent",
+    "dailyMean",
+    "weather"
+  ],
+  "properties": {
+    "eventId": {
+      "$ref": "common.schema.json#/$defs/eventId"
+    },
+    "forecastId": {
+      "$ref": "common.schema.json#/$defs/forecastId"
+    },
+    "previousForecastId": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/forecastId"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "직전 발행 스냅샷(없으면 null — 첫 예보)"
+    },
+    "publishedAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "level": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before",
+        "after"
+      ],
+      "properties": {
+        "before": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/level"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after": {
+          "$ref": "common.schema.json#/$defs/level"
+        }
+      }
+    },
+    "peakConcurrent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before",
+        "after",
+        "unit"
+      ],
+      "properties": {
+        "before": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "p10",
+                "p50",
+                "p90"
+              ],
+              "properties": {
+                "p10": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "p50": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "p90": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "p10",
+            "p50",
+            "p90"
+          ],
+          "properties": {
+            "p10": {
+              "type": "number",
+              "minimum": 0
+            },
+            "p50": {
+              "type": "number",
+              "minimum": 0
+            },
+            "p90": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "unit": {
+          "const": "명"
+        }
+      }
+    },
+    "dailyMean": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before",
+        "after",
+        "unit"
+      ],
+      "properties": {
+        "before": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "p10",
+                "p50",
+                "p90"
+              ],
+              "properties": {
+                "p10": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "p50": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "p90": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "p10",
+            "p50",
+            "p90"
+          ],
+          "properties": {
+            "p10": {
+              "type": "number",
+              "minimum": 0
+            },
+            "p50": {
+              "type": "number",
+              "minimum": 0
+            },
+            "p90": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "unit": {
+          "const": "명/일"
+        }
+      }
+    },
+    "weather": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "applied",
+        "evidenceIds",
+        "note"
+      ],
+      "description": "D-7 날씨 보정(T-208) 적용 여부. 적용하지 않았으면 이유를 note에(예: 행사일이 예보 범위 밖·보정 표본 부족)",
+      "properties": {
+        "applied": {
+          "type": "boolean"
+        },
+        "evidenceIds": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/evidenceId"
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
