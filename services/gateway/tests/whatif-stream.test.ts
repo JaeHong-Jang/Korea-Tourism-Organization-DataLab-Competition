@@ -1,4 +1,5 @@
 // 조건 질문 열 가지의 순서·호출 상한·숫자·근거와 원본 보존을 실제 SSE로 검사한다
+
 import type { Evidence, ForecastCard } from "@crowdcast/contracts/types";
 import { expect, it } from "vitest";
 import { auditClaimNumbers } from "../evals/scenario-numbers.js";
@@ -8,6 +9,7 @@ import {
   isClassification,
   validFollowup,
 } from "./followup-fixture.js";
+import { isReplyCall } from "./reply-fixture.js";
 import { validSequence } from "./team-fixture.js";
 import { whatifFixture, withWeatherAssumption } from "./whatif-fixture.js";
 
@@ -43,11 +45,13 @@ it.each([
   const harness = whatifFixture();
   const { id, forecastId, report } = await harness.publish();
   const original = structuredClone(report);
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text });
   validSequence(events);
   expect(eventData(events, "error")).toEqual([]);
-  const calls = harness.calls.slice(before);
+  const calls = harness.calls
+    .filter((call) => !isReplyCall(call))
+    .slice(before);
   expect(calls.filter(isClassification)).toHaveLength(0);
   expect(
     calls.filter((call) => call.url.pathname === "/api/chat"),
@@ -101,7 +105,7 @@ it.each(["비 오면?", "비슷한 행사는?"])(
   async (text) => {
     const harness = whatifFixture({ forecast: withWeatherAssumption });
     const { id, forecastId, report } = await harness.publish();
-    const before = harness.calls.length;
+    const before = harness.calls.filter((call) => !isReplyCall(call)).length;
     const events = await harness.message(id, { text });
     validFollowup(events, forecastId);
     expect(eventData(events, "error")).toEqual([]);
@@ -110,7 +114,9 @@ it.each(["비 오면?", "비슷한 행사는?"])(
       { gate: "publish", passed: true },
     ]);
     expect(eventData(events, "forecast")).toEqual([]);
-    const calls = harness.calls.slice(before);
+    const calls = harness.calls
+      .filter((call) => !isReplyCall(call))
+      .slice(before);
     expect(
       calls.filter((call) =>
         ["/api/chat", "/v1/whatif", "/v1/predict"].includes(call.url.pathname),

@@ -64,6 +64,7 @@ export function createExecutor(
             if (!agent.usesLlm)
               throw new Error("이 팀원은 LLM을 호출할 수 없습니다");
             signal.throwIfAborted();
+            deadline.consumeLlmCall();
             const client = createLlmClient({
               env: settings.env,
               host: settings.config.ollamaHost,

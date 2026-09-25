@@ -1,6 +1,8 @@
 // trace와 SSE 지연이 요청 종료·세션 잠금 해제를 막지 않는지 검증한다
+
 import { setTimeout as delay } from "node:timers/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { withoutReplyEvents } from "./reply-fixture.js";
 import { shortText, teamFixture, validSequence } from "./team-fixture.js";
 
 afterEach(() => vi.restoreAllMocks());
@@ -20,7 +22,7 @@ describe("기록·전송 마감", () => {
     const id = await harness.create();
     const events = await harness.message(id, { text: shortText });
     validSequence(events);
-    expect(events.slice(-2)).toMatchObject([
+    expect(withoutReplyEvents(events).slice(-2)).toMatchObject([
       { event: "error", data: { code: "DEADLINE_EXCEEDED" } },
       { event: "done" },
     ]);
@@ -46,7 +48,7 @@ describe("기록·전송 마감", () => {
     const steps = await (
       await harness.app.request(`/api/team/sessions/${id}/steps`)
     ).json();
-    expect(steps).toHaveLength(17);
+    expect(steps).toHaveLength(19);
   });
 
   // 응답을 읽지 않는 연결의 역압력도 마감에 끊고 새 요청을 허용한다

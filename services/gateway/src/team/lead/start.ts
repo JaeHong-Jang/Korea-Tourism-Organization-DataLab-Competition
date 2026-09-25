@@ -50,7 +50,15 @@ export async function startConsultation(
   }
   session.pendingPurpose = undefined;
   if (purpose === "recommend") {
-    await recommendFestivals(text, today, execute, writer, deadline, settings);
+    await recommendFestivals(
+      text,
+      today,
+      execute,
+      writer,
+      deadline,
+      settings,
+      message.near,
+    );
     return null;
   }
   return { ...message, text };

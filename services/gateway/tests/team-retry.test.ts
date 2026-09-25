@@ -1,5 +1,7 @@
 // 행사 적재 전 실패와 부분 적재 후 동일 내용 재시도의 경계를 검증한다
+
 import { describe, expect, it } from "vitest";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { teamFixture, validSequence } from "./team-fixture.js";
 
 describe("분석 재시도", () => {
@@ -21,7 +23,7 @@ describe("분석 재시도", () => {
     const id = await harness.prepare();
     const initial = await harness.message(id);
     validSequence(initial);
-    expect(initial.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(initial).at(-2)).toMatchObject({
       event: "error",
       data: { code: "SERVICE_UNAVAILABLE" },
     });
@@ -31,11 +33,13 @@ describe("분석 재시도", () => {
     });
     validSequence(retry);
     expect(retry.some((event) => event.event === "forecast")).toBe(true);
-    const eventLoads = harness.calls.filter(
-      (call) =>
-        call.url.pathname.endsWith("/facts") &&
-        (call.body as { schema: string }).schema === "event",
-    );
+    const eventLoads = harness.calls
+      .filter((call) => !isReplyCall(call))
+      .filter(
+        (call) =>
+          call.url.pathname.endsWith("/facts") &&
+          (call.body as { schema: string }).schema === "event",
+      );
     expect(eventLoads).toHaveLength(2);
     expect(eventLoads[1].body).toEqual(eventLoads[0].body);
     expect(retry.filter((event) => event.event === "agent_step")).toEqual(
@@ -82,11 +86,13 @@ describe("분석 재시도", () => {
       revision: 4,
     });
     expect(retry.some((event) => event.event === "forecast")).toBe(true);
-    const events = harness.calls.filter(
-      (call) =>
-        call.url.pathname.endsWith("/facts") &&
-        (call.body as { schema: string }).schema === "event",
-    );
+    const events = harness.calls
+      .filter((call) => !isReplyCall(call))
+      .filter(
+        (call) =>
+          call.url.pathname.endsWith("/facts") &&
+          (call.body as { schema: string }).schema === "event",
+      );
     expect(events).toHaveLength(2);
     expect(events[0].body).toEqual(events[1].body);
   });

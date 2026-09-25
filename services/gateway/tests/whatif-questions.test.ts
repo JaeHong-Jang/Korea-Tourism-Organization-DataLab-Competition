@@ -1,4 +1,5 @@
 // 모호한 값·버튼 답·분류 실패와 발행 전 질문이 임의 예측으로 이어지지 않는지 검사한다
+
 import { expect, it } from "vitest";
 import { eventData } from "../evals/scenario-score.js";
 import {
@@ -6,6 +7,7 @@ import {
   isClassification,
   validFollowup,
 } from "./followup-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { validSequence } from "./team-fixture.js";
 import { whatifFixture } from "./whatif-fixture.js";
 
@@ -28,19 +30,22 @@ it.each([
   async (text, field, answer, changes) => {
     const harness = whatifFixture();
     const { id, report, forecastId } = await harness.publish();
-    const before = harness.calls.length;
+    const before = harness.calls.filter((call) => !isReplyCall(call)).length;
     const question = await harness.message(id, { text });
     validSequence(question);
     expect(eventData(question, "ask")).toMatchObject([
       { field, options: expect.any(Array) },
     ]);
-    expect(harness.calls.slice(before)).toHaveLength(0);
+    expect(
+      harness.calls.filter((call) => !isReplyCall(call)).slice(before),
+    ).toHaveLength(0);
     expect(harness.snapshots.get(forecastId)).toEqual(report);
     const events = await harness.message(id, { text: answer });
     validSequence(events);
     expect(eventData(events, "claim").length).toBeGreaterThan(0);
     expect(
       harness.calls
+        .filter((call) => !isReplyCall(call))
         .slice(before)
         .find((call) => call.url.pathname === "/v1/whatif")?.body,
     ).toEqual({ event: report.event, changes });
@@ -58,7 +63,9 @@ it("요금 질문은 답변의 fee만 허용한다", async () => {
   });
   validSequence(events);
   expect(
-    harness.calls.find((call) => call.url.pathname === "/v1/whatif")?.body,
+    harness.calls
+      .filter((call) => !isReplyCall(call))
+      .find((call) => call.url.pathname === "/v1/whatif")?.body,
   ).toEqual({ event: report.event, changes: { fee: "유료" } });
 });
 
@@ -76,13 +83,19 @@ it("규칙 없는 요청은 LLM 한 번 뒤 선택 질문으로 전환한다", a
     },
   });
   const { id } = await harness.publish();
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text: "돈을 받는다면?" });
   validSequence(events);
   expect(eventData(events, "ask")).toMatchObject([{ field: "fee" }]);
-  expect(harness.calls.slice(before).filter(isClassification)).toHaveLength(1);
   expect(
     harness.calls
+      .filter((call) => !isReplyCall(call))
+      .slice(before)
+      .filter(isClassification),
+  ).toHaveLength(1);
+  expect(
+    harness.calls
+      .filter((call) => !isReplyCall(call))
       .slice(before)
       .filter((call) => call.url.pathname === "/v1/whatif"),
   ).toHaveLength(0);
@@ -101,11 +114,11 @@ it.each([
   const id = await harness.create();
   const events = await harness.message(id, { text });
   validSequence(events);
-  expect(events).toMatchObject([
+  expect(withoutReplyEvents(events)).toMatchObject([
     { event: "error", data: { message: "먼저 예보를 만들어요" } },
     { event: "done", data: { forecastId: null } },
   ]);
-  expect(harness.calls).toHaveLength(0);
+  expect(harness.calls.filter((call) => !isReplyCall(call))).toHaveLength(0);
 });
 
 // 질문을 보류하고 다른 후속 명령을 선택하면 예전 질문의 답으로 오인하지 않는다
@@ -123,10 +136,12 @@ it("복합 조건과 존재하지 않는 날짜는 예보를 호출하지 않는
   const harness = whatifFixture();
   const { id } = await harness.publish();
   for (const text of ["일요일 밤이면?", "2026-02-30이면?"]) {
-    const before = harness.calls.length;
+    const before = harness.calls.filter((call) => !isReplyCall(call)).length;
     const events = await harness.message(id, { text });
     validSequence(events);
     expect(eventData(events, "ask")).toHaveLength(1);
-    expect(harness.calls.slice(before)).toHaveLength(0);
+    expect(
+      harness.calls.filter((call) => !isReplyCall(call)).slice(before),
+    ).toHaveLength(0);
   }
 });

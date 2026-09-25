@@ -29,13 +29,16 @@ export function recommendationConditions(
   text: string,
   today: string,
   festivals: FestivalSummary[],
+  nearby = false,
 ) {
   const selected = types
     .filter(([type, pattern]) =>
       pattern.test(type === "꽃" ? text.replace(/불꽃/g, "") : text),
     )
     .map(([type]) => type);
-  const region = recommendationRegion(text, festivals);
+  const region = nearby
+    ? { sido: null, label: null, matches: () => true }
+    : recommendationRegion(text, festivals);
   const sort = /덜\s*붐비|한적|조용/.test(text)
     ? "quiet"
     : /큰|유명한|유명/.test(text)
@@ -50,7 +53,7 @@ export function recommendationConditions(
     },
     selected,
     region,
-    sort,
+    sort: nearby ? "distance" : sort,
   };
 }
 
@@ -89,7 +92,9 @@ export function selectRecommendations(
       ? "순간 최대 인원이 적은 순"
       : sort === "large"
         ? "순간 최대 인원이 많은 순"
-        : "가까운 날짜순";
+        : sort === "distance"
+          ? ""
+          : "가까운 날짜순";
   return matched.map((summary) => ({
     summary,
     reason: [

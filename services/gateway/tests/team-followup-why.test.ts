@@ -1,4 +1,5 @@
 // 후속 설명의 재발행·근거·검증 실패가 실제 스트림 계약을 지키는지 확인한다
+
 import { writeFileSync } from "node:fs";
 import type { Claim, GateReport } from "@crowdcast/contracts/types";
 import { expect, it, vi } from "vitest";
@@ -12,16 +13,19 @@ import {
   followupFixture,
   validFollowup,
 } from "./followup-fixture.js";
+import { isReplyCall, withoutReplyEvents } from "./reply-fixture.js";
 import { oodForecast } from "./report-fixture.js";
 
 // 숫자 카드는 재전송하지 않고 처음 발행할 때 쓴 사례·평시·모델 근거를 설명한다
 it("왜 이렇게 많아는 규칙만으로 설명을 검증·발행한다", async () => {
   const harness = followupFixture({ forecast: oodForecast });
   const { id, forecastId, report } = await harness.publish();
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text: "왜 이렇게 많아?" });
   validFollowup(events, forecastId);
-  const calls = harness.calls.slice(before);
+  const calls = harness.calls
+    .filter((call) => !isReplyCall(call))
+    .slice(before);
   expect(calls.some((call) => call.url.pathname === "/api/chat")).toBe(false);
   expect(
     events.find((event) => event.event === "agent_step")?.data,
@@ -80,7 +84,7 @@ it("왜 이렇게 많아는 규칙만으로 설명을 검증·발행한다", asy
 it("같은 이유 질문을 두 번 해도 같은 근거와 새 id로 발행한다", async () => {
   const harness = followupFixture();
   const { id, forecastId, report } = await harness.publish();
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const first = await harness.message(id, { text: "이유와 근거를 알려 줘" });
   const second = await harness.message(id, { text: "이유와 근거를 알려 줘" });
   validFollowup(first, forecastId);
@@ -98,7 +102,9 @@ it("같은 이유 질문을 두 번 해도 같은 근거와 새 id로 발행한�
       (claim) => !firstClaims.some((first) => first.id === claim.id),
     ),
   ).toBe(true);
-  const calls = harness.calls.slice(before);
+  const calls = harness.calls
+    .filter((call) => !isReplyCall(call))
+    .slice(before);
   expect(
     calls.filter((call) => call.url.pathname === "/api/chat"),
   ).toHaveLength(0);
@@ -121,6 +127,7 @@ it("같은 이유 질문을 두 번 해도 같은 근거와 새 id로 발행한�
       JSON.stringify({
         sessionId: id,
         calls: harness.calls
+          .filter((call) => !isReplyCall(call))
           .filter((call) =>
             /\/(facts|validate|publish)$/.test(call.url.pathname),
           )
@@ -157,7 +164,7 @@ it("게이트 B 차단은 미발행으로 끝나고 다음 why는 정상 발행�
   });
   const { id, forecastId } = await harness.publish();
   blocked = true;
-  const before = harness.calls.length;
+  const before = harness.calls.filter((call) => !isReplyCall(call)).length;
   const events = await harness.message(id, { text: "왜?" });
   validFollowup(events, forecastId);
   expect(events.filter((event) => event.event === "gate")).toHaveLength(1);
@@ -166,7 +173,7 @@ it("게이트 B 차단은 미발행으로 끝나고 다음 why는 정상 발행�
       ["claim", "evidence", "suggest"].includes(event.event),
     ),
   ).toEqual([]);
-  expect(events.slice(-2)).toMatchObject([
+  expect(withoutReplyEvents(events).slice(-2)).toMatchObject([
     {
       event: "error",
       data: {
@@ -178,6 +185,7 @@ it("게이트 B 차단은 미발행으로 끝나고 다음 why는 정상 발행�
   ]);
   expect(
     harness.calls
+      .filter((call) => !isReplyCall(call))
       .slice(before)
       .some((call) => call.url.pathname.endsWith("/publish")),
   ).toBe(false);
@@ -204,7 +212,7 @@ it.each(["number", "evidence", "factor"])(
     const events = await harness.message(id, { text: "왜?" });
     validFollowup(events, forecastId);
     expect(claimsIn(events)).toEqual([]);
-    expect(events.at(-2)).toMatchObject({
+    expect(withoutReplyEvents(events).at(-2)).toMatchObject({
       event: "error",
       data: { message: "설명 문장을 검증하지 못했어요" },
     });
