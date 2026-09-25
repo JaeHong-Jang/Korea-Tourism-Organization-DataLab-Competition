@@ -144,7 +144,8 @@
    "status": "todo"
   },
   "T-207": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T02:50:13.774Z"
   },
   "T-203b": {
    "status": "todo"
@@ -1124,6 +1125,11 @@
    "id": "T-204b",
    "status": "done",
    "evidence": "develop 7b8adca·27d7f1d · forecast 1206 · sol PASS · OOD 211→65·등급 불변"
+  },
+  {
+   "at": "2026-09-25T02:50:13.774Z",
+   "id": "T-207",
+   "status": "running"
   }
  ]
 }
