@@ -7,6 +7,7 @@ import {
   useSceneQuality,
 } from "../../components/scene/scene-options";
 import { SceneTools } from "../../components/scene/scene-tools";
+import { buildingCap } from "../../components/scene/venue/buildings";
 import {
   sampleEvent,
   type VenueEvent,
@@ -159,10 +160,7 @@ export function Venue3D({
         <div className="venue-3d__frame">
           <p className="sr-only" aria-live="polite">
             {venueDescription(
-              Math.min(
-                tiles.buildings.length,
-                quality === "high" ? 2400 : quality === "medium" ? 1200 : 600,
-              ),
+              Math.min(tiles.buildings.length, buildingCap(quality)),
               hour,
               weather,
             )}

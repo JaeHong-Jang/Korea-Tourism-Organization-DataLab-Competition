@@ -1,6 +1,7 @@
 // 발행 예보서의 문장 순서와 숫자 표기를 스냅샷 안에서만 정한다.
 import type { Claim, ForecastReport } from "@crowdcast/contracts/types";
 import { formatSnapshotNumber } from "../../lib/format";
+import { renderClaim } from "../../lib/render-claim";
 
 // 수치 필드의 원래 값을 천 단위 쉼표만 더해 표시한다.
 export function reportNumber(value: number | null): string {
@@ -35,21 +36,7 @@ export function claimText(claim: Claim, report: ForecastReport): string {
     report.event.expectedByHost,
     ...report.similar.flatMap((item) => [item.measured, item.announced]),
   ].filter((item) => item != null);
-  if (!claim.placeholders.length) {
-    const rendered = claim.rendered ?? claim.text;
-    return report.forecast.judgment.basis === "구간" && rendered.includes("%")
-      ? "표본 한계로 확률 수치를 표시하지 않아요."
-      : rendered;
-  }
-  let text = claim.text;
-  for (const placeholder of claim.placeholders) {
-    const quantity = quantities.find(
-      (item) => item.id === placeholder.quantityId,
-    );
-    const value = quantity?.[placeholder.field];
-    if (value == null) return "수치 자료 없음";
-    text = text.replaceAll(`{{${placeholder.name}}}`, reportNumber(value));
-  }
+  const text = renderClaim(claim, quantities);
   return report.forecast.judgment.basis === "구간" && text.includes("%")
     ? "표본 한계로 확률 수치를 표시하지 않아요."
     : text;

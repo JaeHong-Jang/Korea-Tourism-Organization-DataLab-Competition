@@ -1,5 +1,5 @@
 /* 장면 안의 품질과 저장 도구를 범례를 가리지 않는 오른쪽 모서리에 둔다. */
-.scene-tools { position: absolute; top: var(--space-3); right: var(--space-3); z-index: calc(var(--z-panel) + 2); display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); }
+.scene-tools { position: absolute; z-index: calc(var(--z-panel) + 2); display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); }
 .scene-tools label { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
 .scene-tools select, .scene-tools button { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font: inherit; }
 .scene-tools button { cursor: pointer; }
