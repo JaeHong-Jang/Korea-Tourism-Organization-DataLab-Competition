@@ -137,7 +137,8 @@
   },
   "T-205": {
    "status": "running",
-   "updated": "2026-09-25T00:21:05.419Z"
+   "updated": "2026-09-25T00:21:05.419Z",
+   "note": "2회차 재디스패치 — 동시 실행 잠금·runId 해시에서 promotedAt 제외(중단 시 섞임은 runId 감지로 충분 — 오케스트레이터 판정)"
   },
   "T-206": {
    "status": "todo"
@@ -201,7 +202,7 @@
   "T-304": {
    "status": "running",
    "updated": "2026-09-25T00:21:07.767Z",
-   "note": "1회차 BLOCKED(숫자 규칙·규칙 상수·런타임 경로) → 오케스트레이터 결정, 1회차 재디스패치"
+   "note": "1회차 PARTIAL(실서비스 미기동) → 오케스트레이터 실사용 확인: 해설 입력 컨텍스트 초과·S10 근거 모양·수치 서식·기준일(T-303)·스냅샷 예산 → 2회차 재디스패치"
   },
   "T-305": {
    "status": "todo"
@@ -376,6 +377,14 @@
    "status": "done",
    "updated": "2026-09-24T19:16:16.138Z",
    "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  "T-102b": {
+   "status": "running",
+   "updated": "2026-09-25T01:30:56.676Z",
+   "note": "첫 geocode 25초(정규식 재컴파일) — T-304 실사용에서 발견"
+  },
+  "T-204b": {
+   "status": "todo"
   }
  },
  "history": [
@@ -1067,6 +1076,11 @@
    "id": "T-407",
    "status": "done",
    "evidence": "develop 병합, web 137·build, astra PASS, 스크린샷 확인"
+  },
+  {
+   "at": "2026-09-25T01:30:56.676Z",
+   "id": "T-102b",
+   "status": "running"
   }
  ]
 }
