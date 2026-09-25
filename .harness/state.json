@@ -205,7 +205,8 @@
    "evidence": "develop a352073 · gateway 821·forecast 1173·web 137(깨끗한 상태) · sol PASS · 실사용 T-304.live.md"
   },
   "T-305": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T02:25:38.771Z"
   },
   "R-05": {
    "status": "todo"
@@ -306,7 +307,8 @@
    "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
   },
   "T-433": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T02:31:49.227Z"
   },
   "R-07": {
    "status": "todo"
@@ -385,7 +387,8 @@
   },
   "T-204b": {
    "status": "running",
-   "updated": "2026-09-25T02:08:17.586Z"
+   "updated": "2026-09-25T02:08:17.586Z",
+   "note": "1회차 재디스패치 — 자체 구간 문구(중앙값 단정 → 가능성 표현)·runId는 실제 쓴 설정 객체 해시"
   }
  },
  "history": [
@@ -1105,6 +1108,16 @@
    "id": "T-102b",
    "status": "done",
    "evidence": "develop bf7056d · 빌드 0.88초·동등성 테스트 · sol PASS"
+  },
+  {
+   "at": "2026-09-25T02:25:38.771Z",
+   "id": "T-305",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T02:31:49.227Z",
+   "id": "T-433",
+   "status": "running"
   }
  ]
 }
