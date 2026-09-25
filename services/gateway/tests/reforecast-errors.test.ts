@@ -189,3 +189,22 @@ it("records가 저장 내용을 바꿔 반환하면 503이다", async () => {
   });
   expect((await harness.request()).status).toBe(503);
 });
+
+// 같은 날 같은 조건이면 예보 id가 같아 새 스냅샷을 만들지 않고 변화 없음을 알린다
+it("같은 예보 id가 다시 나오면 409 reforecast_unchanged이고 저장하지 않는다", async () => {
+  const harness = reforecastFixture({
+    forecast: (forecast, attempt) =>
+      attempt === 2
+        ? JSON.parse(
+            JSON.stringify(forecast).replaceAll(forecast.id, "f-reforecast-1"),
+          )
+        : forecast,
+  });
+  expect((await harness.request()).status).toBe(200);
+  const response = await harness.request();
+  expect(response.status).toBe(409);
+  expect(await response.json()).toMatchObject({
+    code: "reforecast_unchanged",
+  });
+  expect(harness.snapshots).toHaveLength(1);
+});

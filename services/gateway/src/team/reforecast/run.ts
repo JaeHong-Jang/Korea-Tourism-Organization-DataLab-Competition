@@ -90,8 +90,13 @@ export async function runReforecast(
       settings,
       today,
     );
+    // 예보 id는 입력·기준일·모델의 해시라, 같은 날 같은 조건이면 이미 발행한 예보와 같다 — 변화 없음으로 알린다
     if (snapshots.some((report) => report.forecastId === bundle.forecast.id))
-      throw new Error("새 예보 식별자 응답 계약 위반");
+      throw new ReforecastError(
+        409,
+        "reforecast_unchanged",
+        "오늘 같은 조건으로 발행한 예보가 이미 있어 바뀐 것이 없어요. 새 자료(방문자·날씨)가 들어온 뒤 다시 재예보해 주세요.",
+      );
 
     // 상담과 같은 보고팀·재작성 상한·게이트 B·원자적 발행을 사용한다
     stage = "B";
