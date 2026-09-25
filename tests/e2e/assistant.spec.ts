@@ -81,7 +81,7 @@ test("봇에서 행사 선택 뒤 예보서 미리보기", async ({ page }) => {
     .last()
     .click();
   await expect.poll(() => messages[0]?.eventId).toBe(festival.eventId);
-  await page.getByRole("link", { name: "예보 상담" }).click();
+  await page.getByRole("link", { name: "예보 상담", exact: true }).click();
   await expect(page.locator(".key-number strong").first()).toBeVisible();
   await page.screenshot({
     path: resolve(screenshots, "T-442-s2.png"),
@@ -138,7 +138,8 @@ test("되묻기 자유 답", async ({ page }) => {
 // 사용자가 움직임을 줄이면 3D 캔버스 대신 정지 펫을 보여 준다.
 test("움직임 줄이기에서는 고래가 정지 그림", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/consult");
+  // 예보 상담 화면은 패널이 열려 봇 버튼을 숨기므로 첫 화면에서 본다
+  await page.goto("/?sceneFixture=1");
   await expect(page.locator(".assistant-whale svg")).toBeVisible();
   await expect(page.locator(".assistant-whale canvas")).toHaveCount(0);
 });

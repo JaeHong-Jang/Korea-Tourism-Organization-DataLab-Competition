@@ -234,9 +234,9 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 	await page.locator(".scene-stage").focus();
 	const beforeSceneKey = await cameraTarget(page);
 	await page.keyboard.press("ArrowRight");
-	expect((await cameraTarget(page))?.[0]).toBeCloseTo(
-		(beforeSceneKey?.[0] ?? 0) + 20,
-	);
+	await expect
+		.poll(async () => (await cameraTarget(page))?.[0] ?? 0)
+		.toBeCloseTo((beforeSceneKey?.[0] ?? 0) + 20);
 	await page.getByRole("button", { name: "전국 보기" }).click();
 	await expect.poll(() => boardCornersAreSafe(page)).toBe(true);
 
@@ -302,7 +302,7 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 			sessions.push(request.url());
 	});
 	await page.getByRole("link", { name: "이 행사 예보 받기" }).click();
-	await expect(page.getByLabel("고래 봇 대화")).toBeVisible();
+	await expect(page.getByRole("complementary", { name: "고래 봇 대화" })).toBeVisible();
 	await expect(page).toHaveURL(/\/(\?|$)/);
 	await expect.poll(() => sessions.length).toBeGreaterThan(0);
 	await page.getByRole("button", { name: "대화 닫기" }).click();

@@ -41,9 +41,8 @@ export function observePanelBounds(
       const rect = stage.getBoundingClientRect();
       const panels = [
         ...scenePanels,
-        ...document.querySelectorAll<HTMLElement>(
-          ".assistant-panel, .assistant-whale",
-        ),
+        // 작은 떠다니는 고래는 넣지 않는다 — 자리를 옮길 때마다 장면 구도를 다시 잡아 카메라 조작을 덮는다
+        ...document.querySelectorAll<HTMLElement>(".assistant-panel"),
       ].filter((panel) => panel.getClientRects().length > 0);
       const value = {
         width: rect.width,
@@ -59,6 +58,9 @@ export function observePanelBounds(
         }),
       };
       const current = caches.get(stage);
+      // 값이 그대로면 알리지 않는다 — 스타일 변화마다 장면 구도를 다시 잡지 않게
+      if (current && JSON.stringify(current.value) === JSON.stringify(value))
+        return;
       if (current) current.value = value;
       for (const receive of listeners) receive(value);
     };
@@ -67,9 +69,7 @@ export function observePanelBounds(
       for (const panel of [
         stage,
         ...scenePanels,
-        ...document.querySelectorAll<HTMLElement>(
-          ".assistant-panel, .assistant-whale",
-        ),
+        ...document.querySelectorAll<HTMLElement>(".assistant-panel"),
       ]) {
         if (!observed.has(panel)) {
           observer.observe(panel);

@@ -145,7 +145,7 @@ test("WebGL2 대체 안내", async ({ page }) => {
     page.locator(".festival-list__items li"),
   ).toHaveCount(30);
   await expect(
-    page.locator(".festival-list__items li").first().getByRole("button"),
+    page.locator(".festival-list__items li .festival-list__pick").first(),
   ).toBeVisible();
 });
 
