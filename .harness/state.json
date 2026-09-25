@@ -410,14 +410,17 @@
    "status": "todo"
   },
   "T-306c": {
-   "status": "running",
-   "updated": "2026-09-25T04:14:37.719Z"
+   "status": "done",
+   "updated": "2026-09-25T04:26:57.572Z",
+   "evidence": "develop f1989b3 · gateway 914 · sol PASS · 실사용 두 경로 같은 계획"
   },
   "T-407b": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T04:22:23.604Z"
   },
   "T-433b": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T04:22:23.529Z"
   }
  },
  "history": [
@@ -1230,6 +1233,22 @@
    "id": "R-07",
    "status": "done",
    "evidence": "PASS(High 0), Med → T-433b·T-407b"
+  },
+  {
+   "at": "2026-09-25T04:22:23.529Z",
+   "id": "T-433b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:22:23.604Z",
+   "id": "T-407b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:26:57.572Z",
+   "id": "T-306c",
+   "status": "done",
+   "evidence": "develop f1989b3 · gateway 914 · sol PASS · 실사용 두 경로 같은 계획"
   }
  ]
 }
