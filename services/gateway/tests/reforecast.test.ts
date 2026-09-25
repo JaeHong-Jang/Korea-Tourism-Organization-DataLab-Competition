@@ -39,9 +39,13 @@ it("첫 재예보는 before null과 검증된 새 스냅샷을 반환한다", as
   expect(
     harness.calls.find((call) => call.url.pathname === "/v1/predict")?.body,
   ).toEqual(harness.event);
-  expect(paths.some((path) => /geocode|baseline|similar/.test(path))).toBe(
-    false,
-  );
+  // 장소는 확정돼 지오코딩은 하지 않지만, 예보 근거가 가리키는 평시·유사 행사는 예보 전에 적재한다
+  expect(paths.some((path) => /geocode/.test(path))).toBe(false);
+  const predictAt = paths.indexOf("/v1/predict");
+  expect(paths.indexOf("/v1/baseline")).toBeGreaterThanOrEqual(0);
+  expect(paths.indexOf("/v1/baseline")).toBeLessThan(predictAt);
+  expect(paths.indexOf("/v1/similar")).toBeGreaterThanOrEqual(0);
+  expect(paths.indexOf("/v1/similar")).toBeLessThan(predictAt);
   const publish = paths.findIndex((path) => path.endsWith("/publish"));
   const save = harness.calls.findIndex(
     (call) =>

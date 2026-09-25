@@ -44,10 +44,14 @@ it.each(["다른 데이터셋", "모델 근거"])(
   async (failure) => {
     const harness = reforecastFixture({
       forecast: (forecast) => {
-        const original = forecast.evidence.find(
+        const found = forecast.evidence.find(
           (item) => item.kind === (failure === "모델 근거" ? "model" : "data"),
         );
-        if (!original) throw new Error("날씨 근거 테스트용 원본 없음");
+        if (!found) throw new Error("날씨 근거 테스트용 원본 없음");
+        // 평시 근거는 재예보 전에 그대로 적재되므로 바꾸지 않고, 새 id의 사본으로 문구만 날씨처럼 만든다
+        const original = structuredClone(found);
+        original.id = `${found.id}-weather-word`;
+        forecast.evidence.push(original);
         original.title = "날씨 weather 보정";
         if (failure === "모델 근거")
           original.source = {
@@ -93,8 +97,14 @@ it("이전 스냅샷에만 날씨 근거가 있으면 새 결과는 applied=fals
   const harness = reforecastFixture({
     forecast: (forecast, attempt) => {
       if (attempt === 1) {
-        const data = forecast.evidence.find((item) => item.kind === "data");
-        if (data?.source) data.source.datasetId = "ds-kma-mid-15059468";
+        // 적재된 평시 근거는 그대로 두고 기상청 데이터셋을 가리키는 새 근거 사본을 더한다
+        const found = forecast.evidence.find((item) => item.kind === "data");
+        if (found?.source) {
+          const data = structuredClone(found);
+          data.id = `${found.id}-kma`;
+          if (data.source) data.source.datasetId = "ds-kma-mid-15059468";
+          forecast.evidence.push(data);
+        }
       }
       return forecast;
     },

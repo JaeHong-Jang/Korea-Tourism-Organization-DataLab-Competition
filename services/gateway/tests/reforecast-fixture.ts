@@ -76,6 +76,10 @@ export function reforecastFixture(options: Options = {}) {
       throw new Error("예상하지 않은 records 요청");
     }
 
+    // 평시·유사 행사는 상담과 같은 가짜 forecast 응답을 쓴다(재예보도 먼저 적재한다)
+    if (url.pathname === "/v1/baseline" || url.pathname === "/v1/similar")
+      return fakeForecastFetch(input, init);
+
     // 예보마다 식별자만 새로 부여하고 테스트가 지정한 수치를 그대로 반환한다
     if (url.pathname === "/v1/predict") {
       const response = await fakeForecastFetch(input, init);
