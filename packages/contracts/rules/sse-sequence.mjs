@@ -62,8 +62,9 @@ export function sequenceProblems(events, ctx = { mode: "new" }) {
         st.card = e.data;
       }
     } else if (e.event === "claim" || e.event === "evidence" || e.event === "suggest") {
-      // R6 문장·근거·다음 할 일은 발행 검사 통과 뒤에만
-      if (!st.published) out.push(`${at}: 발행 전에 보냄`);
+      // R6 문장·근거·다음 할 일은 발행 검사 통과 뒤에만 — 단 후속 요청에서 문장·근거를 하나도 보내지 않는 스트림의 다음 할 일(저장·초안 링크)은 발행 없이 허용
+      const actionsOnly = followup && e.event === "suggest" && !events.some((x) => x.event === "claim" || x.event === "evidence" || x.event === "gate");
+      if (!st.published && !actionsOnly) out.push(`${at}: 발행 전에 보냄`);
       if (e.event === "claim") {
         if (st.card && e.data.forecastId !== st.card.id) out.push(`${at}: 문장의 예보 ${e.data.forecastId} ≠ 카드 ${st.card.id}`);
         for (const id of e.data.evidenceIds) st.claimEvidence.add(id);

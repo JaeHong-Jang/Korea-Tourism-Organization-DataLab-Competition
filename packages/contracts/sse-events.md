@@ -35,12 +35,12 @@ agent_status(lead) → agent_status/agent_step(dictation) → event_card → [as
 - `error.code`: `ANALYSIS_GATE_FAILED` · `SERVICE_UNAVAILABLE` · `DEADLINE_EXCEEDED` · `OUT_OF_SCOPE`.
 - LLM이 꺼져 있어도 순서는 같다. 문장은 템플릿으로 만들어져 같은 게이트를 지난다.
 
-**순서 규칙** — `rules/sse-sequence.mjs`의 `sequenceProblems(events, ctx)`가 판정한다. `ctx.mode`는 `new`(새 예보·what-if: A → B → 발행)와 `followup`(발행된 예보 `ctx.forecastId`에 대한 설명·초안: B → 발행, `docs/plan/10` §3 다른 플레이북)이다. 후속 요청에는 게이트 A·숫자 카드·행사 카드·되묻기가 없고, 문장과 `done`의 `forecastId`는 기존 예보 id다. 계약 검사는 `fixtures-sse/`(새 예보 정상 5 · 위반 12, 후속 요청 정상 1 · 위반 2)로, 게이트웨이 스트림 테스트(T-303)는 실제 스트림을 같은 함수에 넣어 확인한다.
+**순서 규칙** — `rules/sse-sequence.mjs`의 `sequenceProblems(events, ctx)`가 판정한다. `ctx.mode`는 `new`(새 예보·what-if: A → B → 발행)와 `followup`(발행된 예보 `ctx.forecastId`에 대한 설명·초안: B → 발행, `docs/plan/10` §3 다른 플레이북)이다. 후속 요청에는 게이트 A·숫자 카드·행사 카드·되묻기가 없고, 문장과 `done`의 `forecastId`는 기존 예보 id다. 계약 검사는 `fixtures-sse/`(새 예보 정상 5 · 위반 12, 후속 요청 정상 2 · 위반 3)로, 게이트웨이 스트림 테스트(T-303)는 실제 스트림을 같은 함수에 넣어 확인한다.
 - R1 `seq`는 0부터 1씩 늘고, R2 `done` 뒤에는 이벤트가 없다.
 - R3 게이트 A가 실패하면 그 뒤에는 `agent_status`·`agent_step`·`error`·`done`만 보낸다.
 - R4 게이트 전이는 A(한 번) → B → publish(한 번). B는 두 경우에만 다시 한다: 실패 뒤 재작성·템플릿 교체(실패는 최대 2번까지 다시), 통과 뒤 새 사실로 내용 revision이 올랐거나 기준 그래프가 바뀌어 masterVersion이 올랐을 때(재검사 — 두 값이 그대로면 반복하지 않는다). 발행 검사 뒤에는 어떤 게이트도 보내지 않는다(발행 승인을 되돌리는 역행 금지). `gate`로 `integrity`를 보내지 않는다(적재 거부는 서비스 응답).
 - R5 `forecast`(숫자 카드)는 게이트 A 통과 뒤 한 번만, 발행 검사 전에 반드시 보낸다. 카드 = `rules/card-projection.mjs`의 `projectCard(forecast)`.
-- R6 `claim`·`evidence`·`suggest`는 발행 검사 통과 뒤에만, 문장의 `forecastId`는 카드 id와 같다.
+- R6 `claim`·`evidence`·`suggest`는 발행 검사 통과 뒤에만, 문장의 `forecastId`는 카드 id와 같다. 예외: 후속 요청에서 **문장·근거·게이트를 하나도 보내지 않는** 스트림(저장 확인·계획 초안 링크처럼 이미 발행된 문장만 쓰는 일)은 `suggest`(다음 할 일 — `href`가 있으면 게이트웨이 경로 링크)를 발행 없이 보낼 수 있다(9/25, T-306).
 - R7 `done.forecastId`는 발행했으면 카드 id, 아니면 `null`.
 - R8 스트림은 `done`으로 끝나고, 게이트 A 실패면 `ANALYSIS_GATE_FAILED` 오류가 있으며, 문장이 가리킨 근거는 모두 `evidence`로 보낸다.
 - R9 `event_card`·`ask`는 게이트 A 전에만 보낸다(분석이 시작된 뒤 행사 정보를 바꾸지 않는다).

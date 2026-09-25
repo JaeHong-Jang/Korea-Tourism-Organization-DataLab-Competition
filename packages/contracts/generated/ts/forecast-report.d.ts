@@ -706,4 +706,8 @@ export interface NoName8 {
 export interface Action {
   id: string;
   label: string;
+  /**
+   * 누르면 여는 게이트웨이 경로(예: 계획 초안 docx 받기). 없으면 같은 상담에 id를 요청으로 보낸다(9/25 추가, 선택).
+   */
+  href?: string;
 }
