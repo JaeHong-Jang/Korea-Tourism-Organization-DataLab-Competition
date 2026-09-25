@@ -2,6 +2,7 @@
 import type { Claim, Forecast } from "@crowdcast/contracts/types";
 import type { CheckInput, CheckResult } from "../report/bundle.js";
 import type { Agent } from "../runtime/agent.js";
+import { type AnalysisCheckInput, analysisCheck } from "./analysis-check.js";
 import { checkNumbers } from "./number-check.js";
 
 // 판정은 규칙 결과 문구와 인용 근거·조항이 모두 같은 경우에만 허용한다
@@ -75,5 +76,19 @@ export const ruleCheck: Agent<CheckInput, CheckResult[]> = {
       })),
       note: "판정 문구와 법정·자체 기준을 대조했어요.",
     };
+  },
+};
+
+// 게이트 A의 판정 규칙과 법정 조항 연결 검사를 법규담당 작업으로 기록한다
+export const analysisRuleCheck: Agent<AnalysisCheckInput, null> = {
+  ...ruleCheck,
+  // 판정 규칙을 가리킨 근거에 담당 모양의 검사 결과를 연결한다
+  async run({ input }) {
+    return analysisCheck(
+      input,
+      ["S05", "S06"],
+      input.evidence.filter((item) => item.kind === "rule"),
+      "판정 규칙과 법정 조항 연결을 확인했어요.",
+    );
   },
 };

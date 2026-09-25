@@ -169,6 +169,8 @@ export async function newForecast(
       }),
       session.id,
       revision,
+      { forecast, baseline, similar },
+      execute,
     ),
   );
   deadline.check();

@@ -2,11 +2,17 @@
 
 import type { Claim, Forecast, GateReport } from "@crowdcast/contracts/types";
 import type { createKnowledgeClient } from "../../clients/knowledge-client.js";
+import { type ReportBundle, reportEvidence } from "../report/bundle.js";
 import type { Executor } from "../runtime/executor.js";
 import { numberCheck } from "../verification/number-check.js";
-import { ruleCheck } from "../verification/rule-check.js";
-import { hasReviewCitation, skeptic } from "../verification/skeptic.js";
+import { analysisRuleCheck, ruleCheck } from "../verification/rule-check.js";
 import {
+  analysisSkeptic,
+  hasReviewCitation,
+  skeptic,
+} from "../verification/skeptic.js";
+import {
+  analysisSourceCheck,
   hasKnownReferences,
   sourceCheck,
 } from "../verification/source-check.js";
@@ -173,6 +179,8 @@ export async function analysisGate(
   knowledge: ReturnType<typeof createKnowledgeClient>,
   sessionId: string,
   revision: number,
+  bundle: ReportBundle,
+  execute: Executor,
 ) {
   const { masterVersion } = await knowledge.getMasterVersion();
   const gate = await knowledge.validateSession(
@@ -189,5 +197,15 @@ export async function analysisGate(
   ) {
     throw new AnalysisGateError("분석 검증 범위가 일치하지 않습니다");
   }
+
+  // 같은 검증 결과를 세 팀원에게 병렬 배정하고 모든 기록을 게이트보다 먼저 마친다
+  const input = { gate, evidence: reportEvidence(bundle) };
+  const results = await Promise.allSettled([
+    execute(analysisSourceCheck, input, "출처와 예보 계보를 확인해요.", 3),
+    execute(analysisRuleCheck, input, "판정 규칙과 법정 조항을 확인해요.", 3),
+    execute(analysisSkeptic, input, "환산 가정과 공개 시점을 확인해요.", 3),
+  ]);
+  for (const result of results)
+    if (result.status === "rejected") throw result.reason;
   return gate;
 }
