@@ -85,6 +85,12 @@ export function SvgKoreaMap({ festivals }: { festivals: FestivalSummary[] }) {
     selectFestival(festival.eventId);
     selectSigungu(festival.sigunguCode);
   };
+  // 지역을 고르면 이전 행사 요약을 지우고 해당 시도의 필터를 맞춘다.
+  const pickRegion = (region: Region) => {
+    selectFestival(null);
+    selectSigungu(region.sgg);
+    setFilters({ sido: region.sidonm });
+  };
   if (error)
     return (
       <p role="alert">
@@ -111,15 +117,11 @@ export function SvgKoreaMap({ festivals }: { festivals: FestivalSummary[] }) {
               role="button"
               tabIndex={0}
               aria-label={`${region.properties.sidonm} ${region.properties.sggnm} 선택`}
-              onClick={() => {
-                selectSigungu(region.properties.sgg);
-                setFilters({ sido: region.properties.sidonm });
-              }}
+              onClick={() => pickRegion(region.properties)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  selectSigungu(region.properties.sgg);
-                  setFilters({ sido: region.properties.sidonm });
+                  pickRegion(region.properties);
                 }
               }}
             />

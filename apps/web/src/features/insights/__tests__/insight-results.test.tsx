@@ -16,13 +16,47 @@ const html = (node: React.ReactNode) => renderToStaticMarkup(node);
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-// 인사이트가 없을 때에는 서식4 문장 복사도 제공하지 않는다.
+// 인사이트가 없을 때에는 카드마다 다음 행동을 주되 복사 버튼은 숨긴다.
 it("인사이트 빈 상태에는 복사 버튼이 없다", () => {
   const output = html(
     <InsightResults first={{ status: "empty" }} second={{ status: "empty" }} />,
   );
   expect(output).toContain("9/27");
-  expect(output).not.toContain("<button");
+  expect(output.match(/자료 다시 확인/g)).toHaveLength(2);
+  expect(output).not.toContain("서식4용 문장 복사");
+  expect(output).toContain("동네지기");
+});
+
+// 한 카드의 계약 오류나 대기 상태가 다른 카드의 확인된 결과를 가리지 않는다.
+it("I1 오류와 I2 대기에도 다른 카드 상태를 각각 표시한다", () => {
+  const insight = {
+    key: "I2",
+    title: "인천 중구 평시 방문",
+    headline: { value: 14500, unit: "명/일", text: "방문자 수를 비교했어요." },
+    sampleSize: 86,
+    comparablePairs: 1,
+    period: { from: "2025-01-01", to: "2025-12-31" },
+    series: [],
+    evidenceIds: [evidenceFixture.id],
+    evidence: [evidenceFixture],
+    computedAt: "2026-09-27T12:00:00+09:00",
+  } as Insight;
+  const failed = html(
+    <InsightResults first={{ status: "error" }} second={ready(insight)} />,
+  );
+  expect(failed).toContain('data-insight="I1"');
+  expect(failed).toContain("자료 형식을 확인할 수 없어요");
+  expect(failed).toContain('data-insight="I2"');
+  expect(failed).toContain("인천 중구 평시 방문");
+  expect(failed).toContain("14,500");
+  const pending = html(
+    <InsightResults
+      first={ready({ ...insight, key: "I1" })}
+      second={{ status: "loading" }}
+    />,
+  );
+  expect(pending).toContain("자료를 불러오는 중이에요");
+  expect(pending).toContain("14,500");
 });
 
 // 확인된 명세 행과 인사이트만 표·복사 동작에 들어간다.

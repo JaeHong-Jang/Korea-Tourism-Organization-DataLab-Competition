@@ -105,6 +105,20 @@ test("SVG 대체 지도에서 선택과 필터", async ({ page }) => {
 	await expect(
 		page.locator(".festival-list__items li.is-selected"),
 	).toHaveCount(1);
+	await page
+		.getByRole("button", { name: /서울특별시 .* 선택/ })
+		.first()
+		.click();
+	expect((await selection(page)).festival).toBeNull();
+	await expect(
+		page.getByRole("region", { name: "선택 행사 요약" }),
+	).toHaveCount(0);
+	await page.getByRole("button", { name: "견본 행사 1, 1등급 선택" }).click();
+	await page
+		.getByRole("button", { name: /서울특별시 .* 선택/ })
+		.first()
+		.press("Enter");
+	expect((await selection(page)).festival).toBeNull();
 	await page.getByLabel("시도").selectOption("부산광역시");
 	await expect(page.locator(".svg-korea-map__event")).toHaveCount(5);
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(5);
@@ -118,6 +132,28 @@ test("SVG 대체 지도에서 선택과 필터", async ({ page }) => {
 		.click();
 	await expect(page.getByLabel("시도")).toHaveValue("대구광역시");
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(0);
+});
+
+// 접으면 목록 본문과 요약이 사라지고 패널 높이가 줄어든 채 새로고침 뒤에도 유지된다.
+test("행사 목록 접기와 기억", async ({ page }) => {
+	await page.setViewportSize({ width: 1366, height: 768 });
+	await page.goto(`${origin}/?sceneFixture=1&forceSvg=1&theme=day&at=${clock}`);
+	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);
+	const panel = page.locator('[data-feature="M1-F3"]');
+	const before = await panel.boundingBox();
+	await page.getByRole("button", { name: "목록 접기" }).click();
+	await expect(page.locator(".festival-list__body")).toBeHidden();
+	await expect(
+		page.getByRole("button", { name: "목록 펼치기" }),
+	).toHaveAttribute("aria-expanded", "false");
+	const after = await panel.boundingBox();
+	expect(before && after && after.height < before.height).toBe(true);
+	await page.screenshot({ path: resolve(screens, "T-407b-s1-collapsed.png") });
+	await page.reload();
+	await expect(page.locator(".festival-list__body")).toBeHidden();
+	await expect(
+		page.getByRole("button", { name: "목록 펼치기" }),
+	).toHaveAttribute("aria-expanded", "false");
 });
 
 // 낮과 밤, 모바일의 패널 배치를 같은 진단 자료로 저장한다.

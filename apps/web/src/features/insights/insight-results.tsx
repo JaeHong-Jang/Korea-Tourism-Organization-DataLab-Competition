@@ -1,8 +1,8 @@
 // 실제 계산된 인사이트만 중요도 순으로 보여 주고 서식4 문장을 복사한다.
 import type { Insight } from "@crowdcast/contracts/types";
 import { useState } from "react";
+import { PetAvatar } from "../../components/pets";
 import type { ContractState } from "../../lib/validation/use-contract";
-import { ContractMessage } from "../validation/contract-state";
 
 // 인사이트 한 건의 계약 근거와 표본 기간을 함께 읽게 한다.
 function InsightResult({ insight }: { insight: Insight }) {
@@ -24,7 +24,7 @@ function InsightResult({ insight }: { insight: Insight }) {
     }
   }
   return (
-    <article className="insight-result">
+    <article className="insight-result" data-insight={insight.key}>
       <span>{insight.key}</span>
       <h3>{insight.title}</h3>
       <strong>
@@ -47,7 +47,52 @@ function InsightResult({ insight }: { insight: Insight }) {
   );
 }
 
-// 요청 실패 시 숫자 견본과 복사 버튼을 모두 숨긴다.
+// 각 카드의 대기·빈 값·오류에는 펫과 다시 확인할 행동을 붙인다.
+function InsightCard({
+  insightKey,
+  state,
+}: {
+  insightKey: "I1" | "I2";
+  state: ContractState<Insight>;
+}) {
+  if (state.status === "ready" && state.value)
+    return <InsightResult insight={state.value} />;
+  const status = state.status === "ready" ? "empty" : state.status;
+  const message =
+    status === "loading"
+      ? "자료를 불러오는 중이에요."
+      : status === "error"
+        ? "자료 형식을 확인할 수 없어요."
+        : "인사이트는 데이터 수집이 끝나면 채워져요 · 9/27";
+  return (
+    <article
+      className="insight-result insight-result--state"
+      data-insight={insightKey}
+    >
+      <span>{insightKey}</span>
+      <h3>{insightKey} 자료 확인</h3>
+      <div role={status === "error" ? "alert" : "status"}>
+        <PetAvatar
+          agentId={status === "error" ? "source-check" : "local-guide"}
+          state={
+            status === "error"
+              ? "error"
+              : status === "loading"
+                ? "working"
+                : "idle"
+          }
+          size={96}
+        />
+        <p>{message}</p>
+      </div>
+      <button type="button" onClick={() => window.location.reload()}>
+        자료 다시 확인
+      </button>
+    </article>
+  );
+}
+
+// I1과 I2의 요청 상태를 각각 그려 확인된 결과를 계속 보여 준다.
 export function InsightResults({
   first,
   second,
@@ -55,24 +100,10 @@ export function InsightResults({
   first: ContractState<Insight>;
   second: ContractState<Insight>;
 }) {
-  if (first.status === "loading" || second.status === "loading")
-    return <ContractMessage state={{ status: "loading" }} empty="" />;
-  if (first.status === "error" || second.status === "error")
-    return <ContractMessage state={{ status: "error" }} empty="" />;
-  const insights = [first.value, second.value].filter(
-    (item): item is Insight => item != null,
-  );
-  if (!insights.length)
-    return (
-      <p className="validation-state">
-        인사이트는 데이터 수집이 끝나면 채워져요 · 9/27
-      </p>
-    );
   return (
     <div className="insight-results">
-      {insights.map((item) => (
-        <InsightResult key={item.key} insight={item} />
-      ))}
+      <InsightCard insightKey="I1" state={first} />
+      <InsightCard insightKey="I2" state={second} />
     </div>
   );
 }
