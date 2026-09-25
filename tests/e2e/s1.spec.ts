@@ -298,7 +298,7 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 		page.getByRole("button", { name: "데이터 모드 켜짐" }),
 	).toHaveAttribute("aria-pressed", "true");
 	await expect(page.locator(".scene-legend")).toContainText(
-		"타일 색·높이 = 기간 안 예보 순간 최대(p50) 합",
+		"타일 색·높이 = 기간 안 예보 순간 최대 중앙값 합",
 	);
 	await expect(page.locator(".scene-legend__data")).toContainText("예보 없음");
 	await expect(page.locator(".scene-legend__data-row")).toHaveCount(6);
