@@ -619,6 +619,17 @@
    "accept": "staffing 섹션 근거 = 매뉴얼 조항"
   },
   {
+   "id": "T-306c",
+   "type": "task",
+   "lane": "L3",
+   "priority": "P0",
+   "deps": [
+    "T-306"
+   ],
+   "title": "세션 없이 예보서에서 계획 초안(POST /api/forecasts/{id}/plan)",
+   "accept": "두 경로 같은 계획"
+  },
+  {
    "id": "T-307",
    "type": "task",
    "lane": "L3",
@@ -1025,7 +1036,8 @@
     "T-504",
     "G1",
     "T-102b",
-    "T-306b"
+    "T-306b",
+    "T-306c"
    ],
    "title": "G2 — 상담 → 예보서 → docx E2E"
   },
