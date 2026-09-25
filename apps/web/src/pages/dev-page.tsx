@@ -3,12 +3,22 @@
 import { PageHeading } from "../components/common/page-heading";
 import { PetsGallery } from "../components/pets";
 import { Button } from "../components/ui/button";
+import { Venue3D } from "../features/venue-3d/venue-3d";
 import { KitPage } from "./dev/kit-page";
 
 // 공용 버튼의 세 모양을 같은 토큰 환경에서 확인한다.
 export function DevPage() {
   if (window.location.pathname === "/dev/pets") return <PetsGallery />;
   if (window.location.pathname === "/dev/kit") return <KitPage />;
+  const venueKey = window.location.pathname.match(
+    /^\/dev\/venue\/(yeongjong|hangang|suwon)$/,
+  )?.[1];
+  if (venueKey)
+    return (
+      <div className="page-wrap">
+        <Venue3D sampleKey={venueKey as "yeongjong" | "hangang" | "suwon"} />
+      </div>
+    );
   return (
     <div className="page-wrap regular-page">
       <PageHeading
