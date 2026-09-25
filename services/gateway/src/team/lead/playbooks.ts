@@ -8,6 +8,7 @@ import type {
   ForecastCard,
 } from "@crowdcast/contracts/types";
 import { createKnowledgeClient } from "../../clients/knowledge-client.js";
+import { RequestTimeoutError } from "../../clients/request-deadline.js";
 import { archivist } from "../analysis/archivist.js";
 import { dictation } from "../analysis/dictation-step.js";
 import type { TeamMessage } from "../analysis/draft-answer.js";
@@ -19,7 +20,12 @@ import type { Executor } from "../runtime/executor.js";
 import type { TeamSession } from "../runtime/sessions.js";
 import type { TeamSettings } from "../runtime/settings.js";
 import type { Deadline } from "./deadline.js";
-import { AnalysisGateError, analysisGate } from "./gates.js";
+import {
+  AnalysisGateError,
+  analysisGate,
+  ExplanationGateError,
+} from "./gates.js";
+import { publishForecast } from "./publish.js";
 
 // 첫 메시지와 되묻기 재개는 LLM 분류 없이 같은 플레이북을 선택한다
 const lead: Agent<string, null> = {
@@ -86,10 +92,12 @@ async function parallelAnalysis(
     session.askedFields = [location.ask.field];
     return null;
   }
-  return eventReady;
+  const event = await eventReady;
+  if (!event) return null;
+  return { event, baseline: location.baseline, similar: (await similar) ?? [] };
 }
 
-// 숫자 카드는 분석 게이트 뒤에만 내보내고 발행 단계는 다음 task에 남긴다
+// 숫자는 분석 게이트 뒤에 보내고 설명은 검증·발행 플레이북으로 이어 간다
 export async function newForecast(
   session: TeamSession,
   message: TeamMessage,
@@ -131,14 +139,15 @@ export async function newForecast(
   }
 
   // 행사 적재 이후의 조건 변경은 새 세션에서만 허용한다
-  const event = await parallelAnalysis(
+  const analysis = await parallelAnalysis(
     extracted.draft,
     session,
     execute,
     writer,
     deadline,
   );
-  if (!event) return;
+  if (!analysis) return;
+  const { event, baseline, similar } = analysis;
   const { forecast, revision } = await execute(
     forecaster,
     event,
@@ -164,5 +173,19 @@ export async function newForecast(
     throw new AnalysisGateError("분석 게이트를 통과하지 못했습니다");
   deadline.check();
   await writer.emit("forecast", projectCard(forecast) as ForecastCard);
-  session.completed = true;
+  try {
+    await publishForecast(
+      session,
+      event,
+      { forecast, baseline, similar },
+      gate,
+      execute,
+      writer,
+      deadline,
+      settings,
+    );
+  } catch (error) {
+    if (error instanceof RequestTimeoutError) throw error;
+    throw new ExplanationGateError("설명 문장을 검증하지 못했어요");
+  }
 }

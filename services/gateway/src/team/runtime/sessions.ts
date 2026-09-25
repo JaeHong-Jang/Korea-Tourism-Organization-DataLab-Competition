@@ -12,6 +12,7 @@ export type TeamSession = {
   busy: boolean;
   analyzed: boolean;
   completed: boolean;
+  forecastId?: string;
 };
 
 // 저장소 인스턴스는 앱마다 분리해 테스트와 다른 앱의 세션이 섞이지 않게 한다

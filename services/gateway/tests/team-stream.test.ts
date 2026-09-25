@@ -2,7 +2,7 @@
 
 // @ts-expect-error 계약의 카드 투영 실행기는 JavaScript로 배포된다
 import { projectCard } from "@crowdcast/contracts/rules/card-projection.mjs";
-import type { AgentStep } from "@crowdcast/contracts/types";
+import type { AgentStep, GateReport } from "@crowdcast/contracts/types";
 import { describe, expect, it } from "vitest";
 import { contractRegistry } from "../src/contract/registry.js";
 import { ANALYSIS_SHAPES } from "../src/team/lead/gates.js";
@@ -15,7 +15,7 @@ import {
 
 describe("새 예보 스트림", () => {
   // 가짜 서비스라도 실제 요청·참조 적재·검증 범위와 카드 투영을 모두 거친다
-  it("분석팀 네 명과 게이트 A를 거쳐 숫자 카드만 보낸다", async () => {
+  it("분석팀과 게이트 A 뒤 숫자를 보내고 발행 뒤 문장을 보낸다", async () => {
     const harness = teamFixture();
     const id = await harness.prepare();
     const events = await harness.message(id);
@@ -30,14 +30,24 @@ describe("새 예보 스트림", () => {
         .map((body) => body.schema)
         .sort(),
     ).toEqual(["region-baseline", "similar-event"]);
-    expect(facts.at(-1)?.schema).toBe("forecast");
+    const forecastFact = facts.find((fact) => fact.schema === "forecast");
+    expect(forecastFact).toBeDefined();
     expect(events.find((event) => event.event === "forecast")?.data).toEqual(
-      projectCard(facts.at(-1)?.items[0]),
+      projectCard(forecastFact?.items[0]),
     );
     expect(
-      events.filter((event) =>
-        ["claim", "evidence", "suggest"].includes(event.event),
-      ),
+      events
+        .slice(
+          0,
+          events.findIndex(
+            (event) =>
+              event.event === "gate" &&
+              (event.data as GateReport).gate === "publish",
+          ),
+        )
+        .filter((event) =>
+          ["claim", "evidence", "suggest"].includes(event.event),
+        ),
     ).toEqual([]);
     const gate = events.find((event) => event.event === "gate");
     expect(gate?.data).toMatchObject({
@@ -57,13 +67,13 @@ describe("새 예보 스트림", () => {
       harness.calls
         .find((call) => call.url.pathname === "/v1/baseline")
         ?.url.searchParams.get("before"),
-    ).toBe("2026-10-04");
+    ).toBe("2026-09-25");
     expect(
       harness.calls.some(
         (call) =>
           call.url.port === "8030" || call.url.pathname.endsWith("/publish"),
       ),
-    ).toBe(false);
+    ).toBe(true);
 
     // API 기록과 JSONL 기록은 스트림의 실제 작업 결과와 같아야 한다
     const response = await harness.app.request(
@@ -75,12 +85,19 @@ describe("새 예보 스트림", () => {
     );
     expect(steps.map((step) => step.agentId).sort()).toEqual([
       "archivist",
+      "briefer",
+      "card-maker",
       "dictation",
       "dictation",
+      "explainer",
       "forecaster",
       "lead",
       "lead",
       "local-guide",
+      "number-check",
+      "rule-check",
+      "skeptic",
+      "source-check",
     ]);
     for (const step of steps) {
       expect(validate?.(step)).toBe(true);

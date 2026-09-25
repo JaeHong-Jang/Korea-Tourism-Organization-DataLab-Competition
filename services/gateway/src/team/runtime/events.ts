@@ -3,7 +3,9 @@ import { join } from "node:path";
 import type {
   AgentStatus,
   AgentStep,
+  Claim,
   EventDraft,
+  Evidence,
   ForecastCard,
   GateReport,
   SseEvent,
@@ -25,6 +27,9 @@ type EventData = {
   };
   gate: GateReport;
   forecast: ForecastCard;
+  claim: Claim;
+  evidence: { items: Evidence[] };
+  suggest: { actions: { id: string; label: string }[] };
   error: {
     code:
       | "ANALYSIS_GATE_FAILED"
