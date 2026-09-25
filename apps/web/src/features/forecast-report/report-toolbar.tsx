@@ -41,10 +41,8 @@ export async function requestPlan(
 export function ReportToolbar({ report }: { report: ForecastReport }) {
   const [plan, setPlan] = useState<PlanState>("idle");
   const [copy, setCopy] = useState("");
-  const hasAction = report.brief.actions.some((action) => action.id === "plan");
-  const reason = !hasAction
-    ? "계획 초안 경로가 없어 받을 수 없어요."
-    : plan === "unavailable"
+  const reason =
+    plan === "unavailable"
       ? "계획 초안 경로가 아직 없어요."
       : plan === "error"
         ? "계획 초안을 받지 못했어요. 예보서를 새로 열어 주세요."
@@ -79,7 +77,7 @@ export function ReportToolbar({ report }: { report: ForecastReport }) {
       <Button
         type="button"
         size="sm"
-        disabled={!hasAction || plan !== "idle"}
+        disabled={!report.publishedAt || plan !== "idle"}
         onClick={async () => {
           setPlan("loading");
           const result = await requestPlan(report.forecastId);
@@ -90,7 +88,6 @@ export function ReportToolbar({ report }: { report: ForecastReport }) {
           setPlan("downloaded");
           const link = document.createElement("a");
           link.href = result.href;
-          link.download = "";
           document.body.append(link);
           link.click();
           link.remove();

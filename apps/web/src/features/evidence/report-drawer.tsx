@@ -1,9 +1,36 @@
 // 근거 카드 선택과 출발 칩으로 돌아가는 키보드 동작을 제공한다.
-import type { ForecastReport } from "@crowdcast/contracts/types";
+import type { Evidence, ForecastReport } from "@crowdcast/contracts/types";
 import { useEffect, useRef, useState } from "react";
 import { EvidenceCard } from "../../components/common/evidence-card";
 import { FeaturePanel } from "../../components/common/feature-panel";
 import type { OpenEvidence } from "../forecast-report/report-claims";
+
+// 근거의 관측 ID와 출처가 모두 일치할 때만 관측 수치를 카드에 붙인다.
+export function observationForEvidence(
+  evidence: Evidence,
+  observations: readonly ForecastReport["forecast"]["observations"][number][],
+) {
+  if (evidence.kind !== "data" || !evidence.source) return null;
+  let summaryId: string | null = null;
+  try {
+    const summary: unknown = JSON.parse(evidence.summary);
+    if (
+      summary &&
+      typeof summary === "object" &&
+      "id" in summary &&
+      typeof summary.id === "string"
+    )
+      summaryId = summary.id;
+  } catch {
+    // 일반 설명문에는 관측 ID가 없으므로 수치를 덧붙이지 않는다.
+  }
+  const matched = observations.filter(
+    (item) =>
+      item.datasetId === evidence.source?.datasetId &&
+      (evidence.quantityIds.includes(item.id) || summaryId === item.id),
+  );
+  return matched.length === 1 ? matched[0] : null;
+}
 
 // 여러 곳의 같은 근거 칩 가운데 실제 출발 요소를 기억한다.
 export function useEvidenceDrawer() {
@@ -84,8 +111,9 @@ export function ReportDrawer({
               highlighted={selectedId === evidence.id}
               hideProbability={report.forecast.judgment.basis === "구간"}
               context={{
-                observation: report.forecast.observations.find(
-                  (item) => item.datasetId === evidence.source?.datasetId,
+                observation: observationForEvidence(
+                  evidence,
+                  report.forecast.observations,
                 ),
                 predictionRun: report.forecast.predictionRun,
                 assumption: report.forecast.assumptions.find(

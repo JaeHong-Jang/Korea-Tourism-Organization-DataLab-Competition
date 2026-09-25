@@ -62,6 +62,15 @@ it("수치·빈 자료·문장 근거를 계약 픽스처대로 표시한다", (
   ).toContain("자료 없음");
 });
 
+// 문장이 인용하지 않은 일평균도 스냅샷의 수치 ID가 모델 근거를 가리키면 칩을 보여 준다.
+it("일평균 수치에 직접 연결된 근거 칩을 표시한다", () => {
+  const output = renderToStaticMarkup(
+    <ReportNumbers report={fixture} onOpen={noOpen} />,
+  );
+  const daily = output.split("일평균 방문객")[1]?.split("피크 시간")[0];
+  expect(daily).toContain('href="#evidence-ev-model-f-yeongjong-2025"');
+});
+
 // 비교 자료가 있으면 서로 다른 집계 단위와 추정 여부를 수치 옆에 붙인다.
 it("유사 행사와 평시 자료의 원래 값과 집계 단위를 표시한다", () => {
   const similar = {
@@ -166,5 +175,5 @@ it("docx 요청의 성공·404·오류를 구별한다", async () => {
   const withoutPlan = { ...fixture, brief: { ...fixture.brief, actions: [] } };
   expect(
     renderToStaticMarkup(<ReportToolbar report={withoutPlan} />),
-  ).toContain("계획 초안 경로가 없어 받을 수 없어요.");
+  ).not.toContain("disabled");
 });

@@ -54,6 +54,26 @@ async function selection(page: import("@playwright/test").Page) {
 	});
 }
 
+// 구불구불한 지역 경계는 경계 상자 중앙이 이웃 지역일 수 있어 실제 보이는 면을 누른다.
+async function clickVisibleRegion(
+	page: import("@playwright/test").Page,
+	region: import("@playwright/test").Locator,
+) {
+	const point = await region.evaluate((path) => {
+		const bounds = path.getBoundingClientRect();
+		for (let row = 0; row < 20; row++) {
+			for (let column = 0; column < 20; column++) {
+				const x = bounds.left + (bounds.width * (column + 0.5)) / 20;
+				const y = bounds.top + (bounds.height * (row + 0.5)) / 20;
+				if (document.elementFromPoint(x, y) === path) return { x, y };
+			}
+		}
+		return null;
+	});
+	expect(point).not.toBeNull();
+	if (point) await page.mouse.click(point.x, point.y);
+}
+
 // 필터를 합치면 목록과 KPI가 같은 2건을 보여 주고 카드 선택이 스토어에 남는다.
 test("필터·목록·KPI와 선택", async ({ page }) => {
 	await page.goto(`${origin}/?sceneFixture=1&theme=day&at=${clock}`);
@@ -105,10 +125,10 @@ test("SVG 대체 지도에서 선택과 필터", async ({ page }) => {
 	await expect(
 		page.locator(".festival-list__items li.is-selected"),
 	).toHaveCount(1);
-	await page
-		.getByRole("button", { name: /서울특별시 .* 선택/ })
-		.first()
-		.click();
+	await clickVisibleRegion(
+		page,
+		page.getByRole("button", { name: /서울특별시 .* 선택/ }).first(),
+	);
 	expect((await selection(page)).festival).toBeNull();
 	await expect(
 		page.getByRole("region", { name: "선택 행사 요약" }),

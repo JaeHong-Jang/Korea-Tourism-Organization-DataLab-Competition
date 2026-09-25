@@ -66,7 +66,9 @@ export function SceneLegend({
       </div>
       <span className="scene-legend__note">
         인원 규모는 예보값 비례 · 인형 위치는 실제 사람 위치가 아니에요 ·
-        열차·차량·봇 움직임은 연출 — 실제 운행·교통량이 아님.
+        {dataMode
+          ? "데이터 모드에서는 열차·차량을 숨겨요 · 봇 움직임은 연출이에요."
+          : "열차·차량·봇 움직임은 연출 — 실제 운행·교통량이 아님."}
       </span>
       {notices}
       <FestivalList festivals={festivals} />
