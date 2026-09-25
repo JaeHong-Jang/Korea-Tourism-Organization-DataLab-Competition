@@ -2,8 +2,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { cityBuildingCap, cityBuildingGeometry } from "../city/city-buildings";
+import { trafficCaps } from "../city/city-traffic";
 import { motionSeconds } from "../motion/rail-lines";
-import { vehicleCap } from "./actors";
 import { clipPolygon, clipSegment } from "./clip";
 import { tileAt, tilePointToVenue } from "./coordinates";
 import { graphRoutes, routeGraph, vehicleAt } from "./routes";
@@ -157,13 +157,18 @@ describe("행사장 연출", () => {
           footprint: square(20),
         },
       ],
-      { wall: "#f3ead7", roof: "#fbf6ec", tall: "#e8dcc4" },
+      { wall: "#f3ead7", roof: "#fbf6ec", tall: "#e8dcc4", cool: "#e3e3de" },
     );
-    expect(merged?.getAttribute("color")?.count).toBe(
-      merged?.getAttribute("position")?.count,
-    );
-    merged?.dispose();
-    expect(vehicleCap("high")).toBeLessThanOrEqual(500);
+    // 벽(창문 그림용 UV 포함)과 지붕을 따로 모으고 칸마다 색을 칠한다.
+    for (const part of [merged?.walls, merged?.roofs]) {
+      expect(part?.getAttribute("color")?.count).toBe(
+        part?.getAttribute("position")?.count,
+      );
+      part?.dispose();
+    }
+    expect(merged?.walls.getAttribute("uv")).toBeDefined();
+    expect(trafficCaps("high").cars).toBeLessThanOrEqual(500);
+    expect(trafficCaps("low").cars).toBeLessThan(trafficCaps("high").cars);
     expect(dollCount(100000, 19, [{ hour: 19, share: 1 }], "low").count).toBe(
       125,
     );

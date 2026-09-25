@@ -1,4 +1,4 @@
-// 동네 한 조각을 나무 받침 위의 크림색 땅·흰 도로·녹지·물로 깐다.
+// 동네 한 조각을 나무 받침 위의 크림색 땅·회색 아스팔트(큰길 중앙선)·녹지·물로 깐다.
 import { useEffect, useMemo } from "react";
 import {
   DoubleSide,
@@ -29,7 +29,7 @@ function roundedSquare(size: number, radius: number): Shape {
   return shape;
 }
 
-// 길은 큰길을 넓고 밝게, 골목·보행로를 가늘게 두어 성남 지도처럼 읽히게 한다.
+// 길은 큰길을 넓고 짙게, 골목·보행로를 가늘게 두어 성남 지도처럼 읽히게 한다.
 export function CityGround({
   tiles,
   wet = false,
@@ -70,6 +70,17 @@ export function CityGround({
       ),
     [tiles],
   );
+  // 큰길 가운데 흰 중앙선(가는 띠)으로 차로가 읽히게 한다.
+  const centerLine = useMemo(
+    () =>
+      stripGeometry(
+        tiles.roads
+          .filter((line) => line.kind === "major_road")
+          .map((line) => ({ ...line, width: 0.6 })),
+        1.2,
+      ),
+    [tiles],
+  );
   const rail = useMemo(
     () =>
       stripGeometry(
@@ -89,6 +100,14 @@ export function CityGround({
       side: new MeshStandardMaterial({
         color: sceneColor("board-side"),
         roughness: 1,
+      }),
+      line: new MeshStandardMaterial({
+        color: sceneColor("city-road-line"),
+        side: DoubleSide,
+        roughness: 0.8,
+        polygonOffset: true,
+        polygonOffsetFactor: -3,
+        polygonOffsetUnits: -3,
       }),
       minor: new MeshStandardMaterial({
         color: sceneColor("city-road"),
@@ -130,10 +149,10 @@ export function CityGround({
   // 자료 교체·언마운트 때 지면 버퍼와 재료를 돌려준다.
   useEffect(
     () => () => {
-      for (const geometry of [minor, major, rail, water, park])
+      for (const geometry of [minor, major, centerLine, rail, water, park])
         geometry?.dispose();
     },
-    [minor, major, rail, water, park],
+    [minor, major, centerLine, rail, water, park],
   );
   useEffect(() => () => base.dispose(), [base]);
   useEffect(
@@ -153,6 +172,7 @@ export function CityGround({
       {water && <mesh geometry={water} material={materials.water} />}
       <mesh geometry={minor} material={materials.minor} receiveShadow />
       <mesh geometry={major} material={materials.major} receiveShadow />
+      <mesh geometry={centerLine} material={materials.line} />
       <mesh geometry={rail} material={materials.rail} />
     </group>
   );

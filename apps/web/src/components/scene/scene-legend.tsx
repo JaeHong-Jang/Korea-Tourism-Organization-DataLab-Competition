@@ -27,7 +27,7 @@ export function SceneLegend({
     <div className="scene-stage__note scene-legend">
       {city && (
         <div className="scene-legend__note">
-          동네 3D · 건물·도로 = OpenStreetMap · 사람·차 = 연출(보이게 키움)
+          동네 3D · 건물·도로·공원 = OpenStreetMap · 사람·차·기차·나무 자리 = 연출(보이게 키움)
         </div>
       )}
       <div className="scene-legend__scale">

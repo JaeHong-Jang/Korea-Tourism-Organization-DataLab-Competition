@@ -1,7 +1,7 @@
-// 실제 건물 외곽선을 크림색 미니어처 건물로 세우고 한 형상으로 합쳐 그린다.
+// 실제 건물 외곽선을 창문 달린 미니어처 건물로 세우고 벽·지붕을 각각 한 형상으로 합쳐 그린다.
 import { useEffect, useMemo } from "react";
 import {
-  type BufferGeometry,
+  BufferGeometry,
   Color,
   ExtrudeGeometry,
   Float32BufferAttribute,
@@ -11,6 +11,7 @@ import {
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { sceneColor } from "../quality";
 import type { VenueBuilding } from "../venue/tiles";
+import { windowTexture } from "./window-texture";
 
 // 소프트웨어 렌더러에서도 기준 프레임을 지키도록 품질별 건물 수를 제한한다.
 export function cityBuildingCap(quality: "high" | "medium" | "low") {
@@ -24,17 +25,54 @@ function jitter(building: VenueBuilding) {
   return value - Math.floor(value);
 }
 
-// 외곽선을 위로 밀어 올리고 윗면·옆면에 서로 다른 크림색을 칠한다.
-export type BuildingPalette = { wall: string; roof: string; tall: string };
+// 외곽선을 위로 밀어 올리고 옆벽(창문 그림을 붙일 면)과 윗면(지붕)을 따로 모은다.
+export type BuildingPalette = {
+  wall: string;
+  roof: string;
+  tall: string;
+  cool: string;
+};
+export type BuildingGeometry = { walls: BufferGeometry; roofs: BufferGeometry };
+
+// 돌출 형상의 무리 0은 윗·아랫면, 무리 1은 옆벽 — 정점 범위만 잘라 새 형상으로 만든다.
+function slice(geometry: BufferGeometry, materialIndex: number) {
+  const group = geometry.groups.find(
+    (item) => item.materialIndex === materialIndex,
+  );
+  const part = new BufferGeometry();
+  if (!group) return part;
+  for (const name of ["position", "normal", "uv"]) {
+    const attribute = geometry.getAttribute(name);
+    const size = attribute.itemSize;
+    part.setAttribute(
+      name,
+      new Float32BufferAttribute(
+        (attribute.array as Float32Array).slice(
+          group.start * size,
+          (group.start + group.count) * size,
+        ),
+        size,
+      ),
+    );
+  }
+  return part;
+}
+
+// 정점 색을 한 가지로 칠한다(창문 그림·조명과 곱해진다).
+function paint(geometry: BufferGeometry, color: Color) {
+  const count = geometry.getAttribute("position").count;
+  const colors = new Float32Array(count * 3);
+  for (let index = 0; index < count; index++)
+    colors.set([color.r, color.g, color.b], index * 3);
+  geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
+}
 
 export function cityBuildingGeometry(
   buildings: VenueBuilding[],
   palette: BuildingPalette,
-): BufferGeometry | null {
-  const wall = new Color(palette.wall);
-  const roof = new Color(palette.roof);
-  const tall = new Color(palette.tall);
-  const pieces: BufferGeometry[] = [];
+): BuildingGeometry | null {
+  const walls: BufferGeometry[] = [];
+  const roofs: BufferGeometry[] = [];
   const color = new Color();
   for (const building of buildings) {
     const outline = building.footprint;
@@ -54,20 +92,33 @@ export function cityBuildingGeometry(
     });
     geometry.rotateX(-Math.PI / 2);
     geometry.translate(0, building.minHeight, 0);
-    const normals = geometry.getAttribute("normal");
-    const colors = new Float32Array(normals.count * 3);
-    const shade = 0.94 + jitter(building) * 0.1;
-    for (let index = 0; index < normals.count; index++) {
-      const up = normals.getY(index) > 0.5;
-      color.copy(up ? roof : building.height > 40 ? tall : wall);
-      color.multiplyScalar(shade);
-      colors.set([color.r, color.g, color.b], index * 3);
-    }
-    geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
-    pieces.push(geometry);
+    // 크림·높은 건물 베이지·옅은 회색(4채 중 1채)을 섞고 좌표로 정한 미세 명암을 준다.
+    const tone = jitter(building);
+    const shade = 0.94 + tone * 0.1;
+    const wall = slice(geometry, 1);
+    const roof = slice(geometry, 0);
+    geometry.dispose();
+    color
+      .set(
+        tone < 0.25
+          ? palette.cool
+          : building.height > 40
+            ? palette.tall
+            : palette.wall,
+      )
+      .multiplyScalar(shade);
+    paint(wall, color);
+    color.set(palette.roof).multiplyScalar(shade);
+    paint(roof, color);
+    walls.push(wall);
+    roofs.push(roof);
   }
-  const merged = pieces.length ? mergeGeometries(pieces, false) : null;
-  for (const piece of pieces) piece.dispose();
+  if (!walls.length) return null;
+  const merged = {
+    walls: mergeGeometries(walls, false),
+    roofs: mergeGeometries(roofs, false),
+  };
+  for (const piece of [...walls, ...roofs]) piece.dispose();
   return merged;
 }
 
@@ -76,7 +127,7 @@ export function isLit(building: VenueBuilding) {
   return jitter(building) > 0.62;
 }
 
-// 가까운 건물부터 품질 상한까지 세우고, 밤에는 불 켜진 건물을 스스로 빛나는 재질로 따로 그린다.
+// 가까운 건물부터 품질 상한까지 세우고, 벽에는 창문 그림을, 밤에는 불 켜진 건물의 창만 빛나게 한다.
 export function CityBuildings({
   buildings,
   quality,
@@ -95,6 +146,7 @@ export function CityBuildings({
       wall: sceneColor("city-wall"),
       roof: sceneColor("city-roof"),
       tall: sceneColor("city-wall-tall"),
+      cool: sceneColor("city-wall-cool"),
     }),
     [],
   );
@@ -110,48 +162,89 @@ export function CityBuildings({
     () => (night ? cityBuildingGeometry(chosen.filter(isLit), palette) : null),
     [chosen, night, palette],
   );
-  const material = useMemo(
-    () => new MeshStandardMaterial({ vertexColors: true, roughness: 0.92 }),
+  const textures = useMemo(
+    () => ({
+      glass: windowTexture(sceneColor("glass-window")),
+      lit: windowTexture("", true),
+    }),
     [],
   );
-  const litMaterial = useMemo(
-    () =>
-      new MeshStandardMaterial({
+  const materials = useMemo(
+    () => ({
+      wall: new MeshStandardMaterial({
         vertexColors: true,
+        map: textures.glass,
+        roughness: 0.9,
+      }),
+      litWall: new MeshStandardMaterial({
+        vertexColors: true,
+        map: textures.glass,
         roughness: 0.9,
         emissive: new Color(sceneColor("city-window")),
-        emissiveIntensity: 0.24,
+        emissiveMap: textures.lit,
+        emissiveIntensity: 0.85,
       }),
-    [],
+      roof: new MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }),
+    }),
+    [textures],
   );
 
-  // 자료가 바뀌거나 화면을 떠날 때 합친 형상과 재료를 해제한다.
-  useEffect(() => () => geometry?.dispose(), [geometry]);
-  useEffect(() => () => litGeometry?.dispose(), [litGeometry]);
+  // 자료가 바뀌거나 화면을 떠날 때 합친 형상·그림·재료를 해제한다.
   useEffect(
     () => () => {
-      material.dispose();
-      litMaterial.dispose();
+      geometry?.walls.dispose();
+      geometry?.roofs.dispose();
     },
-    [material, litMaterial],
+    [geometry],
+  );
+  useEffect(
+    () => () => {
+      litGeometry?.walls.dispose();
+      litGeometry?.roofs.dispose();
+    },
+    [litGeometry],
+  );
+  useEffect(
+    () => () => {
+      for (const item of Object.values(materials)) item.dispose();
+      textures.glass.dispose();
+      textures.lit.dispose();
+    },
+    [materials, textures],
   );
 
+  const shadows = quality === "high";
   return (
     <>
       {geometry && (
-        <mesh
-          geometry={geometry}
-          material={material}
-          castShadow={quality === "high"}
-          receiveShadow={quality === "high"}
-        />
+        <>
+          <mesh
+            geometry={geometry.walls}
+            material={materials.wall}
+            castShadow={shadows}
+            receiveShadow={shadows}
+          />
+          <mesh
+            geometry={geometry.roofs}
+            material={materials.roof}
+            castShadow={shadows}
+            receiveShadow={shadows}
+          />
+        </>
       )}
       {litGeometry && (
-        <mesh
-          geometry={litGeometry}
-          material={litMaterial}
-          receiveShadow={quality === "high"}
-        />
+        <>
+          <mesh
+            geometry={litGeometry.walls}
+            material={materials.litWall}
+            receiveShadow={shadows}
+          />
+          <mesh
+            geometry={litGeometry.roofs}
+            material={materials.roof}
+            receiveShadow={shadows}
+          />
+        </>
       )}
     </>
   );

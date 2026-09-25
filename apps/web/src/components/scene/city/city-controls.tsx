@@ -60,7 +60,7 @@ export function CityControls({
     <OrbitControls
       ref={controls}
       target={[0, 0, 0]}
-      minDistance={140}
+      minDistance={35} // 사람 얼굴·차 바퀴가 보일 만큼 가까이 갈 수 있게
       maxDistance={MAX_DISTANCE}
       minPolarAngle={0.2}
       maxPolarAngle={1.32}
