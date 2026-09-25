@@ -46,6 +46,7 @@ async function parallelAnalysis(
   execute: Executor,
   writer: EventWriter,
   deadline: Deadline,
+  today: string,
 ) {
   let ready: (event: Event | null) => void = () => {};
   let rejectReady: (error: unknown) => void = () => {};
@@ -57,6 +58,7 @@ async function parallelAnalysis(
     localGuide,
     {
       draft,
+      today,
       // 행사 적재 성공 후에만 조건을 고정하고 병렬 분석을 시작한다
       ready(event) {
         if (event) session.analyzed = true;
@@ -105,6 +107,7 @@ export async function newForecast(
   writer: EventWriter,
   deadline: Deadline,
   settings: TeamSettings,
+  today: string,
 ) {
   await execute(
     lead,
@@ -145,12 +148,13 @@ export async function newForecast(
     execute,
     writer,
     deadline,
+    today,
   );
   if (!analysis) return;
   const { event, baseline, similar } = analysis;
   const { forecast, revision } = await execute(
     forecaster,
-    event,
+    { event, today },
     "행사 예측과 판정을 요청해요.",
     2,
   );

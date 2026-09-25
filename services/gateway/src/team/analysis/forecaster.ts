@@ -5,7 +5,7 @@ import { asOfDate } from "./as-of.js";
 
 // 수치·판정·근거는 서비스 응답을 보정하지 않고 게이트 A로 넘긴다
 export const forecaster: Agent<
-  Event,
+  { event: Event; today: string },
   { forecast: Forecast; revision: number }
 > = {
   id: "forecaster",
@@ -14,10 +14,11 @@ export const forecaster: Agent<
   budgetMs: 8_000,
   // 적재가 성공해야 예보관 작업을 완료로 기록한다
   async run(ctx) {
-    const forecast = await ctx.forecast.predict(ctx.input);
+    const { event, today } = ctx.input;
+    const forecast = await ctx.forecast.predict(event);
     if (
-      forecast.eventId !== ctx.input.id ||
-      forecast.asOf !== asOfDate(ctx.input.startsAt) ||
+      forecast.eventId !== event.id ||
+      forecast.asOf !== asOfDate(event.startsAt, today) ||
       forecast.predictionRun.asOf !== forecast.asOf
     )
       throw new Error("예보 행사 또는 D-14 기준일 불일치");

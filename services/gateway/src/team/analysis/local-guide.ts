@@ -10,6 +10,7 @@ import { confirmedEvent } from "./confirmed-event.js";
 
 type Input = {
   draft: EventDraft;
+  today: string;
   ready(event: Event | null): void;
   showDraft(draft: EventDraft): Promise<void>;
 };
@@ -76,7 +77,7 @@ export const localGuide: Agent<Input, Output> = {
     ctx.input.ready(event);
     const baseline = await ctx.forecast.baseline(
       place.sigunguCode,
-      asOfDate(event.startsAt),
+      asOfDate(event.startsAt, ctx.input.today),
     );
     if (baseline.sigunguCode !== event.sigunguCode)
       throw new Error("평시 지역이 행사 지역과 다릅니다");

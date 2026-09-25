@@ -1,8 +1,10 @@
 // 요청의 오류·취소·완료를 한곳에서 처리해 스트림을 done으로 끝낸다
 import { RequestTimeoutError } from "../../clients/request-deadline.js";
 import { ServiceHttpError } from "../../clients/request-json.js";
+import { koreanToday } from "../analysis/as-of.js";
 import type { TeamMessage } from "../analysis/draft-answer.js";
 import type { Deadline } from "../lead/deadline.js";
+import { followup } from "../lead/followups.js";
 import { AnalysisGateError, ExplanationGateError } from "../lead/gates.js";
 import { newForecast } from "../lead/playbooks.js";
 import type { EventWriter } from "./events.js";
@@ -47,11 +49,38 @@ export async function runRequest(
   deadline: Deadline,
 ) {
   const previousForecastId = session.forecastId;
+  const isFollowup = session.completed;
+  const today = koreanToday();
   const cancel = () => deadline.abort(disconnected.reason);
   disconnected.addEventListener("abort", cancel, { once: true });
   if (disconnected.aborted) cancel();
   try {
-    if (session.completed || (session.analyzed && message.answer != null)) {
+    const execute = createExecutor(session.id, settings, deadline, writer);
+    if (isFollowup) {
+      await followup(
+        session,
+        message.text,
+        execute,
+        writer,
+        deadline,
+        settings,
+      );
+      return;
+    }
+    // 발행 전의 단독 저장 명령만 안내하고 되묻기 답은 기존 분석으로 이어 간다
+    if (
+      !message.answer &&
+      /^(?:예보서(?:를)?\s*)?(?:저장|보관)(?:해\s*(?:줘|주세요))?[.!?\s]*$/.test(
+        message.text.trim(),
+      )
+    ) {
+      await writer.emit("error", {
+        code: "OUT_OF_SCOPE",
+        message: "먼저 예보를 받아야 저장할 수 있어요",
+      });
+      return;
+    }
+    if (session.analyzed && message.answer != null) {
       await writer.emit("error", {
         code: "OUT_OF_SCOPE",
         message: "새 예보는 새 상담에서 시작해 주세요.",
@@ -61,10 +90,11 @@ export async function runRequest(
     await newForecast(
       session,
       message,
-      createExecutor(session.id, settings, deadline, writer),
+      execute,
       writer,
       deadline,
       settings,
+      today,
     );
   } catch (error) {
     deadline.abort(error);
@@ -73,8 +103,9 @@ export async function runRequest(
     try {
       await writer.emit("done", {
         sessionId: session.id,
-        forecastId:
-          session.forecastId !== previousForecastId
+        forecastId: isFollowup
+          ? (previousForecastId ?? null)
+          : session.forecastId !== previousForecastId
             ? (session.forecastId ?? null)
             : null,
       });

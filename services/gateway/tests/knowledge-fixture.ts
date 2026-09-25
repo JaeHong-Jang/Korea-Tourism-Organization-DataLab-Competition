@@ -1,7 +1,10 @@
 // 가짜 knowledge도 실제 참조·수명 주기 규칙과 핵심 SHACL 조건을 적용한다
 import masterIds from "@crowdcast/contracts/jsonld/master-ids.json";
-// @ts-expect-error 계약 수명 주기는 JavaScript로 배포된다
-import { publishProblems } from "@crowdcast/contracts/rules/claim-lifecycle.mjs";
+import {
+  factsTransitionProblems,
+  publishProblems,
+  // @ts-expect-error 계약 수명 주기는 JavaScript로 배포된다
+} from "@crowdcast/contracts/rules/claim-lifecycle.mjs";
 // @ts-expect-error 계약 규칙은 JavaScript로 배포된다
 import * as integrity from "@crowdcast/contracts/rules/integrity.mjs";
 import type { Claim, Forecast, GateReport } from "@crowdcast/contracts/types";
@@ -15,7 +18,7 @@ export function knowledgeFixture() {
   const sessions = new Map<string, Loaded[]>();
   const revisions = new Map<string, number>();
   const master = integrity.masterSets(masterIds, ["mr-v0-1-0"]);
-  return (url: URL, body: SessionFacts | undefined) => {
+  const respond = (url: URL, body: SessionFacts | undefined) => {
     if (url.pathname === "/v1/master/version")
       return Response.json({ masterVersion: 7 });
     if (url.pathname === "/v1/events") return Response.json(body);
@@ -34,6 +37,33 @@ export function knowledgeFixture() {
     let revision = revisions.get(id) ?? 0;
     const scope = integrity.sessionScope(id, loaded, revision);
     if (action === "facts" && body) {
+      // 허용되지 않는 문장 상태 전이는 실제 knowledge처럼 무결성 게이트 422로 거부한다
+      if (body.schema === "claim") {
+        const problems = body.items.flatMap((doc) =>
+          (
+            factsTransitionProblems(
+              scope.claims.get((doc as Claim).id),
+              doc,
+            ) as string[]
+          ).map((message) => ({ nodeId: (doc as Claim).id, message })),
+        );
+        if (problems.length)
+          return Response.json(
+            {
+              gate: "integrity",
+              passed: false,
+              revision,
+              masterVersion: 7,
+              violations: problems.map(({ nodeId, message }) => ({
+                check: "integrity",
+                shapeId: null,
+                nodeId,
+                message,
+              })),
+            },
+            { status: 422 },
+          );
+      }
       expect(
         body.items.flatMap((doc) =>
           integrity.refProblems(doc, body.schema, master, scope),
@@ -117,4 +147,15 @@ export function knowledgeFixture() {
       violations,
     });
   };
+  // 실제 가짜 저장소의 마지막 상태를 읽어 실패 뒤 남은 후보와 발행 문장을 확인한다
+  return Object.assign(respond, {
+    claims(id: string): Claim[] {
+      const scope = integrity.sessionScope(
+        id,
+        sessions.get(id) ?? [],
+        revisions.get(id) ?? 0,
+      );
+      return structuredClone([...scope.claims.values()]);
+    },
+  });
 }

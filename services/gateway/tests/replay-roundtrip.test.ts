@@ -16,6 +16,11 @@ describe("실제 세션 trace 왕복", () => {
     let recording = false;
     const harness = teamFixture({
       env: { FORECAST_MODE: "fake" },
+      // 발행 실패한 분석 세션의 오류 재생은 기존 null 종료 규칙을 유지한다
+      override: async ({ url }) =>
+        url.pathname.endsWith("/publish")
+          ? new Response(null, { status: 503 })
+          : undefined,
       traceAppend: async (...args) => {
         if (recording) await appendTrace(...args);
       },
