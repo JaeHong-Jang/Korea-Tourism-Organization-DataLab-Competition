@@ -10,6 +10,7 @@ from jsonschema import ValidationError
 from crowdcast.analytics.upcoming import check_range
 from crowdcast.analytics.upcoming import upcoming as find_upcoming
 from crowdcast.api.assemble.http import endpoint_validator, response
+from crowdcast.api.assemble.locations import attach_locations
 from crowdcast.data.image_cache import attach_images
 
 router = APIRouter()
@@ -34,7 +35,7 @@ async def upcoming(request: Request) -> JSONResponse:
     def calculate() -> list[dict[str, Any]]:
         run_id, rows = find_upcoming(start, end)
         headers["X-Run-Id"] = run_id
-        return attach_images(rows)
+        return attach_locations(attach_images(rows))
 
     # 기존 응답 검증·오류 변환을 거친 정상 결과에 실행 식별자를 붙인다.
     result = await response("/v1/festivals/upcoming", calculate)

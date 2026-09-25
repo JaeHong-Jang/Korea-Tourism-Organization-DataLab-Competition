@@ -17,10 +17,14 @@ export function SkyScene({
   center,
   quality,
   reducedMotion,
+  moonOffset,
+  moonSize,
 }: {
   center: [number, number];
   quality: SceneQuality;
   reducedMotion: boolean;
+  moonOffset?: [number, number, number];
+  moonSize?: number;
 }) {
   const { sky } = useTheme();
   return (
@@ -48,6 +52,8 @@ export function SkyScene({
       {sky === "night" && (
         <Moon
           center={center}
+          offset={moonOffset}
+          size={moonSize}
           colors={{
             glow: sceneColor("moon-glow"),
             face: sceneColor("moon-face"),

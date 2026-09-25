@@ -16,6 +16,11 @@ class ModelVerdict(Enum):
     미검증 = '미검증'
 
 
+class CoordSource(Enum):
+    venue = 'venue'
+    centroid = 'centroid'
+
+
 class Image(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -48,6 +53,12 @@ class FestivalSummary(BaseModel):
         ModelVerdict | None,
         Field(
             description="이 예보를 만든 사용 모델의 검증 상태(reports/backtest/promoted.json의 verdict, 06 §8). 미검증이면 지도·목록에 '골든 사례 0건 — 사례 재현 검증 전 임시 사용'을 표시한다. 없으면 표시 근거가 없는 것으로 본다(선택 필드 — 9/25 추가)."
+        ),
+    ] = None
+    coordSource: Annotated[
+        CoordSource | None,
+        Field(
+            description="lat·lng의 출처(선택 — 9/25 추가). venue = TourAPI 등으로 확인한 행사장 좌표, centroid = 행사장 좌표를 확인하기 전의 시군구 중심점. 동네 3D는 centroid면 '시군구 중심 동네'라고 밝힌다."
         ),
     ] = None
     image: Annotated[

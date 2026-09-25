@@ -3,6 +3,9 @@ import type { FestivalSummary, Weather } from "@crowdcast/contracts/types";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
+import { CityBuildings, cityBuildingCap } from "../city/city-buildings";
+import { CityGround } from "../city/city-ground";
+import { CityWalkers } from "../city/city-walkers";
 import { Fireworks } from "../effects/fireworks";
 import { FestivalModels } from "../festival-models";
 import type { PlacedFestival } from "../festival-models/placement";
@@ -13,11 +16,8 @@ import { weatherEffects } from "../weather/state";
 import { WeatherScene } from "../weather/weather-scene";
 import { WetHighlights } from "../weather/wet-highlights";
 import { VenueActors } from "./actors";
-import { buildingCap, VenueBuildings } from "./buildings";
-import { VenueDolls } from "./dolls";
-import { VenueGround } from "./ground";
 import { VenueNightLights } from "./night-lights";
-import { graphRoutes, routeGraph } from "./routes";
+import { graphRoutes, routeGraph, towardShare } from "./routes";
 import type { VenueEvent, VenueKey } from "./sites";
 import type { VenueTiles } from "./tiles";
 import { dollCount, venueDate, venueSun } from "./time";
@@ -68,7 +68,7 @@ export function VenueScene({
 }: {
   tiles: VenueTiles;
   event: VenueEvent;
-  siteKey: VenueKey;
+  siteKey: VenueKey | "korea";
   peak: number;
   profile: { hour: number; share: number }[];
   level: number;
@@ -127,7 +127,7 @@ export function VenueScene({
       frameloop="always"
     >
       <VenueLight event={event} hour={hour} quality={activeQuality} />
-      <VenueGround tiles={tiles} wet={effects.wetGround} />
+      <CityGround tiles={tiles} wet={effects.wetGround} />
       {t435 && (
         <WeatherScene
           weather={weather}
@@ -143,19 +143,20 @@ export function VenueScene({
       {t435 && effects.wetGround && (
         <WetHighlights center={[0, 0]} y={1.35} radius={180} />
       )}
-      <VenueBuildings
+      <CityBuildings
         buildings={tiles.buildings}
-        stations={tiles.stations}
         quality={activeQuality}
         night={sky === "night"}
       />
       <group position={[0, -7, 0]}>
         <FestivalModels placed={placed} />
       </group>
-      <VenueDolls
-        count={dolls.count}
+      <CityWalkers
+        routes={roads}
+        gather={dolls.count}
+        towardShare={towardShare(hour, eventHour)}
+        quality={activeQuality}
         reducedMotion={reducedMotion || !t435}
-        rain={effects.precipitation === "rain"}
       />
       {t435 && sky !== "day" && <VenueNightLights quality={activeQuality} />}
       {t435 && sky === "night" && event.type.includes("불꽃") && (
@@ -172,6 +173,7 @@ export function VenueScene({
         hour={hour}
         eventHour={eventHour}
         reducedMotion={reducedMotion}
+        scale={3.2}
       />
       <OrbitControls
         makeDefault
@@ -189,7 +191,10 @@ export function VenueScene({
         onRegressFactor={setRegress}
       />
       <VenueSignal
-        buildings={Math.min(tiles.buildings.length, buildingCap(activeQuality))}
+        buildings={Math.min(
+          tiles.buildings.length,
+          cityBuildingCap(activeQuality),
+        )}
         cars={cars}
         sky={sky}
         measure={measure}

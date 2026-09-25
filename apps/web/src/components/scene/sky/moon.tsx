@@ -62,9 +62,13 @@ function moonTexture(colors: { glow: string; face: string; shade: string }) {
 export function Moon({
   center,
   colors,
+  offset = MOON_OFFSET,
+  size = 520,
 }: {
   center: [number, number];
   colors: { glow: string; face: string; shade: string };
+  offset?: [number, number, number];
+  size?: number;
 }) {
   const { glow, face, shade } = colors;
   const texture = useMemo(
@@ -74,12 +78,8 @@ export function Moon({
   useEffect(() => () => texture.dispose(), [texture]);
   return (
     <sprite
-      position={[
-        center[0] + MOON_OFFSET[0],
-        MOON_OFFSET[1],
-        center[1] + MOON_OFFSET[2],
-      ]}
-      scale={[520, 520, 1]}
+      position={[center[0] + offset[0], offset[1], center[1] + offset[2]]}
+      scale={[size, size, 1]}
       renderOrder={-8}
     >
       <spriteMaterial

@@ -176,6 +176,26 @@
   --scene-moonlight: #cfdcff;
   /* 낮 햇빛 번짐(장식, 더하기 합성) */
   --scene-sunlight: #ffe2a8;
+  /* 동네 3D(성남식 미니어처): 크림 건물·흰 도로·연녹 공원·청록 물 — 재질 색, 낮밤은 조명으로 */
+  --scene-city-land: #e2d8bf;
+  --scene-city-road: #fbf8f1;
+  --scene-city-road-major: #ffffff;
+  --scene-city-rail: #9aa0a8;
+  --scene-city-park: #bcd597;
+  --scene-city-water: #9fd0d3;
+  --scene-city-wall: #f3ead7;
+  --scene-city-roof: #fbf6ec;
+  --scene-city-wall-tall: #e8dcc4;
+  --scene-city-window: #ffd27a;
+  /* 동네 사람 옷(장식 — 크림 바탕에서 보이게 진하되 등급 4색과 겹치지 않는 차분한 색) */
+  --scene-person-1: #4f68a8;
+  --scene-person-2: #9a4f74;
+  --scene-person-3: #2f8a86;
+  --scene-person-4: #7c5f35;
+  --scene-person-5: #6452a0;
+  --scene-person-6: #2f4a6e;
+  --scene-person-7: #6f8034;
+  --scene-person-8: #5a5f66;
   --scene-window-glow: #ffd98a;
   --scene-shadow: rgba(40, 30, 20, 0.28);
   /* 블록 인형 옷(데이터 의미 없음 — 등급·팀 색과 겹치지 않게 채도를 낮춘 파스텔 8색)과 칠하지 않은 나무 머리 */

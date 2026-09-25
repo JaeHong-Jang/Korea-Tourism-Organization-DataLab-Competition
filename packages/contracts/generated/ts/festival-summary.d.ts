@@ -31,6 +31,10 @@ export interface FestivalSummary {
    */
   modelVerdict?: "통과" | "미검증";
   /**
+   * lat·lng의 출처(선택 — 9/25 추가). venue = TourAPI 등으로 확인한 행사장 좌표, centroid = 행사장 좌표를 확인하기 전의 시군구 중심점. 동네 3D는 centroid면 '시군구 중심 동네'라고 밝힌다.
+   */
+  coordSource?: "venue" | "centroid";
+  /**
    * 대표 이미지(선택 — TourAPI firstimage를 로컬 캐시로). 없으면 화면은 유형 그림
    */
   image?: {

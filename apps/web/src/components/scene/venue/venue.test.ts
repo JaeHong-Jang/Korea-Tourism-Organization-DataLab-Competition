@@ -1,11 +1,9 @@
 // 실제 한강 타일 한 장과 경계·경로·시간 규칙을 네트워크 없이 검증한다.
 import { readFileSync } from "node:fs";
-import { Color } from "three";
 import { describe, expect, it } from "vitest";
+import { cityBuildingCap, cityBuildingGeometry } from "../city/city-buildings";
 import { motionSeconds } from "../motion/rail-lines";
 import { vehicleCap } from "./actors";
-import { displayBuildingHeight, mergeBuildingTiles } from "./building-tiles";
-import { buildingCap } from "./buildings";
 import { clipPolygon, clipSegment } from "./clip";
 import { tileAt, tilePointToVenue } from "./coordinates";
 import { graphRoutes, routeGraph, vehicleAt } from "./routes";
@@ -32,6 +30,10 @@ describe("행사장 z15 타일", () => {
     };
     readVenueTile(data, 27942, 12693, [126.98, 37.53], tiles);
     expect(tiles.buildings.length).toBeGreaterThan(0);
+    // 동네 3D가 상자 대신 세울 실제 외곽선도 함께 읽는다.
+    expect(
+      tiles.buildings.every((item) => (item.footprint?.length ?? 0) >= 3),
+    ).toBe(true);
     expect(tiles.roads.length).toBeGreaterThan(0);
     expect(tiles.rails.length).toBeGreaterThan(0);
     expect(graphRoutes(routeGraph(tiles.roads)).length).toBeGreaterThan(0);
@@ -125,27 +127,42 @@ describe("행사장 연출", () => {
   });
 
   it("품질 상한과 모션 감소 정지를 지킨다", () => {
-    expect(buildingCap("low")).toBeLessThan(buildingCap("high"));
-    expect(buildingCap("high")).toBeLessThanOrEqual(700);
-    expect(
-      displayBuildingHeight(
-        { x: 0, z: 0, width: 8, depth: 8, height: 19, minHeight: 0 },
-        "medium",
-      ),
-    ).toBe(16);
-    const merged = mergeBuildingTiles(
+    expect(cityBuildingCap("low")).toBeLessThan(cityBuildingCap("high"));
+    expect(cityBuildingCap("high")).toBeLessThanOrEqual(2200);
+    // 실제 외곽선 두 채를 한 형상으로 합치고 칸마다 색을 칠한다.
+    const square = (x: number): [number, number][] => [
+      [x, 0],
+      [x + 8, 0],
+      [x + 8, 8],
+      [x, 8],
+    ];
+    const merged = cityBuildingGeometry(
       [
-        { x: 0, z: 0, width: 8, depth: 8, height: 19, minHeight: 0 },
-        { x: 20, z: 0, width: 8, depth: 8, height: 21, minHeight: 0 },
+        {
+          x: 4,
+          z: 4,
+          width: 8,
+          depth: 8,
+          height: 19,
+          minHeight: 0,
+          footprint: square(0),
+        },
+        {
+          x: 24,
+          z: 4,
+          width: 8,
+          depth: 8,
+          height: 21,
+          minHeight: 0,
+          footprint: square(20),
+        },
       ],
-      "high",
-      true,
-      { wall: new Color(), window: new Color() },
+      { wall: "#f3ead7", roof: "#fbf6ec", tall: "#e8dcc4" },
     );
-    expect(merged).toHaveLength(1);
-    merged.forEach((tile) => {
-      tile.dispose();
-    });
+    expect(merged?.getAttribute("color")?.count).toBe(
+      merged?.getAttribute("position")?.count,
+    );
+    merged?.dispose();
     expect(vehicleCap("high")).toBeLessThanOrEqual(500);
     expect(dollCount(100000, 19, [{ hour: 19, share: 1 }], "low").count).toBe(
       125,

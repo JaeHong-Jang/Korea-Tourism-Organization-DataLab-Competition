@@ -7,12 +7,14 @@ import { useSelectionStore } from "../../lib/selection-store";
 import { useTheme } from "../../lib/theme/theme-provider";
 import { Board } from "./board";
 import { CameraRig } from "./camera-rig";
+import { CityScene, type CityStatus } from "./city/city-scene";
 import { Fireworks } from "./effects/fireworks";
 import { FestivalLayer } from "./festival-layer";
 import { LandTiles } from "./land-tiles";
 import { RoadTraffic } from "./motion/road-traffic";
 import { Trains } from "./motion/trains";
 import { WhaleBots } from "./motion/whale-bots";
+import { NameTags } from "./name-tag";
 import { ForecastOffice } from "./office/forecast-office";
 import { qualityDpr, sceneColor } from "./quality";
 import { nationalDescription } from "./scene-description";
@@ -50,6 +52,7 @@ export function MiniKoreaCanvas({
 }) {
   const [regressFactor, setRegressFactor] = useState(1);
   const [showLand, setShowLand] = useState(true);
+  const [cityStatus, setCityStatus] = useState<CityStatus | null>(null);
   const diagnostics = useMemo(readSceneOptions, []);
   const { mode, quality: activeQuality, change } = useSceneQuality(diagnostics);
   const t435 = diagnostics.t435;
@@ -78,6 +81,11 @@ export function MiniKoreaCanvas({
   const selectFestival = useSelectionStore((state) => state.selectFestival);
   const selectSigungu = useSelectionStore((state) => state.selectSigungu);
   const setFilters = useSelectionStore((state) => state.setFilters);
+  // 행사를 고르면 그 동네를 실제 건물·길이 있는 3D 미니어처로 펼친다(sceneCity=0이면 전국 판만).
+  const cityFestival =
+    diagnostics.city && selectedId
+      ? (festivals.find((festival) => festival.eventId === selectedId) ?? null)
+      : null;
 
   // 나무판과 조명 범위는 땅 경계에 여백 90km를 더한 크기로 맞춘다.
   const bounds = model?.bounds;
@@ -129,7 +137,15 @@ export function MiniKoreaCanvas({
       style={{ position: "absolute", inset: 0 }}
       aria-label="시군구를 선택할 수 있는 3D 미니 대한민국"
       data-focus-id={selectedId ?? ""}
+      data-city-mode={cityFestival ? "true" : "false"}
     >
+      {cityFestival && cityStatus !== "ready" && (
+        <p className="scene-city-status" role="status">
+          {cityStatus === "error"
+            ? "이 동네 지도를 불러오지 못했어요. 전국 보기로 돌아가 주세요."
+            : `${cityFestival.name} 주변 동네를 펼치는 중이에요.`}
+        </p>
+      )}
       <p className="sr-only" aria-live="polite">
         {nationalDescription(
           scene.placed.map(({ festival }) => festival),
@@ -169,99 +185,143 @@ export function MiniKoreaCanvas({
           onQualityChange={change}
           onRegressFactor={setRegressFactor}
         />
-        <SunLight
-          revision={scene.placed}
-          quality={activeQuality}
-          center={center}
-          width={width}
-          depth={depth}
-        />
-        {diagnostics.sky && (
-          <SkyScene
-            center={center}
+        {cityFestival ? (
+          <CityScene
+            key={cityFestival.eventId}
+            festival={cityFestival}
             quality={activeQuality}
             reducedMotion={reducedMotion}
+            onLeave={() => {
+              selectFestival(null);
+              selectSigungu(null);
+            }}
+            onStatus={setCityStatus}
           />
-        )}
-        <Board center={center} width={width} depth={depth} />
-        {t435 && (
-          <WeatherScene
-            weather={weather}
-            quality={activeQuality}
-            reducedMotion={reducedMotion}
-            center={center}
-            width={width}
-            depth={depth}
-            surfaceY={9.5}
-            night={sky === "night"}
-          />
-        )}
-        {t435 &&
-          weatherEffects(weather, activeQuality).wetGround &&
-          scene.placed[0] && (
-            <WetHighlights
-              center={[scene.placed[0].x, scene.placed[0].z]}
-              y={11}
-              radius={13}
-              count={8}
+        ) : (
+          <>
+            <SunLight
+              revision={scene.placed}
+              quality={activeQuality}
+              center={center}
+              width={width}
+              depth={depth}
             />
-          )}
+            {diagnostics.sky && (
+              <SkyScene
+                center={center}
+                quality={activeQuality}
+                reducedMotion={reducedMotion}
+              />
+            )}
+            <Board center={center} width={width} depth={depth} />
+            {t435 && (
+              <WeatherScene
+                weather={weather}
+                quality={activeQuality}
+                reducedMotion={reducedMotion}
+                center={center}
+                width={width}
+                depth={depth}
+                surfaceY={9.5}
+                night={sky === "night"}
+              />
+            )}
+            {t435 &&
+              weatherEffects(weather, activeQuality).wetGround &&
+              scene.placed[0] && (
+                <WetHighlights
+                  center={[scene.placed[0].x, scene.placed[0].z]}
+                  y={11}
+                  radius={13}
+                  count={8}
+                />
+              )}
+            {showLand && <LandTiles model={model} onPick={onPick} />}
+            {diagnostics.motion && !dataMode && (
+              <Trains
+                reducedMotion={reducedMotion}
+                diagnostic={diagnostics.debug}
+              />
+            )}
+            {diagnostics.motion && !dataMode && (
+              <RoadTraffic
+                quality={activeQuality}
+                reducedMotion={reducedMotion}
+              />
+            )}
+            <FestivalLayer
+              scene={scene}
+              center={center}
+              reducedMotion={reducedMotion || !t435}
+            />
+            {t435 &&
+              sky === "night" &&
+              scene.placed
+                .filter(({ festival }) => festival.type.includes("불꽃"))
+                .slice(0, 3)
+                .map(({ festival, x, y, z }) => (
+                  <Fireworks
+                    key={festival.eventId}
+                    position={[x, y + 36, z]}
+                    quality={activeQuality}
+                    reducedMotion={reducedMotion}
+                  />
+                ))}
+            {diagnostics.motion && (
+              <WhaleBots
+                selected={
+                  scene.placed.find(
+                    ({ festival }) => festival.eventId === selectedId,
+                  ) ?? null
+                }
+                quality={activeQuality}
+                reducedMotion={reducedMotion}
+                diagnostic={diagnostics.debug}
+              />
+            )}
+            <CameraRig
+              center={center}
+              selected={
+                focusPoint ??
+                (picked ? (model.centers.get(picked) ?? null) : null)
+              }
+              reducedMotion={reducedMotion}
+              focus={Boolean(diagnostics.focusCode || selectedId)}
+              width={width}
+              depth={depth}
+              overviewRevision={overviewRevision}
+              onDeepZoom={
+                diagnostics.city
+                  ? ([x, z]) => {
+                      // 화면 중심에서 30km 안의 가장 가까운 행사 동네로 들어간다.
+                      const nearest = scene.placed
+                        .map((item) => ({
+                          item,
+                          distance: Math.hypot(item.x - x, item.z - z),
+                        }))
+                        .sort((a, b) => a.distance - b.distance)[0];
+                      if (nearest && nearest.distance < 30)
+                        selectFestival(nearest.item.festival.eventId);
+                    }
+                  : undefined
+              }
+            />
+          </>
+        )}
         {t435 && (
           <ForecastOffice
             x={center[0] - width / 2 + 38}
             z={center[1] - depth / 2 + 38}
+            hidden={Boolean(cityFestival)}
           />
         )}
-        {showLand && <LandTiles model={model} onPick={onPick} />}
-        {diagnostics.motion && !dataMode && (
-          <Trains
-            reducedMotion={reducedMotion}
-            diagnostic={diagnostics.debug}
-          />
-        )}
-        {diagnostics.motion && !dataMode && (
-          <RoadTraffic quality={activeQuality} reducedMotion={reducedMotion} />
-        )}
-        <FestivalLayer
-          scene={scene}
+        {/* 이름표는 동네 모드에서도 떼지 않고 숨긴다(떼면 React 19 DOM 제거 오류). */}
+        <NameTags
+          placed={scene.placed}
           center={center}
-          reducedMotion={reducedMotion || !t435}
-        />
-        {t435 &&
-          sky === "night" &&
-          scene.placed
-            .filter(({ festival }) => festival.type.includes("불꽃"))
-            .slice(0, 3)
-            .map(({ festival, x, y, z }) => (
-              <Fireworks
-                key={festival.eventId}
-                position={[x, y + 36, z]}
-                quality={activeQuality}
-                reducedMotion={reducedMotion}
-              />
-            ))}
-        {diagnostics.motion && (
-          <WhaleBots
-            selected={
-              scene.placed.find(
-                ({ festival }) => festival.eventId === selectedId,
-              ) ?? null
-            }
-            quality={activeQuality}
-            reducedMotion={reducedMotion}
-            diagnostic={diagnostics.debug}
-          />
-        )}
-        <CameraRig
-          center={center}
-          selected={
-            focusPoint ?? (picked ? (model.centers.get(picked) ?? null) : null)
-          }
-          reducedMotion={reducedMotion}
-          focus={Boolean(diagnostics.focusCode || selectedId)}
-          width={width}
-          depth={depth}
-          overviewRevision={overviewRevision}
+          selectedId={selectedId}
+          onPick={selectFestival}
+          hidden={Boolean(cityFestival)}
         />
         <FrameSignal
           measure={diagnostics.measure}

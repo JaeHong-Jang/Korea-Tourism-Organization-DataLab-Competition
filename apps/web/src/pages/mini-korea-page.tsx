@@ -215,6 +215,11 @@ export function MiniKoreaPage() {
             dataMode={dataMode && !svgMode}
             totals={totals}
             notices={<HonestNotices festivals={festivals} fixture={fixture} />}
+            city={
+              Boolean(selected) &&
+              !svgMode &&
+              new URLSearchParams(location.search).get("sceneCity") !== "0"
+            }
           />
         </div>
       </div>

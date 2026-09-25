@@ -32,6 +32,7 @@ export function VenueActors({
   hour,
   eventHour,
   reducedMotion,
+  scale = 1,
 }: {
   roadRoutes: MotionRoute[];
   railRoutes: MotionRoute[];
@@ -39,6 +40,8 @@ export function VenueActors({
   hour: number;
   eventHour: number;
   reducedMotion: boolean;
+  // 동네 3D처럼 멀리서 볼 때 차·열차를 보이게 키우는 배율.
+  scale?: number;
 }) {
   const carCount = roadRoutes.length ? vehicleCap(quality) : 0;
   const trainCount = railRoutes.length
@@ -75,17 +78,18 @@ export function VenueActors({
         const toward =
           !reducedMotion && index / carCount < towardShare(hour, eventHour);
         vehicleAt(route, seconds, index, toward, point);
-        object.position.set(point.x, 1.1, point.z);
+        object.position.set(point.x, 1.1 * scale, point.z);
         object.rotation.set(0, point.heading, 0);
-        object.scale.set(1, 1, 1);
+        object.scale.setScalar(scale);
         object.updateMatrix();
         cars.current?.setMatrixAt(index, object.matrix);
       }
       for (let index = 0; index < trainCount; index++) {
         const route = railRoutes[index % railRoutes.length];
         routePosition(route, seconds, 3, index * 81, point);
-        object.position.set(point.x, 1.7, point.z);
+        object.position.set(point.x, 1.7 * scale, point.z);
         object.rotation.set(0, point.heading, 0);
+        object.scale.setScalar(scale);
         object.updateMatrix();
         trains.current?.setMatrixAt(index, object.matrix);
       }
@@ -102,6 +106,7 @@ export function VenueActors({
       reducedMotion,
       object,
       point,
+      scale,
     ],
   );
 

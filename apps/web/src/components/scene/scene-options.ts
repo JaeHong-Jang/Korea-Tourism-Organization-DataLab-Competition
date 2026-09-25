@@ -56,6 +56,8 @@ export function readSceneOptions() {
     t435: search.get("sceneT435") !== "0",
     // 성능 비교용: sceneSky=0이면 하늘 공·별·달·햇빛을 끈다.
     sky: search.get("sceneSky") !== "0",
+    // 행사를 고르면 동네 3D로 들어간다 — sceneCity=0이면 전국 판 진단만 한다.
+    city: search.get("sceneCity") !== "0",
   };
 }
 
