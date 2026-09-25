@@ -644,9 +644,10 @@
    "id": "T-308",
    "type": "task",
    "lane": "L3",
-   "priority": "P1",
+   "priority": "P0",
    "deps": [
-    "T-306"
+    "T-306",
+    "T-306c"
    ],
    "title": "C 평가",
    "accept": "근거 없는 발행 0"
