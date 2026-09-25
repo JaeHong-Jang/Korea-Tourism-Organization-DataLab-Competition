@@ -11,6 +11,7 @@ from crowdcast.api.assemble.http import NoObservation
 from crowdcast.api.assemble.identity import identifier
 from crowdcast.api.assemble.inputs import feature_event, primary_labels, region_rows
 from crowdcast.features import build
+from crowdcast.features.announced import with_announced
 from crowdcast.features.availability import Feature, check_availability
 from crowdcast.features.region_features import prepare_regions, region_features
 
@@ -19,6 +20,8 @@ from crowdcast.features.region_features import prepare_regions, region_features
 def feature_frame(event: dict[str, Any], as_of: date, names: list[str]) -> pl.DataFrame:
     current = feature_event(event)
     events, labels = primary_labels(as_of)
+    # 단건·일괄 예보 모두 계약 행사와 식별자는 유지하고 내부 피처에만 전년 발표치를 보충한다.
+    current = with_announced(current, events)
     events = [row for row in events if row["event_id"] != current["event_id"]] + [current]
     regions = region_rows(event["sigunguCode"], as_of).sort("date", "tou_div")
     # 학습 감사 파일을 덮지 않도록 요청별 임시 파일에 기존 생성기의 검사를 기록한다.

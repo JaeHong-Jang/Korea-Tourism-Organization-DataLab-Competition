@@ -20,8 +20,10 @@ def announced_features(event: dict[str, Any]) -> dict[str, Feature]:
     }
 
 
-# 계약에 없는 발표치는 같은 행사 ID·지역·개최연도의 마스터에서만 연결한다.
+# 직접 입력한 발표치를 우선하고 결측만 같은 행사 ID·지역·개최연도의 마스터에서 연결한다.
 def with_announced(event: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
+    if event.get("visitors_announced") is not None:
+        return event
     matches = [row for row in events if row["event_id"] == event["event_id"]]
     if len(matches) != 1:
         return event
