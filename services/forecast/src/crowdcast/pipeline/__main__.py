@@ -11,7 +11,8 @@ import httpx
 from crowdcast import paths
 from crowdcast.data.call_ledger import korea_today
 from crowdcast.data.datago_client import DataGoError, TransientDataGoError, safe_error
-from crowdcast.pipeline import gates, run_record, stages
+from crowdcast.pipeline import gates, run_record, stages, summary
+from jsonschema import ValidationError
 
 
 # 공개 단계는 모든 선행 단계의 실제 통과가 확인될 때만 통과시킨다.
@@ -131,7 +132,16 @@ def main(argv: list[str] | None = None) -> int:
         "--dry", action="store_true", help="단계 실행 없이 입력·게이트를 검사하고 dry 기록만 저장"
     )
     parser.add_argument("--max-calls", type=int, default=0, help="재시도를 포함한 방문자 외부 호출 총예산")
+    commands = parser.add_subparsers(dest="command")
+    summarize = commands.add_parser("summary", help="완료된 실행 기록에 요약을 채운다")
+    summarize.add_argument("run_id")
     args = parser.parse_args(argv)
+    if args.command == "summary":
+        try:
+            return 0 if summary.summarize_run(args.run_id) else 1
+        except (OSError, ValueError, ValidationError):
+            print("실행 기록을 요약할 수 없습니다: 식별자·기록·완료 상태를 확인하세요")
+            return 1
     if args.max_calls < 0:
         parser.error("--max-calls는 0 이상이어야 합니다")
     try:
@@ -183,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
     # 실패 뒤 선택 단계는 초기 pending 상태 그대로 두고 종료 코드를 명확하게 전달한다.
     code = run_record.finish_record(record, args.dry, selected)
     path = run_record.write_record(record)
+    summary.save_summary(record, use_ollama=not args.dry)
     print(f"{record['summary']}\n{path}")
     return code
 
