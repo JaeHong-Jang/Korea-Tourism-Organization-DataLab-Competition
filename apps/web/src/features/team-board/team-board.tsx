@@ -164,7 +164,7 @@ export function TeamBoard({
                     <PetAvatar
                       agentId={id}
                       state={agentState(statuses, id)}
-                      size={32}
+                      size={48}
                       label={status?.note || undefined}
                     />
                     {failed.some(

@@ -50,9 +50,9 @@
 .consult-page .team-groups { display: grid; gap: var(--space-2); }
 .consult-page .team-group { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: var(--space-2); }
 .consult-page .team-group h3 { margin: 0; }
-.consult-page .team-members { display: flex; flex-wrap: nowrap; gap: var(--space-2); overflow-x: auto; }
-.consult-page .team-group:first-child .team-members { justify-content: center; }
-.consult-page .team-member { flex: 0 0 48px; height: 48px; }
+.consult-page .team-members { display: grid; grid-template-columns: repeat(4, minmax(64px, 1fr)); gap: var(--space-2); } /* 팀 한 줄 = 4칸, 이름이 잘리지 않게 칸 높이는 내용대로 */
+.consult-page .team-group:first-child .team-members { grid-template-columns: minmax(64px, calc((100% - 3 * var(--space-2)) / 4)); justify-content: center; }
+.consult-page .team-member { display: grid; justify-items: center; gap: var(--space-1); min-height: 80px; padding: var(--space-2) var(--space-1); }
 .consult-page .team-gates { margin-top: var(--space-3); }
 .consult-work { justify-self: start; max-width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); font-size: var(--text-sm); }
 .consult-work__current, .consult-work li { display: flex; align-items: center; gap: var(--space-2); }
