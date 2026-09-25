@@ -106,7 +106,7 @@ export async function approvePublication(
 }
 
 // 최대 두 번의 실패 게이트 이후 템플릿 실패는 추가 게이트 없이 오류로 끝낸다
-export async function publishForecast(
+export async function publishForecastReport(
   session: TeamSession,
   event: Event,
   bundle: ReportBundle,
@@ -206,7 +206,30 @@ export async function publishForecast(
 
   for (const claim of report.claims) await writer.emit("claim", claim);
   await writer.emit("evidence", { items: report.evidence });
+  return report as ForecastReport;
+}
 
+// 상담의 저장 실패 안내는 유지하고 발행 본체는 재예보에서도 사용한다
+export async function publishForecast(
+  session: TeamSession,
+  event: Event,
+  bundle: ReportBundle,
+  analysis: GateReport,
+  execute: Executor,
+  writer: EventWriter,
+  deadline: Deadline,
+  settings: TeamSettings,
+) {
+  const report = await publishForecastReport(
+    session,
+    event,
+    bundle,
+    analysis,
+    execute,
+    writer,
+    deadline,
+    settings,
+  );
   // 저장에 최대 5초를 주되 실패 안내와 완료 이벤트를 보낼 잔여 시간을 남긴다
   const actions = [...report.brief.actions];
   try {

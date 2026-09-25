@@ -20,6 +20,7 @@ const recordsCases = [
     response: { valid: true, count: 0, brokenAt: null },
   },
   { method: "GET", path: `snapshots/${report.forecastId}`, response: report },
+  { method: "GET", path: "shares/sh-yeongjong-share-0001", response: report },
   {
     method: "POST",
     path: "events",
@@ -141,6 +142,7 @@ it.each([
   ["POST", "events/e-yeongjong/snapshots"],
   ["GET", "plans"],
   ["GET", "shares"],
+  ["GET", "shares/yeongjong-share"],
   ["GET", "health"],
   ["PATCH", `plans/${plan.id}`],
   ["PUT", "events"],
