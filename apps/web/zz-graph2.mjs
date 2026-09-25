@@ -1,0 +1,17 @@
+import { chromium } from "@playwright/test";
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+const t0 = Date.now();
+page.on("pageerror", (e) => console.log(Date.now() - t0, "pageerror", String(e.stack || e).slice(0, 900)));
+await page.goto("http://127.0.0.1:5190/graph?theme=night", { waitUntil: "load" });
+await page.waitForSelector(".knowledge-graph__canvas canvas", { timeout: 60000 });
+console.log(Date.now() - t0, "loaded");
+await page.waitForTimeout(4000);
+console.log(Date.now() - t0, "idle done");
+await page.getByLabel("노드 검색").fill("백테스트");
+await page.waitForTimeout(1500);
+console.log(Date.now() - t0, "typed");
+await page.locator(".knowledge-graph__results button").first().click();
+await page.waitForTimeout(3000);
+console.log(Date.now() - t0, "selected");
+await browser.close();

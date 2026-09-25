@@ -104,7 +104,9 @@ export function formatDate(value: string): string {
     parts.find((item) => item.type === type)?.value ?? "";
   const day = `${part("month")}.${part("day")}(${part("weekday")})`;
   const midnight = part("hour") === "00" && part("minute") === "00";
-  return dateOnly || midnight ? day : `${day} ${part("hour")}:${part("minute")}`;
+  return dateOnly || midnight
+    ? day
+    : `${day} ${part("hour")}:${part("minute")}`;
 }
 
 // 계약의 0~1 확률을 정수 백분율 또는 이미 계산된 구간으로 표기한다.
