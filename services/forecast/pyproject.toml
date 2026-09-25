@@ -31,7 +31,14 @@ dependencies = [
 ]
 
 [dependency-groups]
+challenger = [
+    "pymc>=5.20",
+]
 dev = ["pytest>=8", "ruff>=0.6", "respx>=0.21"]
+pipeline = [
+    "dagster>=1.10",
+    "dagster-webserver>=1.10",
+]
 
 [project.scripts]
 crowdcast = "crowdcast.pipeline.cli:app"
