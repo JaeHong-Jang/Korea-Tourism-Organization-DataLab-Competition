@@ -23,6 +23,7 @@ export type TeamSession = {
     revision: number;
     masterVersion: number;
     pendingClaims?: Claim[];
+    planId?: string;
   };
 };
 

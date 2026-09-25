@@ -1,6 +1,9 @@
 // 기록 서비스의 행사와 불변 예보 스냅샷을 응답 계약으로 검증한다
-import type { Event, ForecastReport } from "@crowdcast/contracts/types";
+import type { Event, ForecastReport, Plan } from "@crowdcast/contracts/types";
+import { contractRegistry } from "../contract/registry.js";
 import { responseListSchema, responseSchema } from "../contract/responses.js";
+import { querySchema } from "./query-schemas.js";
+import { relayRecords } from "./records-relay-client.js";
 import { requestJson, type ServiceClientOptions } from "./request-json.js";
 
 // 발행 전 문장이 섞인 스냅샷은 예보서 계약이 거부한다
@@ -8,10 +11,43 @@ const eventSchema = responseSchema("event");
 const eventsSchema = responseListSchema("event");
 const snapshotSchema = responseSchema("forecast-report");
 const snapshotsSchema = responseListSchema("forecast-report");
+const planSchema = querySchema<Plan>("plan");
+// records의 초안 검증 거부 본문만 검사해 로그에 실패 규칙을 남길 수 있게 한다
+const planRejectionSchema = contractRegistry.compile({
+  type: "object",
+  required: ["error", "message"],
+  properties: { error: { const: "invalid_plan" }, message: { type: "string" } },
+});
 
 // 행사와 스냅샷의 저장 경로를 서비스 내부에 한정한다
 export function createRecordsClient(options: ServiceClientOptions) {
   return {
+    // 초안 요청과 저장 결과를 같은 계약으로 검사한다
+    savePlan(plan: Plan) {
+      return requestJson(options, "/v1/plans", planSchema, {
+        method: "POST",
+        body: plan,
+        bodySchema: planSchema,
+        errorSchemas: { 422: planRejectionSchema },
+      });
+    },
+    // 중복 저장 충돌 뒤에도 기존 초안을 계약 검증 후 재사용한다
+    getPlan(id: string) {
+      return requestJson(
+        options,
+        `/v1/plans/${encodeURIComponent(id)}`,
+        planSchema,
+        { method: "GET" },
+      );
+    },
+    // 기존 중계의 본문 마감·크기 상한과 다운로드 헤더 보존을 그대로 쓴다
+    exportPlan(id: string) {
+      return relayRecords(options, {
+        method: "GET",
+        path: `/v1/plans/${encodeURIComponent(id)}/export.docx`,
+        docx: true,
+      });
+    },
     // 예보 식별자로 불변 스냅샷 한 건을 조회한다
     getSnapshot(forecastId: string) {
       return requestJson(

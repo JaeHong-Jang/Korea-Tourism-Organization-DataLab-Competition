@@ -109,6 +109,19 @@ export async function newForecast(
   settings: TeamSettings,
   today: string,
 ) {
+  // 발행 전의 단독 초안 요청은 행사 받아쓰기로 넘기지 않고 먼저 예보를 안내한다
+  if (
+    !message.answer &&
+    /^(?:안전관리\s*)?(?:계획(?:서)?(?:\s*초안)?|초안)(?:을|를)?\s*(?:만들어\s*(?:줘|주세요)|작성해\s*(?:줘|주세요)|부탁해|줘|주세요)?[.!?\s]*$/.test(
+      message.text.trim(),
+    )
+  ) {
+    await writer.emit("error", {
+      code: "OUT_OF_SCOPE",
+      message: "먼저 예보를 받아야 계획 초안을 만들 수 있어요",
+    });
+    return;
+  }
   await execute(
     lead,
     settings.mode === "fake"

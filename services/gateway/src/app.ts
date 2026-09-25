@@ -7,6 +7,7 @@ import { createForecastsRoute } from "./routes/forecasts.js";
 import { createHealthRoute } from "./routes/health.js";
 import { createInsightsRoute } from "./routes/insights.js";
 import { createOpsRoute } from "./routes/ops.js";
+import { createPlansRoute } from "./routes/plans.js";
 import { createRecordsRelayRoute } from "./routes/records-relay.js";
 import { createRegionsRoute } from "./routes/regions.js";
 import { createTeamReplayRoute } from "./routes/team-replay.js";
@@ -26,6 +27,7 @@ export function createApp(
   app.route("/api/festivals", createFestivalsRoute(config, fetcher));
   app.route("/api/regions.topojson", createRegionsRoute(config, fetcher));
   app.route("/api/forecasts", createForecastsRoute(config, fetcher));
+  app.route("/api/plans", createPlansRoute(config, fetcher));
   app.route("/api/evidence", createEvidenceRoute(config, fetcher));
   app.route("/api/weather", createWeatherRoute(config, fetcher));
   app.route("/api/validation", createValidationRoute(config, fetcher));
