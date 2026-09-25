@@ -144,9 +144,9 @@
    "status": "todo"
   },
   "T-207": {
-   "status": "running",
-   "updated": "2026-09-25T02:50:13.774Z",
-   "note": "2회차 재디스패치 — 준비본 행사 스냅샷 = 예보에 쓰인 행사인지 id 재계산 대조"
+   "status": "done",
+   "updated": "2026-09-25T04:09:27.072Z",
+   "evidence": "develop 442924c · forecast 1294 · sol PASS · 선정 20건(등록은 9/29 오케스트레이터)"
   },
   "T-203b": {
    "status": "todo"
@@ -1184,6 +1184,12 @@
    "at": "2026-09-25T03:44:26.277Z",
    "id": "T-306",
    "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:09:27.072Z",
+   "id": "T-207",
+   "status": "done",
+   "evidence": "develop 442924c · forecast 1294 · sol PASS · 선정 20건(등록은 9/29 오케스트레이터)"
   }
  ]
 }
