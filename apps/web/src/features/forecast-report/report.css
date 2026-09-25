@@ -74,3 +74,8 @@
   .report-print-notes li { break-inside: avoid; }
   .evidence-chip { color: var(--ink); text-decoration: none; }
 }
+.report-density__field { display: grid; gap: var(--space-1); max-width: 18rem; margin-top: var(--space-3); font-weight: 600; }
+.report-density__field input { padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font: inherit; font-weight: 400; }
+.report-density__hint { color: var(--muted); font-size: 0.9em; }
+.report-density__result { padding: var(--space-2) var(--space-3); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.report-density__result--over { border: 1px solid var(--level-4); background: color-mix(in srgb, var(--level-4) 10%, var(--surface)); color: var(--ink); }
