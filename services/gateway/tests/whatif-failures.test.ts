@@ -180,3 +180,18 @@ it("OOD 예보의 눈·비 질문은 같은 그래프에서 반복 발행한다"
     expect(claimsIn(events)).toHaveLength(2);
   }
 });
+
+// 바꿀 조건이 이미 지금 예보와 같으면 what-if를 부르지 않고 안내로 끝낸다(W03)
+it("같은 조건 what-if는 새 예보 없이 안내한다", async () => {
+  const harness = whatifFixture();
+  const { id } = await harness.publish();
+  await harness.message(id, { text: "밤이면?" });
+  const before = harness.calls.length;
+  const events = await harness.message(id, { text: "밤이면?" });
+  const whatifCalls = harness.calls
+    .slice(before)
+    .filter((call) => call.url.pathname === "/v1/whatif");
+  expect(whatifCalls).toHaveLength(0);
+  expect(eventData(events, "error")).toMatchObject([{ code: "OUT_OF_SCOPE" }]);
+  expect(events.at(-1)?.data).toMatchObject({ forecastId: null });
+});
