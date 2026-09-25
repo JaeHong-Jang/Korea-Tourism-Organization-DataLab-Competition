@@ -13,4 +13,12 @@ export interface Weather {
   pop: number | null;
   source: "초단기실황" | "단기예보" | "중기예보" | "없음";
   fetchedAt: string | null;
+  /**
+   * 그날 최저기온(℃) — 단기예보 TMN·중기예보 도시 기온. 시각 기온(temp)과 따로, 없으면 null
+   */
+  tempMin?: number | null;
+  /**
+   * 그날 최고기온(℃) — 단기예보 TMX·중기예보 도시 기온. 없으면 null
+   */
+  tempMax?: number | null;
 }

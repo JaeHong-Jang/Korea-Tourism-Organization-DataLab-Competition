@@ -75,6 +75,20 @@
           "type": "null"
         }
       ]
+    },
+    "tempMin": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "그날 최저기온(℃) — 단기예보 TMN·중기예보 도시 기온. 시각 기온(temp)과 따로, 없으면 null"
+    },
+    "tempMax": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "그날 최고기온(℃) — 단기예보 TMX·중기예보 도시 기온. 없으면 null"
     }
   }
 }
