@@ -52,7 +52,7 @@ test("QA-2 산점도", async ({ page }) => {
   await expect(chart.locator("[data-point]").first()).toBeVisible();
   await expect(chart.locator(".validation-whisker")).toHaveCount(0);
   await chart.screenshot({ path: resolve(screens, "QA-2-s6-scatter.png") });
-  await chart.locator("[data-point]").first().hover();
+  await chart.locator("[data-point]").first().focus();
   await expect(chart.locator(".validation-whisker")).toHaveCount(1);
 });
 
