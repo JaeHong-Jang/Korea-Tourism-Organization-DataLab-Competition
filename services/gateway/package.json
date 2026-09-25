@@ -8,6 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "test": "vitest run",
     "eval:extract": "tsx evals/run-extract-eval.ts",
+    "eval:scenario": "node --import tsx evals/run-scenario-eval.ts",
     "build": "tsc --noEmit",
     "lint": "biome check src tests package.json tsconfig.json biome.json"
   },
