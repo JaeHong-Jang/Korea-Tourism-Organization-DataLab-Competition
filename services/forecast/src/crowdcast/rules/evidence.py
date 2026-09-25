@@ -85,6 +85,11 @@ def rule_evidence(
 
     # 고정 사유 문구와 별도로 입력 필드·수치를 직렬화해 계산 근거를 보존한다.
     summary = f"{rule['kind']} 기준 — {text or rule['text']} 입력: {_canonical_json(dict(inputs))}"
+    # 매뉴얼 쪽수와 수치 권고는 입력 뒤 근거에만 적어 발행 문장의 숫자 허용값과 분리한다.
+    if rule.get("source"):
+        summary += f" 출처: {rule['source']}"
+    if rule.get("note"):
+        summary += f" 참고: {rule['note']}"
     return _evidence(
         "rule",
         rule["title"],

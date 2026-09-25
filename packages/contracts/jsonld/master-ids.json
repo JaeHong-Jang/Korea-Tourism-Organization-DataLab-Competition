@@ -31,7 +31,13 @@
     "rule-check-fire",
     "rule-check-single-exit",
     "rule-check-stage-crowd",
-    "rule-check-rain-shelter"
+    "rule-check-rain-shelter",
+    "rule-check-staff-plan",
+    "rule-check-staff-distinct",
+    "rule-check-staff-focus",
+    "rule-check-org-chart",
+    "rule-check-org-hq",
+    "rule-check-capacity"
   ],
   "assumptions": [
     "as-peak-day-factor",

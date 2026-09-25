@@ -64,3 +64,65 @@ rules:
         초단기실황: 0 # 자체 보수적 처리: 실황은 관측 순간에만 쓰고 미래 날씨로 간주하지 않는다
         단기예보: 3 # T-202 게이트 피드백: 단기예보 유효 범위(일), 경계 포함
         중기예보: 10 # T-202 게이트 피드백 및 docs/plan/06 §6: 중기예보 유효 범위(일), 경계 포함
+
+  # 매뉴얼의 계획 항목은 등급 판정 후 수립 권고 이상에 자체 점검으로 적용한다.
+  rule-check-staff-plan:
+    id: ck-staff-plan
+    kind: 자체
+    clause_id: null
+    title: 안전관리요원 배치도와 구역별 인원·임무·책임자, 비상연락망 마련
+    text: 안전관리요원 배치도와 구역별 인원·임무·책임자, 비상연락망 마련
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.26·p.138 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 요원 배치계획과 비상연락망을 마련한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
+  rule-check-staff-distinct:
+    id: ck-staff-distinct
+    kind: 자체
+    clause_id: null
+    title: 행사진행요원과 안전관리요원 구분 표기
+    text: 행사진행요원과 안전관리요원 구분 표기
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.26 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 단순 행사진행요원과 안전관리요원을 구분한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
+  rule-check-staff-focus:
+    id: ck-staff-focus
+    kind: 자체
+    clause_id: null
+    title: 요원 규모는 지자체·경찰·소방과 협의, 출입구·주차장·차량 이동로·종료 시 출구 집중 배치
+    text: 요원 규모는 지자체·경찰·소방과 협의, 출입구·주차장·차량 이동로·종료 시 출구 집중 배치
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.46·p.49~50 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 매뉴얼에 요원 인원 비율은 없으며 관계기관과 협의한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
+  rule-check-org-chart:
+    id: ck-org-chart
+    kind: 자체
+    clause_id: null
+    title: 안전관리 조직도·종합상황실·분야별 책임자 지정
+    text: 안전관리 조직도·종합상황실·분야별 책임자 지정
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.137 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 안전관리 조직과 책임 체계를 마련한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
+  rule-check-org-hq:
+    id: ck-org-hq
+    kind: 자체
+    clause_id: null
+    title: 재난안전대책본부 구성과 유관기관 협조 체계
+    text: 재난안전대책본부 구성과 유관기관 협조 체계
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.142 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 재난 대응 조직과 유관기관 협조 체계를 마련한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
+  rule-check-capacity:
+    id: ck-capacity
+    kind: 자체
+    clause_id: null
+    title: 동시 최대 수용인원 산정(사람이 다니는 면적 × 면적당 인원 상한)과 초과 시 입장 제한·대기 장소
+    text: 동시 최대 수용인원 산정(사람이 다니는 면적 × 면적당 인원 상한)과 초과 시 입장 제한·대기 장소
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.134 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 순수점유면적 기준으로 1㎡당 4인 이하 권고. 면적당 상한은 현장 여건에 따라 지자체가 정한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
