@@ -1,10 +1,16 @@
 // 여섯 종류의 근거를 계약 필드와 연결된 예보 맥락으로 읽을 수 있게 한다.
+
+import masterLabels from "@crowdcast/contracts/jsonld/master-labels.json";
 import type {
   Evidence,
   Forecast,
   SimilarEvent,
 } from "@crowdcast/contracts/types";
-import { formatDate, formatQuantity } from "../../lib/format";
+import {
+  formatDate,
+  formatSnapshotNumber,
+  formatSnapshotQuantity,
+} from "../../lib/format";
 import { ComponentState, type ComponentStatus } from "./component-state";
 import { evidenceKinds } from "./evidence-chip";
 import { evidenceNumber } from "./evidence-number";
@@ -33,6 +39,7 @@ export function EvidenceCard({
   defaultOpen = false,
   highlighted = false,
   status = "ready",
+  hideProbability = false,
 }: {
   evidence?: Evidence | null;
   number?: number;
@@ -41,6 +48,7 @@ export function EvidenceCard({
   defaultOpen?: boolean;
   highlighted?: boolean;
   status?: ComponentStatus;
+  hideProbability?: boolean;
 }) {
   if (status !== "ready" || !evidence)
     return (
@@ -58,6 +66,23 @@ export function EvidenceCard({
   const observation = context?.observation;
   const assumption = context?.assumption;
   const similar = context?.similar;
+  const rule = evidence.ruleId
+    ? masterLabels.rules[evidence.ruleId as keyof typeof masterLabels.rules]
+    : null;
+  const clause = evidence.clauseId
+    ? masterLabels.clauses[
+        evidence.clauseId as keyof typeof masterLabels.clauses
+      ]
+    : null;
+  const dataset = evidence.source?.datasetId
+    ? masterLabels.datasets[
+        evidence.source.datasetId as keyof typeof masterLabels.datasets
+      ]
+    : null;
+  const accessUrl =
+    evidence.kind === "data"
+      ? (dataset?.url ?? evidence.source?.accessUrl)
+      : evidence.source?.accessUrl;
 
   // 같은 번호의 칩이 이 카드로 이동하므로 접힌 상태에서도 제목과 번호를 유지한다.
   return (
@@ -75,12 +100,17 @@ export function EvidenceCard({
         <small>{label}</small>
       </summary>
       <div className="evidence-card__body">
-        <p>{evidence.summary}</p>
+        <p>
+          {hideProbability && evidence.summary.includes("%")
+            ? "구간 기준 표시"
+            : evidence.summary}
+        </p>
         {/* 데이터 근거에는 출처와 공개일, 연결된 관측값을 함께 둔다. */}
         {evidence.kind === "data" && (
           <>
             <p>
-              출처 {evidence.source?.publisher} · {evidence.source?.title}
+              출처 {evidence.source?.publisher} ·{" "}
+              {dataset?.title ?? evidence.source?.title}
             </p>
             {evidence.source?.datalabMenu && (
               <p>메뉴 {evidence.source.datalabMenu}</p>
@@ -93,7 +123,8 @@ export function EvidenceCard({
             {observation && (
               <p>
                 지표 {observation.featureName} ·{" "}
-                {formatQuantity(observation.value, observation.unit)}
+                {formatSnapshotNumber(observation.value)}
+                {observation.unit}
               </p>
             )}
             {evidence.availableAt && (
@@ -117,13 +148,18 @@ export function EvidenceCard({
         {evidence.kind === "rule" && (
           <>
             <p>
-              {context?.ruleKind ?? (evidence.clauseId ? "법정" : "자체")} ·{" "}
-              {evidence.title}
+              {rule?.kind ??
+                context?.ruleKind ??
+                (evidence.clauseId ? "법정" : "자체")}{" "}
+              · {rule?.title ?? evidence.title}
             </p>
-            <p>
-              규칙 {evidence.ruleId}
-              {evidence.clauseId && ` · 조항 ${evidence.clauseId}`}
-            </p>
+            <p>조항 {clause?.title ?? "자체 기준"}</p>
+            {clause && <p>게시처 {clause.publisher}</p>}
+            {clause && (
+              <a href={clause.url} target="_blank" rel="noreferrer">
+                법령 원문 보기
+              </a>
+            )}
           </>
         )}
         {/* 사례 근거는 다른 집계 단위가 섞일 때 차이를 계산하지 않는다. */}
@@ -136,11 +172,11 @@ export function EvidenceCard({
             {similar?.measured && (
               <p>
                 {similar.measured.estimated ? "실측 추정" : "실측"}{" "}
-                {formatQuantity(similar.measured)}
+                {formatSnapshotQuantity(similar.measured)}
               </p>
             )}
             {similar?.announced && (
-              <p>발표 {formatQuantity(similar.announced)}</p>
+              <p>발표 {formatSnapshotQuantity(similar.announced)}</p>
             )}
             {similar && (
               <p>
@@ -157,9 +193,10 @@ export function EvidenceCard({
             <p>가정 {assumption?.name ?? evidence.title}</p>
             {assumption && (
               <p>
-                값 {formatQuantity(assumption.value, assumption.unit)} · 범위{" "}
-                {formatQuantity(assumption.low, assumption.unit)} ~{" "}
-                {formatQuantity(assumption.high, assumption.unit)}
+                값 {formatSnapshotNumber(assumption.value)}
+                {assumption.unit} · 범위 {formatSnapshotNumber(assumption.low)}
+                {assumption.unit} ~ {formatSnapshotNumber(assumption.high)}
+                {assumption.unit}
               </p>
             )}
             {assumption && (
@@ -182,8 +219,8 @@ export function EvidenceCard({
             )}
           </>
         )}
-        {evidence.source?.accessUrl && (
-          <a href={evidence.source.accessUrl} target="_blank" rel="noreferrer">
+        {accessUrl && (
+          <a href={accessUrl} target="_blank" rel="noreferrer">
             원문 보기
           </a>
         )}

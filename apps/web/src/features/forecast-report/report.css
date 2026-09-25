@@ -1,0 +1,73 @@
+/* 발행 예보서를 문서 폭으로 두고 근거 카드는 읽는 자리 옆에 둔다. */
+.forecast-page { padding-block: var(--space-8) var(--space-14); }
+.document-layout { display: grid; grid-template-columns: minmax(0, 880px) minmax(300px, 360px); gap: var(--space-10); align-items: start; }
+.document-main { min-width: 0; }
+.document-sheet { padding: var(--space-8); border-radius: var(--radius-input); }
+.document-sheet .feature-panel__heading + p { margin-bottom: var(--space-6); }
+.report-toolbar { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); align-items: center; max-width: 620px; }
+.report-toolbar [role="status"] { flex-basis: 100%; text-align: right; color: var(--ink-2); font-size: var(--text-caption); }
+.report-event { padding-bottom: var(--space-5); border-bottom: 1px solid var(--line); }
+.report-event h3 { margin: var(--space-2) 0; font-size: var(--text-section); }
+.report-event small { color: var(--ink-2); }
+.report-section { padding-block: var(--space-6); border-bottom: 1px solid var(--line); }
+.report-section h3 { margin: 0 0 var(--space-4); font-size: var(--text-subtitle); }
+.report-section h4 { margin: 0 0 var(--space-2); }
+.report-section .report-claim { margin-top: var(--space-3); color: var(--ink); font-size: var(--text-body); }
+.report-judgment { padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.report-notices { margin-top: var(--space-4); padding: var(--space-3); border-left: 3px solid var(--brand); background: var(--surface); }
+.report-reasons { display: grid; gap: var(--space-2); margin: var(--space-4) 0 0; padding-left: var(--space-5); }
+.report-reasons b { margin-right: var(--space-2); }
+.report-number-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.report-number { display: grid; align-content: start; gap: var(--space-2); min-width: 0; padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); }
+.report-number > span, .report-number > small { color: var(--ink-2); }
+.report-number strong { font-size: var(--text-title); font-variant-numeric: tabular-nums; }
+.report-number strong small { font-size: var(--text-body); }
+.report-number .evidence-chip { justify-self: start; }
+.report-number--time { grid-column: 1 / -1; }
+.report-probability { color: var(--ink); }
+.report-context { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.report-context-card { margin-top: var(--space-3); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-input); }
+.report-table-scroll { max-width: 100%; overflow-x: auto; }
+.report-table-scroll table { border-collapse: collapse; font-size: var(--text-sm); }
+.report-table-scroll th, .report-table-scroll td { padding: var(--space-2); border-bottom: 1px solid var(--line); text-align: right; }
+.report-hourly { display: grid; gap: var(--space-2); }
+.report-hourly > div { display: grid; grid-template-columns: 48px 1fr 48px; gap: var(--space-2); align-items: center; }
+.report-hourly__track { height: 10px; background: var(--surface-sunken); border-radius: var(--radius-input); }
+.report-hourly__track span { display: block; height: 100%; background: var(--brand); border-radius: var(--radius-input); }
+.report-checklist { display: grid; gap: var(--space-3); padding-left: var(--space-5); }
+.report-next { margin-top: var(--space-6); }
+.report-next ul { display: grid; gap: var(--space-2); }
+.evidence-drawer { position: sticky; top: var(--space-4); max-height: calc(100vh - 2 * var(--space-4)); overflow: auto; }
+.report-drawer-actions { display: flex; gap: var(--space-2); margin-block: var(--space-4); }
+.report-drawer-actions button { padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-button); color: var(--link); background: var(--surface); cursor: pointer; }
+.report-evidence-list { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+.report-print-notes { display: none; }
+
+/* 좁은 화면에서는 근거 목록을 문서 아래로 보내고 수치를 한 줄씩 놓는다. */
+@media (max-width: 900px) {
+  .document-layout { grid-template-columns: 1fr; }
+  .evidence-drawer { position: static; max-height: none; }
+}
+@media (max-width: 640px) {
+  .document-sheet { padding: var(--space-5); }
+  .report-number-grid, .report-context { grid-template-columns: 1fr; }
+  .report-number--time { grid-column: auto; }
+}
+
+/* 인쇄에는 판정·수치·체크리스트와 같은 번호의 근거 각주를 A4 한 장에 모은다. */
+@page { size: A4 portrait; margin: 12mm; }
+@media print {
+  body { background: var(--surface); }
+  .site-header, .site-footer, .page-title-row, .evidence-drawer, .report-context, .report-explanations, .report-next { display: none; }
+  .forecast-page { width: 100%; padding: 0; }
+  .document-layout { display: block; }
+  .document-sheet { border: 0; box-shadow: none; padding: 0; }
+  .report-section { padding-block: var(--space-3); break-inside: avoid; }
+  .report-event { padding-bottom: var(--space-2); }
+  .report-judgment { padding: var(--space-3); }
+  .report-number { padding: var(--space-3); }
+  .report-number strong { font-size: var(--text-section); }
+  .report-print-notes { display: block; margin-top: var(--space-3); padding-left: var(--space-5); font-size: var(--text-caption); columns: 2; }
+  .report-print-notes li { break-inside: avoid; }
+  .evidence-chip { color: var(--ink); text-decoration: none; }
+}

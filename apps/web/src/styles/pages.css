@@ -158,19 +158,6 @@
 @media (max-width: 900px) { .consult-layout { grid-template-columns: 1fr; } .consult-chat { min-height: 360px; } }
 @media (max-width: 640px) { .consult-preview__numbers { grid-template-columns: 1fr; } .consult-time { display: grid; } }
 
-/* 예보서는 문서 폭 880px과 근거 서랍 폭 360px을 유지한다. */
-.forecast-page { padding-block: var(--space-8) var(--space-14); }
-.document-layout { display: grid; grid-template-columns: minmax(0, 880px) minmax(300px, 360px); gap: var(--space-10); align-items: start; }
-.document-main { min-width: 0; }
-.document-sheet { min-height: 540px; padding: var(--space-8); border-radius: var(--radius-input); }
-.document-sheet__lines { display: grid; gap: var(--space-5); margin-top: var(--space-10); }
-.document-sheet__lines span { height: 1px; background: var(--line); }
-.document-sheet__lines span:nth-child(2) { width: 78%; }
-.document-sheet__lines span:nth-child(3) { width: 92%; }
-.document-sheet__lines span:nth-child(4) { width: 55%; }
-.document-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-top: var(--space-6); }
-.evidence-drawer { min-height: 540px; }
-
 /* 검증 성적을 앞에, 근거와 제한을 뒤에 놓고 인사이트는 중요도 순으로 배치한다. */
 .validation-layout, .insights-layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-8); }
 .validation-layout > *, .insights-layout > * { min-width: 0; }

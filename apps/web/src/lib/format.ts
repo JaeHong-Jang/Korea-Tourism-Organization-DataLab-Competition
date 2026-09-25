@@ -5,6 +5,22 @@ const tenThousands = new Intl.NumberFormat("ko-KR", {
   maximumFractionDigits: 1,
 });
 
+// 발행 예보서에는 수치를 축약·반올림하지 않고 천 단위 쉼표만 더한다.
+export function formatSnapshotNumber(value: number | null): string {
+  if (value == null) return "자료 없음";
+  const [integer, fraction] = String(value).split(".");
+  const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return fraction === undefined ? grouped : `${grouped}.${fraction}`;
+}
+
+// 발행 근거의 비교 수치에는 원본 단위와 범위를 함께 둔다.
+export function formatSnapshotQuantity(quantity: QuantityDisplay): string {
+  const value = quantity.value ?? quantity.p50;
+  return value == null
+    ? "자료 없음"
+    : `${formatSnapshotNumber(value)}${quantity.unit} · ${quantity.timeUnit} · ${quantity.spatialScope}${quantity.estimated ? " · 추정" : ""}`;
+}
+
 // 1만 명부터 만 단위 한 자리로 보여 주고 작은 값은 천 단위 쉼표를 쓴다.
 export function formatPeople(value: number): string {
   return value >= 10_000

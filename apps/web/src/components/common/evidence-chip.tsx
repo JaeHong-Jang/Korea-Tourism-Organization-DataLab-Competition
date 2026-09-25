@@ -26,12 +26,14 @@ export function EvidenceChip({
   number,
   evidenceOrder,
   onOpen,
+  hideProbability = false,
   status = "ready",
 }: {
   evidence?: Evidence | null;
   number?: number;
   evidenceOrder?: readonly Evidence[];
-  onOpen?: (id: string) => void;
+  onOpen?: (id: string, origin: HTMLElement) => void;
+  hideProbability?: boolean;
   status?: ComponentStatus;
 }) {
   if (status !== "ready" || !evidence)
@@ -54,9 +56,15 @@ export function EvidenceChip({
   );
   const props = {
     className: "evidence-chip",
-    title: evidence.summary,
+    title:
+      hideProbability && evidence.summary.includes("%")
+        ? "구간 기준 표시"
+        : evidence.summary,
     "aria-label": `근거 ${resolvedNumber}, ${label}: ${evidence.title}`,
-    "aria-description": evidence.summary,
+    "aria-description":
+      hideProbability && evidence.summary.includes("%")
+        ? "구간 기준 표시"
+        : evidence.summary,
   };
   return (
     <a
@@ -66,7 +74,7 @@ export function EvidenceChip({
       onClick={(event) => {
         if (onOpen) {
           event.preventDefault();
-          onOpen(evidence.id);
+          onOpen(evidence.id, event.currentTarget);
           return;
         }
         const card = document.getElementById(`evidence-${evidence.id}`);
