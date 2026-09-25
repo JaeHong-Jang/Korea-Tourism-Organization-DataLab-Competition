@@ -312,9 +312,9 @@
    "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
   },
   "T-433": {
-   "status": "running",
-   "updated": "2026-09-25T02:31:49.227Z",
-   "note": "2회차 재디스패치 — 히트 대상 경계 갱신(High), 이름표 실제 크기·패널 크기 변화·프레임 할당, SVG 데이터 모드"
+   "status": "done",
+   "updated": "2026-09-25T03:34:22.807Z",
+   "evidence": "develop 0bfe5d4 · web 142·e2e 3/3 · astra PASS · 211건 p95 1.26배"
   },
   "R-07": {
    "status": "todo"
@@ -1155,6 +1155,12 @@
    "at": "2026-09-25T03:26:44.419Z",
    "id": "T-304b",
    "status": "running"
+  },
+  {
+   "at": "2026-09-25T03:34:22.807Z",
+   "id": "T-433",
+   "status": "done",
+   "evidence": "develop 0bfe5d4 · web 142·e2e 3/3 · astra PASS · 211건 p95 1.26배"
   }
  ]
 }
