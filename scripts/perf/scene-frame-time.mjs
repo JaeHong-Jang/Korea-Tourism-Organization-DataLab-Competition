@@ -110,7 +110,8 @@ async function measure(browser, ollamaHost, fixture = false, festivalCount = 0, 
     } });
   });
   const condition = scenario?.enabled === false ? "&sceneT435=0" : "";
-  await page.goto(venue ? `http://127.0.0.1:5185/dev/venue/${venue}?sceneMeasure=1&venueHour=${scenario?.hour ?? 19}${condition}` : `http://127.0.0.1:5185/?theme=${scenario?.theme ?? "day"}&at=2025-10-18T${scenario?.theme === "night" ? "21" : "13"}:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}${motion ? "" : "&sceneMotion=0"}${condition}`);
+  const quality = scenario?.quality ? `&sceneQuality=${scenario.quality}` : "";
+  await page.goto(venue ? `http://127.0.0.1:5185/dev/venue/${venue}?sceneMeasure=1&venueHour=${scenario?.hour ?? 19}${condition}${quality}` : `http://127.0.0.1:5185/?theme=${scenario?.theme ?? "day"}&at=2025-10-18T${scenario?.theme === "night" ? "21" : "13"}:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}${motion ? "" : "&sceneMotion=0"}${condition}${quality}`);
   await page.waitForFunction((isVenue) => isVenue ? document.documentElement.dataset.venueReady === "true" : document.documentElement.dataset.sceneReady === "true", venue !== null, { timeout: 45000 });
   if (festivalCount || fixture) await page.waitForFunction((expected) => document.querySelectorAll(".festival-list__items li").length === expected, festivalCount || 30, { timeout: 30000 });
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -173,7 +174,78 @@ const server = await startServer();
 let browser;
 try {
   browser = await chromium.launch({ args: ["--enable-gpu", "--use-gl=egl", "--enable-precise-memory-info", "--enable-unsafe-swiftshader"] });
-  if (process.argv.includes("--t435")) {
+	if (process.argv.includes("--t436")) {
+		// 같은 Chromium 실행의 정적 기준과 전체 연출 높음·저사양 낮음을 각각 비교한다.
+		const baseline = await measure(browser, null, true, 0, false, null, {
+			enabled: false,
+		});
+		const nationalHigh = await measure(browser, null, true, 0, true, null, {
+			weather: "비",
+			theme: "night",
+			quality: "high",
+		});
+		const venueHigh = await measure(
+			browser,
+			null,
+			false,
+			0,
+			true,
+			"yeongjong",
+			{ weather: "눈", hour: 12, quality: "high" },
+		);
+		const nationalLow = await measure(browser, null, true, 0, true, null, {
+			weather: "비",
+			theme: "night",
+			quality: "low",
+		});
+		const venueLow = await measure(browser, null, false, 0, true, "yeongjong", {
+			weather: "눈",
+			hour: 12,
+			quality: "low",
+		});
+		const ratio =
+			Math.max(nationalHigh.p95_ms, venueHigh.p95_ms) / baseline.p95_ms;
+		const report = {
+			task: "T-436",
+			baseline_t433b: baseline,
+			national_high: nationalHigh,
+			venue_high: venueHigh,
+			national_low: nationalLow,
+			venue_low: venueLow,
+			p95_ratio: ratio,
+			passed: ratio <= 1.3,
+		};
+		mkdirSync(output, { recursive: true });
+		writeFileSync(
+			join(output, "T-436-frame-time.json"),
+			`${JSON.stringify(report, null, 2)}\n`,
+		);
+		writeFileSync(
+			join(output, "T-436-frame-time.md"),
+			[
+				"# T-436 장면 품질별 프레임 시간",
+				"",
+				"| 장면 | 품질 | p50 | p95 | DPR |",
+				"| --- | --- | ---: | ---: | ---: |",
+				...Object.entries({
+					"같은 실행 T-433b": baseline,
+					"전국 판 높음": nationalHigh,
+					"행사장 높음": venueHigh,
+					"전국 판 저사양": nationalLow,
+					"행사장 저사양": venueLow,
+				}).map(
+					([name, result]) =>
+						`| ${name} | ${result.quality} | ${result.p50_ms?.toFixed(2)}ms | ${result.p95_ms?.toFixed(2)}ms | ${result.actual_dpr} |`,
+				),
+				`- 높음 p95 최고 비율 ${ratio.toFixed(2)}배 / 합격선 1.3배: ${report.passed ? "통과" : "미달"}`,
+				"",
+			].join("\n"),
+		);
+		console.log(
+			`T-436 높음 p95 비율 ${ratio.toFixed(2)}배: ${report.passed ? "통과" : "미달"}`,
+		);
+		if (!report.passed) process.exitCode = 1;
+	} else if (process.argv.includes("--t435")) {
     // T-433b 정적 장면과 비·밤 및 눈·낮 장면을 같은 브라우저 실행에서 비교한다.
     const baseline = await measure(browser, null, true, 0, false, null, { enabled: false });
     const rainNight = await measure(browser, null, true, 0, false, null, { weather: "비", theme: "night" });

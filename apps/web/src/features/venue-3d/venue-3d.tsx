@@ -1,6 +1,12 @@
 // 예보서와 개발 견본의 행사장 디오라마를 로딩·빈 값·오류 상태와 함께 제공한다.
 import type { ForecastReport } from "@crowdcast/contracts/types";
 import { useEffect, useMemo, useState } from "react";
+import { venueDescription } from "../../components/scene/scene-description";
+import {
+  readSceneOptions,
+  useSceneQuality,
+} from "../../components/scene/scene-options";
+import { SceneTools } from "../../components/scene/scene-tools";
 import {
   sampleEvent,
   type VenueEvent,
@@ -58,6 +64,9 @@ export function Venue3D({
   );
   const key = event ? venueFor(event.venue.lng, event.venue.lat) : null;
   const [tiles, setTiles] = useState<VenueTiles | null>(null);
+  const [captureRequest, setCaptureRequest] = useState(0);
+  const qualityOptions = useMemo(readSceneOptions, []);
+  const { mode, setMode, quality, change } = useSceneQuality(qualityOptions);
   const [error, setError] = useState("");
   const initialHour = event ? Number(event.startsAt.slice(11, 13)) : 12;
   const [hour, setHour] = useState(() => {
@@ -148,6 +157,16 @@ export function Venue3D({
       )}
       {webgl && tiles && (
         <div className="venue-3d__frame">
+          <p className="sr-only" aria-live="polite">
+            {venueDescription(
+              Math.min(
+                tiles.buildings.length,
+                quality === "high" ? 2400 : quality === "medium" ? 1200 : 600,
+              ),
+              hour,
+              weather,
+            )}
+          </p>
           <VenueScene
             tiles={tiles}
             event={event}
@@ -158,6 +177,15 @@ export function Venue3D({
             hour={hour}
             reducedMotion={reducedMotion}
             weather={weather}
+            captureRequest={captureRequest}
+            qualityMode={mode}
+            quality={quality}
+            onQualityChange={change}
+          />
+          <SceneTools
+            mode={mode}
+            onModeChange={setMode}
+            onSave={() => setCaptureRequest((request) => request + 1)}
           />
           <p className="venue-3d__honest">
             건물·도로 = OpenStreetMap · 인형·차량 위치와 흐름은 연출 · 인원

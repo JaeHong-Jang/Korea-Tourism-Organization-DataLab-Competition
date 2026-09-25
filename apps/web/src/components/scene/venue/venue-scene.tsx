@@ -7,8 +7,10 @@ import { Fireworks } from "../effects/fireworks";
 import { SceneEffects } from "../effects/scene-effects";
 import { FestivalModels } from "../festival-models";
 import type { PlacedFestival } from "../festival-models/placement";
-import { qualityDpr, type SceneQuality, shiftQuality } from "../quality";
+import { type QualityMode, qualityDpr, type SceneQuality } from "../quality";
+import { SceneCaptureFrame } from "../scene-capture";
 import { QualityControl } from "../scene-diagnostics";
+import { readSceneOptions } from "../scene-options";
 import { weatherEffects } from "../weather/state";
 import { WeatherScene } from "../weather/weather-scene";
 import { WetHighlights } from "../weather/wet-highlights";
@@ -62,6 +64,10 @@ export function VenueScene({
   hour,
   reducedMotion,
   weather,
+  captureRequest,
+  qualityMode,
+  quality,
+  onQualityChange,
 }: {
   tiles: VenueTiles;
   event: VenueEvent;
@@ -72,22 +78,16 @@ export function VenueScene({
   hour: number;
   reducedMotion: boolean;
   weather: Weather | null;
+  captureRequest: number;
+  qualityMode: QualityMode;
+  quality: SceneQuality;
+  onQualityChange: (step: -1 | 1) => void;
 }) {
-  const [quality, setQuality] = useState<SceneQuality>("high");
   const [regress, setRegress] = useState(1);
-  const params = useMemo(() => new URLSearchParams(window.location.search), []);
-  const measure = params.get("sceneMeasure") === "1";
-  const t435 = params.get("sceneT435") !== "0";
-  const fixed =
-    measure ||
-    params.get("sceneQuality") === "high" ||
-    params.get("sceneQuality") === "medium" ||
-    params.get("sceneQuality") === "low";
-  const activeQuality = measure
-    ? "high"
-    : fixed
-      ? (params.get("sceneQuality") as SceneQuality)
-      : quality;
+  const options = useMemo(readSceneOptions, []);
+  const activeQuality = quality;
+  const measure = options.measure;
+  const t435 = options.t435;
   const roads = useMemo(
     () => graphRoutes(routeGraph(tiles.roads), 20),
     [tiles],
@@ -184,11 +184,9 @@ export function VenueScene({
       />
       <QualityControl
         quality={activeQuality}
-        fixed={fixed}
-        diagnostic={measure}
-        onQualityChange={(change) =>
-          setQuality((current) => shiftQuality(current, change))
-        }
+        fixed={qualityMode !== "auto"}
+        diagnostic={options.debug || measure}
+        onQualityChange={onQualityChange}
         onRegressFactor={setRegress}
       />
       <VenueSignal
@@ -203,8 +201,15 @@ export function VenueScene({
         cars={cars}
         sky={sky}
         measure={measure}
+        diagnostic={options.debug || measure}
       />
       {t435 && <SceneEffects quality={activeQuality} />}
+      <SceneCaptureFrame
+        request={captureRequest}
+        screen="venue"
+        note="건물·도로 = OpenStreetMap · 인형·차량 위치와 흐름은 연출 · 인원 규모는 예보값 비례 · 날씨 효과 = 기상청 예보 기반 연출 · 참고용 — 담당자 검토 필수"
+        postprocessed={t435 && activeQuality === "high"}
+      />
     </Canvas>
   );
 }

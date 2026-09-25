@@ -3,7 +3,6 @@
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
-import type { Topology } from "topojson-specification";
 import { useSelectionStore } from "../../lib/selection-store";
 import { useTheme } from "../../lib/theme/theme-provider";
 import { Board } from "./board";
@@ -11,24 +10,24 @@ import { CameraRig } from "./camera-rig";
 import { Fireworks } from "./effects/fireworks";
 import { SceneEffects } from "./effects/scene-effects";
 import { FestivalLayer } from "./festival-layer";
-import { buildLandModelForData, LandTiles } from "./land-tiles";
+import { LandTiles } from "./land-tiles";
 import { RoadTraffic } from "./motion/road-traffic";
 import { Trains } from "./motion/trains";
 import { WhaleBots } from "./motion/whale-bots";
 import { ForecastOffice } from "./office/forecast-office";
-import {
-  qualityDpr,
-  type SceneQuality,
-  sceneColor,
-  shiftQuality,
-} from "./quality";
+import { qualityDpr, sceneColor } from "./quality";
+import { SceneCaptureFrame } from "./scene-capture";
+import { nationalDescription } from "./scene-description";
 import { FrameSignal, QualityControl } from "./scene-diagnostics";
 import {
   hasWebGl2,
   readSceneOptions,
   useScenePreferences,
+  useSceneQuality,
 } from "./scene-options";
+import { SceneTools } from "./scene-tools";
 import { SunLight } from "./sun-light";
+import { useLandModel } from "./use-land-model";
 import { type SceneScale, useScene } from "./use-scene";
 import { weatherEffects } from "./weather/state";
 import { useSceneWeather } from "./weather/use-scene-weather";
@@ -51,13 +50,16 @@ export function MiniKoreaCanvas({
   totals?: Map<string, number>;
   overviewRevision?: number;
 }) {
-  const [topology, setTopology] = useState<Topology | null>(null);
-  const [error, setError] = useState(false);
-  const [quality, setQuality] = useState<SceneQuality>("high");
   const [regressFactor, setRegressFactor] = useState(1);
+  const [captureRequest, setCaptureRequest] = useState(0);
   const [showLand, setShowLand] = useState(true);
   const diagnostics = useMemo(readSceneOptions, []);
-  const activeQuality = diagnostics.fixedQuality ?? quality;
+  const {
+    mode,
+    setMode,
+    quality: activeQuality,
+    change,
+  } = useSceneQuality(diagnostics);
   const t435 = diagnostics.t435;
   const scene = useScene(
     festivals,
@@ -75,6 +77,7 @@ export function MiniKoreaCanvas({
     };
   }, [diagnostics.debug]);
   const [webgl] = useState(hasWebGl2);
+  const { model, error } = useLandModel(webgl, dataMode, totals);
   const { visible, reducedMotion } = useScenePreferences();
   const picked = useSelectionStore((state) => state.selectedSigunguCode);
   const selectedId = useSelectionStore((state) => state.selectedFestivalId);
@@ -83,41 +86,6 @@ export function MiniKoreaCanvas({
   const selectFestival = useSelectionStore((state) => state.selectFestival);
   const selectSigungu = useSelectionStore((state) => state.selectSigungu);
   const setFilters = useSelectionStore((state) => state.setFilters);
-
-  // 공개 경계 파일을 한 번 가져오고 중단된 요청은 상태를 바꾸지 않는다.
-  useEffect(() => {
-    if (!webgl) return;
-    const controller = new AbortController();
-    fetch("/geo/sigungu.topo.json", { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error(`경계 파일 ${response.status}`);
-        return response.json();
-      })
-      .then((data: Topology) => setTopology(data))
-      .catch((reason) => {
-        if (reason.name !== "AbortError") setError(true);
-      });
-    return () => controller.abort();
-  }, [webgl]);
-
-  // 경계 파일을 시군구 타일·중심점·시도 대응표로 한 번만 바꾼다.
-  const model = useMemo(
-    () =>
-      topology
-        ? buildLandModelForData(topology, dataMode ? totals : null)
-        : null,
-    [topology, dataMode, totals],
-  );
-
-  // 경계가 교체되거나 페이지를 떠나면 병합 버퍼를 GPU에서 해제한다.
-  useEffect(
-    () => () => {
-      model?.tiles.forEach((tile) => {
-        tile.geometry.dispose();
-      });
-    },
-    [model],
-  );
 
   // 나무판과 조명 범위는 땅 경계에 여백 90km를 더한 크기로 맞춘다.
   const bounds = model?.bounds;
@@ -170,6 +138,12 @@ export function MiniKoreaCanvas({
       aria-label="시군구를 선택할 수 있는 3D 미니 대한민국"
       data-focus-id={selectedId ?? ""}
     >
+      <p className="sr-only" aria-live="polite">
+        {nationalDescription(
+          scene.placed.map(({ festival }) => festival),
+          selectedId,
+        )}
+      </p>
       <Canvas
         onPointerMissed={(event) => {
           if (
@@ -197,11 +171,9 @@ export function MiniKoreaCanvas({
       >
         <QualityControl
           quality={activeQuality}
-          fixed={diagnostics.fixedQuality !== null}
+          fixed={mode !== "auto"}
           diagnostic={diagnostics.debug}
-          onQualityChange={(change) =>
-            setQuality((current) => shiftQuality(current, change))
-          }
+          onQualityChange={change}
           onRegressFactor={setRegressFactor}
         />
         <SunLight
@@ -293,7 +265,18 @@ export function MiniKoreaCanvas({
           diagnostic={diagnostics.debug}
         />
         {t435 && <SceneEffects quality={activeQuality} />}
+        <SceneCaptureFrame
+          request={captureRequest}
+          screen="national"
+          note="인원 규모는 예보값 비례 · 움직임은 연출 · 인형 위치는 실제 사람 위치가 아니에요. 날씨 효과 = 기상청 예보 기반 연출."
+          postprocessed={t435 && activeQuality === "high"}
+        />
       </Canvas>
+      <SceneTools
+        mode={mode}
+        onModeChange={setMode}
+        onSave={() => setCaptureRequest((request) => request + 1)}
+      />
     </section>
   );
 }
