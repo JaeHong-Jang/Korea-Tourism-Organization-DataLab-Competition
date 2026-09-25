@@ -13,6 +13,7 @@ from crowdcast.api.routes import (
     regions,
     similar,
     upcoming,
+    weather,
     whatif,
 )
 from crowdcast.config import get_settings
@@ -31,3 +32,4 @@ app.include_router(whatif.router)
 app.include_router(upcoming.router)
 app.include_router(regions.router)
 app.include_router(preregistration.router)
+app.include_router(weather.router)

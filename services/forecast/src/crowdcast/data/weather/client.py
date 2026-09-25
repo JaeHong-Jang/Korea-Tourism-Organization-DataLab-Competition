@@ -25,13 +25,19 @@ class WeatherClient:
         ledger_path: Path | None = None,
         max_calls: int = 800,
         transport: httpx.BaseTransport | None = None,
+        timeout_seconds: float = 30,
+        attempts: int = 3,
     ) -> None:
         self.cache_dir = cache_dir if cache_dir is not None else CACHE / "weather"
         self.ledger = CallLedger(
             ledger_path if ledger_path is not None else CACHE / "datago/ledger.csv", max_calls=max_calls
         )
         self._transport = transport if transport is not None else httpx.HTTPTransport(retries=0)
-        self._cache = WeatherCache(self.cache_dir, WeatherTransport(self.ledger, self._transport))
+        self._cache = WeatherCache(
+            self.cache_dir,
+            WeatherTransport(self.ledger, self._transport, timeout_seconds=timeout_seconds),
+            attempts=attempts,
+        )
 
     # 여러 종류의 날씨 요청에서 연결 풀을 재사용한다.
     def __enter__(self) -> "WeatherClient":

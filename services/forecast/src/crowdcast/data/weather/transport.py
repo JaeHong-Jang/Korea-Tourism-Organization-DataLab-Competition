@@ -21,9 +21,12 @@ ENDPOINTS = {
 # URL 로깅을 피하는 T-101 전송 계층 방식으로 인증키를 요청에서만 사용한다.
 class WeatherTransport:
     # 호출 예산과 전송 자원은 클라이언트 수명 동안 재사용한다.
-    def __init__(self, ledger: CallLedger, transport: httpx.BaseTransport) -> None:
+    def __init__(
+        self, ledger: CallLedger, transport: httpx.BaseTransport, *, timeout_seconds: float = 30
+    ) -> None:
         self.ledger = ledger
         self.transport = transport
+        self.timeout = httpx.Timeout(timeout_seconds)
 
     # 재시도 한 번마다 같은 공공데이터 장부에 실제 전송 한 건을 먼저 예약한다.
     def request(self, api: str, query: dict[str, str | int]) -> dict[str, Any]:
@@ -34,7 +37,7 @@ class WeatherTransport:
             "GET",
             f"https://apis.data.go.kr/{ENDPOINTS[api]}",
             params={**query, "serviceKey": unquote(key.get_secret_value())},
-            extensions={"timeout": httpx.Timeout(30).as_dict()},
+            extensions={"timeout": self.timeout.as_dict()},
         )
         try:
             self.ledger.reserve(f"weather_{api}")

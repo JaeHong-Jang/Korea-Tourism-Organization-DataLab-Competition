@@ -16,9 +16,10 @@ from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait
 # 발표 시각·좌표·서비스가 같으면 인증키와 무관하게 같은 캐시를 읽는다.
 class WeatherCache:
     # 날씨 캐시만 별도 디렉터리에 두고 호출 장부는 전송 계층에서 공유한다.
-    def __init__(self, path: Path, transport: WeatherTransport) -> None:
+    def __init__(self, path: Path, transport: WeatherTransport, *, attempts: int = 3) -> None:
         self.path = path
         self.transport = transport
+        self.attempts = attempts
 
     # 모든 페이지와 날씨 값 검증이 끝나기 전에는 성공 캐시를 남기지 않는다.
     def get(
@@ -50,7 +51,7 @@ class WeatherCache:
         payloads: list[dict[str, Any]] = []
         total, received = None, 0
         retry = Retrying(
-            stop=stop_after_attempt(3),
+            stop=stop_after_attempt(self.attempts),
             wait=wait_exponential(min=1, max=4),
             retry=retry_if_exception_type(TransientDataGoError),
             reraise=True,
@@ -68,7 +69,9 @@ class WeatherCache:
             payloads.append(payload)
             if received >= total:
                 return json.dumps(
-                    {"fetched_at": fetched_at, "payloads": payloads}, ensure_ascii=False, sort_keys=True
+                    {"fetched_at": fetched_at, "params": params, "payloads": payloads},
+                    ensure_ascii=False,
+                    sort_keys=True,
                 ).encode()
 
 
