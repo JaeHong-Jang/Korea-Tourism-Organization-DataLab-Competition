@@ -131,9 +131,9 @@
    "evidence": "sol r3 PASS — 라벨·가중치/공개 시점 646칸 위반 0/연도 분리/분모 공개 모두 PASS, Med(골드B 영역) → backlog T-203b"
   },
   "T-204": {
-   "status": "running",
-   "note": "1회차 PARTIAL(계보 인터페이스 BLOCKED) → 오케스트레이터가 피처 계보·계약(modelVerdict·가정 id) 제공, 1회차 재디스패치",
-   "updated": "2026-09-24T22:17:04.038Z"
+   "status": "done",
+   "updated": "2026-09-25T00:20:31.474Z",
+   "evidence": "develop 병합, forecast 1115, 계약 오류 0, gateway 744, 실사용 게이트 A 통과, sol PASS"
   },
   "T-205": {
    "status": "todo"
@@ -287,7 +287,8 @@
    "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
   },
   "T-407": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-24T23:09:09.473Z"
   },
   "T-431": {
    "status": "done",
@@ -1035,6 +1036,17 @@
    "id": "G1",
    "status": "done",
    "evidence": "백테스트 v1 수치·서비스 5개 기동·SHACL 게이트 A 실사용 통과(위반 0)"
+  },
+  {
+   "at": "2026-09-24T23:09:09.473Z",
+   "id": "T-407",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T00:20:31.474Z",
+   "id": "T-204",
+   "status": "done",
+   "evidence": "develop 병합, forecast 1115, 계약 오류 0, gateway 744, 실사용 게이트 A 통과, sol PASS"
   }
  ]
 }

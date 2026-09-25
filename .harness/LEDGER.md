@@ -46,3 +46,4 @@
 | T-604 | gpt-6-astra | done | 0·0 | G1 ✓ · G2 knowledge 284→288·ruff·✓ knowledge·실기동 사용 모델 등록 · G3 sol FAIL(세션 간 같은 문장 id)→PASS · G4 기동 적재 포인터 확인, 기존 저장소 기준 TTL 새 정의 병합(오케스트레이터) | gpt-6-sol PASS | 4bc542f | — |
 | G1 | 오케스트레이터 | done | — | 백테스트 v1(사용 모델 v1-cf7766 단순 49.3%·57.0%) · dev.mjs --check 서비스 5개+Ollama ✓ · SHACL 실사용: 임시 저장소 모델 등록→영종 행사·예보 적재→게이트 A 통과 위반 0 | — | — | — |
 | (오케스트레이터) knowledge 기준 동기화 | 오케스트레이터 | done | — | 기존 저장소에 기준 TTL 새 정의·빠진 술어만 추가(masterVersion +1), 값 충돌·삭제는 저장값 유지+경고, 빈 노드 순환 방지 · knowledge 292 | gpt-6-sol FAIL×3 → PASS | 84a4f11·8d5e9a8·a4c5130·6caffa1 | — |
+| T-204 | gpt-6-astra + 오케스트레이터(계보 인터페이스·계약·전회차 선택·OOD·실버 규모대) | done | 0·0·0 | G1 ✓ · G2 forecast 1101→1113→1115·ruff·✓ forecast, 실사용: 영종 /predict 200·관측 3·근거 5종·modelVerdict 미검증·p95 0.36~0.9초, knowledge 행사→유사 5→평시→예보 적재 200·게이트 A 위반 0 · G3 sol FAIL(평시 불완전 창 High)→PASS(Med 2 직접 수정) · 워커 BLOCKED 2회(계보 인터페이스·단위 '일') 오케스트레이터 해소 | gpt-6-sol PASS | 460669d | — |
