@@ -2,6 +2,7 @@
 import type { Claim, Forecast } from "@crowdcast/contracts/types";
 import type { CheckInput, CheckResult } from "../report/bundle.js";
 import type { Agent } from "../runtime/agent.js";
+import { isWeatherRecommendation } from "../whatif/weather-evidence.js";
 import { type AnalysisCheckInput, analysisCheck } from "./analysis-check.js";
 import { checkNumbers } from "./number-check.js";
 
@@ -34,10 +35,13 @@ export function matchesRule(claim: Claim, forecast: Forecast) {
       );
     });
   if (claim.claimType === "권고")
-    return forecast.judgment.checklist.some(
-      (item) =>
-        rendered === item.text &&
-        item.evidenceIds.every((id) => claim.evidenceIds.includes(id)),
+    return (
+      isWeatherRecommendation(claim, forecast) ||
+      forecast.judgment.checklist.some(
+        (item) =>
+          rendered === item.text &&
+          item.evidenceIds.every((id) => claim.evidenceIds.includes(id)),
+      )
     );
   // 요인은 예측 서비스가 만든 라벨 그대로만 허용한다(풀어 쓴 문장은 뜻·부정·한글 수사를 검증할 수 없다)
   if (claim.claimType === "요인")

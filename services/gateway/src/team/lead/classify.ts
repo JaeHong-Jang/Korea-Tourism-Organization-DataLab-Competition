@@ -1,12 +1,14 @@
 // 단일 키워드 의도는 즉시 선택하고 모호한 후속 요청만 한 번 분류한다
 import { CLASSIFICATION_PROMPT } from "../../llm/classification-prompt.js";
-import {
-  classificationSchema,
-  type Intent,
-  validateClassification,
-} from "../../llm/classification-schema.js";
+import type { Intent } from "../../llm/classification-schema.js";
 import type { Agent } from "../runtime/agent.js";
 import type { Executor } from "../runtime/executor.js";
+import {
+  type Classification,
+  followupSchema,
+  validateFollowup,
+  whatifMatches,
+} from "../whatif/intent.js";
 import type { Deadline } from "./deadline.js";
 
 const rules: [Intent, RegExp][] = [
@@ -19,17 +21,22 @@ const rules: [Intent, RegExp][] = [
 
 // 여러 키워드가 같은 의도를 가리키면 여전히 단일 규칙으로 취급한다
 export function ruleIntents(text: string): Intent[] {
-  return rules
+  const kinds = whatifMatches(text);
+  const matches = rules
     .filter(([, pattern]) => pattern.test(text))
     .map(([intent]) => intent);
+  if (kinds.length) matches.push("whatif");
+  return [...new Set(matches)].filter(
+    (intent) => intent !== "new_event" || !kinds.includes("similar"),
+  );
 }
 
 // 원문 대신 의도와 분류 방식만 팀장 기록에 남긴다
-function result(intent: Intent, method: "규칙" | "LLM") {
-  return { value: intent, note: `요청 분류: ${intent} (${method})` };
+function result(value: Classification, method: "규칙" | "LLM") {
+  return { value, note: `요청 분류: ${value.intent} (${method})` };
 }
 
-const classifier: Agent<string, Intent> = {
+const classifier: Agent<string, Classification> = {
   id: "lead",
   team: "lead",
   usesLlm: true,
@@ -37,23 +44,35 @@ const classifier: Agent<string, Intent> = {
   // 규칙이 없거나 충돌할 때만 enum 스키마를 강제해 Ollama를 호출한다
   async run(ctx) {
     const matches = ruleIntents(ctx.input);
-    if (matches.length === 1) return result(matches[0], "규칙");
+    if (matches.length === 1) {
+      const kinds = whatifMatches(ctx.input);
+      return result(
+        {
+          intent: matches[0],
+          ...(kinds.length === 1 ? { whatifKind: kinds[0] } : {}),
+        },
+        "규칙",
+      );
+    }
     try {
       const completion = await ctx.llm.complete({
-        schema: classificationSchema,
+        schema: followupSchema,
         messages: [
-          { role: "system", content: CLASSIFICATION_PROMPT },
+          {
+            role: "system",
+            content: `${CLASSIFICATION_PROMPT}\nwhatif이면 whatifKind를 date(날짜), time(시간대), fee(요금), type(유형), weather(비·눈), similar(유사 행사) 중 하나로 분류한다. 바꿀 값은 추측하지 않는다.`,
+          },
           { role: "user", content: JSON.stringify({ text: ctx.input }) },
         ],
         recordingKey: `classify:${ctx.input}`,
       });
       const parsed: unknown = JSON.parse(completion.content);
       return result(
-        validateClassification(parsed) ? parsed.intent : "out_of_scope",
+        validateFollowup(parsed) ? parsed : { intent: "out_of_scope" },
         "LLM",
       );
     } catch {
-      return result("out_of_scope", "LLM");
+      return result({ intent: "out_of_scope" }, "LLM");
     }
   },
 };
@@ -75,7 +94,7 @@ export async function classify(
         budgetMs: 1_000,
         // 시간 초과 뒤에도 분류 결과와 실제 시도한 방식을 기록한다
         async run() {
-          return result("out_of_scope", "LLM");
+          return result({ intent: "out_of_scope" }, "LLM");
         },
       },
       "",

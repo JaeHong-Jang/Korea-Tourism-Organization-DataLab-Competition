@@ -6,7 +6,6 @@ import type { AgentStep, GateReport } from "@crowdcast/contracts/types";
 import { describe, expect, it } from "vitest";
 import { contractRegistry } from "../src/contract/registry.js";
 import { ANALYSIS_SHAPES } from "../src/team/lead/gates.js";
-import { validFollowup } from "./followup-fixture.js";
 import {
   answer,
   fullText,
@@ -184,24 +183,23 @@ describe("새 예보 스트림", () => {
     expect(harness.calls).toEqual([]);
   });
 
-  // 행사 적재 후 같은 세션의 행사 조건을 다시 바꾸지 못한다
-  it("발행 완료 세션의 조건 변경은 기존 예보 id로 안내한다", async () => {
+  // 묻지 않은 answer는 적용하지 않고 새 예보 모드에서 조건을 확인한다
+  it("발행 완료 세션의 모호한 날짜 변경은 선택 질문을 보낸다", async () => {
     const harness = teamFixture();
     const id = await harness.prepare();
     const published = await harness.message(id);
     const done = published.at(-1)?.data as { forecastId: string };
-    const forecastId = done.forecastId;
+    expect(done.forecastId).toEqual(expect.any(String));
     const count = harness.calls.length;
     const events = await harness.message(id, {
       text: "날짜 변경",
       answer: { startsAt: "2026-10-19T19:00:00+09:00" },
     });
-    validFollowup(events, forecastId);
+    validSequence(events);
     expect(events.at(-2)).toMatchObject({
-      event: "error",
+      event: "ask",
       data: {
-        code: "OUT_OF_SCOPE",
-        message: "비·요일을 바꿔 보는 기능은 준비 중이에요",
+        field: "startsAt",
       },
     });
     expect(harness.calls).toHaveLength(count);

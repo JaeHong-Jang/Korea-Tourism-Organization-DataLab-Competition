@@ -1,4 +1,6 @@
 // 계약 픽스처를 로컬 forecast 응답으로 재생하며 예측 수치는 계산하지 않는다
+
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import type { Event, Forecast } from "@crowdcast/contracts/types";
 import { asOfDate } from "../analysis/as-of.js";
@@ -49,13 +51,22 @@ export const fakeForecastFetch: typeof fetch = async (input, init) => {
   }
   if (url.pathname === "/v1/similar")
     return Response.json([fixture("similar")]);
-  if (url.pathname === "/v1/predict") {
+  if (url.pathname === "/v1/predict" || url.pathname === "/v1/whatif") {
     // 수치는 예시 그대로 두고 식별자와 D-14 메타데이터만 요청 행사에 연결한다
-    const event = body as Event;
+    const event = (
+      url.pathname === "/v1/whatif" ? { ...body.event, ...body.changes } : body
+    ) as Event;
+    if (
+      event.sigunguCode !== example.sigunguCode ||
+      venueName(event.venue.name) !== venueName(example.venue.name)
+    )
+      return new Response(null, { status: 503 });
     const forecast = JSON.parse(
       JSON.stringify(fixture("forecast")).replaceAll(
         "f-yeongjong-2025",
-        `f-${event.id.slice(2)}`,
+        url.pathname === "/v1/whatif"
+          ? `f-whatif-${randomUUID()}`
+          : `f-${event.id.slice(2)}`,
       ),
     ) as Forecast;
     forecast.eventId = event.id;

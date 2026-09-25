@@ -12,6 +12,7 @@ export type Scenario = {
   category: "new" | "ask" | "followup" | "out_of_scope";
   tags: string[];
   parent?: string;
+  whatifMode?: "new" | "followup";
   offsetDays?: number;
   text: string;
   extraction?: ExtractedFields;

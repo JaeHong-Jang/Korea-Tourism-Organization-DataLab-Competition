@@ -18,3 +18,6 @@
 {"id":"F03","category":"followup","tags":["draft"],"parent":"N03","text":"안전관리계획 초안을 만들어 주세요.","expected":{"askFields":[],"published":false,"intent":"draft"}}
 {"id":"O01","category":"out_of_scope","tags":["범위밖"],"parent":"N04","text":"김치찌개 조리법을 알려 주세요.","expected":{"askFields":[],"published":false,"intent":"out_of_scope"}}
 {"id":"O02","category":"out_of_scope","tags":["범위밖"],"parent":"N04","text":"영어 문장을 번역해 주세요.","expected":{"askFields":[],"published":false,"intent":"out_of_scope"}}
+{"id":"W01","category":"followup","tags":["whatif"],"parent":"N02","whatifMode":"new","text":"유료면?","expected":{"askFields":[],"published":true,"intent":"whatif"}}
+{"id":"W02","category":"followup","tags":["whatif"],"parent":"N06","whatifMode":"new","text":"일요일이면?","expected":{"askFields":[],"published":true,"intent":"whatif"}}
+{"id":"W03","category":"followup","tags":["whatif"],"parent":"N07","whatifMode":"new","text":"밤이면?","expected":{"askFields":[],"published":true,"intent":"whatif"}}
