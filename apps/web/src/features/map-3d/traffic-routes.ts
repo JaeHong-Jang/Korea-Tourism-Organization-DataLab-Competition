@@ -16,8 +16,9 @@ export type RoadFeature = { geometry: Geometry; properties: GeoJsonProperties };
 export function trafficRoutes(
   features: RoadFeature[],
   visible?: (lng: number, lat: number) => boolean,
+  focus: [number, number][] = [],
 ): TrafficRoute[] {
-  const routes: TrafficRoute[] = [];
+  const routes: (TrafficRoute & { distance: number })[] = [];
   const seen = new Set<string>();
   for (const feature of features) {
     const kind = feature.properties?.kind;
@@ -56,7 +57,21 @@ export function trafficRoutes(
         line[0] as [number, number],
       ).meterInMercatorCoordinateUnits();
       if (length < meterScale * 12) continue;
+      // 화면 중심·행사에서 가까운 경로부터 남기도록 양 끝과 가운데 점의 거리를 잰다.
+      const distance = Math.min(
+        Infinity,
+        ...focus.flatMap(([focusLng, focusLat]) =>
+          [line[0], line[line.length >> 1], line[line.length - 1]].map(
+            ([lng, lat]) =>
+              Math.hypot(
+                (lng - focusLng) * Math.cos((focusLat * Math.PI) / 180),
+                lat - focusLat,
+              ),
+          ),
+        ),
+      );
       const route = {
+        distance,
         kind:
           kind === "rail"
             ? ("rail" as const)
@@ -70,10 +85,13 @@ export function trafficRoutes(
       };
       routes.push(route);
       if (isRoad) routes.push({ ...route, kind: "walk" });
-      if (routes.length >= 500) return routes;
     }
   }
-  return routes;
+  // 타일 순서대로 500개에서 자르면 행사 근처 길이 빠져 모이는 사람이 0명이 된다.
+  return routes
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 500)
+    .map(({ distance: _distance, ...route }) => route);
 }
 
 // 누적 선분 길이로 위치와 방향을 매 프레임 새 배열 없이 구한다.

@@ -83,7 +83,7 @@ export function installMapEvents(options: Options): () => void {
   map.setMaxBounds(KOREA_BOUNDS);
   const honest = stage.querySelector<HTMLElement>(".map-2d__honest");
   const notice =
-    "건물·도로 = OpenStreetMap · 사람·차량 움직임은 연출 · 인원 규모는 예보값 비례";
+    "건물·도로 = OpenStreetMap · 사람·차량 움직임은 연출 · 인원 규모는 예보값 비례 · 사람 크기는 보이게 키움";
   if (honest) honest.textContent = notice;
 
   // 스타일 교체 뒤 하늘·차량·행사 소스를 현재 선택으로 복원한다.
@@ -142,11 +142,6 @@ export function installMapEvents(options: Options): () => void {
       return;
     }
     const visible = map.getBounds();
-    const routes = trafficRoutes(
-      map.querySourceFeatures("protomaps", { sourceLayer: "roads" }),
-      (lng, lat) => visible.contains([lng, lat]),
-    );
-    traffic.current.setRoutes(routes);
     const nearby = festivals.current.filter((festival) =>
       visible.contains([festival.lng, festival.lat]),
     );
@@ -158,6 +153,17 @@ export function installMapEvents(options: Options): () => void {
           Math.hypot(a.lng - center.lng, a.lat - center.lat) -
           Math.hypot(b.lng - center.lng, b.lat - center.lat),
       )[0];
+    const routes = trafficRoutes(
+      map.querySourceFeatures("protomaps", { sourceLayer: "roads" }),
+      (lng, lat) => visible.contains([lng, lat]),
+      focused
+        ? [
+            [center.lng, center.lat],
+            [focused.lng, focused.lat],
+          ]
+        : [[center.lng, center.lat]],
+    );
+    traffic.current.setRoutes(routes);
     traffic.current.setFestival(
       focused
         ? {

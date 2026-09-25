@@ -33,6 +33,15 @@ import {
 
 const VEHICLE_KINDS = ["car", "taxi", "bus", "train"] as const;
 
+// 지도 축척과 별도로 z15에서 사람 높이와 차량 폭을 몇 픽셀로 읽히게 한다.
+export function actorScale(zoom: number, latitude: number, person: boolean) {
+  const metersPerPixel =
+    (156543.03392 * Math.cos((latitude * Math.PI) / 180)) / 2 ** zoom;
+  return person
+    ? Math.min(18, Math.max(2, metersPerPixel * 3.3))
+    : Math.min(12, Math.max(1.8, metersPerPixel * 1.7));
+}
+
 // 기존 차량 배분 API도 실제 타일 기반의 새 배치와 같은 상한을 쓴다.
 export function vehiclePlan(routes: TrafficRoute[], quality: Quality) {
   return cityActorPlan(routes, quality, null).filter(
@@ -74,9 +83,15 @@ export class TrafficLayer implements CustomLayerInterface {
   private festival: FestivalFocus | null = null;
   private focusX = 0;
   private focusY = 0;
+  private centerLatitude = 37;
   private reducedMotion = false;
   private visible = true;
   private started = performance.now();
+
+  // 카메라 위도는 이동할 때만 읽어 프레임마다 좌표 객체를 만들지 않는다.
+  private updateLatitude = () => {
+    this.centerLatitude = this.map?.getCenter().lat ?? 37;
+  };
 
   // 품질 단계는 사람 2500·차량 600을 넘지 않도록 고정한다.
   constructor(private quality: Quality) {}
@@ -84,6 +99,8 @@ export class TrafficLayer implements CustomLayerInterface {
   // 옷과 머리, 차종은 토큰 팔레트로 칠하고 각 종류를 하나의 드로콜로 묶는다.
   onAdd(map: MapLibre, gl: WebGL2RenderingContext) {
     this.map = map;
+    this.updateLatitude();
+    map.on("move", this.updateLatitude);
     this.renderer = new WebGLRenderer({
       canvas: map.getCanvas(),
       context: gl,
@@ -210,6 +227,9 @@ export class TrafficLayer implements CustomLayerInterface {
       this.started,
       this.reducedMotion,
     );
+    const zoom = this.map.getZoom();
+    const peopleScale = actorScale(zoom, this.centerLatitude, true);
+    const vehicleScale = actorScale(zoom, this.centerLatitude, false);
     for (let index = 0; index < this.actors.length; index++) {
       const actor = this.actors[index];
       const route = actor.route;
@@ -235,11 +255,12 @@ export class TrafficLayer implements CustomLayerInterface {
       this.dummy.position.set(
         this.position.x - this.originX + Math.sin(this.position.heading) * side,
         this.position.y - this.originY - Math.cos(this.position.heading) * side,
-        route.meterScale * (person ? 1.05 : 1.8),
+        route.meterScale * (person ? peopleScale * 1.05 : vehicleScale * 1.8),
       );
       this.dummy.rotation.set(0, 0, this.position.heading);
       this.dummy.scale.set(
         route.meterScale *
+          (person ? peopleScale : vehicleScale) *
           (person
             ? 0.75
             : actor.kind === "train"
@@ -247,8 +268,12 @@ export class TrafficLayer implements CustomLayerInterface {
               : actor.kind === "bus"
                 ? 11
                 : 4.5),
-        route.meterScale * (person ? 0.75 : actor.kind === "train" ? 3 : 2),
-        route.meterScale * (person ? 1.8 : actor.kind === "train" ? 3.2 : 2.5),
+        route.meterScale *
+          (person ? peopleScale : vehicleScale) *
+          (person ? 0.75 : actor.kind === "train" ? 3 : 2),
+        route.meterScale *
+          (person ? peopleScale : vehicleScale) *
+          (person ? 1.8 : actor.kind === "train" ? 3.2 : 2.5),
       );
       this.dummy.updateMatrix();
       this.meshes[actor.kind].setMatrixAt(
@@ -256,8 +281,8 @@ export class TrafficLayer implements CustomLayerInterface {
         this.dummy.matrix,
       );
       if (person) {
-        this.dummy.position.z = route.meterScale * 2.35;
-        this.dummy.scale.setScalar(route.meterScale * 0.8);
+        this.dummy.position.z = route.meterScale * peopleScale * 2.35;
+        this.dummy.scale.setScalar(route.meterScale * peopleScale * 0.8);
         this.dummy.updateMatrix();
         this.meshes.head.setMatrixAt(this.counts.person - 1, this.dummy.matrix);
       }
@@ -279,6 +304,7 @@ export class TrafficLayer implements CustomLayerInterface {
 
   // 지도 컨텍스트는 MapLibre에 남기고 이 레이어가 만든 자원만 정리한다.
   onRemove() {
+    this.map?.off("move", this.updateLatitude);
     for (const mesh of Object.values(this.meshes ?? {}))
       mesh.material instanceof MeshBasicMaterial && mesh.material.dispose();
     this.box.dispose();

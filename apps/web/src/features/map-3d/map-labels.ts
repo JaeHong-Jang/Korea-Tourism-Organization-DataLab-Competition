@@ -1,6 +1,37 @@
-// 화면 안 행사와 역·공원의 이름을 최대 30개의 작은 카드로 표시한다.
+// 행사 카드를 우선 배치하고 화면에 드문드문 주요 장소만 표시한다.
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { type Map as MapLibre, Marker } from "maplibre-gl";
+
+type CardArea = { x: number; y: number; width: number; height: number };
+const PLACE_KINDS = new Set([
+  "station",
+  "railway_station",
+  "park",
+  "castle",
+  "monument",
+  "attraction",
+]);
+
+// 화면 좌표로 카드의 자리를 예약해 행사와 겹치는 장소를 숨긴다.
+function reserveCard(
+  map: MapLibre,
+  coordinates: [number, number],
+  width: number,
+  height: number,
+  occupied: CardArea[],
+): boolean {
+  const { x, y } = map.project(coordinates);
+  if (
+    occupied.some(
+      (card) =>
+        Math.abs(card.x - x) < (card.width + width) / 2 + 8 &&
+        Math.abs(card.y - y) < (card.height + height) / 2 + 8,
+    )
+  )
+    return false;
+  occupied.push({ x, y, width, height });
+  return true;
+}
 
 // 실제 대표 이미지는 동일 출처의 캐시 주소만 이름표에 붙인다.
 function festivalCard(
@@ -38,42 +69,59 @@ export class MapLabels {
     private choose: (id: string) => void,
   ) {}
 
-  // 행사를 우선 표시하고 남는 슬롯에 이름이 있는 역·공원을 둔다.
+  // 행사에 먼저 자리를 주고 중요한 역·공원·명소만 남긴다.
   update(festivals: FestivalSummary[], mode: "3d" | "top") {
     this.clear();
     if (mode !== "3d") return;
     const bounds = this.map.getBounds();
-    const visible = festivals
-      .filter((item) => bounds.contains([item.lng, item.lat]))
-      .slice(0, 25);
-    for (const festival of visible)
+    const occupied: CardArea[] = [];
+    let festivalCount = 0;
+    for (const festival of festivals) {
+      if (festivalCount >= 12) break;
+      const coordinates: [number, number] = [festival.lng, festival.lat];
+      if (
+        !bounds.contains(coordinates) ||
+        !reserveCard(this.map, coordinates, 190, 52, occupied)
+      )
+        continue;
       this.markers.push(
         new Marker({
           element: festivalCard(festival, this.choose),
           anchor: "bottom",
           offset: [0, -18],
         })
-          .setLngLat([festival.lng, festival.lat])
+          .setLngLat(coordinates)
           .addTo(this.map),
       );
-    if (this.map.getZoom() < 13 || this.markers.length >= 30) return;
+      festivalCount++;
+    }
+    if (this.map.getZoom() < 13) return;
     const names = new Set<string>();
-    for (const feature of this.map.querySourceFeatures("protomaps", {
-      sourceLayer: "pois",
-    })) {
-      if (this.markers.length >= 30) break;
-      const name = feature.properties["name:ko"] ?? feature.properties.name;
+    const places = this.map
+      .querySourceFeatures("protomaps", { sourceLayer: "pois" })
+      .filter(
+        (feature) =>
+          feature.geometry.type === "Point" &&
+          PLACE_KINDS.has(feature.properties.kind) &&
+          Number(feature.properties.min_zoom) <= 14 &&
+          (feature.properties["name:ko"] || feature.properties.name),
+      )
+      .sort(
+        (a, b) => Number(a.properties.min_zoom) - Number(b.properties.min_zoom),
+      );
+    let placeCount = 0;
+    for (const feature of places) {
+      if (placeCount >= 12) break;
+      const name = String(
+        feature.properties["name:ko"] ?? feature.properties.name,
+      );
+      if (names.has(name) || feature.geometry.type !== "Point") continue;
+      const coordinates = feature.geometry.coordinates as [number, number];
       if (
-        !name ||
-        names.has(name) ||
-        !["station", "park", "railway_station"].includes(
-          feature.properties.kind,
-        ) ||
-        feature.geometry.type !== "Point"
+        !bounds.contains(coordinates) ||
+        !reserveCard(this.map, coordinates, 120, 36, occupied)
       )
         continue;
-      const coordinates = feature.geometry.coordinates as [number, number];
-      if (!bounds.contains(coordinates)) continue;
       names.add(name);
       const card = document.createElement("span");
       card.className = "map-3d-label map-3d-label--place";
@@ -83,6 +131,7 @@ export class MapLabels {
           .setLngLat(coordinates)
           .addTo(this.map),
       );
+      placeCount++;
     }
   }
 

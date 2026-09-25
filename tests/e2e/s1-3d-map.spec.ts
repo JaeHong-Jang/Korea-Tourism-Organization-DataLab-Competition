@@ -59,6 +59,8 @@ async function city(
 
 // 로컬 PMTiles만 읽으며 전국·도시·밤 장면을 저장하고 지도 클릭을 목록과 대조한다.
 test("기본 3D 지도에서 서울·부산 건물과 행사·차량을 본다", async ({ page }) => {
+	// 도시 세 곳 타일 로딩·캡처가 전체 병렬 실행에서 30초를 넘는다(단독 약 21초)
+	test.setTimeout(90_000);
 	await page.setViewportSize({ width: 1440, height: 900 });
 	const external: string[] = [];
 	page.on("request", (request) => {
@@ -75,6 +77,9 @@ test("기본 3D 지도에서 서울·부산 건물과 행사·차량을 본다",
 	await expect(page.locator(".map-2d__honest")).toContainText(
 		"사람·차량 움직임은 연출",
 	);
+	await expect(page.locator(".map-2d__honest")).toContainText(
+		"사람 크기는 보이게 키움",
+	);
 	const limits = await page.evaluate(() => {
 		const map = (
 			window as Window & { __crowdcastMap?: import("maplibre-gl").Map }
@@ -82,10 +87,12 @@ test("기본 3D 지도에서 서울·부산 건물과 행사·차량을 본다",
 		return {
 			west: map?.getMaxBounds()?.getWest() ?? 0,
 			foreignCountryLayer: Boolean(map?.getLayer("places_country")),
+			poiLayer: Boolean(map?.getLayer("pois")),
 		};
 	});
 	expect(limits.west).toBeGreaterThan(125);
 	expect(limits.foreignCountryLayer).toBe(false);
+	expect(limits.poiLayer).toBe(false);
 	await page.screenshot({ path: resolve(screens, "T-445-overview.png") });
 
 	await city(page, 126.98, 37.56);
@@ -102,31 +109,28 @@ test("기본 3D 지도에서 서울·부산 건물과 행사·차량을 본다",
 	expect(
 		Number(await page.locator("html").getAttribute("data-map-trains")),
 	).toBeGreaterThanOrEqual(0);
-	expect(await page.locator(".map-3d-label").count()).toBeLessThanOrEqual(30);
+	expect(
+		await page.locator(".map-3d-label--place").count(),
+	).toBeLessThanOrEqual(12);
 	const gatheredBefore = Number(
 		await page.locator("html").getAttribute("data-map-gathering"),
 	);
-	await page.screenshot({ path: resolve(screens, "T-445-seoul-day.png") });
-	const point = await page.evaluate(() => {
-		const map = (
-			window as Window & { __crowdcastMap?: import("maplibre-gl").Map }
-		).__crowdcastMap;
-		const pixel = map?.project([126.98, 37.56]);
-		return { x: pixel?.x ?? 0, y: pixel?.y ?? 0 };
-	});
-	await page.mouse.click(point.x, point.y);
+	await page.screenshot({ path: resolve(screens, "T-445b-seoul-day.png") });
+	// 서울 좌표에는 견본 행사 1이 놓인다. 카드 자체를 눌러 선택 경로를 확인한다.
+	await city(page, 126.98, 37.57);
+	await page.getByRole("button", { name: "견본 행사 1 선택" }).click();
 	await expect(
 		page.getByRole("region", { name: "선택 행사 요약" }),
-	).toContainText("견본 행사 2");
+	).toContainText("견본 행사 1");
 	await expect(
 		page.locator(".festival-list__items li.is-selected"),
-	).toContainText("견본 행사 2");
+	).toContainText("견본 행사 1");
 	await expect
 		.poll(async () =>
 			Number(await page.locator("html").getAttribute("data-map-gathering")),
 		)
 		.toBeGreaterThan(gatheredBefore);
-	await page.screenshot({ path: resolve(screens, "T-445-festival.png") });
+	await page.screenshot({ path: resolve(screens, "T-445b-festival.png") });
 	await page.getByRole("button", { name: "위에서 보기" }).click();
 	await expect(page.locator(".map-2d")).toHaveAttribute("data-map-mode", "top");
 	await expect(page.locator(".maplibregl-canvas")).toHaveCount(1);
