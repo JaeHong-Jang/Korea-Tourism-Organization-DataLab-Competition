@@ -1,0 +1,458 @@
+{
+  "assets": [
+    {
+      "dagsterRunId": null,
+      "deps": [],
+      "gate": {
+        "message": "시도 1: 시군구×전체 날짜×세 구분 격자 2023-01-01~2026-08-25 결측 194400/1055232=18.422489% (<2%); 최신 관측일 2026-08-25; 실제 반영 지연=31일 (실행일 2026-09-25, 0~35일); 공유 장부 900/900건 | 캐시만; 수집 0행; 이번 실행 외부 호출=0; 마지막 수집 성공 시각=미기록; 수집 상태 JSON: {\"latest\": \"2026-08-25\", \"last_success\": null}",
+        "passed": false
+      },
+      "inputFiles": [
+        {
+          "path": "data/external/boundaries/sigungu.topo.json",
+          "sha256": null
+        },
+        {
+          "path": "data/processed/mcst_festivals.parquet",
+          "sha256": null
+        },
+        {
+          "path": "data/processed/region_daily.parquet",
+          "sha256": null
+        }
+      ],
+      "key": "crowdcast/fetch",
+      "lastRunId": "20260925T051804177020+0900-500504",
+      "outputFiles": [
+        {
+          "path": "data/processed/admin_dict.parquet",
+          "rows": null,
+          "sha256": "b94e21a0dc1cf3c9e20a3bb565fd87fb7aa0cf05fdf4aa5e49a2e0c3fb20ffc1"
+        },
+        {
+          "path": "data/processed/events.parquet",
+          "rows": null,
+          "sha256": "964f24e441bbf025b0207326a3d097207db83b4ce253b4339262e3a6fbff3391"
+        },
+        {
+          "path": "data/processed/events_qc.md",
+          "rows": null,
+          "sha256": "a40190cc030bcadde1399e18dae5edb040de00bbb47e14300aa2cf1501154c69"
+        },
+        {
+          "path": "data/processed/region_daily.parquet",
+          "rows": null,
+          "sha256": "3af83ecabebb649cffdc7e76d9b4d41ec07a430eb5ff0df3b7d728ab3c539779"
+        },
+        {
+          "path": "data/processed/region_daily.progress.json",
+          "rows": null,
+          "sha256": "4721679efb4f4970d07cf2a8806c5bac46b6c273051ad2cb95cd8f8fd5c4a11f"
+        }
+      ],
+      "status": "failed"
+    },
+    {
+      "dagsterRunId": null,
+      "deps": [
+        "crowdcast/fetch"
+      ],
+      "gate": {
+        "message": "T-103 저장 판정: G0=simple, 골드=5; 유의 음수=9/259 (pass); 신호 유지=pass; 오류 건수={'unexpected_missing_snr_count': 0, 'invalid_snr_count': 0, 'zero_significant_count': 0}; 전체 음수=pass; 종료 코드 0",
+        "passed": true
+      },
+      "inputFiles": [
+        {
+          "path": "data/processed/diy_targets.csv",
+          "sha256": null
+        },
+        {
+          "path": "data/processed/events.parquet",
+          "sha256": null
+        },
+        {
+          "path": "data/processed/labels.parquet",
+          "sha256": null
+        },
+        {
+          "path": "data/processed/labels_g0.json",
+          "sha256": null
+        },
+        {
+          "path": "data/processed/region_daily.parquet",
+          "sha256": null
+        }
+      ],
+      "key": "crowdcast/labels",
+      "lastRunId": "20260925T051827799715+0900-156984",
+      "outputFiles": [
+        {
+          "path": "data/processed/diy_labels_template.csv",
+          "rows": null,
+          "sha256": "7d000f9c4879a3c5ccdefb07e579e8b548d7e419a8f9991ed443c7e39dc2a239"
+        },
+        {
+          "path": "data/processed/labels.parquet",
+          "rows": null,
+          "sha256": "0cf4a6eff781e8d40830263ea7ea8a3a649b60c4a10c6594561da562c5a64c9a"
+        },
+        {
+          "path": "data/processed/labels_g0.json",
+          "rows": null,
+          "sha256": "27f0935090a86b0074311a4c966cbe7c1757f3b9728eeab2a93c931f879a5f81"
+        },
+        {
+          "path": "data/processed/labels_qc.md",
+          "rows": null,
+          "sha256": "e43f6bda702a1ff4143a7684e9e95cd96c5a08d26401f10c7fcb7ad2628fea38"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "dagsterRunId": null,
+      "deps": [
+        "crowdcast/labels"
+      ],
+      "gate": {
+        "message": "공개 시점 검사 checked=646, violations=0; asOfRule=외부 관측 available_at ≤ as_of = 시작일 − 14일; 행사 입력 제외; 종료 코드 0",
+        "passed": true
+      },
+      "inputFiles": [
+        {
+          "path": "data/processed/events.parquet",
+          "sha256": null
+        },
+        {
+          "path": "data/processed/labels.parquet",
+          "sha256": null
+        },
+        {
+          "path": "data/processed/region_daily.parquet",
+          "sha256": null
+        }
+      ],
+      "key": "crowdcast/features",
+      "lastRunId": "20260925T083256329535+0900-ecb6cf",
+      "outputFiles": [
+        {
+          "path": "data/processed/features.parquet",
+          "rows": null,
+          "sha256": "4b1b99a8457104d2fd00069ad560adeffe8a3ee9b3f532a1dbf1f9464e856049"
+        },
+        {
+          "path": "data/processed/features_availability.json",
+          "rows": null,
+          "sha256": "a15af6f779582b4d6c59f5f242b6e354ea5541d23330ee2adabb0aa8e527cc11"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "dagsterRunId": null,
+      "deps": [
+        "crowdcast/features"
+      ],
+      "gate": {
+        "message": "학습 모듈 종료 코드 0; 모델 카드 계약 통과; 모델 파일=True; 종료 코드 0",
+        "passed": true
+      },
+      "inputFiles": [
+        {
+          "path": "data/processed/labels.parquet",
+          "sha256": null
+        }
+      ],
+      "key": "crowdcast/train",
+      "lastRunId": "20260925T083256329535+0900-ecb6cf",
+      "outputFiles": [
+        {
+          "path": "models/v1-064e60073a7411037212/2025/calibration.json",
+          "rows": null,
+          "sha256": "cd88efad991ac4d78d5687355be6434ab9c83261e261c9996901d549f628b4e6"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/2025/factors.json",
+          "rows": null,
+          "sha256": "7f1d2de8e74ed50f3f0018c5f30f67df5b4ac9b6461d87f33d85fd88ab233a05"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/2025/features.json",
+          "rows": null,
+          "sha256": "0de1d6988e9d31ae871322ebd4e562a40fe68512cb974e078ff1cea63710db07"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/2025/ood.json",
+          "rows": null,
+          "sha256": "d67aaca4728ddabc9c1729bd3f1a8b74600abef98b4b7da941893fa55ca86116"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/2025/p10.txt",
+          "rows": null,
+          "sha256": "14496b42ce32288f97952e489fc087e4f0f8703496e2f67800ff402874247322"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/2025/p50.txt",
+          "rows": null,
+          "sha256": "5e423f18d1029d48e88292c589ecf345c1e0bcf1a55781c089456e32fa61925a"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/2025/p90.txt",
+          "rows": null,
+          "sha256": "d9b3f1852d051757cf4743be54dda0d70f0ef9f779f494a29113c63311eb2f1a"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/2025/simple.json",
+          "rows": null,
+          "sha256": "72a7d64c0f101e9dc14f973eaa97ba9964bed4f881c3a13e4d155a94b662f84a"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/2025/training.json",
+          "rows": null,
+          "sha256": "049c466f5d43484baf63022ba773e76794efb2d8ae9a5fb07cd309a659b297e8"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/artifact_hashes.json",
+          "rows": null,
+          "sha256": "7c61a92314b50180a412b48c183d414ebad3d828627579a035f41131caee1d84"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/calibration.json",
+          "rows": null,
+          "sha256": "cd88efad991ac4d78d5687355be6434ab9c83261e261c9996901d549f628b4e6"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/feature_availability.parquet",
+          "rows": null,
+          "sha256": "4b1b99a8457104d2fd00069ad560adeffe8a3ee9b3f532a1dbf1f9464e856049"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/features.json",
+          "rows": null,
+          "sha256": "0de1d6988e9d31ae871322ebd4e562a40fe68512cb974e078ff1cea63710db07"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/2025/calibration.json",
+          "rows": null,
+          "sha256": "fac49961f281ee95460b76e0d09779197affa23c1822771a24518e233ff40821"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/2025/factors.json",
+          "rows": null,
+          "sha256": "9bc1029c58f0590f18445853de93cc5c9ebbeea62dac023f433f84bdb01c091e"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/2025/features.json",
+          "rows": null,
+          "sha256": "60ed79a55f58f01fe74a713772c6b083052b872a5df974e6548bc436b59c9cf3"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/2025/ood.json",
+          "rows": null,
+          "sha256": "da18adeae903810ef963ed7505877d18df64f697fc2fc10a03a3862c9790972b"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/2025/p10.txt",
+          "rows": null,
+          "sha256": "62b350a0e049fde9b842cbc7f75aeb9acd33949acf905e846a9a1b696ce0394b"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/2025/p50.txt",
+          "rows": null,
+          "sha256": "3d047ae838ec497891b69c9a0ab5b2974f1c9566df7418021fe9d6110d0e2a3b"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/2025/p90.txt",
+          "rows": null,
+          "sha256": "6226347c15fc39586509153a834400377a7743cd728d7a0693be9a95dbe28324"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/2025/simple.json",
+          "rows": null,
+          "sha256": "43b71731a644989723bd59d2d1fe7912cfe79811c2820bed119efbc7e2cb6a5a"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/2025/training.json",
+          "rows": null,
+          "sha256": "049c466f5d43484baf63022ba773e76794efb2d8ae9a5fb07cd309a659b297e8"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/calibration.json",
+          "rows": null,
+          "sha256": "fac49961f281ee95460b76e0d09779197affa23c1822771a24518e233ff40821"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/feature_availability.parquet",
+          "rows": null,
+          "sha256": "ef094d7dfd32b762e402c581a03e2bf684210aa1a6955525439fad7c19b5b3e0"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/features.json",
+          "rows": null,
+          "sha256": "60ed79a55f58f01fe74a713772c6b083052b872a5df974e6548bc436b59c9cf3"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/ood.json",
+          "rows": null,
+          "sha256": "da18adeae903810ef963ed7505877d18df64f697fc2fc10a03a3862c9790972b"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/p10.txt",
+          "rows": null,
+          "sha256": "62b350a0e049fde9b842cbc7f75aeb9acd33949acf905e846a9a1b696ce0394b"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/p50.txt",
+          "rows": null,
+          "sha256": "3d047ae838ec497891b69c9a0ab5b2974f1c9566df7418021fe9d6110d0e2a3b"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/p90.txt",
+          "rows": null,
+          "sha256": "6226347c15fc39586509153a834400377a7743cd728d7a0693be9a95dbe28324"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/simple.json",
+          "rows": null,
+          "sha256": "43b71731a644989723bd59d2d1fe7912cfe79811c2820bed119efbc7e2cb6a5a"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/filename_sensitivity/training.json",
+          "rows": null,
+          "sha256": "049c466f5d43484baf63022ba773e76794efb2d8ae9a5fb07cd309a659b297e8"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/g0.json",
+          "rows": null,
+          "sha256": "aa23f343ee3816f86132775245e4c8f9817cbebc44f06cf581f64139c94ca9f2"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/model_card.json",
+          "rows": null,
+          "sha256": "ca66250d9a88f5e9324c146e7bfce1da5e36ef7014b863c57acd7adec705ee4f"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/ood.json",
+          "rows": null,
+          "sha256": "d67aaca4728ddabc9c1729bd3f1a8b74600abef98b4b7da941893fa55ca86116"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/p10.txt",
+          "rows": null,
+          "sha256": "14496b42ce32288f97952e489fc087e4f0f8703496e2f67800ff402874247322"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/p50.txt",
+          "rows": null,
+          "sha256": "5e423f18d1029d48e88292c589ecf345c1e0bcf1a55781c089456e32fa61925a"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/p90.txt",
+          "rows": null,
+          "sha256": "d9b3f1852d051757cf4743be54dda0d70f0ef9f779f494a29113c63311eb2f1a"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/run.json",
+          "rows": null,
+          "sha256": "ac54b72c64147bedb8fd6b4541aedbfeaa3c1abaa35e22ceb29d03f25d0e8502"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/simple.json",
+          "rows": null,
+          "sha256": "72a7d64c0f101e9dc14f973eaa97ba9964bed4f881c3a13e4d155a94b662f84a"
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/training.json",
+          "rows": null,
+          "sha256": "049c466f5d43484baf63022ba773e76794efb2d8ae9a5fb07cd309a659b297e8"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "dagsterRunId": null,
+      "deps": [
+        "crowdcast/train"
+      ],
+      "gate": {
+        "message": "허용 악화폭 초과: MdAPE=49.10331408326303% (직전 49.33759813857037% +3%p); 포함률=46.5% (직전 57.0% -5%p); 종료 코드 0",
+        "passed": false
+      },
+      "inputFiles": [
+        {
+          "path": "data/processed/events.parquet",
+          "sha256": null
+        },
+        {
+          "path": "data/processed/labels.parquet",
+          "sha256": null
+        }
+      ],
+      "key": "crowdcast/backtest",
+      "lastRunId": "20260925T140413877689+0900-ed0800",
+      "outputFiles": [
+        {
+          "path": "reports/backtest/bt-v2-8e862b5c0f9f1b02ad48/backtest.json",
+          "rows": null,
+          "sha256": "97953f801ff54f4424c68b11c0d3b3a08bb05386a135a218bf8d1dba644723f2"
+        },
+        {
+          "path": "reports/backtest/bt-v2-8e862b5c0f9f1b02ad48/backtest.md",
+          "rows": null,
+          "sha256": "92f466e106babbfa2c6b08cbf79411e7f0bc46fb92abf472183c28fd1bf0a12a"
+        },
+        {
+          "path": "reports/backtest/bt-v2-8e862b5c0f9f1b02ad48/points.parquet",
+          "rows": null,
+          "sha256": "1aae9e2c181a4c0eb64b64ef197a858311daa00272c7410947037c1254f34988"
+        }
+      ],
+      "status": "failed"
+    },
+    {
+      "dagsterRunId": null,
+      "deps": [
+        "crowdcast/backtest"
+      ],
+      "gate": {
+        "message": "진입점 없음: crowdcast.analytics.upcoming; skipped",
+        "passed": null
+      },
+      "inputFiles": [
+        {
+          "path": "data/processed/events.parquet",
+          "sha256": null
+        },
+        {
+          "path": "models/v1-064e60073a7411037212/model_card.json",
+          "sha256": null
+        },
+        {
+          "path": "reports/backtest/promoted.json",
+          "sha256": null
+        }
+      ],
+      "key": "crowdcast/batch",
+      "lastRunId": "20260925T070406009970+0900-aa3e77",
+      "outputFiles": [],
+      "status": "skipped"
+    },
+    {
+      "dagsterRunId": null,
+      "deps": [
+        "crowdcast/batch"
+      ],
+      "gate": {
+        "message": "publish 미실행: fetch, labels, backtest, batch 미통과; 사용 모델 v1-af1d52f3284a71e557e6(verdict=미검증)",
+        "passed": null
+      },
+      "inputFiles": [],
+      "key": "crowdcast/publish",
+      "lastRunId": "20260925T070406009970+0900-aa3e77",
+      "outputFiles": [],
+      "status": "skipped"
+    }
+  ],
+  "exportedAt": "2026-09-25T16:13:10.457760+09:00",
+  "schemaVersion": 1
+}

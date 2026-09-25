@@ -1,0 +1,42 @@
+{
+  "backtestRunId": "bt-v1-064e60073a7411037212",
+  "createdAt": "2026-09-25T08:33:35.919643+09:00",
+  "evalYears": [
+    2025
+  ],
+  "features": [
+    "type",
+    "time_of_day",
+    "fee",
+    "host_type",
+    "edition",
+    "log_budget",
+    "hazard_fireworks",
+    "hazard_fire",
+    "hazard_flammable_gas",
+    "hazard_petroleum",
+    "hazard_mountain",
+    "hazard_water",
+    "hazard_vehicle_entry",
+    "hazard_single_exit",
+    "hazard_stage_crowd",
+    "hazard_poor_lighting",
+    "duration",
+    "weekend_days",
+    "month",
+    "holiday_days",
+    "holiday_streak",
+    "previous_daily_mean",
+    "region_daily_mean",
+    "nonlocal_share",
+    "weekend_ratio"
+  ],
+  "id": "mr-v1-064e60073a7411037212",
+  "modelVersion": "v1-064e60073a7411037212",
+  "notes": "공개 분모(주 모델): 평가 86건(골드 1·실버 85), 80% 구간 포함 49/86, 비교 쌍 B0 86·B1 1(전회차 골드 실측)·B2 0, 건너뛴 연도 2024(학습 2 < 최소 20 (학습 ≤ 2022)), 명절 실버 채점 불가 34건, 실측 대상 미만 0건. labels SHA-256=0cf4a6eff781e8d40830263ea7ea8a3a649b60c4a10c6594561da562c5a64c9a; 실버 가중치=0.5·골드 가중치=1.0(단순 모델 계층 중앙값·잔차 분위수와 LightGBM 모두 적용, B0 기준선만 무가중 유형 중앙값); 코로나(2020·2021) 제외=True; G0=simple, 주 모델=simple, judgment.basis=구간; 정의 일치 골드 고유 행사=5; 목표 포함률 80%(보장 아님). 표본 한계로 구간 기준 표시 시에도 등급·적용 규칙은 같은 표본의 확률 판정으로 정한다. 순간 최대 및 실측 환산 판정은 추정 산식 기반이며 실제 순간 인원 정답이 아니다. 실버 holiday_overlap·명절 행사는 학습·채점 제외, 채점 불가 건수를 별도 공개한다. 실버는 시군구 순증 보조 정답으로 골드 행사장 방문자와 정의가 다르며 계절 교란이 남는다. 기본 = 조건부 백테스트: 행사 속성이 주어졌을 때의 예보 성능 — 당시 공개 여부를 입증하지 않은 행사 속성을 쓴다. 참고 = 파일명 날짜 기준 민감도는 별도 표이며 공개일 미입증(엄격한 D-14 입증이 아님). 행사 속성까지 D-14 공개가 입증된 백테스트는 공식 공개 기록이 없어 지금은 만들 수 없다. 임시공휴일은 지정 시각을 복원할 수 없어 두 백테스트의 달력 피처에서 제외했다. 공개 시점 규칙은 지역 관측·전회차 라벨에만 적용한다. 입력 행사 일정·장소는 예보 대상 정의이고 환산은 같은 행사 정의에 적용한다. 단순 모델의 규모 계층 선택은 전회차 또는 학습 유형 중앙값만 쓴다. 최종 모델은 마지막 성공 롤링 분할 그대로이며 평가 자료를 재학습하지 않았다. MdAPE는 %, coverage80·재현율·정밀도는 비율, coverageN은 평가 분모; 계약 baselineDeltaPp·comparablePairs는 B2 단위 일치 쌍 기준이다. SHAP은 LightGBM 중앙값 로그 예측 설명이며 단순 주 모델의 설명으로 사용하지 않는다. 판정 재현율·정밀도는 등급이 수립 대상 이상인 이진 분류 기준이다. 대상 미만 표본이 없는 평가에서는 판정 경계의 구분 성능을 주장할 수 없다. 피처별 결측 수={\"duration\": 0, \"edition\": 115, \"fee\": 0, \"hazard_fire\": 0, \"hazard_fireworks\": 0, \"hazard_flammable_gas\": 0, \"hazard_mountain\": 0, \"hazard_petroleum\": 0, \"hazard_poor_lighting\": 0, \"hazard_single_exit\": 0, \"hazard_stage_crowd\": 0, \"hazard_vehicle_entry\": 0, \"hazard_water\": 0, \"holiday_days\": 0, \"holiday_streak\": 0, \"host_type\": 0, \"log_budget\": 3, \"month\": 0, \"nonlocal_share\": 14, \"previous_daily_mean\": 226, \"region_daily_mean\": 14, \"time_of_day\": 228, \"type\": 0, \"weekend_days\": 0, \"weekend_ratio\": 16}. 참고용 — 담당자 검토 필수",
+  "target": "일평균 방문객",
+  "trainRange": {
+    "from": "2018-05-04",
+    "to": "2023-10-28"
+  }
+}

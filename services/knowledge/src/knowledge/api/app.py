@@ -22,6 +22,7 @@ from knowledge.api.session_graph import router as session_graph_router
 from knowledge.api.stats import register_validation_logging
 from knowledge.api.stats import router as stats_router
 from knowledge.api.validate import router as validate_router
+from knowledge.lineage.load import load_startup_lineage
 from knowledge.query.evidence import UnpublishedResource
 from knowledge.store.facts import IntegrityError, KnowledgeStore, violations_for
 from knowledge.validate.snapshot import ScopeConflict
@@ -39,6 +40,7 @@ def create_app(store: KnowledgeStore | None = None) -> FastAPI:
         application.state.knowledge = store if store is not None else KnowledgeStore(paths.STORE)
         try:
             load_promoted_model(application.state.knowledge)
+            load_startup_lineage(application.state.knowledge.repository)
             yield
         finally:
             del application.state.knowledge

@@ -9,7 +9,7 @@ from knowledge.paths import ONTOLOGY
 from knowledge.store.repository import CC, ID, MASTER, TBOX, GraphRepository
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.compare import isomorphic
-from rdflib.namespace import RDF, XSD
+from rdflib.namespace import PROV, RDF, XSD
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +54,11 @@ class MasterCatalog:
                     logger.info(
                         "기준 TTL 트리플 %d개 추가 — masterVersion %d → %d", added, version, version + 1
                     )
-            if not repository.read_graph(TBOX):
-                repository.replace_graph(TBOX, Graph().parse(ONTOLOGY / "crowdcast.ttl", format="turtle"))
+            # 새 계보 어휘도 기존 저장소에 더하되 저장된 TBox 정의는 보존한다.
+            tbox = repository.read_graph(TBOX)
+            fresh_tbox = Graph().parse(ONTOLOGY / "crowdcast.ttl", format="turtle")
+            if set(fresh_tbox) - set(tbox):
+                repository.replace_graph(TBOX, tbox + fresh_tbox)
 
     # 한 그래프 스냅샷에서 버전과 실제로 정의된 id 집합을 함께 읽는다.
     def snapshot(self) -> tuple[int, Master]:
@@ -118,9 +121,12 @@ def sync_definitions(graph: Graph, fresh: Graph) -> tuple[int, list[str]]:
         if changed:
             conflicts.append(str(subject).removeprefix(str(ID)))
 
-    # 기준 TTL에서 사라진 정의(실행 중 등록되는 모델 실행 제외)도 마이그레이션 필요 항목이다.
+    # 실행 중 등록되는 모델·계보 노드는 TTL 삭제 충돌로 잘못 보고하지 않는다.
+    runtime_classes = (CC.ModelRun, CC.PipelineStage, CC.LineageSnapshot, PROV.Entity)
     for subject in sorted({s for s in graph.subjects() if isinstance(s, URIRef) and s != MASTER}):
-        if subject not in fresh_subjects and (subject, RDF.type, CC.ModelRun) not in graph:
+        if subject not in fresh_subjects and not any(
+            (subject, RDF.type, cls) in graph for cls in runtime_classes
+        ):
             conflicts.append(str(subject).removeprefix(str(ID)) + "(TTL에서 삭제)")
     return added, conflicts
 
