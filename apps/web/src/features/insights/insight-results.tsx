@@ -4,6 +4,24 @@ import { useState } from "react";
 import { PetAvatar } from "../../components/pets";
 import type { ContractState } from "../../lib/validation/use-contract";
 
+// 각 인사이트가 무엇을 보는지 한 줄로 알려 준다.
+const QUESTIONS: Record<string, string> = {
+  I1: "지자체가 발표한 방문객 수가 데이터랩 실측(이동통신 기반)과 몇 배 차이 나는지 봐요.",
+  I2: "예상 인원이 법정 기준 1,000명 근처라 안전관리계획 수립 여부가 갈리는 행사가 얼마나 되는지 봐요.",
+};
+
+// 표본이 없으면 요약값 0은 결측 표시라 숫자 대신 "표본 없음"으로, 비율은 %로 읽게 바꾼다.
+export function headlineValue(insight: Insight): string | null {
+  if (insight.sampleSize === 0 || insight.comparablePairs === 0) return null;
+  const { value, unit } = insight.headline;
+  if (unit === "비율") {
+    const percent = value * 100;
+    return `${percent.toFixed(Number.isInteger(percent) ? 0 : 1)}%`;
+  }
+  if (unit === "배") return `${value.toFixed(1)}배`;
+  return `${value.toLocaleString("ko-KR")}${unit}`;
+}
+
 // 인사이트 한 건의 계약 근거와 표본 기간을 함께 읽게 한다.
 function InsightResult({ insight }: { insight: Insight }) {
   const [copied, setCopied] = useState(false);
@@ -12,7 +30,8 @@ function InsightResult({ insight }: { insight: Insight }) {
     .filter((item) => item != null);
   if (source.length !== insight.evidenceIds.length)
     return <p role="alert">인사이트 근거가 연결되지 않았어요.</p>;
-  const sentence = `- ${insight.title}: ${insight.headline.value.toLocaleString("ko-KR")}${insight.headline.unit}, 표본 ${insight.sampleSize.toLocaleString("ko-KR")}건, ${insight.period.from}~${insight.period.to}.`;
+  const value = headlineValue(insight);
+  const sentence = `- ${insight.title}: ${value ?? "표본 없음"}, 표본 ${insight.sampleSize.toLocaleString("ko-KR")}건, ${insight.period.from}~${insight.period.to}.`;
 
   // 복사 성공 뒤에만 완료 안내를 띄운다.
   async function copy() {
@@ -27,9 +46,11 @@ function InsightResult({ insight }: { insight: Insight }) {
     <article className="insight-result" data-insight={insight.key}>
       <span>{insight.key}</span>
       <h3>{insight.title}</h3>
-      <strong>
-        {insight.headline.value.toLocaleString("ko-KR")}
-        {insight.headline.unit}
+      {QUESTIONS[insight.key] && (
+        <p className="insight-result__question">{QUESTIONS[insight.key]}</p>
+      )}
+      <strong className={value ? undefined : "insight-result__missing"}>
+        {value ?? "표본 없음"}
       </strong>
       <p>{insight.headline.text}</p>
       <small>
@@ -61,9 +82,11 @@ function InsightResult({ insight }: { insight: Insight }) {
           ))}
         </ul>
       </details>
-      <button type="button" onClick={copy}>
-        서식4용 문장 복사
-      </button>
+      {value && (
+        <button type="button" onClick={copy}>
+          서식4용 문장 복사
+        </button>
+      )}
       {copied && <span role="status">복사됨</span>}
     </article>
   );

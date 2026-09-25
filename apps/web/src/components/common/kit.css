@@ -15,16 +15,19 @@
 .level-badge small { margin-left: var(--space-1); color: var(--ink-2); font-size: var(--text-caption); }
 .range-bar { min-width: 0; margin: var(--space-3) 0; }
 .range-bar h4 { margin: 0 0 var(--space-2); color: var(--ink); font-size: var(--text-sm); }
-.range-bar__direct-label, .range-bar__conclusion, .range-bar__threshold-label { margin: var(--space-1) 0; color: var(--ink); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.range-bar__direct-label, .range-bar__conclusion { margin: var(--space-1) 0; color: var(--ink); font-size: var(--text-sm); overflow-wrap: anywhere; }
 .range-bar__direct-label { font-weight: 700; font-variant-numeric: tabular-nums; }
-.range-bar__conclusion { font-weight: 700; }
-.range-bar__threshold-label { color: var(--ink-2); font-size: var(--text-caption); }
+.range-bar__conclusion { margin-bottom: var(--space-3); font-size: var(--text-body); }
+.range-bar__conclusion strong { font-size: var(--text-subtitle); }
 .range-bar__track { position: relative; height: 34px; border-bottom: 1px solid var(--axis); }
+.range-bar__track { margin-top: 22px; } /* 기준 이름표 자리 */
+.range-bar--mini .range-bar__track { margin-top: 16px; }
 .range-bar__band { position: absolute; top: 8px; height: 20px; border: 0; border-radius: var(--radius-input); background: var(--seq-2); }
 .range-bar__median, .range-bar__threshold { position: absolute; top: 3px; height: 22px; }
 .range-bar__median::before, .range-bar__threshold::before { position: absolute; top: 0; left: 50%; height: 22px; border-left: 2px solid var(--ink); outline: 1px solid var(--surface); content: ""; }
 [data-theme="night"] .range-bar__median::before { border-left-color: var(--surface); outline-color: var(--ink); }
-.range-bar__threshold::before { border-left: 1px dashed var(--ink-2); }
+.range-bar__threshold::before { border-left: 2px solid var(--ink-2); outline: 0; }
+.range-bar__threshold-tag { position: absolute; bottom: calc(100% + 2px); left: calc(50% - 1px); color: var(--ink-2); font-size: var(--text-caption); font-weight: 600; white-space: nowrap; pointer-events: none; }
 .range-bar__host { position: absolute; top: -9px; color: var(--link); font-size: var(--text-caption); transform: translateX(-50%); }
 .range-bar__target { width: 20px; min-height: 28px; padding: 0; border-top: 0; border-right: 0; border-bottom: 0; background: transparent; cursor: help; transform: translateX(-50%); }
 .range-bar__target:hover, .range-bar__target:focus-visible, .range-bar__band:hover, .range-bar__band:focus-visible { z-index: 2; outline: 2px solid var(--focus); }
@@ -39,7 +42,8 @@
 .range-bar--mini .range-bar__band { top: 5px; height: 8px; }
 .range-bar--mini .range-bar__median, .range-bar--mini .range-bar__threshold { top: 0; height: 17px; }
 .range-bar--mini .range-bar__median::before, .range-bar--mini .range-bar__threshold::before { height: 17px; }
-.range-bar--mini .range-bar__threshold-label, .range-bar--mini figcaption { font-size: var(--text-caption); }
+.range-bar--mini figcaption { font-size: var(--text-caption); }
+.range-bar--mini .range-bar__threshold-tag { font-size: 11px; }
 .range-bar__table { margin-top: var(--space-1); color: var(--ink-2); font-size: var(--text-caption); }
 .range-bar__table summary { width: max-content; color: var(--link); cursor: pointer; }
 .range-bar__table th, .range-bar__table td { padding: var(--space-1) var(--space-3) var(--space-1) 0; text-align: left; }

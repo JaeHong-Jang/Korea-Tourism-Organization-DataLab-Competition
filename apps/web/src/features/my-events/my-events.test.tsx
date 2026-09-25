@@ -16,7 +16,7 @@ import {
   postReforecast,
 } from "../../lib/my-events-api";
 import { actualQuantity } from "./actual-form";
-import { changedCondition, reforecastError } from "./event-detail";
+import { changedCondition, isUnchanged, reforecastError } from "./event-detail";
 import { orderedSnapshots, type SavedEvent, sortAndFilter } from "./event-list";
 import { ReforecastCard } from "./reforecast-card";
 import { SharedReport } from "./shared-report";
@@ -85,11 +85,20 @@ it("재예보 카드에 계약 숫자·날씨 근거 링크를 보인다", () =>
   expect(titled).toContain(">기상청 단기예보</a>");
 });
 
-// 게이트의 code와 message를 함께 유지하고 연결 오류는 구별한다.
+// 게이트 이유 문장·바뀐 것 없음 안내·연결 오류를 구별한다.
 it("재예보 409 이유와 404·503 상태를 구별한다", () => {
   expect(
-    reforecastError(new MyEventsApiError(409, "gate_b · 근거 검증 실패")),
-  ).toContain("gate_b");
+    reforecastError(new MyEventsApiError(409, "근거 검증 실패", "gate_b")),
+  ).toBe("발행하지 못했어요. 근거 검증 실패");
+  // 같은 조건이라 새로 발행하지 않은 경우는 오류 문장이 아니라 안내로 분기한다.
+  expect(
+    isUnchanged(
+      new MyEventsApiError(409, "바뀐 것이 없어요", "reforecast_unchanged"),
+    ),
+  ).toBe(true);
+  expect(
+    isUnchanged(new MyEventsApiError(409, "근거 검증 실패", "gate_b")),
+  ).toBe(false);
   expect(reforecastError(new MyEventsApiError(404, "없음"))).toContain(
     "찾지 못했어요",
   );
@@ -112,9 +121,11 @@ it("재예보 409 응답에서 게이트 이름을 보존한다", async () => {
       ),
   );
   try {
-    await expect(postReforecast(event.id)).rejects.toThrow(
-      "gate_b · 근거 검증 실패",
-    );
+    // 게이트 이름은 분기용 code로 남기고 화면 문장에는 사람이 읽는 이유만 둔다.
+    await expect(postReforecast(event.id)).rejects.toMatchObject({
+      code: "gate_b",
+      message: "근거 검증 실패",
+    });
   } finally {
     vi.unstubAllGlobals();
   }

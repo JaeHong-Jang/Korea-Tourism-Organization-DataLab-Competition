@@ -3,14 +3,7 @@
 [data-sky="dusk"] .site-header { border-bottom-color: var(--team-report); }
 .site-header__row { min-height: 72px; max-width: 1600px; margin-inline: auto; padding: 0 var(--space-8); display: flex; align-items: center; gap: var(--space-8); }
 .brand { display: inline-flex; align-items: center; flex: none; gap: var(--space-2); font-size: var(--text-subtitle); font-weight: 800; letter-spacing: -.045em; white-space: nowrap; }
-.brand__mark { flex: none; overflow: visible; }
-.brand__body { fill: var(--brand); }
-.brand__eye { fill: var(--surface); }
-.brand__belly { stroke: var(--surface); stroke-width: 1.3; opacity: .55; }
-.brand__drop { fill: var(--link); }
-.brand__drop--1 { opacity: .55; }
-.brand__drop--2 { opacity: .8; }
-[data-theme="night"] .brand__drop { fill: var(--select); } /* 밤에는 물방울이 별빛처럼 */
+.brand__mark { flex: none; object-fit: contain; }
 .main-nav { align-self: stretch; display: flex; align-items: stretch; gap: var(--space-2); min-width: 0; }
 .main-nav__link { display: flex; align-items: center; position: relative; padding: var(--space-1) var(--space-3) 0; color: var(--ink-2); font-size: var(--text-ui); white-space: nowrap; transition: color var(--dur-hover) var(--ease); }
 .main-nav__link:hover, .main-nav__link.is-active { color: var(--ink); }

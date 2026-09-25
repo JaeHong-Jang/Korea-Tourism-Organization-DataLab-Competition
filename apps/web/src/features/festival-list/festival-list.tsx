@@ -7,7 +7,7 @@ import { EmptyState } from "../../components/common/empty-state";
 import { ErrorState } from "../../components/common/error-state";
 import { LevelBadge } from "../../components/common/level-badge";
 import { useAssistantStore } from "../../lib/consult-store";
-import { formatDate, formatPeople } from "../../lib/format";
+import { formatDate } from "../../lib/format";
 import { useSelectionStore } from "../../lib/selection-store";
 import { type FestivalSort, sortFestivals } from "./sort-festivals";
 import "./festival-list.css";
@@ -186,10 +186,6 @@ export function FestivalList({
                   />
                 </button>
                 <RangeBar range={festival} mini />
-                <p className="festival-list__range">
-                  p10–p90 {formatPeople(festival.peakP10)}~
-                  {formatPeople(festival.peakP90)} · 추정
-                </p>
                 <button
                   type="button"
                   className="festival-list__consult"

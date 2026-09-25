@@ -41,7 +41,7 @@ function StageRows({ stages }: { stages: PipelineRun["stages"] }) {
               : stage.gate.passed
                 ? "통과"
                 : "실패"}
-            {stage.gate.message ? ` · ${stage.gate.message}` : ""}
+            {stage.gate.message ? ` · ${tidyMessage(stage.gate.message)}` : ""}
           </p>
           {stage.artifacts.length > 0 && (
             <ul className="ops-artifacts">
@@ -74,6 +74,52 @@ function StageRows({ stages }: { stages: PipelineRun["stages"] }) {
           )}
         </li>
       ))}
+    </ol>
+  );
+}
+
+// 게이트 문구의 긴 소수(49.10331408…)는 화면에서만 한 자리로 줄인다.
+export function tidyMessage(message: string): string {
+  return message.replace(/(\d+\.\d)\d{2,}/g, "$1");
+}
+
+// 어느 단계에서 왜 멈췄는지 한 줄로 만든다 — 실패 단계가 먼저, 없으면 돌았지만 검증 못 한 단계.
+export function stoppedAt(run: PipelineRun): string | null {
+  const failed = run.stages.find((stage) => stage.status === "failed");
+  if (failed)
+    return `${stageName[failed.name]}에서 멈췄어요 — ${tidyMessage(failed.gate.message ?? "이유 기록 없음")}`;
+  const unverified = run.stages.find(
+    (stage) =>
+      stage.status === "skipped" &&
+      stage.ms !== null &&
+      stage.gate.passed === null,
+  );
+  if (unverified)
+    return `${stageName[unverified.name]}는 돌았지만 검증하지 못했어요 — ${tidyMessage(unverified.gate.message ?? "이유 기록 없음")}`;
+  return null;
+}
+
+// 단계 순서대로 상태를 작은 칩으로 늘어놓아 한눈에 어디까지 갔는지 보이게 한다.
+function StageChain({ run }: { run: PipelineRun }) {
+  return (
+    <ol className="ops-chain" aria-label="단계별 상태">
+      {run.stages.map((stage) => {
+        const unverified =
+          stage.status === "skipped" &&
+          stage.ms !== null &&
+          stage.gate.passed === null;
+        const label = unverified ? "검증 못 함" : stageStatus[stage.status];
+        return (
+          <li
+            key={stage.name}
+            className={`ops-chain__step ops-chain__step--${unverified ? "unverified" : stage.status}`}
+            title={`${stageName[stage.name]} · ${label}`}
+          >
+            {stageName[stage.name]}
+            <span className="sr-only"> {label}</span>
+          </li>
+        );
+      })}
     </ol>
   );
 }
@@ -147,7 +193,13 @@ export function RunList({ state }: { state: OpsResource<PipelineRun[]> }) {
                 </span>
               </td>
               <td>
-                <span>{run.summary ?? "요약 작성 전"}</span>
+                <StageChain run={run} />
+                <p className="ops-run__reason">
+                  {stoppedAt(run) ??
+                    (run.status === "passed"
+                      ? "모든 단계를 통과했어요."
+                      : (run.summary ?? "요약 작성 전"))}
+                </p>
                 <details className="ops-run__details">
                   <summary>단계 펼치기</summary>
                   <StageRows stages={run.stages} />
