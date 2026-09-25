@@ -13,6 +13,7 @@ from knowledge.api.contract_response import contract_response, internal_error_re
 from knowledge.api.evidence import router as evidence_router
 from knowledge.api.facts import router as facts_router
 from knowledge.api.health import router as health_router
+from knowledge.api.master_graph import router as master_graph_router
 from knowledge.api.master_version import router as master_router
 from knowledge.api.model_runs import load_promoted_model
 from knowledge.api.model_runs import router as model_runs_router
@@ -50,6 +51,7 @@ def create_app(store: KnowledgeStore | None = None) -> FastAPI:
     application.include_router(health_router)
     application.include_router(facts_router)
     application.include_router(master_router)
+    application.include_router(master_graph_router)
     application.include_router(model_runs_router)
     application.include_router(stats_router)
     application.include_router(validate_router)

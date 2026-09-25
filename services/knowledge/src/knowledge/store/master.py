@@ -31,6 +31,7 @@ class MasterCatalog:
         self.repository = repository
         with repository.master_lock:
             graph = repository.read_graph(MASTER)
+            original_version = graph.value(MASTER, CC.masterVersion)
             fresh = Graph()
             for path in sorted((ONTOLOGY / "master").glob("*.ttl")):
                 fresh.parse(path, format="turtle")
@@ -59,6 +60,15 @@ class MasterCatalog:
             fresh_tbox = Graph().parse(ONTOLOGY / "crowdcast.ttl", format="turtle")
             if set(fresh_tbox) - set(tbox):
                 repository.replace_graph(TBOX, tbox + fresh_tbox)
+                # TBox만 바뀌어도 전체 지도와 검증 범위가 바뀌므로 기준 버전을 올린다.
+                current = repository.read_graph(MASTER)
+                if (
+                    original_version is not None
+                    and current.value(MASTER, CC.masterVersion) == original_version
+                ):
+                    version = Literal(int(original_version) + 1, datatype=XSD.integer)
+                    current.set((MASTER, CC.masterVersion, version))
+                    repository.replace_graph(MASTER, current)
 
     # 한 그래프 스냅샷에서 버전과 실제로 정의된 id 집합을 함께 읽는다.
     def snapshot(self) -> tuple[int, Master]:

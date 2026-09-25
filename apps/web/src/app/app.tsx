@@ -1,10 +1,11 @@
-// 공용 헤더와 여덟 화면의 주소를 연결한다.
-import { Route, Routes } from "react-router-dom";
+// 공용 헤더와 각 화면의 주소를 연결한다.
+import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { SiteHeader } from "../components/common/site-header";
 import { ConsultPage } from "../pages/consult-page";
 import { DevPage } from "../pages/dev-page";
 import { ForecastPage } from "../pages/forecast-page";
 import { InsightsPage } from "../pages/insights-page";
+import { KnowledgeGraphPage } from "../pages/knowledge-graph-page";
 import { MiniKoreaPage } from "../pages/mini-korea-page";
 import { MyEventsPage } from "../pages/my-events-page";
 import { OpsPage } from "../pages/ops-page";
@@ -15,11 +16,18 @@ import { HeaderWeatherChip } from "./header-weather-chip";
 
 // 이후 각 레인이 페이지 내부만 구현할 수 있게 라우트를 고정한다.
 export function App() {
+  const location = useLocation();
   return (
     <div className="app-shell">
       <SiteHeader />
       <HeaderWeatherChip />
       <main id="main-content">
+        {location.pathname === "/validation" && (
+          <nav className="validation-graph-nav" aria-label="검증 둘러보기">
+            <span>검증</span>
+            <Link to="/graph">근거 그래프</Link>
+          </nav>
+        )}
         <Routes>
           <Route path="/" element={<MiniKoreaPage />} />
           <Route path="/consult" element={<ConsultPage />} />
@@ -28,6 +36,7 @@ export function App() {
           <Route path="/my" element={<MyEventsPage />} />
           <Route path="/s/:token" element={<SharedPage />} />
           <Route path="/validation" element={<ValidationPage />} />
+          <Route path="/graph" element={<KnowledgeGraphPage />} />
           <Route path="/insights" element={<InsightsPage />} />
           <Route path="/ops" element={<OpsPage />} />
           <Route path="/dev/*" element={<DevPage />} />

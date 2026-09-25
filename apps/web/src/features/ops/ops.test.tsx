@@ -176,3 +176,33 @@ it("항목별 평가·지연과 모델 판정을 계약 값 그대로 표시한�
   expect(freshness).toContain("미검증");
   expect(freshness).toContain("골든 사례 0건 — 사례 재현 검증 전 임시 사용");
 });
+
+// 수집 전 자료와 긴 실행 ID는 좁은 카드에서도 짧은 문장과 복사 행동으로 남긴다.
+it("최신성 카드의 미수집 상태와 실행 ID 축약", () => {
+  const runId = "mr-v1-064e60073a7411037212";
+  const empty = {
+    ...status.freshness[0],
+    datasetId: "ds-kma-short-forecast",
+    title: "기상청 단기예보",
+    lastCollectedAt: null,
+    lastObservedDate: null,
+    rows: null,
+  };
+  const markup = renderToStaticMarkup(
+    <FreshnessCard
+      state={{
+        phase: "ready",
+        value: {
+          ...status,
+          freshness: [empty],
+          model: { ...status.model, modelRunId: runId },
+        },
+      }}
+    />,
+  );
+  expect(markup).toContain("아직 수집 전");
+  expect(markup).not.toContain("마지막 수집: 미수집");
+  expect(markup).toContain(runId.slice(0, 12));
+  expect(markup).not.toContain(`>${runId}</code>`);
+  expect(markup).toContain("모델 실행 ID 복사");
+});

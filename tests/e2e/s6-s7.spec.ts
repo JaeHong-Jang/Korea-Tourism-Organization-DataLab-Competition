@@ -169,7 +169,7 @@ for (const theme of ["day", "night"] as const) {
     await expect(
       page.locator('[data-feature="M6-F2"] [data-point]'),
     ).toHaveCount(3);
-    await page.getByRole("button", { name: "표 보기" }).click();
+    await page.getByRole("button", { name: "표로 보기" }).click();
     await expect(page.locator('[data-feature="M6-F2"] table')).toContainText(
       "연천 구석기 축제",
     );
@@ -181,6 +181,10 @@ for (const theme of ["day", "night"] as const) {
       "발행 문장이 아직 없어요",
     );
     await expect(page.locator('[data-feature="M6-F5"] li')).toHaveCount(14);
+    await page
+      .locator('[data-feature="M6-F6"] summary')
+      .getByText("원문 보기")
+      .click();
     await expect(page.locator('[data-feature="M6-F6"]')).toContainText(
       "명절 실버는 채점할 수 없습니다.",
     );
@@ -250,8 +254,8 @@ test("S7 빈 상태", async ({ page }) => {
   });
 });
 
-// 산점도 점과 글자 범례는 같은 범주형 토큰을 쓰며 판정 토큰을 재사용하지 않는다.
-test("T-407b S6 산점도 범주 색", async ({ page }) => {
+// 같은 좌표는 겹침 수로 모으고 포함 여부의 모양·색을 범례와 맞춘다.
+test("T-407b S6 산점도 포함 여부와 겹침", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await fakeGateway(page);
   await page.route("**/api/validation/backtest", (route) =>
@@ -268,15 +272,22 @@ test("T-407b S6 산점도 범주 색", async ({ page }) => {
     }),
   );
   await page.goto("/validation?theme=day");
-  await expect(page.locator(".validation-point--goldA")).toHaveCount(1);
+  await expect(page.locator(".validation-point--covered")).toHaveCount(2);
+  await expect(page.locator(".validation-point--outside")).toHaveCount(1);
+  await expect(page.locator(".validation-overlap-count")).toContainText(
+    "2건 겹침",
+  );
+  await expect(page.locator(".validation-whisker")).toHaveCount(0);
   const colors = await page.evaluate(() => {
-    return (["goldA", "goldB", "silver"] as const).map((tier, index) => {
-      const point = document.querySelector(`.validation-point--${tier} text`);
-      const legend = document.querySelector(`.validation-legend--${tier} i`);
-      if (!point || !legend) throw new Error(`${tier} 산점도 범례 없음`);
+    return (["covered", "outside"] as const).map((kind, index) => {
+      const point = document.querySelector(
+        `.validation-point--${kind} ${kind === "covered" ? "circle" : "rect"}`,
+      );
+      const legend = document.querySelector(`.validation-legend--${kind} i`);
+      if (!point || !legend) throw new Error(`${kind} 산점도 범례 없음`);
       const expected = (() => {
         const swatch = document.createElement("span");
-        swatch.style.color = `var(--cat-${index + 1})`;
+        swatch.style.color = `var(--cat-${index === 0 ? 3 : 2})`;
         document.body.append(swatch);
         const value = getComputedStyle(swatch).color;
         swatch.remove();
@@ -293,6 +304,8 @@ test("T-407b S6 산점도 범주 색", async ({ page }) => {
     expect(color.point).toBe(color.expected);
     expect(color.legend).toBe(color.expected);
   }
+  await page.locator(".validation-point--covered").first().hover();
+  await expect(page.locator(".validation-whisker")).toHaveCount(1);
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({
     path: resolve(output, "T-407b-s6.png"),

@@ -3,8 +3,9 @@ import type { ModelCard } from "@crowdcast/contracts/types";
 import { formatModelVersion } from "../../lib/validation/format-model-version";
 import type { ContractState } from "../../lib/validation/use-contract";
 import { ContractMessage } from "./contract-state";
+import { modelLimitSummary } from "./model-limit-summary";
 
-// notes의 문자와 문단 경계를 그대로 보존한다.
+// 카드의 공개 기록을 먼저 요약하고 원문은 접어서 보존한다.
 export function ModelDetails({
   state,
   goldenEmpty,
@@ -17,11 +18,6 @@ export function ModelDetails({
   const card = state.value;
   return (
     <div className="validation-content">
-      {goldenEmpty && (
-        <strong className="validation-warning">
-          골든 사례 0건 — 사례 재현 검증 전 임시 사용
-        </strong>
-      )}
       <dl className="validation-model-list">
         <div>
           <dt>버전</dt>
@@ -53,7 +49,15 @@ export function ModelDetails({
         </ul>
       </details>
       <h3>한계</h3>
-      <div className="validation-notes">{card.notes}</div>
+      <ul className="validation-limit-summary">
+        {modelLimitSummary(card, goldenEmpty).map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
+      <details className="validation-raw-notes">
+        <summary className="validation-raw-notes__summary">원문 보기</summary>
+        <div className="validation-notes">{card.notes}</div>
+      </details>
     </div>
   );
 }

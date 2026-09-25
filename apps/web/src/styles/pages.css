@@ -32,7 +32,7 @@
 .festival-list__pick > span:not(.level-badge) { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--ink-2); font-size: var(--text-caption); }
 .festival-list__pick:focus-visible, .festival-filters :focus-visible, .svg-korea-map [role="button"]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .festival-list .range-bar { margin-bottom: 0; }
-.festival-list .range-bar__legend, .festival-list .range-bar__axis-label, .festival-list .range-bar__ticks { display: none; }
+.festival-list .range-bar__axis-label, .festival-list .range-bar__ticks { display: none; }
 .festival-list__range { font-variant-numeric: tabular-nums; }
 
 /* KPI와 등급별 주간 막대는 같은 필터의 건수를 텍스트와 표로 반복 제공한다. */
@@ -211,17 +211,15 @@
 .validation-metrics span, .validation-rates span { font-size: var(--text-sm); color: var(--ink-2); }
 .validation-metrics strong, .validation-rates strong { font-size: var(--text-section); line-height: 1.1; font-variant-numeric: tabular-nums; }
 .validation-metrics small, .validation-rates small { color: var(--ink-2); }
-.validation-disclosure { padding: var(--space-4); border-left: 3px solid var(--brand); background: var(--surface-sunken); }
+.validation-disclosure { padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); }
 .feature-panel .validation-disclosure p + p { margin-top: var(--space-2); }
 .validation-source, .validation-assumption { color: var(--ink-2); font-size: var(--text-sm); }
-.validation-warning { color: var(--ink); }
 
 /* 산점도는 같은 로그 척도와 표 전환을 제공하며 점 모양도 범례에 적는다. */
 .validation-chart-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--text-sm); }
 .validation-legend i { font-style: normal; }
-.validation-legend--goldA i { color: var(--cat-1); }
-.validation-legend--goldB i { color: var(--cat-2); }
-.validation-legend--silver i { color: var(--cat-3); }
+.validation-legend--covered i { color: var(--cat-3); }
+.validation-legend--outside i { color: var(--cat-2); }
 .validation-chart-tools button, .insight-result button { padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--link); cursor: pointer; }
 .validation-quadrant-wrap { display: grid; gap: var(--space-2); }
 .validation-quadrants { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin: 0; }
@@ -231,10 +229,13 @@
 .validation-svg-wrap { width: min(100%, 650px); margin: auto; overflow-x: auto; }
 .validation-svg-wrap svg { display: block; width: 100%; min-width: 600px; height: auto; }
 .validation-svg-wrap text { fill: var(--ink-2); font-size: 12px; }
-.validation-svg-wrap .validation-point text { font-size: 15px; cursor: help; }
-.validation-svg-wrap .validation-point--goldA text { fill: var(--cat-1); }
-.validation-svg-wrap .validation-point--goldB text { fill: var(--cat-2); }
-.validation-svg-wrap .validation-point--silver text { fill: var(--cat-3); }
+.validation-svg-wrap .validation-point { cursor: help; }
+.validation-svg-wrap .validation-point:focus-visible { outline: none; }
+.validation-svg-wrap .validation-point--covered circle { fill: var(--cat-3); stroke: var(--surface); stroke-width: 1; }
+.validation-svg-wrap .validation-point--outside rect { fill: var(--cat-2); stroke: var(--surface); stroke-width: 1; }
+.validation-svg-wrap .validation-point:focus-visible circle, .validation-svg-wrap .validation-point:focus-visible rect { stroke: var(--focus); stroke-width: 3; }
+.validation-svg-wrap .validation-overlap-count { fill: var(--ink); font-size: var(--text-caption); font-weight: 700; }
+.validation-svg-wrap .validation-diagonal-label { fill: var(--ink); font-weight: 700; }
 .validation-axis { stroke: var(--ink-2); stroke-width: 1; }
 .validation-diagonal { stroke: var(--line); stroke-width: 2; stroke-dasharray: 5 4; }
 .validation-whisker { stroke: var(--brand); stroke-width: 2; }
@@ -255,6 +256,9 @@
 .validation-model-list dt { color: var(--ink-2); font-size: var(--text-sm); }
 .validation-model-list dd { margin: 0; overflow-wrap: anywhere; }
 .validation-notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+.validation-limit-summary { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-5); }
+.validation-raw-notes__summary { color: var(--link); cursor: pointer; }
+.validation-raw-notes .validation-notes { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); }
 
 /* 인사이트 원문과 복사 행동을 표본·기간 아래에 배치한다. */
 .insight-results { display: grid; gap: var(--space-4); margin-top: var(--space-5); }

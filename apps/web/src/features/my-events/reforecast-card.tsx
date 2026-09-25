@@ -1,5 +1,8 @@
 // 재예보 응답의 이전·새 발행값과 날씨 근거를 변화 카드에 표시한다.
-import type { ReforecastResult } from "@crowdcast/contracts/types";
+import type {
+  ForecastReport,
+  ReforecastResult,
+} from "@crowdcast/contracts/types";
 import { LevelBadge } from "../../components/common/level-badge";
 import { formatSnapshotNumber } from "../../lib/format";
 
@@ -43,8 +46,14 @@ function QuantityChange({
   );
 }
 
-// 근거 ID는 새 발행 예보서의 해당 근거 카드 앵커로 연결한다.
-export function ReforecastCard({ result }: { result: ReforecastResult }) {
+// 새 예보서 근거의 제목을 보여 주고 아직 내려오지 않았으면 날씨 근거로 읽는다.
+export function ReforecastCard({
+  result,
+  evidence,
+}: {
+  result: ReforecastResult;
+  evidence?: ForecastReport["evidence"];
+}) {
   return (
     <div className="my-events-reforecast-card" role="status">
       <h3>재예보 변화</h3>
@@ -71,11 +80,16 @@ export function ReforecastCard({ result }: { result: ReforecastResult }) {
             key={id}
             href={`/f/${encodeURIComponent(result.forecastId)}#evidence-${encodeURIComponent(id)}`}
           >
-            근거 {id}
+            {evidence?.find((item) => item.id === id)?.title ?? "날씨 근거"}
           </a>
         ))}
       </div>
-      <a href={`/f/${encodeURIComponent(result.forecastId)}`}>새 예보서 보기</a>
+      <a
+        className="my-events-report-link"
+        href={`/f/${encodeURIComponent(result.forecastId)}`}
+      >
+        새 예보서 보기
+      </a>
     </div>
   );
 }
