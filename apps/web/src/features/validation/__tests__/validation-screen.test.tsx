@@ -211,7 +211,7 @@ it("모델 카드의 한계 원문을 보존한다", () => {
   const output = html(<ModelDetails state={ready(card)} goldenEmpty />);
   expect(output).toContain("원문 보기");
   expect(output).toContain(notes);
-  expect(output).toContain("평가 표본·골드/실버 구성: 카드에 기록 없음");
+  expect(output).not.toContain("카드에 기록 없음");
   expect(output).toContain("골든 사례 0건 — 사례 재현 검증 전 임시 사용");
 });
 

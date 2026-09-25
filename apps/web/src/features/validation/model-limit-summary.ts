@@ -40,5 +40,5 @@ export function modelLimitSummary(
     goldenEmpty
       ? "골든 사례 0건 — 사례 재현 검증 전 임시 사용"
       : "골든 사례 수: 검증 화면에서 확인하세요",
-  ];
+  ].filter((line) => !line.endsWith("카드에 기록 없음")); // 카드에 없는 항목은 줄을 빼고 원문 보기에 맡긴다
 }
