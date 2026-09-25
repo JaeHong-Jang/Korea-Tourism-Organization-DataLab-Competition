@@ -7,6 +7,8 @@ process.env.CROWDCAST_GATEWAY_URL ??= "http://127.0.0.1:9";
 
 export default defineConfig({
   testDir: "../../tests/e2e",
+  // 기본(코어 절반 = 12)이면 소프트웨어 WebGL 지도끼리 CPU를 나눠 지도 테스트가 시간 초과로 흔들린다(6이면 231개 통과)
+  workers: 6,
   use: { baseURL: `http://127.0.0.1:${port}`, ...devices["Desktop Chrome"] },
   webServer: {
     command: `npm run dev -- --host 127.0.0.1 --port ${port} --strictPort`,

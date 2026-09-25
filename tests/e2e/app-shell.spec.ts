@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 
 const screens = [
-	{ name: "home", path: "/", title: "미니 대한민국" },
+	{ name: "home", path: "/", title: "대한민국 행사 지도" },
 	{ name: "consult", path: "/consult", title: "예보 상담" },
 	{ name: "forecast", path: "/f/demo", title: "예보서" },
 	{ name: "validation", path: "/validation", title: "검증" },
@@ -54,20 +54,24 @@ test("home mobile 화면", async ({ page }) => {
 		.getByRole("button", { name: "행사 목록" })
 		.click();
 	await expect(page.getByRole("heading", { name: "행사 목록" })).toBeVisible();
-  await page.screenshot({
-    path: resolve(output, "T-401-home-mobile.png"),
-    fullPage: true,
-  });
+	await page.screenshot({
+		path: resolve(output, "T-401-home-mobile.png"),
+		fullPage: true,
+	});
 });
 
 // 사용자가 고른 테마와 메뉴 위치가 이동·새로고침 뒤에도 유지되는지 확인한다.
 test("테마 선택과 메뉴 이동", async ({ page }) => {
-  await page.goto("/?at=2026-10-18T19:00+09:00");
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "night");
-  await page.getByRole("combobox", { name: "화면 테마" }).selectOption("day");
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "day");
-  await page.reload();
-  await expect(page.getByRole("combobox", { name: "화면 테마" })).toHaveValue("day");
-  await page.getByRole("link", { name: "검증", exact: true }).click();
-  await expect(page.getByRole("link", { name: "검증", exact: true })).toHaveClass(/is-active/);
+	await page.goto("/?at=2026-10-18T19:00+09:00");
+	await expect(page.locator("html")).toHaveAttribute("data-theme", "night");
+	await page.getByRole("combobox", { name: "화면 테마" }).selectOption("day");
+	await expect(page.locator("html")).toHaveAttribute("data-theme", "day");
+	await page.reload();
+	await expect(page.getByRole("combobox", { name: "화면 테마" })).toHaveValue(
+		"day",
+	);
+	await page.getByRole("link", { name: "검증", exact: true }).click();
+	await expect(
+		page.getByRole("link", { name: "검증", exact: true }),
+	).toHaveClass(/is-active/);
 });

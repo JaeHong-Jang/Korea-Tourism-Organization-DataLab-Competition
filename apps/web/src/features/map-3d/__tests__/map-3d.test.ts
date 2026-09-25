@@ -18,7 +18,7 @@ import {
   festivalColumns,
   festivalRings,
 } from "../festival-geometry";
-import { actorSeconds, vehiclePlan } from "../traffic-layer";
+import { actorScale, actorSeconds, vehiclePlan } from "../traffic-layer";
 import {
   peopleCap,
   sampleRoute,
@@ -69,6 +69,10 @@ it("z15 서울의 건물과 한국어 낮·밤 3D 지도를 조립한다", () =>
         (layer) => layer.id === "places_country" || layer.id === "places_state",
       ),
     ).toBe(false);
+    expect(style.layers.some((layer) => layer.id === "pois")).toBe(false);
+    expect(
+      style.layers.find((layer) => layer.id === "places_subplace"),
+    ).toMatchObject({ minzoom: 13, paint: { "text-opacity": 0.42 } });
     expect(KOREA_BOUNDS[0][0]).toBeGreaterThan(125);
     expect(KOREA_BOUNDS[1][1]).toBeLessThan(39);
     expect(
@@ -126,6 +130,8 @@ it("실제 서울 선에서 차량·열차 경로를 만들고 품질 상한을 
   expect(vehiclePlan(routes, "low")).toHaveLength(0);
   expect(actorSeconds(5000, 1000, true)).toBe(0);
   expect(actorSeconds(5000, 1000, false)).toBe(4);
+  expect(actorScale(15, 37.56, true) * 1.8).toBeGreaterThan(20);
+  expect(actorScale(15, 37.56, false) * 2).toBeGreaterThan(12);
   expect(
     cityActorPlan(routes, "medium", null).filter(
       (actor) => actor.kind === "person",

@@ -58,10 +58,33 @@ export function mapStyle(
   // 베이스맵의 땅·녹지·물·도로를 지도 전용 디자인 토큰으로 맞춘다.
   const base = layers("protomaps", namedFlavor(flavor), { lang: "ko" })
     .filter(
-      (layer) => layer.id !== "places_country" && layer.id !== "places_state",
+      (layer) =>
+        layer.id !== "places_country" &&
+        layer.id !== "places_state" &&
+        layer.id !== "pois",
     )
     .map((layer) => {
       if (layer.id === "buildings") return { ...layer, maxzoom: 13 };
+      // 도시 확대 때 동네 이름만 옅게 남겨 행사와 장소 카드를 먼저 읽게 한다.
+      if (layer.type === "symbol" && layer.id === "places_locality")
+        return {
+          ...layer,
+          maxzoom: 13,
+          filter: southKoreanLabelFilter(layer.filter),
+        };
+      if (layer.type === "symbol" && layer.id === "places_subplace")
+        return {
+          ...layer,
+          minzoom: 13,
+          filter: southKoreanLabelFilter(layer.filter),
+          layout: { ...layer.layout, "text-size": 11 },
+          paint: {
+            ...layer.paint,
+            "text-color": colors.ink,
+            "text-opacity": 0.42,
+            "text-halo-color": colors.earth,
+          },
+        };
       if (
         layer.type === "symbol" &&
         layer.layout?.["text-field"] &&
