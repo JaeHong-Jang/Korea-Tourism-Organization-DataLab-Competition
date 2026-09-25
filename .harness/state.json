@@ -386,9 +386,9 @@
    "evidence": "develop bf7056d · 빌드 0.88초·동등성 테스트 · sol PASS"
   },
   "T-204b": {
-   "status": "running",
-   "updated": "2026-09-25T02:08:17.586Z",
-   "note": "1회차 재디스패치 — 자체 구간 문구(중앙값 단정 → 가능성 표현)·runId는 실제 쓴 설정 객체 해시"
+   "status": "done",
+   "updated": "2026-09-25T02:47:53.219Z",
+   "evidence": "develop 7b8adca·27d7f1d · forecast 1206 · sol PASS · OOD 211→65·등급 불변"
   }
  },
  "history": [
@@ -1118,6 +1118,12 @@
    "at": "2026-09-25T02:31:49.227Z",
    "id": "T-433",
    "status": "running"
+  },
+  {
+   "at": "2026-09-25T02:47:53.219Z",
+   "id": "T-204b",
+   "status": "done",
+   "evidence": "develop 7b8adca·27d7f1d · forecast 1206 · sol PASS · OOD 211→65·등급 불변"
   }
  ]
 }
