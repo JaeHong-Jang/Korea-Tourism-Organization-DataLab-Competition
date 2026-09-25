@@ -6,11 +6,11 @@ from typing import Any
 from crowdcast.features.availability import Feature, publication_date
 
 
-# 규모 계층은 확인된 공개일이 기준일 이내인 양수 발표치만 사용한다.
-def published_announced_daily(row: dict[str, Any]) -> float | None:
+# 평가 정의에 따라 가림을 마친 행사 입력을 쓰되 명시된 미래 공개일은 제외한다.
+def announced_scale_daily(row: dict[str, Any]) -> float | None:
     available = publication_date(row.get("visitors_announced_available_at"))
     as_of = publication_date(row.get("as_of"))
-    if available is None or as_of is None or available > as_of:
+    if available is not None and (as_of is None or available > as_of):
         return None
     value, duration = row.get("visitors_announced"), row.get("duration")
     if value is None or duration is None:

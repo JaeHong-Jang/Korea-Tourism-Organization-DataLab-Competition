@@ -1,4 +1,4 @@
-"""공개된 발표치의 연속 규모 계층·학습 잔차 폭·구버전 호환성을 검증한다."""
+"""조건부 발표치의 연속 규모 계층·학습 잔차 폭·구버전 호환성을 검증한다."""
 
 import json
 from datetime import date
@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 import pytest
+from crowdcast.features.build import filename_sensitivity
 from crowdcast.models.baselines import SimpleModel, weighted_quantile
 from crowdcast.models.calibrate import rolling_split
 
@@ -47,13 +48,14 @@ def test_scale_hierarchy_and_roundtrip(tmp_path: Path) -> None:
     )
 
 
-# 기준일 당일은 허용하고 다음 날·미상 공개일·미상 기준일은 예측과 적합에서 제외한다.
+# 미상 공개일은 행사 입력으로 쓰고 명시된 날짜만 기준일과 비교해 적합·예측에 적용한다.
 @pytest.mark.parametrize(
     "available,as_of,allowed",
     [
         (date(2023, 4, 19), date(2023, 4, 19), True),
         (date(2023, 4, 20), date(2023, 4, 19), False),
-        (None, date(2023, 4, 19), False),
+        (None, date(2023, 4, 19), True),
+        (None, None, True),
         (date(2023, 4, 19), None, False),
     ],
 )
@@ -67,6 +69,35 @@ def test_publication_gate(available: date | None, as_of: date | None, allowed: b
     assert model.scale_source(row) == ("announced" if allowed else "type")
     assert fitted.announced_ratio == (2 if allowed else None)
     assert len(fitted.announced_residuals) == (4 if allowed else 0)
+
+
+# 마스터처럼 공개일 열 자체가 없어도 조건부 발표치 비율과 계층을 사용한다.
+def test_conditional_without_publication_column() -> None:
+    frame = training().drop("visitors_announced_available_at")
+    model = SimpleModel(announced_scale=True).fit(frame)
+    assert model.announced_ratio == 2
+    assert model.announced_pairs == {"goldA": 4}
+    assert model.scale_source(frame.row(0, named=True)) == "announced"
+    assert model.center(frame.row(0, named=True)) == 400
+
+
+# 파일명 민감도에서 가려진 발표치는 학습 비율에도 예측 계층에도 들어가지 않는다.
+def test_masked_announcements_are_not_used() -> None:
+    names = ["type", "duration", "visitors_announced"]
+    frame = training().with_columns(
+        pl.lit(None, dtype=pl.Date).alias("visitors_announced_available_at"),
+        pl.Series("event_id", [f"e-yeoncheon-2023-{i}" for i in range(4)]),
+        *[pl.lit(False).alias(f"{name}_is_observation") for name in names],
+        *[pl.lit(None, dtype=pl.Date).alias(f"{name}_available_at") for name in ("type", "duration")],
+    )
+    events = {event_id: {"start": date(2023, 5, 3), "source": ["문체부"]} for event_id in frame["event_id"]}
+    masked = filename_sensitivity(frame, names, events, {2025: "2025-03-21"})
+    model = SimpleModel(announced_scale=True).fit(frame)
+    assert model.announced_pairs == {"goldA": 4}
+    assert model.scale_source(masked.row(0, named=True)) == "type"
+    fitted = SimpleModel(announced_scale=True).fit(masked)
+    assert fitted.announced_ratio is None
+    assert fitted.announced_pairs == {} and fitted.announced_residuals == []
 
 
 # 구간 폭은 실제 학습 발표치 오차를 반영하고 예측 시 평가 정답을 참조하지 않는다.

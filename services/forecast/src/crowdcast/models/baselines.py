@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 import polars as pl
-from crowdcast.features.announced import published_announced_daily
+from crowdcast.features.announced import announced_scale_daily
 from crowdcast.features.availability import publication_date
 
 
@@ -65,7 +65,7 @@ class SimpleModel:
         # 전년 누적 발표치를 입력 기간으로 나눈 규모 대용치와 정답의 비율을 학습 표본에서만 맞춘다.
         ratios = []
         for row in rows:
-            daily = published_announced_daily(row) if self.announced_scale else announced_daily(row)
+            daily = announced_scale_daily(row) if self.announced_scale else announced_daily(row)
             if daily is not None and daily > 0 and row["daily_mean"] > 0:
                 ratios.append([daily / row["daily_mean"], weight(row)])
                 tier = row.get("label_tier", "미상")
@@ -116,7 +116,7 @@ class SimpleModel:
     def group(self, row: dict[str, Any]) -> str:
         prior = row.get("previous_daily_mean")
         if prior is None and self.announced_ratio is not None:
-            daily = published_announced_daily(row) if self.announced_scale else announced_daily(row)
+            daily = announced_scale_daily(row) if self.announced_scale else announced_daily(row)
             if daily is not None:
                 prior = daily / self.announced_ratio
         fallback = self.weighted_type_medians.get(event_type(row), self.global_median)
@@ -130,7 +130,7 @@ class SimpleModel:
     def announced_center(self, row: dict[str, Any]) -> float | None:
         if not self.announced_scale or self.announced_ratio is None:
             return None
-        daily = published_announced_daily(row)
+        daily = announced_scale_daily(row)
         return daily / self.announced_ratio if daily is not None else None
 
     # 실제 선택한 계층을 백테스트·다가오는 행사 집계에서 동일하게 센다.

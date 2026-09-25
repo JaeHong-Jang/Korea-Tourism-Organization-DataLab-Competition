@@ -16,6 +16,7 @@ from crowdcast.models.challenger.snapshot import load_snapshot
 from crowdcast.models.evaluate import run_models
 from crowdcast.models.g0 import freeze_g0, verify_qc
 from crowdcast.models.publish import publish_directory, run_lock, staging
+from crowdcast.models.scale_gate import promotion_review
 from crowdcast.models.scale_preview import upcoming_distribution
 from crowdcast.models.scale_report import assert_same_population, comparison_markdown, comparison_metrics
 from crowdcast.pipeline.gates import optional_gate
@@ -32,6 +33,10 @@ def hashes(files: list[Path]) -> dict[str, str]:
 def execute(base_run: str, config_path: Path) -> dict[str, Any]:
     with run_lock(paths.MODELS):
         source = load_snapshot(base_run)
+        baseline_points = pl.read_parquet(source.reports / "points.parquet")
+        baseline_sensitivity = baseline_points.filter(
+            pl.col("evaluation_definition") == "filename_sensitivity"
+        ).to_dicts()
         config = read_config(config_path)
         if source.g0["primary_model"] != "simple" or not config.get("simple_announced_scale"):
             raise ValueError("사용 모델 simple·발표치 규모 계층 설정이 필요합니다")
@@ -85,6 +90,12 @@ def execute(base_run: str, config_path: Path) -> dict[str, Any]:
                 audit_path=model_stage / "availability.json",
             )
             assert_same_population(source.manifest["folds"], result["folds"], source.points, result["points"])
+            assert_same_population(
+                source.manifest["folds"],
+                result["sensitivity"]["folds"],
+                baseline_sensitivity,
+                result["sensitivity"]["points"],
+            )
             if (directory / "model_card.json").exists():
                 card["createdAt"] = json.loads((directory / "model_card.json").read_bytes())["createdAt"]
             validate_contract("model-card", card)
@@ -129,13 +140,13 @@ def execute(base_run: str, config_path: Path) -> dict[str, Any]:
                 config,
                 source.g0["basis"],
             )
-            eligible = gate["passed"] is not False
-            used = sum(p.get("scale_source") == "announced" for p in result["points"])
-            recommendation = "승격 후보 제안(골든 미검증)" if gate["passed"] is None else "승격 후보 제안"
-            if not eligible:
-                recommendation = "보류: 기존 승격 게이트 미달"
-            elif not used or not preview["scaleSources"].get("announced"):
-                recommendation = "보류: 발표치 계층 사용 0건으로 규모 구분 개선 미검증"
+            evaluations = {
+                definition: {"v1": comparison_metrics(before), "candidate": comparison_metrics(after)}
+                for definition, before, after in (
+                    ("conditional", source.points, result["points"]),
+                    ("filename_sensitivity", baseline_sensitivity, result["sensitivity"]["points"]),
+                )
+            }
             source.verify()
             if hashes(protected) != preserved:
                 raise ValueError("비교 중 사용 모델·포인터·입력·기존 예보 바이트 변경")
@@ -144,14 +155,11 @@ def execute(base_run: str, config_path: Path) -> dict[str, Any]:
                 "baseModelVersion": source.directory.name,
                 "runId": run_id,
                 "modelVersion": version,
-                "metrics": {
-                    "v1": comparison_metrics(source.points),
-                    "candidate": comparison_metrics(result["points"]),
-                },
+                "metrics": evaluations["conditional"],
+                "evaluations": evaluations,
                 "sameFoldsAndLabels": True,
                 "gate": gate,
-                "promotionEligible": eligible,
-                "recommendation": recommendation,
+                **promotion_review(gate, evaluations, preview),
                 "upcoming": preview,
                 "preservedHashes": preserved,
             }
@@ -178,8 +186,11 @@ def execute(base_run: str, config_path: Path) -> dict[str, Any]:
             "runId": run_id,
             "modelVersion": version,
             "gate": gate,
-            "recommendation": recommendation,
+            "recommendation": comparison["recommendation"],
+            "promotionEligible": comparison["promotionEligible"],
+            "recallSafety": comparison["recallSafety"],
             "metrics": comparison["metrics"],
+            "evaluations": evaluations,
             "upcoming": preview,
         }
 

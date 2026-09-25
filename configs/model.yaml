@@ -7,8 +7,9 @@ silver_weight: 0.5
 gold_weight: 1.0
 min_train_rows: 20
 min_calibration_rows: 10
-# 발표 공개일이 D-14 이내인 규모 대용치를 중앙값으로 쓰는 새 단순 모델 계층이다.
-simple_announced_scale: true
+# 발표치 규모 계층(개최계획서 전년 방문객 신고치) — T-448b 비교에서 MdAPE 49→74%·재현율 100→86%(놓침 12/86)로 꺼 둔다.
+# 다시 비교할 때만 true로 두고 python -m crowdcast.models.scale_compare 를 돌린다.
+simple_announced_scale: false
 # 실제 공개일·문서 버전은 미입증이며 민감도 평가에만 쓰는 파일명 날짜다.
 event_filename_dates:
   2018: '2018-06-05'
