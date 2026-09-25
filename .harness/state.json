@@ -294,9 +294,9 @@
    "evidence": "develop 병합, web 121·build·lint, 녹화 SSE 3클릭 e2e, astra PASS"
   },
   "T-406": {
-   "status": "running",
-   "updated": "2026-09-25T04:51:02.544Z",
-   "note": "9/25 13:30 사용자 요청으로 중단 — 워크트리에 부분 결과, 같은 명세로 재디스패치해 이어 감"
+   "status": "done",
+   "updated": "2026-09-25T04:59:11.460Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과(web 152), develop 73aa3fe"
   },
   "R-06": {
    "status": "todo"
@@ -422,18 +422,22 @@
    "evidence": "develop f1989b3 · gateway 914 · sol PASS · 실사용 두 경로 같은 계획"
   },
   "T-407b": {
-   "status": "running",
-   "updated": "2026-09-25T04:51:02.728Z",
-   "note": "9/25 13:30 사용자 요청으로 중단 — 워크트리에 부분 결과, 같은 명세로 재디스패치해 이어 감"
+   "status": "done",
+   "updated": "2026-09-25T04:58:02.243Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(교차 리뷰는 전체 QA)"
   },
   "T-433b": {
-   "status": "running",
-   "updated": "2026-09-25T04:51:02.637Z",
-   "note": "9/25 13:30 사용자 요청으로 중단 — 워크트리에 부분 결과, 같은 명세로 재디스패치해 이어 감"
+   "status": "done",
+   "updated": "2026-09-25T04:58:02.322Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(교차 리뷰는 전체 QA)"
   },
   "T-430b": {
    "status": "running",
    "updated": "2026-09-25T04:54:09.475Z"
+  },
+  "T-434a": {
+   "status": "running",
+   "updated": "2026-09-25T04:58:03.686Z"
   }
  },
  "history": [
@@ -1332,6 +1336,29 @@
    "at": "2026-09-25T04:54:09.646Z",
    "id": "T-105",
    "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:58:02.243Z",
+   "id": "T-407b",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(교차 리뷰는 전체 QA)"
+  },
+  {
+   "at": "2026-09-25T04:58:02.322Z",
+   "id": "T-433b",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(교차 리뷰는 전체 QA)"
+  },
+  {
+   "at": "2026-09-25T04:58:03.686Z",
+   "id": "T-434a",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:59:11.460Z",
+   "id": "T-406",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과(web 152), develop 73aa3fe"
   }
  ]
 }
