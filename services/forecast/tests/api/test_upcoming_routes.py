@@ -28,7 +28,7 @@ def test_upcoming_sort_and_filter(client: TestClient) -> None:
     result = response.json()
     assert [row["eventId"] for row in result] == ["e-jinju-3", "e-jinju-2", "e-jinju-1", "e-jinju-0"]
     endpoint_validator("/v1/festivals/upcoming", "response").validate(result)
-    assert "modelVerdict" not in result[0]
+    assert result[0]["modelVerdict"] == "미검증"
     assert "date_source" not in result[0] and "runId" not in result[0]
     assert response.headers["x-run-id"] == "batch-jinju"
     assert len(client.get("/v1/festivals/upcoming").json()) == 6
@@ -36,6 +36,20 @@ def test_upcoming_sort_and_filter(client: TestClient) -> None:
     assert len(client.get("/v1/festivals/upcoming?to=2026-09-29").json()) == 2
     empty = client.get("/v1/festivals/upcoming?from=2027-01-01")
     assert empty.json() == [] and empty.headers["x-run-id"] == "batch-jinju"
+
+
+# 검증 상태 열이 없는 예전 요약도 그대로 조회되고 선택 필드만 빠진다.
+def test_upcoming_without_verdict_column(client: TestClient) -> None:
+    row = json.loads(
+        (paths.REPO_ROOT / "packages/contracts/fixtures/festival-summary/valid-card.json").read_text()
+    )
+    row.pop("modelVerdict", None)
+    pl.DataFrame([{**row, "runId": "batch-old"}]).write_parquet(
+        paths.PROCESSED / "upcoming.parquet", metadata={"runId": "batch-old"},
+    )
+    response = client.get("/v1/festivals/upcoming")
+    assert response.status_code == 200, response.text
+    assert "modelVerdict" not in response.json()[0]
 
 
 # 잘못된 달력 날짜·역전 범위는 자료 유무와 무관하게 입력 오류로 처리한다.
