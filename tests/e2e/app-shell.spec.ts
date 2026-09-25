@@ -46,7 +46,7 @@ test("home mobile 화면", async ({ page }) => {
 	await page.goto("/?theme=day&at=2026-10-18T12:00+09:00");
 	await page.evaluate(() => document.fonts.ready);
 	await expect(
-		page.getByRole("heading", { name: "미니 대한민국", level: 1 }),
+		page.getByRole("heading", { name: "대한민국 행사 지도", level: 1 }),
 	).toBeVisible();
 	// 390폭은 패널을 탭으로 접는다(T-411b) — 목록 탭을 열어 확인한다.
 	await page

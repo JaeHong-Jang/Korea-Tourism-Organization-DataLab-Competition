@@ -14,20 +14,25 @@ import { Protocol } from "pmtiles";
 import { useEffect, useRef, useState } from "react";
 import { largestClearRect } from "../../components/scene/camera-framing";
 import {
-  observePanelBounds,
-  type PanelBounds,
-} from "../../components/scene/scene-panel-bounds";
+  qualityDpr,
+  recommendedQuality,
+  type SceneQuality,
+} from "../../components/scene/quality";
+import type { PanelBounds } from "../../components/scene/scene-panel-bounds";
 import { useSelectionStore } from "../../lib/selection-store";
+import { festivalColumns, festivalRings } from "../map-3d/festival-geometry";
+import { festivalPopup } from "../map-3d/festival-popup";
+import { addTraffic, installMapEvents } from "../map-3d/map-events";
+import type { TrafficLayer } from "../map-3d/traffic-layer";
 import { cameraMotion, mapPadding } from "./map-camera";
 import {
-  FESTIVAL_CLUSTERS,
-  FESTIVAL_POINTS,
   FESTIVAL_SOURCE,
   festivalGeoJson,
   KOREA_BOUNDS,
   mapStyle,
 } from "./map-style";
 import "../../styles/map-2d.css";
+import "../../styles/map-3d.css";
 
 let protocolRegistered = false;
 
@@ -39,26 +44,15 @@ function registerTiles() {
   protocolRegistered = true;
 }
 
-// MapLibre가 만든 팝업에는 텍스트 노드만 넣어 행사명을 안전하게 표시한다.
-function festivalPopup(festival: FestivalSummary) {
-  const labels = ["✓ 소규모", "! 수립 권고", "▲ 수립 대상", "◆ 대규모"];
-  const element = document.createElement("div");
-  element.className = "map-2d__popup";
-  const name = document.createElement("strong");
-  name.textContent = festival.name;
-  const level = document.createElement("span");
-  level.textContent = `${festival.level}등급 · ${labels[festival.level - 1] ?? labels[3]}`;
-  element.append(name, level);
-  return element;
-}
-
 // 지도 동작과 목록·요약이 같은 행사 ID를 읽고 쓴다.
 export function MapLibreMap({
   festivals,
   overviewRevision,
+  mode = "3d",
 }: {
   festivals: FestivalSummary[];
   overviewRevision: number;
+  mode?: "3d" | "top";
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
@@ -69,11 +63,29 @@ export function MapLibreMap({
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
   const [overzoom, setOverzoom] = useState(false);
+  const trafficRef = useRef<TrafficLayer | null>(null);
+  const quality = useRef<SceneQuality>(
+    (() => {
+      const requested = new URLSearchParams(window.location.search).get(
+        "mapQuality",
+      );
+      return requested === "high" ||
+        requested === "medium" ||
+        requested === "low"
+        ? requested
+        : recommendedQuality(
+            navigator.hardwareConcurrency,
+            (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
+          );
+    })(),
+  );
+  const modeRef = useRef(mode);
   const selectedId = useSelectionStore((state) => state.selectedFestivalId);
   const selectFestival = useSelectionStore((state) => state.selectFestival);
   const selectSigungu = useSelectionStore((state) => state.selectSigungu);
   festivalsRef.current = festivals;
   selectedRef.current = selectedId;
+  modeRef.current = mode;
 
   // 지도를 한 번 만들고, 패널 관찰자와 MapLibre 자원을 함께 해제한다.
   useEffect(() => {
@@ -83,124 +95,53 @@ export function MapLibreMap({
     registerTiles();
     const initialTheme =
       document.documentElement.dataset.theme === "night" ? "night" : "day";
-    let renderedTheme = initialTheme;
     const map = new MapLibre({
       container,
       style: mapStyle(initialTheme, festivalsRef.current),
       center: [127.5, 36.1],
       zoom: 5,
       minZoom: 4,
-      maxZoom: 13,
+      maxZoom: 17,
+      maxPitch: 70,
+      pitch: modeRef.current === "3d" ? 55 : 0,
+      pixelRatio: Math.min(
+        window.devicePixelRatio,
+        qualityDpr(quality.current),
+      ),
       attributionControl: false,
       localIdeographFontFamily: '"Pretendard Variable", Pretendard, sans-serif',
     });
     mapRef.current = map;
+    (window as Window & { __crowdcastMap?: MapLibre }).__crowdcastMap = map;
     map.addControl(
       new NavigationControl({ showCompass: false }),
       "bottom-right",
     );
     map.addControl(new AttributionControl({ compact: true }), "bottom-right");
 
-    // 지도가 준비되면 안전 영역에 전국을 맞추고 점 선택을 열어 둔다.
-    map.on("load", () => {
-      setReady(true);
-      setError(false);
-      if (boundsRef.current) {
-        map.fitBounds(KOREA_BOUNDS, {
-          padding: mapPadding(boundsRef.current),
-          maxZoom: 7,
-          animate: false,
-        });
-      }
-    });
-    map.on("style.load", () => {
-      const source = map.getSource(FESTIVAL_SOURCE) as
-        | GeoJSONSource
-        | undefined;
-      source?.setData(festivalGeoJson(festivalsRef.current));
-      if (map.getLayer("festival-selected")) {
-        map.setFilter("festival-selected", [
-          "==",
-          ["get", "eventId"],
-          selectedRef.current ?? "",
-        ]);
-      }
-    });
-    map.on("error", () => {
-      if (!map.isStyleLoaded()) setError(true);
-    });
-    map.on("zoom", () => setOverzoom(map.getZoom() >= 12.9));
-    map.on("click", FESTIVAL_POINTS, (event) => {
-      const id = event.features?.[0]?.properties?.eventId;
-      const festival = festivalsRef.current.find((item) => item.eventId === id);
-      if (!festival) return;
-      selectFestival(festival.eventId);
-      selectSigungu(festival.sigunguCode);
-    });
-    map.on("click", FESTIVAL_CLUSTERS, (event) => {
-      const clusterId = event.features?.[0]?.properties?.cluster_id;
-      const coordinates = event.features?.[0]?.geometry;
-      const source = map.getSource(FESTIVAL_SOURCE) as
-        | GeoJSONSource
-        | undefined;
-      if (clusterId == null || coordinates?.type !== "Point" || !source) return;
-      source.getClusterExpansionZoom(clusterId).then((zoom) => {
-        if (zoom > 13) {
-          const count = event.features?.[0]?.properties?.point_count;
-          const note = document.createElement("p");
-          note.className = "map-2d__popup";
-          note.textContent = `겹친 행사 ${count}건 · 목록에서 선택해 주세요.`;
-          popupRef.current?.remove();
-          popupRef.current = new Popup({ closeButton: true })
-            .setLngLat(coordinates.coordinates as [number, number])
-            .setDOMContent(note)
-            .addTo(map);
-          return;
-        }
-        map.easeTo({
-          center: coordinates.coordinates as [number, number],
-          zoom,
-          ...cameraMotion(),
-        });
-      });
-    });
-    for (const layer of [FESTIVAL_POINTS, FESTIVAL_CLUSTERS]) {
-      map.on("mouseenter", layer, () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-      map.on("mouseleave", layer, () => {
-        map.getCanvas().style.cursor = "";
-      });
-    }
-
-    // 3D 카메라와 같은 경계 캐시를 써서 크기 변화에도 패널을 피한다.
-    const unobserve = observePanelBounds(stage, (bounds) => {
-      boundsRef.current = bounds;
-      map.resize();
-      if (map.loaded() && !selectedRef.current) {
-        map.fitBounds(KOREA_BOUNDS, {
-          padding: mapPadding(bounds),
-          maxZoom: 7,
-          animate: false,
-        });
-      }
-    });
-    const themeObserver = new MutationObserver(() => {
-      const theme =
-        document.documentElement.dataset.theme === "night" ? "night" : "day";
-      if (theme === renderedTheme) return;
-      renderedTheme = theme;
-      map.setStyle(mapStyle(theme, festivalsRef.current));
-    });
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
+    // 지도 이벤트·패널·테마 관찰은 지도 수명에 맞춰 함께 해제한다.
+    const stopEvents = installMapEvents({
+      map,
+      stage,
+      festivals: festivalsRef,
+      bounds: boundsRef,
+      selected: selectedRef,
+      popup: popupRef,
+      traffic: trafficRef,
+      mode: modeRef,
+      quality: quality.current,
+      onReady: setReady,
+      onError: setError,
+      onOverzoom: setOverzoom,
+      selectFestival,
+      selectSigungu,
     });
     return () => {
-      themeObserver.disconnect();
-      unobserve();
+      stopEvents();
       popupRef.current?.remove();
       map.remove();
+      delete (window as Window & { __crowdcastMap?: MapLibre }).__crowdcastMap;
+      trafficRef.current = null;
       mapRef.current = null;
     };
   }, [selectFestival, selectSigungu]);
@@ -210,7 +151,31 @@ export function MapLibreMap({
     const map = mapRef.current;
     const source = map?.getSource(FESTIVAL_SOURCE) as GeoJSONSource | undefined;
     source?.setData(festivalGeoJson(festivals));
+    (map?.getSource("festival-areas") as GeoJSONSource | undefined)?.setData(
+      festivalColumns(festivals),
+    );
+    (map?.getSource("festival-ring") as GeoJSONSource | undefined)?.setData(
+      festivalRings(festivals, selectedRef.current),
+    );
   }, [festivals]);
+
+  // 위에서 보기 토글은 같은 지도와 카메라 중심을 유지하며 기울기만 바꾼다.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.easeTo({ pitch: mode === "3d" ? 55 : 0, ...cameraMotion() });
+    if (mode === "top" && map.getLayer("map-traffic")) {
+      map.removeLayer("map-traffic");
+      trafficRef.current = null;
+    } else if (
+      mode === "3d" &&
+      map.isStyleLoaded() &&
+      !map.getLayer("map-traffic") &&
+      quality.current !== "low"
+    ) {
+      trafficRef.current = addTraffic(map, quality.current);
+    }
+  }, [mode]);
 
   // 목록·지도에서 선택한 점으로 이동하고 색 외에 등급 글자를 표시한다.
   useEffect(() => {
@@ -223,6 +188,9 @@ export function MapLibreMap({
         selectedId ?? "",
       ]);
     }
+    (map.getSource("festival-ring") as GeoJSONSource | undefined)?.setData(
+      festivalRings(festivals, selectedId),
+    );
     popupRef.current?.remove();
     if (!selectedId) return;
     const festival = festivals.find((item) => item.eventId === selectedId);
@@ -238,7 +206,8 @@ export function MapLibreMap({
         : [0, 0];
     map.easeTo({
       center: [festival.lng, festival.lat],
-      zoom: Math.max(map.getZoom(), 13),
+      zoom: 15,
+      pitch: modeRef.current === "3d" ? 60 : 0,
       offset,
       ...cameraMotion(),
     });
@@ -265,7 +234,15 @@ export function MapLibreMap({
   }, [overviewRevision, ready]);
 
   return (
-    <section className="map-2d" aria-label="대한민국 행사 2D 지도">
+    <section
+      className="map-2d"
+      aria-label={
+        mode === "3d"
+          ? "대한민국 행사 3D 지도"
+          : "대한민국 행사 위에서 보기 지도"
+      }
+      data-map-mode={mode}
+    >
       <div ref={containerRef} className="map-2d__canvas" />
       {!ready && !error && (
         <p className="map-2d__status" role="status">
@@ -288,6 +265,9 @@ export function MapLibreMap({
           더 확대할 수 없어요. 행사 목록에서 자세히 보세요.
         </p>
       )}
+      <p className="map-2d__honest">
+        건물·도로 = OpenStreetMap · 차량 움직임은 연출 · 인원 규모는 예보값 비례
+      </p>
     </section>
   );
 }

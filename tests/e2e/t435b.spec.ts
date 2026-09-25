@@ -26,7 +26,7 @@ test("비 오는 밤의 장면과 저장 도구", async ({ page }) => {
 			},
 		});
 	});
-	await page.goto(`/?sceneFixture=1&sceneQuality=high&theme=night&at=${at}`);
+	await page.goto(`/?sceneFixture=1&view=miniature&sceneQuality=high&theme=night&at=${at}`);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
 		"true",
@@ -44,7 +44,7 @@ test("비 오는 밤의 장면과 저장 도구", async ({ page }) => {
 test("1366 필터와 네 폭의 장면 도구", async ({ page }) => {
 	for (const width of [1366, 1024, 768, 390]) {
 		await page.setViewportSize({ width, height: 768 });
-		await page.goto("/?sceneFixture=1&sceneQuality=high&theme=day");
+		await page.goto("/?sceneFixture=1&view=miniature&sceneQuality=high&theme=day");
 		await expect(page.locator("html")).toHaveAttribute(
 			"data-scene-ready",
 			"true",
@@ -67,7 +67,7 @@ test("1366 필터와 네 폭의 장면 도구", async ({ page }) => {
 // 직접 기간을 여는 전화 필터는 기간과 유형을 날짜보다 먼저 보여 준다.
 test("390 필터의 첫줄과 날짜", async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
-	await page.goto("/?sceneFixture=1&forceSvg=1&theme=day");
+	await page.goto("/?sceneFixture=1&view=miniature&forceSvg=1&theme=day");
 	await page
 		.getByRole("combobox", { name: "기간", exact: true })
 		.selectOption("custom");

@@ -45,7 +45,7 @@ for (const scene of [
 ] as const) {
   test(`${scene.sky} 장면 캡처`, async ({ page }) => {
     await page.goto(
-      `http://127.0.0.1:5184/?theme=${scene.sky}&at=2025-10-18T${scene.time}+09:00`,
+      `http://127.0.0.1:5184/?view=miniature&theme=${scene.sky}&at=2025-10-18T${scene.time}+09:00`,
     );
     await expect(page.locator("html")).toHaveAttribute(
       "data-scene-sky",
@@ -77,7 +77,7 @@ for (const scene of [
 ] as const) {
   test(`T-432 견본 ${scene.sky} 장면`, async ({ page }) => {
     await page.goto(
-      `http://127.0.0.1:5184/?sceneFixture=1&sceneQuality=high&theme=${scene.sky}&at=2025-10-18T${scene.time}+09:00`,
+      `http://127.0.0.1:5184/?sceneFixture=1&view=miniature&sceneQuality=high&theme=${scene.sky}&at=2025-10-18T${scene.time}+09:00`,
     );
     await expect(page.locator("html")).toHaveAttribute(
       "data-scene-ready",
@@ -104,7 +104,7 @@ for (const scene of [
       path: resolve(output, `T-432-scene-${scene.sky}.png`),
     });
     if (scene.sky === "day") {
-      await page.goto("http://127.0.0.1:5184/?sceneFixture=1&sceneQuality=high&sceneFocus=26470&theme=day&at=2025-10-18T13:00+09:00");
+      await page.goto("http://127.0.0.1:5184/?sceneFixture=1&view=miniature&sceneQuality=high&sceneFocus=26470&theme=day&at=2025-10-18T13:00+09:00");
       await expect(page.locator("html")).toHaveAttribute("data-scene-ready", "true", { timeout: 30_000 });
       await expect(page.locator(".scene-name-tag:not(.scene-name-tag--far)").first()).toBeVisible();
       await page.screenshot({ path: resolve(output, "T-432-scene-close.png") });
@@ -114,7 +114,7 @@ for (const scene of [
 
 // 쿼리가 없으면 견본 인형과 모형을 장면에 넣지 않는다.
 test("견본 쿼리가 없는 장면은 군중이 비어 있다", async ({ page }) => {
-  await page.goto("http://127.0.0.1:5184/?theme=day&at=2025-10-18T13:00+09:00");
+  await page.goto("http://127.0.0.1:5184/?view=miniature&theme=day&at=2025-10-18T13:00+09:00");
   await expect(page.locator("html")).toHaveAttribute(
     "data-scene-ready",
     "true",
@@ -136,7 +136,7 @@ test("WebGL2 대체 안내", async ({ page }) => {
       return kind === "webgl2" ? null : original.call(this, kind, ...args);
     } as typeof original;
   });
-  await page.goto("http://127.0.0.1:5184/?sceneFixture=1");
+  await page.goto("http://127.0.0.1:5184/?sceneFixture=1&view=miniature");
   await expect(page.locator(".svg-korea-map")).toBeVisible();
   await expect(page.locator("canvas")).toHaveCount(0);
   await expect(
@@ -151,7 +151,7 @@ test("품질 단계의 DPR을 캔버스에 적용한다", async ({ page }) => {
     ["medium", 0.85],
     ["low", 0.65],
   ] as const) {
-    await page.goto(`http://127.0.0.1:5184/?sceneQuality=${quality}`);
+    await page.goto(`http://127.0.0.1:5184/?view=miniature&sceneQuality=${quality}`);
     await expect(page.locator("html")).toHaveAttribute(
       "data-scene-quality",
       quality,
@@ -166,7 +166,7 @@ test("품질 단계의 DPR을 캔버스에 적용한다", async ({ page }) => {
       .evaluate((canvas) => canvas.width / canvas.clientWidth);
     expect(actual).toBeCloseTo(expected, 2);
   }
-  await page.goto("http://127.0.0.1:5184/?sceneDiagnostic=1&sceneQuality=high");
+  await page.goto("http://127.0.0.1:5184/?view=miniature&sceneDiagnostic=1&sceneQuality=high");
   await expect(page.locator("html")).toHaveAttribute(
     "data-scene-ready",
     "true",
@@ -181,7 +181,7 @@ test("품질 단계의 DPR을 캔버스에 적용한다", async ({ page }) => {
 
 // Canvas가 다시 렌더돼도(창 크기 변경) 낮은 품질의 DPR이 1로 되돌아가지 않아야 한다.
 test("낮은 품질 DPR이 재렌더 뒤에도 유지된다", async ({ page }) => {
-  await page.goto("http://127.0.0.1:5184/?sceneQuality=low");
+  await page.goto("http://127.0.0.1:5184/?view=miniature&sceneQuality=low");
   await expect(page.locator("html")).toHaveAttribute(
     "data-scene-ready",
     "true",
@@ -199,7 +199,7 @@ test("낮은 품질 DPR이 재렌더 뒤에도 유지된다", async ({ page }) =
 
 // 타일을 반복해서 올렸다 내려도 렌더러의 형상·텍스처 수가 늘지 않아야 한다.
 test("타일 재마운트 후 GPU 형상 수가 유지된다", async ({ page }) => {
-  await page.goto("http://127.0.0.1:5184/?sceneDiagnostic=1&sceneQuality=high");
+  await page.goto("http://127.0.0.1:5184/?view=miniature&sceneDiagnostic=1&sceneQuality=high");
   await expect(page.locator("html")).toHaveAttribute(
     "data-scene-ready",
     "true",
@@ -224,7 +224,7 @@ test("자동 품질 강등은 후처리와 DPR을 줄인다", async ({ page }) =
     Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 8 });
     Object.defineProperty(navigator, "deviceMemory", { get: () => 8 });
   });
-  await page.goto("http://127.0.0.1:5184/?sceneFixture=1&sceneDiagnostic=1");
+  await page.goto("http://127.0.0.1:5184/?sceneFixture=1&view=miniature&sceneDiagnostic=1");
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
 		"true",
@@ -248,7 +248,7 @@ test("자동 품질 강등은 후처리와 DPR을 줄인다", async ({ page }) =
 // 후처리와 타일을 열 번씩 교체한 뒤 형상·텍스처가 원래 개수로 돌아온다.
 test("장면 전환 10회 뒤 GPU 리소스 수가 늘지 않는다", async ({ page }) => {
 	await page.goto(
-		"http://127.0.0.1:5184/?sceneFixture=1&sceneQuality=high&sceneDiagnostic=1",
+		"http://127.0.0.1:5184/?sceneFixture=1&view=miniature&sceneQuality=high&sceneDiagnostic=1",
 	);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
@@ -273,7 +273,7 @@ test("장면 전환 10회 뒤 GPU 리소스 수가 늘지 않는다", async ({ p
 
 // 현재 장면을 내려받을 때 PNG 데이터와 현지 시각 이름이 함께 남는다.
 test("장면 저장은 내용이 있는 PNG를 내려받는다", async ({ page }) => {
-	await page.goto("http://127.0.0.1:5184/?sceneFixture=1&sceneQuality=high");
+	await page.goto("http://127.0.0.1:5184/?sceneFixture=1&view=miniature&sceneQuality=high");
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
 		"true",

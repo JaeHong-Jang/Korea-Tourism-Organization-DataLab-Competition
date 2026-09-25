@@ -14,13 +14,16 @@
 .scene-view-toggle button { border: 0; border-radius: var(--radius-input); padding: var(--space-1) var(--space-2); background: transparent; color: var(--ink); cursor: pointer; }
 .scene-view-toggle button[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); }
 .scene-view-toggle button:disabled { opacity: .5; cursor: not-allowed; }
+.scene-overview.scene-top-toggle { top: calc(var(--space-8) + var(--space-14)); left: calc(300px + var(--space-8) + var(--space-5)); }
+.scene-top-toggle[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); }
 .map-2d .maplibregl-ctrl-group button { color: var(--ink); }
-@media (max-width: 1240px) { .scene-overview.scene-view-toggle { left: calc(var(--space-4) + 124px); } }
+@media (max-width: 1240px) { .scene-overview.scene-view-toggle { left: calc(var(--space-4) + 124px); } .scene-overview.scene-top-toggle { left: var(--space-4); } }
 /* 휴대전화에서는 두 안내를 떠 있는 필터보다 위에 쌓는다. */
 @media (max-width: 640px) {
   .scene-overview { top: var(--space-4); left: var(--space-4); }
   .scene-overview.scene-view-toggle { left: auto; right: var(--space-4); }
+  .scene-overview.scene-top-toggle { top: calc(var(--space-4) + var(--space-14)); left: var(--space-4); }
   .scene-view-toggle button { padding-inline: var(--space-1); font-size: var(--text-caption); }
-  .map-2d__hint { top: calc(var(--space-4) + var(--space-14) + var(--space-2)); }
-  .map-2d__overzoom { top: calc(var(--space-4) + var(--space-14) + var(--space-14) + var(--space-2)); }
+  .map-2d__hint { top: calc(var(--space-4) + var(--space-14) + var(--space-14) + var(--space-2)); }
+  .map-2d__overzoom { top: calc(var(--space-4) + var(--space-14) + var(--space-14) + var(--space-14) + var(--space-2)); }
 }

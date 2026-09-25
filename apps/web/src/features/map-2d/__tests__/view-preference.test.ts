@@ -10,14 +10,15 @@ afterEach(() => {
 });
 
 // URL 선택은 저장값에 우선하고 저장소 차단 중에도 3D로 안전하게 연다.
-it("2D 보기 선택을 기억하고 주소로 덮어쓴다", () => {
-  expect(preferredView("")).toBe("3d");
-  rememberView("2d");
-  expect(preferredView("")).toBe("2d");
-  expect(preferredView("?view=3d")).toBe("3d");
-  expect(preferredView("?view=2d")).toBe("2d");
+it("실제 지도를 기본으로 열고 저장값과 기존 주소를 복원한다", () => {
+  expect(preferredView("")).toBe("map");
+  rememberView("top");
+  expect(preferredView("")).toBe("top");
+  expect(preferredView("?view=3d")).toBe("miniature");
+  expect(preferredView("?view=2d")).toBe("top");
+  expect(preferredView("?view=map")).toBe("map");
   vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
     throw new Error("저장소 차단");
   });
-  expect(preferredView("")).toBe("3d");
+  expect(preferredView("")).toBe("map");
 });

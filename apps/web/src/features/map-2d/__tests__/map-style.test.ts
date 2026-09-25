@@ -9,6 +9,13 @@ const colors = {
   surface: "surface-token",
   ink: "ink-token",
   focus: "focus-token",
+  earth: "earth-token",
+  green: "green-token",
+  water: "water-token",
+  road: "road-token",
+  roadEdge: "road-edge-token",
+  rail: "rail-token",
+  building: "building-token",
 };
 
 // 낮·밤 배경 모두 타일·글꼴·스프라이트를 같은 출처에서 읽는다.
@@ -17,7 +24,7 @@ it("낮·밤에서 로컬 한국어 베이스맵과 등급 토큰을 조립한�
   const day = mapStyle("day", [festival], colors, "http://127.0.0.1:5184");
   const night = mapStyle("night", [festival], colors, "http://127.0.0.1:5184");
   expect(day.sources.protomaps).toMatchObject({
-    url: "pmtiles://http://127.0.0.1:5184/tiles/korea-z13.pmtiles",
+    url: "pmtiles://http://127.0.0.1:5184/tiles/korea-z15.pmtiles",
   });
   expect(day.glyphs).toBe("/tiles/fonts/{fontstack}/{range}.pbf");
   expect(day.sprite).toBe("/tiles/sprites/v4/light");

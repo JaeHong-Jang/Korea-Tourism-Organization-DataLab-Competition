@@ -26,18 +26,18 @@ type Scene = {
 // 메뉴와 발표 흐름에 필요한 상태를 한 건당 하나의 재실행 단위로 둔다.
 const scenes: Scene[] = [
   { screen: "g", state: "header", path: "/validation" },
-  { screen: "s1", state: "3d", path: "/?sceneFixture=1&sceneQuality=high" },
-  { screen: "s1", state: "2d", path: "/?sceneFixture=1&view=2d" },
+  { screen: "s1", state: "3d", path: "/?sceneFixture=1&view=miniature&sceneQuality=high" },
+  { screen: "s1", state: "2d", path: "/?sceneFixture=1&view=top" },
   { screen: "s1", state: "svg", path: "/?sceneFixture=1&forceSvg=1" },
   {
     screen: "s1",
     state: "selected",
-    path: "/?sceneFixture=1&sceneQuality=high",
+    path: "/?sceneFixture=1&view=miniature&sceneQuality=high",
   },
   {
     screen: "s1",
     state: "data",
-    path: "/?sceneFixture=1&sceneQuality=high&data=1",
+    path: "/?sceneFixture=1&view=miniature&sceneQuality=high&data=1",
   },
   { screen: "s2", state: "start", path: "/consult" },
   { screen: "s2", state: "stream-end", path: "/consult" },

@@ -36,7 +36,7 @@ test("현재 비·밤 날씨 칩과 장면", async ({ page }) => {
 	});
 	await page.setViewportSize({ width: 1366, height: 768 });
 	await page.goto(
-		`/?sceneFixture=1&theme=night&sceneQuality=high&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`,
+		`/?sceneFixture=1&view=miniature&theme=night&sceneQuality=high&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`,
 	);
 	await expect(page.locator(".weather-chip--forecast")).toContainText(
 		"서울 18° 비 · 밤",
@@ -56,7 +56,7 @@ test("현재 비·밤 날씨 칩과 장면", async ({ page }) => {
 test("연출 열차와 고른 행사 위 고래 봇", async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	await page.setViewportSize({ width: 1440, height: 900 });
-	await page.goto(`/?sceneFixture=1&theme=day&sceneDiagnostic=1&at=${time}`);
+	await page.goto(`/?sceneFixture=1&view=miniature&theme=day&sceneDiagnostic=1&at=${time}`);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
 		"true",
@@ -86,7 +86,7 @@ test("연출 열차와 고른 행사 위 고래 봇", async ({ page }) => {
 	await page.keyboard.press("Escape");
 	await expect(page.locator("html")).toHaveAttribute("data-scene-bots", "0");
 	await page.goto(
-		`/?sceneFixture=1&theme=night&sceneDiagnostic=1&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`,
+		`/?sceneFixture=1&view=miniature&theme=night&sceneDiagnostic=1&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`,
 	);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
@@ -192,7 +192,7 @@ async function cameraTarget(page: Page): Promise<number[] | null> {
 test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	await page.setViewportSize({ width: 1440, height: 900 });
-	await page.goto(`/?sceneFixture=1&theme=day&sceneDiagnostic=1&at=${time}`);
+	await page.goto(`/?sceneFixture=1&view=miniature&theme=day&sceneDiagnostic=1&at=${time}`);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",
 		"true",
@@ -315,7 +315,7 @@ test("밤과 노트북 장면 캡처", async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto(
-		`/?sceneFixture=1&theme=night&sceneDiagnostic=1&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`,
+		`/?sceneFixture=1&view=miniature&theme=night&sceneDiagnostic=1&at=${encodeURIComponent("2025-10-18T21:00:00+09:00")}`,
 	);
 	await expect(page.locator("html")).toHaveAttribute(
 		"data-scene-ready",

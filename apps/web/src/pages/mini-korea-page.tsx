@@ -20,12 +20,13 @@ import { WeeklyTimeline } from "../features/kpi-timeline/weekly-timeline";
 import { MapLibreMap } from "../features/map-2d/maplibre-map";
 import { SvgKoreaMap } from "../features/map-2d/svg-korea-map";
 import {
+  type MapView,
   preferredView,
   rememberView,
 } from "../features/map-2d/view-preference";
+import { ViewControls } from "../features/map-3d/view-controls";
 import { useUpcomingFestivals } from "../lib/festivals/use-upcoming-festivals";
 import { useSelectionStore } from "../lib/selection-store";
-
 // 장면이 화면을 차지하고 부가 정보는 가장자리에 머물게 한다(필터 결과를 판·목록·KPI가 함께 쓴다).
 export function MiniKoreaPage() {
   const location = useLocation();
@@ -43,7 +44,7 @@ export function MiniKoreaPage() {
   const [mobilePanel, setMobilePanel] = useState<
     "filter" | "list" | "timeline" | "legend"
   >("filter");
-  const [view, setView] = useState<"3d" | "2d">(() =>
+  const [view, setView] = useState<MapView>(() =>
     preferredView(location.search),
   );
   const selected =
@@ -89,6 +90,7 @@ export function MiniKoreaPage() {
     }
   });
   const svgMode =
+    view === "svg" ||
     !webglAvailable ||
     new URLSearchParams(location.search).get("forceSvg") === "1";
 
@@ -98,17 +100,12 @@ export function MiniKoreaPage() {
   }, [location.search]);
 
   // 현재 필터·데모 주소를 보존한 채 보기만 바꾼다.
-  const changeView = (next: "3d" | "2d" | "svg") => {
+  const changeView = (next: MapView) => {
     const query = new URLSearchParams(location.search);
-    if (next === "svg") {
-      query.set("forceSvg", "1");
-    } else {
-      setView(next);
-      rememberView(next);
-      query.delete("forceSvg");
-      if (next === "2d") query.set("view", "2d");
-      else query.delete("view");
-    }
+    setView(next);
+    rememberView(next);
+    query.delete("forceSvg");
+    query.set("view", next);
     navigate({ pathname: location.pathname, search: query.toString() });
   };
 
@@ -143,14 +140,15 @@ export function MiniKoreaPage() {
         }}
       >
         <h1 id="scene-title" className="sr-only">
-          미니 대한민국
+          대한민국 행사 지도
         </h1>
         {svgMode ? (
           <SvgKoreaMap festivals={festivals} />
-        ) : view === "2d" ? (
+        ) : view !== "miniature" ? (
           <MapLibreMap
             festivals={festivals}
             overviewRevision={overviewRevision}
+            mode={view === "top" ? "top" : "3d"}
           />
         ) : (
           <MiniKoreaCanvas
@@ -174,43 +172,13 @@ export function MiniKoreaPage() {
             전국 보기
           </button>
         )}
-        <fieldset className="scene-overview scene-view-toggle">
-          <legend className="sr-only">장면 보기</legend>
-          <button
-            type="button"
-            aria-pressed={!svgMode && view === "3d"}
-            disabled={!webglAvailable}
-            onClick={() => changeView("3d")}
-            title={
-              !webglAvailable
-                ? "이 기기에서는 3D 보기를 사용할 수 없어요"
-                : undefined
-            }
-          >
-            3D
-          </button>
-          <button
-            type="button"
-            aria-pressed={!svgMode && view === "2d"}
-            disabled={!webglAvailable}
-            onClick={() => changeView("2d")}
-            title={
-              !webglAvailable
-                ? "이 기기에서는 2D 보기를 사용할 수 없어요"
-                : undefined
-            }
-          >
-            2D 지도
-          </button>
-          <button
-            type="button"
-            aria-pressed={svgMode}
-            onClick={() => changeView("svg")}
-          >
-            SVG 지도
-          </button>
-        </fieldset>
-        {!svgMode && view === "3d" && (
+        <ViewControls
+          view={view}
+          svgMode={svgMode}
+          webglAvailable={webglAvailable}
+          onChange={changeView}
+        />
+        {!svgMode && view === "miniature" && (
           <p className="scene-mobile-scale">
             인형 1개 = {scale.peoplePerDoll.toLocaleString("ko-KR")}명 ·
             움직임은 연출
@@ -253,7 +221,7 @@ export function MiniKoreaPage() {
           <FestivalFiltersPanel all={all} />
         </FeaturePanel>
         <div className="scene-legend-panel">
-          {!svgMode && view === "3d" ? (
+          {!svgMode && view === "miniature" ? (
             <SceneLegend
               peoplePerDoll={scale.peoplePerDoll}
               capExceeded={scale.capExceeded}
@@ -281,8 +249,8 @@ export function MiniKoreaPage() {
                 disabled
               />
               <p>
-                {svgMode ? "SVG 지도" : "2D 지도"}에서는 데이터 모드를 사용할 수
-                없어요.
+                {svgMode ? "SVG 지도" : "실제 지도"}에서는 데이터 모드를 사용할
+                수 없어요.
               </p>
               <fieldset className="scene-legend__grades">
                 <legend className="sr-only">행사 등급 범례</legend>

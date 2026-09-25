@@ -111,7 +111,7 @@ async function measure(browser, ollamaHost, fixture = false, festivalCount = 0, 
   });
   const condition = scenario?.enabled === false ? "&sceneT435=0" : "";
   const quality = scenario?.quality ? `&sceneQuality=${scenario.quality}` : "";
-  await page.goto(venue ? `http://127.0.0.1:5185/dev/venue/${venue}?sceneMeasure=1&venueHour=${scenario?.hour ?? 19}${condition}${quality}` : `http://127.0.0.1:5185/?theme=${scenario?.theme ?? "day"}&at=2025-10-18T${scenario?.theme === "night" ? "21" : "13"}:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}${motion ? "" : "&sceneMotion=0"}${condition}${quality}`);
+  await page.goto(venue ? `http://127.0.0.1:5185/dev/venue/${venue}?sceneMeasure=1&venueHour=${scenario?.hour ?? 19}${condition}${quality}` : `http://127.0.0.1:5185/?view=miniature&theme=${scenario?.theme ?? "day"}&at=2025-10-18T${scenario?.theme === "night" ? "21" : "13"}:00+09:00&sceneMeasure=1&sceneDiagnostic=1${fixture ? "&sceneFixture=1" : ""}${motion ? "" : "&sceneMotion=0"}${condition}${quality}`);
   await page.waitForFunction((isVenue) => isVenue ? document.documentElement.dataset.venueReady === "true" : document.documentElement.dataset.sceneReady === "true", venue !== null, { timeout: 45000 });
   if (festivalCount || fixture) await page.waitForFunction((expected) => document.querySelectorAll(".festival-list__items li").length === expected, festivalCount || 30, { timeout: 30000 });
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
