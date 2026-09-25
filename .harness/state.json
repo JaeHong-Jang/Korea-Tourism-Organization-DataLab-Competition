@@ -145,7 +145,8 @@
   },
   "T-207": {
    "status": "running",
-   "updated": "2026-09-25T02:50:13.774Z"
+   "updated": "2026-09-25T02:50:13.774Z",
+   "note": "1회차 재디스패치 — 취소는 채점 상태 파일로(선정 제외 안 함), 준비본 해시 공개 메타·채점 대조, POST마다 날짜, 원장 집합 대조"
   },
   "T-203b": {
    "status": "todo"
@@ -212,7 +213,8 @@
   },
   "R-05": {
    "status": "running",
-   "updated": "2026-09-25T03:21:16.438Z"
+   "updated": "2026-09-25T03:21:16.438Z",
+   "note": "1차 FAIL — High 1(카드 판정 문구)·High 2(LLM 3회)는 계획·계약 문구 정정으로 판정, Med 1 → T-304b, Med 2 → 계획에 T-306·T-309 예정 표시. T-304b 뒤 재검토"
   },
   "T-306": {
    "status": "todo"
@@ -393,6 +395,10 @@
    "status": "done",
    "updated": "2026-09-25T02:47:53.219Z",
    "evidence": "develop 7b8adca·27d7f1d · forecast 1206 · sol PASS · OOD 211→65·등급 불변"
+  },
+  "T-304b": {
+   "status": "running",
+   "updated": "2026-09-25T03:26:44.419Z"
   }
  },
  "history": [
@@ -1143,6 +1149,11 @@
   {
    "at": "2026-09-25T03:21:16.438Z",
    "id": "R-05",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T03:26:44.419Z",
+   "id": "T-304b",
    "status": "running"
   }
  ]

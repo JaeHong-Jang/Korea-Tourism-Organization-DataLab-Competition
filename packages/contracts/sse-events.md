@@ -4,7 +4,7 @@
 - 한 이벤트 = `event: <이름>` + `data: <JSON>`. `data` 모양은 `schemas/sse-event.schema.json`이 이름별로 정한다. `seq`는 0부터 1씩 증가한다.
 - **원칙**
   1. 게이트 A 전에는 숫자·문장을 보내지 않는다.
-  2. 게이트 A 뒤 `forecast`는 **숫자 카드(`forecast-card`)만** — 근거·요인 문장·관측값은 담지 않는다(스키마가 거부한다).
+  2. 게이트 A 뒤 `forecast`는 **숫자 카드(`forecast-card`)만** — 근거·요인·설명 문장·관측값은 담지 않는다(스키마가 거부한다). 판정 배너의 **규칙 엔진 정본 판정 문구**(`judgment.reasons[].text` — 예측 서비스의 결정적 결과, LLM이 쓰지 않음, 게이트 A의 S05·S06 통과)는 카드에 실을 수 있다(9/25 R-05 판정).
   3. 문장(`claim`)과 근거 카드(`evidence`)는 **팀장이 발행한 뒤에만**, 상태 `published`로 보낸다.
   4. 발행된 예보서 전체는 `GET /api/forecasts/{id}`가 `forecast-report`로 돌려준다(새로고침·공유 링크).
 

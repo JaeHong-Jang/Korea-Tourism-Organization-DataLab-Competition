@@ -555,6 +555,17 @@
    "accept": "시나리오 8"
   },
   {
+   "id": "T-304b",
+   "type": "task",
+   "lane": "L3",
+   "priority": "P0",
+   "deps": [
+    "T-305"
+   ],
+   "title": "게이트 A 검증팀 작업 단계 기록(R-05 Med)",
+   "accept": "게이트 A 앞 세 팀원 단계·/validate 1회"
+  },
+  {
    "id": "R-05",
    "type": "review",
    "kinds": [
@@ -562,7 +573,8 @@
     "code"
    ],
    "deps": [
-    "T-305"
+    "T-305",
+    "T-304b"
    ],
    "title": "예보팀 의도 검토",
    "checklist": [
