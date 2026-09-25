@@ -13,6 +13,8 @@ from zoneinfo import ZoneInfo
 
 KST = ZoneInfo("Asia/Seoul")
 DAILY_LIMIT = 900
+# 기상청 ASOS는 공공데이터 서비스별 트래픽이 따로 잡혀 공유 한도와 별도로 같은 상한을 센다.
+SEPARATE_POOLS = frozenset({"asos"})
 
 
 # 한도 중단을 통신 오류와 구분해 재시도를 막는다.
@@ -84,13 +86,17 @@ class CallLedger:
         except (ValueError, KeyError, TypeError, csv.Error):
             raise RuntimeError("호출 장부 형식 오류: 수동 확인 필요") from None
 
-    # 모든 API의 합계를 검사한 뒤 실제 전송 한 건을 먼저 확정한다.
+    # 같은 한도를 쓰는 API의 합계를 검사한 뒤 실제 전송 한 건을 먼저 확정한다.
     def reserve(self, api: str) -> None:
         with file_lock(self.path.with_suffix(".lock")):
             day = korea_today().isoformat()
             counts = self._read()
-            if sum(n for (d, _), n in counts.items() if d == day) >= DAILY_LIMIT:
-                raise CallLimitReached("한국 날짜 기준 공유 호출 한도 900건 도달")
+            separate = api in SEPARATE_POOLS
+            used = sum(n for (d, a), n in counts.items()
+                       if d == day and (a == api if separate else a not in SEPARATE_POOLS))
+            if used >= DAILY_LIMIT:
+                label = f"{api} 별도" if separate else "공유"
+                raise CallLimitReached(f"한국 날짜 기준 {label} 호출 한도 900건 도달")
             if self.calls >= self.max_calls:
                 raise CallLimitReached("이번 실행의 max_calls 한도 도달")
             counts[day, api] = counts.get((day, api), 0) + 1

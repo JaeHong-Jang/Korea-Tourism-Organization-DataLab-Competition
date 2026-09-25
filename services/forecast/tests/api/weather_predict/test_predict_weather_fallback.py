@@ -131,4 +131,4 @@ def test_dry_forecast_does_not_apply_rain_coefficient(
     assert result["dailyMean"]["p50"] == original["dailyMean"]["p50"]
     note = next(item["summary"] for item in result["evidence"]
                 if item["assumptionId"] == "as-weather-adjustment")
-    assert "무강수 예보" in note and "ASOS 일자료 미보유" not in note
+    assert "무강수 예보" in note and "표본 부족" not in note

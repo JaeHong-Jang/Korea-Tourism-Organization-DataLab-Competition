@@ -24,8 +24,10 @@ ENDPOINTS = {
     "festivals": "B551011/KorService2/searchFestival2",
     "places": "B551011/KorService2/searchKeyword2",
     "holidays": "B090041/openapi/service/SpcdeInfoService/getRestDeInfo",
+    "asos": "1360000/AsosHourlyInfoService/getWthrDataList",
 }
 ITEM_KEYS = {
+    "asos": ("tm", "stnId"),
     "visitors": ("baseYmd", "signguCode", "touDivCd"),
     "concentration": ("baseYmd", "tAtsNm"),
     "festivals": ("contentid",),
