@@ -47,7 +47,7 @@ def test_announced_publication_boundary(year: int, offset: int, masked: bool) ->
         assert frame[name][0] is not None
         assert frame[f"{name}_available_at"][0] is None
         assert sensitive[name][0] == (None if masked else frame[name][0])
-        assert sensitive[f"{name}_available_at"][0] == (date(2025, 3, 21) if year == 2025 else None)
+        assert sensitive[f"{name}_available_at"][0] is None
 
 
 # 실제 공개 시각을 받은 경우에만 그 날짜를 보존하며 임의로 D-14를 붙이지 않는다.

@@ -6,6 +6,20 @@ from typing import Any
 from crowdcast.features.availability import Feature, publication_date
 
 
+# 규모 계층은 확인된 공개일이 기준일 이내인 양수 발표치만 사용한다.
+def published_announced_daily(row: dict[str, Any]) -> float | None:
+    available = publication_date(row.get("visitors_announced_available_at"))
+    as_of = publication_date(row.get("as_of"))
+    if available is None or as_of is None or available > as_of:
+        return None
+    value, duration = row.get("visitors_announced"), row.get("duration")
+    if value is None or duration is None:
+        return None
+    if not math.isfinite(value) or value < 0 or not math.isfinite(duration) or duration <= 0:
+        raise ValueError("발표 방문객수·행사 기간 오류")
+    return float(value / duration) if value > 0 else None
+
+
 # 조건부 입력은 공개일을 추정하지 않으며 파일명 날짜 검사는 별도 민감도 경로에 맡긴다.
 def announced_features(event: dict[str, Any]) -> dict[str, Feature]:
     value = event.get("visitors_announced")
