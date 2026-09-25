@@ -94,4 +94,4 @@
 - **geocode 첫 호출 25초**: 지명 사전 빌드가 정규식 재컴파일로 느리다(코드 문제, 리눅스 경로에서도 같음) → T-102b.
 - **forecast 표시 결함**: 사람 수 소수·사유마다 구간 꼬리·법정/자체 판정 문장 중복·요금 "미상" OOD → T-204b(T-207 전에).
 - **확인 스크립트**: `scripts/dev.mjs`가 떠 있는 서비스 위에 또 띄우지 않는지 확인(오케스트레이터 임시 스크립트에서 `a || b && c` 우선순위로 중복 기동 → 로그 덮어쓰기가 있었다 — dev.mjs는 해당 없음, 기록만).
-- **reports/backtest 실행 폴더(R-08에서 결정)**: 맨 위 포인터(`latest.json`·`promoted.json`)만 커밋했다(551d0ba). `bt-v1-*/`(13개 — 승격 1 + 개발 중 후보)는 git 제외도 추적도 아닌 상태. 승격 실행의 `backtest.json`·`backtest.md`는 서식4 숫자의 근거라 올리는 쪽이 맞고, `points.parquet`(행사별 예측·실측)는 데이터랩 재배포 조건 확인 뒤. 나머지 후보 폴더는 `.gitignore`에 넣는다.
+- **reports/backtest 실행 폴더(R-08에서 결정)**: 맨 위 포인터(`latest.json`·`promoted.json`)를 551d0ba에서 커밋했다가 **추적 해제**했다 — 워크트리가 `reports/backtest`를 본 레포로 가는 링크로 공유해(worktree.sh) 추적 파일과 충돌(L2 병합 중단). AGENTS.md §2의 "reports/backtest/*.json 추적"은 링크 구조와 맞지 않으니 제출 동결(G3) 때 공개용 경로로 복사해 커밋하는 방식으로 정하고 AGENTS.md 문구도 그때 고친다. `bt-v1-*/`(13개 — 승격 1 + 개발 중 후보)는 git 제외도 추적도 아닌 상태. 승격 실행의 `backtest.json`·`backtest.md`는 서식4 숫자의 근거라 올리는 쪽이 맞고, `points.parquet`(행사별 예측·실측)는 데이터랩 재배포 조건 확인 뒤. 나머지 후보 폴더는 `.gitignore`에 넣는다.
