@@ -200,9 +200,9 @@
    "evidence": "피드백 2회(S04·fake 제한·되묻기 3개·위험 확인·마감·병합 규칙), sol 교차 리뷰 PASS, develop 병합 뒤 gateway 276·build·lint, 수동 확인 실제 Ollama·knowledge"
   },
   "T-304": {
-   "status": "running",
-   "updated": "2026-09-25T00:21:07.767Z",
-   "note": "1회차 PARTIAL(실서비스 미기동) → 오케스트레이터 실사용 확인: 해설 입력 컨텍스트 초과·S10 근거 모양·수치 서식·기준일(T-303)·스냅샷 예산 → 2회차 재디스패치"
+   "status": "done",
+   "updated": "2026-09-25T02:21:40.872Z",
+   "evidence": "develop a352073 · gateway 821·forecast 1173·web 137(깨끗한 상태) · sol PASS · 실사용 T-304.live.md"
   },
   "T-305": {
    "status": "todo"
@@ -379,12 +379,13 @@
    "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
   },
   "T-102b": {
-   "status": "running",
-   "updated": "2026-09-25T01:30:56.676Z",
-   "note": "1회차 재디스패치 — 캐시 행을 스냅샷에서 만들기(High)·순서 제어 테스트(Med)"
+   "status": "done",
+   "updated": "2026-09-25T02:21:40.979Z",
+   "evidence": "develop bf7056d · 빌드 0.88초·동등성 테스트 · sol PASS"
   },
   "T-204b": {
-   "status": "todo"
+   "status": "running",
+   "updated": "2026-09-25T02:08:17.586Z"
   }
  },
  "history": [
@@ -1087,6 +1088,23 @@
    "id": "T-205",
    "status": "done",
    "evidence": "develop 53559d1 · forecast 1166 통과 · sol PASS(3회차) · runId 세 산출물 일치"
+  },
+  {
+   "at": "2026-09-25T02:08:17.586Z",
+   "id": "T-204b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T02:21:40.872Z",
+   "id": "T-304",
+   "status": "done",
+   "evidence": "develop a352073 · gateway 821·forecast 1173·web 137(깨끗한 상태) · sol PASS · 실사용 T-304.live.md"
+  },
+  {
+   "at": "2026-09-25T02:21:40.979Z",
+   "id": "T-102b",
+   "status": "done",
+   "evidence": "develop bf7056d · 빌드 0.88초·동등성 테스트 · sol PASS"
   }
  ]
 }
