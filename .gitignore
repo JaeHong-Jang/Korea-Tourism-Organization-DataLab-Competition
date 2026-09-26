@@ -140,6 +140,9 @@ apps/web/public/geo/
 apps/web/public/tiles/korea-z13.pmtiles
 apps/web/public/tiles/korea-z15.pmtiles
 apps/web/public/tiles/원본_안내.txt
+# 백테스트 결과(데이터랩 실측 포함)와 공유 자료 압축 안내는 공개 저장소에 올리지 않는다 — 팀 드라이브 압축으로 받는다(data/raw/README.md)
+reports/backtest/
+/압축_안내.txt
 # 워크트리의 공유 산출물 링크(심볼릭 링크는 디렉터리 규칙에 안 걸리므로 따로 적는다)
 /traces
 /reports/runs
