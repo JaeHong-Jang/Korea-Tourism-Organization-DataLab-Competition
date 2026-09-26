@@ -37,27 +37,22 @@
 .ops-chain__step--unverified { border-style: dashed; border-color: var(--level-3); color: var(--level-3); font-weight: 700; }
 .ops-chain__step--skipped, .ops-chain__step--pending { opacity: .55; }
 .ops-run__reason { margin: 0; color: var(--ink); font-size: var(--text-sm); }
-/* 지금 상태 네 칸: 왼쪽 색 띠로 좋음(파랑)·주의(노랑)·오류(빨강)·기록(회색)을 가른다. */
+/* 지금 상태 네 칸: 상태는 제목 글자·아이콘 색으로만 가른다(왼쪽 색 띠 없음). */
 .ops-overview { margin-bottom: var(--space-6); }
 .ops-overview h2 { margin: 0 0 var(--space-3); font-size: var(--text-h3, 1.15rem); }
 .ops-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
-.ops-tile { display: grid; align-content: start; gap: var(--space-2); min-width: 0; padding: var(--space-4); border: 1px solid var(--line); border-left: 4px solid var(--link); border-radius: var(--radius-card); background: var(--surface); font-size: var(--text-sm); }
+.ops-tile { display: grid; align-content: start; gap: var(--space-2); min-width: 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); font-size: var(--text-sm); }
 .ops-tile h3 { margin: 0; color: var(--ink-2); font-size: var(--text-caption); font-weight: 600; }
 .ops-tile p { margin: 0; }
 .ops-tile small { color: var(--ink-2); }
 .ops-tile__lead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--ink); font-size: 1.15rem; font-weight: 700; }
 .ops-tile__note { color: var(--ink-2); }
-.ops-tile--caution { border-left-color: var(--level-3); }
-.ops-tile--danger { border-left-color: var(--level-4); }
-.ops-tile--neutral { border-left-color: var(--line); }
 .ops-overview__glossary { margin: var(--space-3) 0 0; color: var(--ink-2); font-size: var(--text-caption); }
 /* 실행 기록 카드 */
 .ops-run-list { margin-top: var(--space-4); }
 .ops-runs { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; font-size: var(--text-sm); }
-.ops-run { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-left: 4px solid var(--link); border-radius: var(--radius-input); background: var(--surface); }
-.ops-run--caution { border-left-color: var(--level-3); }
-.ops-run--danger { border-left-color: var(--level-4); }
-.ops-run--neutral { border-left-color: var(--line); background: var(--surface-sunken); }
+.ops-run { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); }
+.ops-run--neutral { background: var(--surface-sunken); }
 .ops-run__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .ops-run__head time { color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .ops-outcome { display: inline-flex; align-items: center; gap: var(--space-1); font-weight: 700; white-space: nowrap; }
@@ -80,3 +75,5 @@
 .ops-evaluation__failing { margin: var(--space-1) 0 0; color: var(--level-3); }
 /* 실행 목록이 왼쪽 두 줄을 차지하고 평가·최신성은 오른쪽 열에 쌓는다. */
 .ops-layout > .ops-main { grid-row: span 2; }
+.ops-tile--caution .ops-tile__lead { color: var(--level-3); }
+.ops-tile--danger .ops-tile__lead { color: var(--level-4); }
