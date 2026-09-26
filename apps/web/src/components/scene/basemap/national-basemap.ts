@@ -1,4 +1,4 @@
-// 전국 z7 지도 타일에서 실제 토지 피복(도시·숲·농지)·호수·고속도로·주요 도로를 읽어 전국 판 좌표(km)로 바꾼다.
+// 전국 지도 타일(z0~8 묶음 중 z7)에서 실제 토지 피복(도시·숲·농지)·호수·고속도로·주요 도로를 읽어 전국 판 좌표(km)로 바꾼다.
 import { VectorTile } from "@mapbox/vector-tile";
 import type { Feature, MultiPolygon, Polygon } from "geojson";
 import Pbf from "pbf";
@@ -97,11 +97,11 @@ function polygons(
     .filter((area) => area.rings.length > 0);
 }
 
-// 한국 경위도 범위를 덮는 z7 타일을 모두 읽는다(약 9장·1.3MB).
+// 한국 경위도 범위를 덮는 z7 타일을 모두 읽는다(약 9장·1.3MB, 저장소의 korea-z8.pmtiles).
 export async function loadNationalBasemap(
   signal?: AbortSignal,
 ): Promise<Basemap> {
-  const archive = new PMTiles("/tiles/korea-z13.pmtiles");
+  const archive = new PMTiles("/tiles/korea-z8.pmtiles");
   const n = 2 ** ZOOM;
   const tileX = (longitude: number) =>
     Math.floor(((longitude + 180) / 360) * n);

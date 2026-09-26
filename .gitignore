@@ -136,7 +136,9 @@ vendor/
 **/.agents/
 **/.codex/
 apps/web/public/geo/
-apps/web/public/tiles
+# 지도 타일은 잘라 낸 작은 파일만 추적하고, 100MB가 넘는 전국 원본은 제외한다(apps/web/public/tiles/README.md)
+apps/web/public/tiles/korea-z13.pmtiles
+apps/web/public/tiles/korea-z15.pmtiles
 # 워크트리의 공유 산출물 링크(심볼릭 링크는 디렉터리 규칙에 안 걸리므로 따로 적는다)
 /traces
 /reports/runs
