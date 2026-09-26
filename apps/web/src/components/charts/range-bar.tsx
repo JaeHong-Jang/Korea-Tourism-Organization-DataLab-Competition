@@ -20,6 +20,10 @@ type HostQuantity = NonNullable<Event["expectedByHost"]>;
 const THRESHOLD = 1000;
 
 // 눈금 끝값을 1·2·2.5·5×10ⁿ 중 가장 가까운 큰 수로 올린다.
+// 법정 기준(순간·1시간 최대 관람객)과 이 예보(한 시점 동시 인원)의 단위 차이 — 판정은 바꾸지 않고 고지만 한다(9/26 (a)안).
+export const HOUR_NOTE =
+  "법정 기준 1,000명은 매뉴얼의 '순간(1시간) 최대 관람객'(1시간 동안 머문 인원)이고, 이 예보는 한 시점에 함께 있는 인원이라 더 적게 나와요. 평균 체류 2시간이면 1시간 기준이 약 1.5배라, 1,000명 조금 아래라도 1시간 기준으로는 넘을 수 있어요.";
+
 export function niceCeil(value: number): number {
   const power = 10 ** Math.floor(Math.log10(Math.max(1, value)));
   const step = [1, 2, 2.5, 5, 10].find((item) => item * power >= value) ?? 10;
@@ -179,6 +183,7 @@ export function RangeBar({
           {hostValue != null ? " · ▲ 주최측 예상" : ""}
         </p>
       )}
+      {!mini && <p className="range-bar__hour-note">{HOUR_NOTE}</p>}
       <figcaption>
         {mini
           ? `${directRange} · 법정 기준 1,000명의 약 ${thresholdRatio(middle)}배`
