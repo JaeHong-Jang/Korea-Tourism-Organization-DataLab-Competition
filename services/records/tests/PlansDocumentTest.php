@@ -96,6 +96,9 @@ final class PlansDocumentTest extends TestCase
         $report['card']['peakConcurrent']['p90'] = 13000.5;
         $bytes = (new Exporter())->render(PlanFixture::example(), $report);
         self::assertStringContainsString('13,000 ~ 13,001 명', $this->part($bytes, 'word/document.xml'));
+        // 법정 기준(순간·1시간)과 예보(한 시점 동시 인원)의 단위 차이를 요약 표에 고지한다(9/26 (a)안)
+        self::assertStringContainsString('기준 단위 차이', $this->part($bytes, 'word/document.xml'));
+        self::assertStringContainsString('1시간 기준이 약 1.5배', $this->part($bytes, 'word/document.xml'));
     }
 
     // 실제 문단의 ID와 해당 정의 및 런의 동아시아 서체·포인트 크기를 함께 대조한다

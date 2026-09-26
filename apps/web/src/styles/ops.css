@@ -2,17 +2,10 @@
 .ops-layout { align-items: start; }
 .ops-layout > .feature-panel { min-width: 0; }
 .ops-layout .kit-screen-state { padding-block: var(--space-5); }
-.ops-table-scroll { max-width: 100%; overflow-x: auto; margin-top: var(--space-4); }
-.ops-runs { width: 100%; min-width: 650px; border-collapse: collapse; font-size: var(--text-sm); }
-.ops-runs th, .ops-runs td { padding: var(--space-3); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-.ops-runs th { background: var(--surface-sunken); color: var(--ink-2); }
-.ops-runs td:first-child small { display: block; color: var(--ink-2); }
-.ops-runs td:last-child > span { display: block; max-width: 30ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ops-status, .ops-stage__heading { display: inline-flex; align-items: center; gap: var(--space-2); }
 .ops-status { white-space: nowrap; } /* "실패"가 한 글자씩 꺾이지 않게 */
 .ops-status--failed, .ops-stage--failed .ops-stage__heading, .ops-dataset--late > span:last-child, .ops-verdict--failed { color: var(--level-4); }
 .ops-status--passed, .ops-stage--passed .ops-stage__heading, .ops-verdict--passed { color: var(--link); }
-.ops-run--failed { background: var(--surface-sunken); }
 .ops-run__details { margin-top: var(--space-2); }
 .ops-run__details summary { color: var(--link); cursor: pointer; }
 .ops-stages { display: grid; gap: var(--space-2); padding-left: var(--space-4); }
@@ -44,3 +37,46 @@
 .ops-chain__step--unverified { border-style: dashed; border-color: var(--level-3); color: var(--level-3); font-weight: 700; }
 .ops-chain__step--skipped, .ops-chain__step--pending { opacity: .55; }
 .ops-run__reason { margin: 0; color: var(--ink); font-size: var(--text-sm); }
+/* 지금 상태 네 칸: 왼쪽 색 띠로 좋음(파랑)·주의(노랑)·오류(빨강)·기록(회색)을 가른다. */
+.ops-overview { margin-bottom: var(--space-6); }
+.ops-overview h2 { margin: 0 0 var(--space-3); font-size: var(--text-h3, 1.15rem); }
+.ops-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.ops-tile { display: grid; align-content: start; gap: var(--space-2); min-width: 0; padding: var(--space-4); border: 1px solid var(--line); border-left: 4px solid var(--link); border-radius: var(--radius-card); background: var(--surface); font-size: var(--text-sm); }
+.ops-tile h3 { margin: 0; color: var(--ink-2); font-size: var(--text-caption); font-weight: 600; }
+.ops-tile p { margin: 0; }
+.ops-tile small { color: var(--ink-2); }
+.ops-tile__lead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--ink); font-size: 1.15rem; font-weight: 700; }
+.ops-tile__note { color: var(--ink-2); }
+.ops-tile--caution { border-left-color: var(--level-3); }
+.ops-tile--danger { border-left-color: var(--level-4); }
+.ops-tile--neutral { border-left-color: var(--line); }
+.ops-overview__glossary { margin: var(--space-3) 0 0; color: var(--ink-2); font-size: var(--text-caption); }
+/* 실행 기록 카드 */
+.ops-run-list { margin-top: var(--space-4); }
+.ops-runs { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; font-size: var(--text-sm); }
+.ops-run { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-left: 4px solid var(--link); border-radius: var(--radius-input); background: var(--surface); }
+.ops-run--caution { border-left-color: var(--level-3); }
+.ops-run--danger { border-left-color: var(--level-4); }
+.ops-run--neutral { border-left-color: var(--line); background: var(--surface-sunken); }
+.ops-run__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.ops-run__head time { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ops-outcome { display: inline-flex; align-items: center; gap: var(--space-1); font-weight: 700; white-space: nowrap; }
+.ops-outcome--ok, .ops-outcome--info { color: var(--link); }
+.ops-outcome--caution { color: var(--level-3); }
+.ops-outcome--danger { color: var(--level-4); }
+.ops-outcome--neutral { color: var(--ink-2); }
+.ops-run .ops-chain { margin: 0; }
+.ops-run__id { margin: var(--space-2) 0; color: var(--ink-2); overflow-wrap: anywhere; }
+.ops-metrics { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ops-metrics li { padding: 2px var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); font-size: var(--text-caption); }
+.ops-metric--ok span { color: var(--link); }
+.ops-metric--bad { border-color: var(--level-4); }
+.ops-metric--bad span { color: var(--level-4); font-weight: 700; }
+.ops-run-list__more { margin-top: var(--space-3); padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--link); font: inherit; cursor: pointer; }
+.ops-run-list__source { margin: var(--space-3) 0 0; color: var(--ink-2); font-size: var(--text-caption); }
+@media (max-width: 1100px) { .ops-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .ops-tiles { grid-template-columns: 1fr; } }
+.ops-tile__lead .ops-detail-badge { font-size: var(--text-caption); font-weight: 600; }
+.ops-evaluation__failing { margin: var(--space-1) 0 0; color: var(--level-3); }
+/* 실행 목록이 왼쪽 두 줄을 차지하고 평가·최신성은 오른쪽 열에 쌓는다. */
+.ops-layout > .ops-main { grid-row: span 2; }

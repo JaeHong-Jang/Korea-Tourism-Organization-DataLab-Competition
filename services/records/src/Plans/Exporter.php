@@ -14,6 +14,11 @@ use RuntimeException;
 // 문장별 근거 각주와 모든 쪽의 참고용 문구를 PHPWord로 기록한다
 final class Exporter
 {
+    // 법정 기준(순간·1시간 최대 관람객)과 이 예보(한 시점 동시 인원)의 단위 차이를 판정은 바꾸지 않고 고지한다
+    public const HOUR_NOTE = '법정 기준 1,000명은 매뉴얼의 "순간(1시간) 최대 관람객"(1시간 동안 머문 인원)이고, '
+        . '이 예보의 순간 최대는 한 시점에 함께 있는 인원이라 더 적게 나옵니다. 평균 체류 2시간이면 1시간 기준이 약 1.5배이므로 '
+        . '1,000명 조금 아래라도 1시간 기준으로는 넘을 수 있습니다.';
+
     // 저장된 초안만 문서화하며 예시 산출물에는 첫 줄에 테스트 데이터임을 밝힌다
     /**
      * @param array<string, mixed> $plan
@@ -131,6 +136,7 @@ final class Exporter
             ['장소', $event['venue']['name'] . ' · ' . $event['sigunguName']],
             ['판정 등급', $card['judgment']['label'] . ' (' . $card['judgment']['level'] . '등급)'],
             ['순간 최대 p10~p90', $this->range($peak)],
+            ['기준 단위 차이', self::HOUR_NOTE],
             ['일평균', number_format($mean['p50']) . ' ' . $mean['unit'] . ' (p50)'],
         ];
         $table = $section->addTable(['borderSize' => 4, 'borderColor' => 'C7C7C7', 'cellMargin' => 100]);
