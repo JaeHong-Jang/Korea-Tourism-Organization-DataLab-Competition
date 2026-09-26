@@ -53,7 +53,9 @@ export function SceneLegend({
         </div>
       )}
       <div className="scene-legend__scale">
-        {dataMode && <>타일 색·높이 = 기간 안 예보 순간 최대 중앙값 합 · </>}
+        {dataMode && (
+          <>시군구 테두리 색 = 기간 안 예보 순간 최대 중앙값 합 · </>
+        )}
         인형 1개 = {peoplePerDoll.toLocaleString("ko-KR")}명
       </div>
       {dataMode && (
@@ -106,7 +108,7 @@ export function SceneLegend({
           인원 규모는 예보값 비례 · 인형 위치는 실제 사람 위치가 아니에요 · 날씨
           효과 = 기상청 예보 기반 연출 ·
           {dataMode
-            ? "데이터 모드에서는 열차·차량을 숨겨요 · 봇·인형 움직임은 연출이에요."
+            ? "데이터 모드에서도 땅·도로·건물은 그대로 두고 값은 테두리 색으로만 보여요 · 열차·차량·봇·인형 움직임은 연출이에요."
             : "열차·차량·봇·인형 움직임은 연출 — 실제 운행·교통량이 아니에요."}
         </p>
         {notices}

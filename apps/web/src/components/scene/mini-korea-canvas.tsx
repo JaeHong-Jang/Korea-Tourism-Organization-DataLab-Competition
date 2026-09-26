@@ -8,6 +8,7 @@ import { useTheme } from "../../lib/theme/theme-provider";
 import { Board } from "./board";
 import { CameraRig } from "./camera-rig";
 import { CityScene, type CityStatus } from "./city/city-scene";
+import { DataBorders } from "./data-borders";
 import { Fireworks } from "./effects/fireworks";
 import { FestivalLayer } from "./festival-layer";
 import { LandTiles } from "./land-tiles";
@@ -62,7 +63,8 @@ export function MiniKoreaCanvas({
     festivals,
     activeQuality,
     onScaleChange,
-    dataMode ? totals : null,
+    // 데이터 모드에서도 땅을 높이지 않으므로 행사 모형도 제자리에 둔다.
+    null,
   );
 
   // 명시적 진단 모드에서만 타일 재마운트를 허용해 GPU 해제량을 확인한다.
@@ -74,7 +76,8 @@ export function MiniKoreaCanvas({
     };
   }, [diagnostics.debug]);
   const [webgl] = useState(hasWebGl2);
-  const { model, error } = useLandModel(webgl, dataMode, totals);
+  // 데이터 모드에서도 땅·풍경은 평소 모습 그대로 두고 값은 시군구 테두리 색으로만 보인다.
+  const { model, error } = useLandModel(webgl, false, totals);
   const { visible, reducedMotion } = useScenePreferences();
   const picked = useSelectionStore((state) => state.selectedSigunguCode);
   const selectedId = useSelectionStore((state) => state.selectedFestivalId);
@@ -240,17 +243,18 @@ export function MiniKoreaCanvas({
                 />
               )}
             {showLand && <LandTiles model={model} onPick={onPick} />}
-            {!dataMode && (
-              <NationalScenery
-                anchors={model.anchors}
-                clusters={showLand}
-                festivals={scene.placed}
-                quality={activeQuality}
-                reducedMotion={reducedMotion}
-                motion={diagnostics.motion}
-                diagnostic={diagnostics.debug}
-              />
+            {dataMode && showLand && (
+              <DataBorders anchors={model.anchors} totals={totals} />
             )}
+            <NationalScenery
+              anchors={model.anchors}
+              clusters={showLand}
+              festivals={scene.placed}
+              quality={activeQuality}
+              reducedMotion={reducedMotion}
+              motion={diagnostics.motion}
+              diagnostic={diagnostics.debug}
+            />
             <FestivalLayer
               scene={scene}
               center={center}
