@@ -26,7 +26,7 @@ type Tower = {
 // 구는 빽빽하고 높게, 시는 넓고 중간, 군은 읍내 몇 채(개수·퍼짐 반경 상한 km·높이 범위).
 const STYLE = {
   gu: {
-    count: 34,
+    count: 56,
     spread: 0.55,
     cap: 3.2,
     low: 1.0,
@@ -34,7 +34,7 @@ const STYLE = {
     size: [0.35, 0.7],
   },
   si: {
-    count: 26,
+    count: 40,
     spread: 0.35,
     cap: 3.6,
     low: 0.5,
@@ -42,7 +42,7 @@ const STYLE = {
     size: [0.3, 0.65],
   },
   gun: {
-    count: 9,
+    count: 14,
     spread: 0.2,
     cap: 1.6,
     low: 0.25,
@@ -53,6 +53,8 @@ const STYLE = {
 
 // 이 높이보다 위에서 내려다보면 멀리서 보는 것으로 친다(전국 판 첫 화면은 약 590).
 export const FAR_HEIGHT = 320;
+// 이 높이보다 위면 전국 첫 화면처럼 아주 멀리서 보는 것으로 친다.
+export const MID_HEIGHT = 480;
 
 // 품질별로 건물 수를 줄인다(낮음은 무리마다 몇 채만).
 const SHARE: Record<SceneQuality, number> = { high: 1, medium: 0.6, low: 0.3 };
@@ -134,14 +136,18 @@ export function CityClusters({
     [anchors, avoid, quality],
   );
   const mesh = useRef<InstancedMesh>(null);
-  const far = useRef<boolean | null>(null);
-  // 멀리서(카메라 높이 320 위)는 무리마다 가장 높은 한 채만 그린다 — 나머지는 점보다 작다.
+  const tier = useRef<number | null>(null);
+  // 멀리(카메라 높이 480 위)는 무리마다 가장 높은 한 채, 중간(320~480)은 여덟 채, 가까이는 모두 그린다.
   useFrame(({ camera }) => {
     const target = mesh.current;
-    const next = camera.position.y > FAR_HEIGHT;
-    if (!target || next === far.current) return;
-    far.current = next;
-    target.count = next ? Math.min(towers.length, anchors.size) : towers.length;
+    const height = camera.position.y;
+    const next = height > MID_HEIGHT ? 0 : height > FAR_HEIGHT ? 1 : 2;
+    if (!target || next === tier.current) return;
+    tier.current = next;
+    target.count =
+      next === 2
+        ? towers.length
+        : Math.min(towers.length, anchors.size * (next === 0 ? 1 : 8));
   });
   // 바닥이 땅 윗면에 닿도록 상자 원점을 아랫면으로 옮긴다.
   const box = useMemo(() => new BoxGeometry(1, 1, 1).translate(0, 0.5, 0), []);
@@ -152,7 +158,7 @@ export function CityClusters({
     const target = mesh.current;
     if (!target) return;
     // 건물 목록이 바뀌면 새 인스턴스에 멀리·가까이 개수를 다시 적용한다.
-    far.current = null;
+    tier.current = null;
     const colors = [
       ...[1, 2, 3, 4].map((i) => sceneColor(`bldg-apartment-${i}`)),
       sceneColor("bldg-villa-1"),
