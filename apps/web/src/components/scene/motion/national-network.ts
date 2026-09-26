@@ -30,7 +30,30 @@ const lonLat = (name: string, points: [number, number][]) =>
     points.map(([longitude, latitude]) => projectKorea(longitude, latitude)),
   );
 
+// 경로 전체를 진행 방향 왼쪽으로 amount(km)만큼 평행 이동한다(꼭짓점은 앞뒤 선분 법선의 평균).
+export function shiftRoute(route: MotionRoute, amount: number): MotionRoute {
+  const { points } = route;
+  const normal = (a: [number, number], b: [number, number]) => {
+    const dx = b[0] - a[0];
+    const dz = b[1] - a[1];
+    const length = Math.hypot(dx, dz) || 1;
+    return [-dz / length, dx / length];
+  };
+  const shifted = points.map((point, index): [number, number] => {
+    const before = index > 0 ? normal(points[index - 1], point) : null;
+    const after =
+      index < points.length - 1 ? normal(point, points[index + 1]) : null;
+    const nx =
+      ((before?.[0] ?? 0) + (after?.[0] ?? 0)) / (before && after ? 2 : 1);
+    const nz =
+      ((before?.[1] ?? 0) + (after?.[1] ?? 0)) / (before && after ? 2 : 1);
+    return [point[0] + nx * amount, point[1] + nz * amount];
+  });
+  return lineRoute(route.name, shifted);
+}
+
 // 고속도로축(도시를 이은 직선) — 전국 판 차가 다니는 길.
+// 같은 구간을 나눠 쓰는 축(예: 경부·동해축의 경주–울산–부산)은 축마다 옆으로 2.5km씩 비켜 나란한 차로가 되게 한다.
 export const highways = [
   via("경부축", [
     "서울",
@@ -134,9 +157,9 @@ export const highways = [
   via("수도권축", ["인천", "서울", "의정부"]),
   via("수도권 남부축", ["서울", "성남", "용인"]),
   via("제주 일주", ["제주시", "한림", "서귀포", "성산", "제주시"]),
-];
+].map((route, index) => shiftRoute(route, ((index % 3) - 1) * 2.5));
 
-// 철도(역을 이은 직선) — 앞의 세 KTX는 기존 전국 판과 같다.
+// 철도(역을 이은 직선) — 앞의 세 KTX는 기존 전국 판과 같다. 같은 도시를 잇는 고속도로와 겹치지 않게 9km 옆으로 둔다.
 export const railways = [
   via("경부 KTX", ["서울", "대전", "동대구", "부산"]),
   via("호남 KTX", ["용산", "광주송정", "목포"]),
@@ -149,7 +172,7 @@ export const railways = [
   via("충북선", ["오송", "청주", "충주", "제천"]),
   via("장항선", ["천안아산", "홍성", "보령", "서천", "군산", "익산"]),
   via("영동선", ["영주", "동해", "강릉"]),
-];
+].map((route) => shiftRoute(route, 9));
 
 // 뱃길(바다 위 경유점을 이은 선) — 여객선 항로를 흉내 낸 연출.
 export const seaways = [

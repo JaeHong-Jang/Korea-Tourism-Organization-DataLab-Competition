@@ -16,7 +16,11 @@ import {
 } from "three";
 import type { MotionPoint, MotionRoute } from "../motion/rail-lines";
 import { routePosition } from "../motion/rail-lines";
-import { towardShare as towardShareAt, vehicleAt } from "../venue/routes";
+import {
+  routeSlot,
+  towardShare as towardShareAt,
+  vehicleAt,
+} from "../venue/routes";
 import { FAR_DISTANCE } from "./city-people";
 import { newFocus, refocus } from "./focus-routes";
 import type { Pose } from "./stamp";
@@ -149,17 +153,24 @@ export function CityTraffic({
   const place = (seconds: number, full = detail.current) => {
     pose.size = VEHICLE_SCALE;
     const nearby = near.current;
+    const nearCars = nearby.length ? Math.ceil(cars / 2) : 0;
     for (let index = 0; index < cars; index++) {
-      const route =
-        nearby.length && index % 2 === 0
-          ? nearby[(index * 3) % nearby.length]
-          : roadRoutes[index % roadRoutes.length];
+      // 짝수 차는 보는 곳 근처 길, 나머지는 동네 전체 길 — 무리마다 경로에 고르게 나눠 같은 경로 차끼리 간격을 둔다.
+      const onNear = nearCars > 0 && index % 2 === 0;
+      const group = onNear ? nearby : roadRoutes;
+      const k = onNear ? index / 2 : nearCars > 0 ? (index - 1) / 2 : index;
+      const slot = routeSlot(
+        k,
+        group.length,
+        onNear ? nearCars : cars - nearCars,
+      );
       vehicleAt(
-        route,
+        group[slot.route],
         seconds,
         index,
         !reducedMotion && index / cars < share,
         point,
+        slot.spacing,
       );
       const lane = 2.2 + (kindOf(index) === "bus" ? 0.6 : 0);
       pose.x = point.x + Math.cos(point.heading) * lane;
@@ -171,16 +182,18 @@ export function CityTraffic({
     pose.size = TRAIN_SCALE;
     for (let train = 0; train < trains; train++) {
       const route = railRoutes[train % railRoutes.length];
+      // 같은 선로의 열차는 왕복 주기에 고르게 두고, 복선처럼 달리는 방향 오른쪽으로 2.4m 비켜 마주 오는 열차와 겹치지 않게 한다.
+      const slot = routeSlot(train, railRoutes.length, trains);
       for (let cart = 0; cart < TRAIN_CARS; cart++) {
         routePosition(
           route,
           seconds,
           9,
-          train * 173 - cart * 19.2 * TRAIN_SCALE,
+          slot.spacing * route.length * 2 - cart * 19.2 * TRAIN_SCALE,
           point,
         );
-        pose.x = point.x;
-        pose.z = point.z;
+        pose.x = point.x + Math.cos(point.heading) * 2.4;
+        pose.z = point.z - Math.sin(point.heading) * 2.4;
         pose.y = 0.4;
         pose.heading = point.heading;
         placeCart(train * TRAIN_CARS + cart);

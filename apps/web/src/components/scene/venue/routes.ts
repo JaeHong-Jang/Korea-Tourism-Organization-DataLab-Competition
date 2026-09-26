@@ -41,10 +41,15 @@ export function routeGraph(lines: VenueLine[], tolerance = 3): RouteGraph {
 }
 
 // 동네를 격자 칸으로 나눠 칸마다 출발점을 번갈아 고르고, 직진을 좋아하는 긴 경로를 만든다(한쪽에 몰리지 않게).
+// 방향과 무관한 선분 이름(작은 번호-큰 번호).
+const edgeKey = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+
+// used에 이미 다른 경로가 쓴 길(선분)을 넣어 주면 그 길은 피한다 — 여러 경로가 한 길을 겹쳐 쓰지 않게.
 export function graphRoutes(
   graph: RouteGraph,
   limit = 16,
   maxLength = 1200,
+  used: Set<string> = new Set(),
 ): MotionRoute[] {
   const connected = graph.nodes
     .map((point, id) => ({ id, point }))
@@ -81,7 +86,7 @@ export function graphRoutes(
     for (const { ids } of order) {
       const id = ids[pass];
       if (id === undefined) continue;
-      const route = straightRoute(graph, id, maxLength);
+      const route = straightRoute(graph, id, maxLength, used);
       if (route) routes.push(route);
       if (routes.length === limit) break;
     }
@@ -93,6 +98,7 @@ function straightRoute(
   graph: RouteGraph,
   id: number,
   maxLength: number,
+  used: Set<string>,
 ): MotionRoute | null {
   const path = [id];
   let length = 0;
@@ -118,13 +124,17 @@ function straightRoute(
       );
     };
     const next = graph.edges[current]
-      .filter((node) => !path.includes(node))
+      .filter(
+        (node) => !path.includes(node) && !used.has(edgeKey(current, node)),
+      )
       .sort((a, b) => turn(a) - turn(b))[0];
     if (next === undefined) break;
     length += Math.hypot(graph.nodes[next][0] - cx, graph.nodes[next][1] - cz);
     path.push(next);
   }
   if (path.length < 3 || length < 60) return null;
+  for (let step = 1; step < path.length; step++)
+    used.add(edgeKey(path[step - 1], path[step]));
   const points = path.map((node) => graph.nodes[node]);
   const lengths = [0];
   for (let step = 1; step < points.length; step++)
@@ -139,14 +149,17 @@ function straightRoute(
 }
 
 // 시각과 경로 번호만으로 같은 장난감 위치를 내며 행사 전후에는 중심 방향을 택한다.
+// spacing(0~1)을 주면 같은 경로의 차들을 경로 길이에 고르게 벌려 서로 겹치지 않게 한다.
 export function vehicleAt(
   route: MotionRoute,
   seconds: number,
   index: number,
   towardVenue: boolean,
   out: MotionPoint,
+  spacing?: number,
 ): MotionPoint {
-  const phase = (seconds * 2.2 + index * 137.17) % (route.length * 2);
+  const start = spacing === undefined ? index * 137.17 : spacing * route.length;
+  const phase = (seconds * 2.2 + start) % (route.length * 2);
   const last = route.points[route.points.length - 1];
   const first = route.points[0];
   const forwardInward =
@@ -265,4 +278,13 @@ function pop(heap: [number, number][]): [number, number] {
     }
   }
   return top;
+}
+
+// 무리(group)의 k번째 차가 탈 경로와 그 경로 안의 간격 비율(0~1) — 경로마다 고르게 나눈다.
+export function routeSlot(k: number, routes: number, total: number) {
+  const route = k % routes;
+  const count = Math.max(1, Math.ceil((total - route) / routes));
+  // 경로마다 출발 위상을 황금비로 밀어 여러 경로의 차가 같은 시각에 교차점에 몰리지 않게 한다.
+  const shift = (route * 0.618034) % 1;
+  return { route, spacing: ((Math.floor(k / routes) + shift) / count) % 1 };
 }

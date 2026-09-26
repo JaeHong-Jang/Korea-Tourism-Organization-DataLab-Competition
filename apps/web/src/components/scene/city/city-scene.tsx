@@ -93,23 +93,20 @@ export function CityScene({
     [tiles],
   );
   // 동네 전체를 다니는 긴 경로와, 확대했을 때 보는 곳 근처에 세울 짧은 경로(300m 이하)를 따로 만든다.
-  const roads = useMemo(
-    () => (roadGraph ? graphRoutes(roadGraph, 64) : []),
-    [roadGraph],
-  );
-  const nearbyRoads = useMemo(
-    () => (roadGraph ? graphRoutes(roadGraph, 300, 300) : []),
-    [roadGraph],
-  );
+  // 두 묶음은 "쓴 길" 목록을 공유해 한 길을 두 경로가 겹쳐 쓰지 않는다(차가 서로 겹치지 않게).
+  const { roads, nearbyRoads } = useMemo(() => {
+    if (!roadGraph) return { roads: [], nearbyRoads: [] };
+    const used = new Set<string>();
+    const long = graphRoutes(roadGraph, 64, 1200, used);
+    return { roads: long, nearbyRoads: graphRoutes(roadGraph, 300, 300, used) };
+  }, [roadGraph]);
   // 사람은 큰길 한가운데가 아니라 골목·보행로 가장자리를 걷는다.
-  const walks = useMemo(
-    () => (walkGraph ? graphRoutes(walkGraph, 64) : []),
-    [walkGraph],
-  );
-  const nearbyWalks = useMemo(
-    () => (walkGraph ? graphRoutes(walkGraph, 400, 300) : []),
-    [walkGraph],
-  );
+  const { walks, nearbyWalks } = useMemo(() => {
+    if (!walkGraph) return { walks: [], nearbyWalks: [] };
+    const used = new Set<string>();
+    const long = graphRoutes(walkGraph, 64, 1200, used);
+    return { walks: long, nearbyWalks: graphRoutes(walkGraph, 400, 300, used) };
+  }, [walkGraph]);
   const rails = useMemo(
     () => (tiles ? graphRoutes(routeGraph(tiles.rails), 8) : []),
     [tiles],

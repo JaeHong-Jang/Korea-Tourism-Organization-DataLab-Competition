@@ -11,7 +11,13 @@ import { trafficCaps } from "../city/city-traffic";
 import { motionSeconds } from "../motion/rail-lines";
 import { clipPolygon, clipSegment } from "./clip";
 import { tileAt, tilePointToVenue } from "./coordinates";
-import { graphRoutes, pathRoute, routeGraph, vehicleAt } from "./routes";
+import {
+  graphRoutes,
+  pathRoute,
+  routeGraph,
+  routeSlot,
+  vehicleAt,
+} from "./routes";
 import { sampleEvent } from "./sites";
 import { isStationName } from "./tile-tags";
 import { readVenueTile, type VenueTiles } from "./tiles";
@@ -162,6 +168,57 @@ describe("행사장 연출", () => {
       Math.max(...routes.map((route) => Math.hypot(...route.points[0]))),
     ).toBeGreaterThan(1200);
     expect(routes.every((route) => route.length >= 300)).toBe(true);
+  });
+
+  // 긴 경로와 근처 경로가 "쓴 길"을 공유하면 어떤 두 경로도 같은 길(선분)을 쓰지 않는다 — 차 겹침 방지
+  it("경로끼리 같은 길을 나눠 쓰지 않고 같은 경로의 차는 고르게 벌린다", () => {
+    const lines = [];
+    for (let at = -800; at <= 800; at += 100)
+      for (let step = -800; step < 800; step += 100) {
+        lines.push({
+          from: [at, step] as [number, number],
+          to: [at, step + 100] as [number, number],
+          kind: "road",
+          width: 5,
+        });
+        lines.push({
+          from: [step, at] as [number, number],
+          to: [step + 100, at] as [number, number],
+          kind: "road",
+          width: 5,
+        });
+      }
+    const graph = routeGraph(lines);
+    const used = new Set<string>();
+    const routes = [
+      ...graphRoutes(graph, 64, 1200, used),
+      ...graphRoutes(graph, 300, 300, used),
+    ];
+    expect(routes.length).toBeGreaterThan(40);
+    const seen = new Set<string>();
+    for (const route of routes)
+      for (let step = 1; step < route.points.length; step++) {
+        const [a, b] = [route.points[step - 1], route.points[step]]
+          .map((point) => point.join(","))
+          .sort();
+        const key = `${a}|${b}`;
+        expect(seen.has(key)).toBe(false);
+        seen.add(key);
+      }
+    // 7대를 경로 3개에 나누면 경로 안 간격은 1/3(또는 1/2)로 고르고, 경로마다 출발 위상만 다르다.
+    const slots = Array.from({ length: 7 }, (_, k) => routeSlot(k, 3, 7));
+    const gaps = (route: number) => {
+      const spots = slots
+        .filter((slot) => slot.route === route)
+        .map((slot) => slot.spacing)
+        .sort((x, y) => x - y);
+      return spots.map(
+        (spot, index) => (spots[(index + 1) % spots.length] - spot + 1) % 1,
+      );
+    };
+    for (const gap of gaps(0)) expect(gap).toBeCloseTo(1 / 3, 6);
+    for (const gap of gaps(1)) expect(gap).toBeCloseTo(1 / 2, 6);
+    expect(slots[0].spacing).not.toBeCloseTo(slots[1].spacing, 3);
   });
 
   // 귀가 길은 격자 길에서 길이 가중 최단 경로이며, 이어지지 않으면 만들지 않는다

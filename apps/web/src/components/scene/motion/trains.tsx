@@ -111,8 +111,9 @@ export function Trains({
               train * line.length - car * CART_GAP,
               point,
             );
-            pose.x = point.x;
-            pose.z = point.z;
+            // 복선처럼 달리는 방향 오른쪽으로 1.2km 비켜 마주 오는 열차와 겹치지 않게 한다.
+            pose.x = point.x + Math.cos(point.heading) * 1.2;
+            pose.z = point.z - Math.sin(point.heading) * 1.2;
             pose.heading = point.heading;
             stampCart(parts, index++, pose);
           }
