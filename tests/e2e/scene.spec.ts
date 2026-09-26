@@ -103,7 +103,8 @@ for (const scene of [
     if (scene.sky === "day") {
       await page.goto("http://127.0.0.1:5184/?sceneFixture=1&view=miniature&sceneQuality=high&sceneFocus=26470&theme=day&at=2025-10-18T13:00+09:00");
       await expect(page.locator("html")).toHaveAttribute("data-scene-ready", "true", { timeout: 30_000 });
-      await expect(page.locator(".scene-name-tag:not(.scene-name-tag--far)").first()).toBeVisible();
+      // 카메라가 초점까지 미끄러지는 시간은 소프트웨어 렌더러 프레임 속도에 달려 있어 5초를 넘길 수 있다.
+      await expect(page.locator(".scene-name-tag:not(.scene-name-tag--far)").first()).toBeVisible({ timeout: 15_000 });
       await page.screenshot({ path: resolve(output, "T-432-scene-close.png") });
     }
   });

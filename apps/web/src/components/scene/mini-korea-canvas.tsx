@@ -288,7 +288,7 @@ export function MiniKoreaCanvas({
                 (picked ? (model.centers.get(picked) ?? null) : null)
               }
               reducedMotion={reducedMotion}
-              focus={Boolean(diagnostics.focusCode || selectedId)}
+              focus={Boolean(diagnostics.focusCode || selectedId || picked)}
               width={width}
               depth={depth}
               overviewRevision={overviewRevision}
