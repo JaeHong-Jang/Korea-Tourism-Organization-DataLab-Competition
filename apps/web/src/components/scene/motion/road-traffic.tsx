@@ -1,4 +1,4 @@
-// 전국 고속도로축(주요 도시를 이은 직선)을 검은 도로·흰 점선으로 깔고 부품으로 만든 장난감 승용차·택시·버스를 길이에 비례해 흘린다.
+// 전국 고속도로(바탕 지도의 실제 고속도로, 오기 전에는 도시를 이은 축)에 부품으로 만든 장난감 승용차·택시·버스를 길이에 비례해 흘린다.
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   useCallback,
@@ -20,11 +20,11 @@ import { sceneColor } from "../quality";
 import { LAND_SURFACE_Y } from "../scene-height";
 import {
   type MotionPoint,
+  type MotionRoute,
   motionSeconds,
   roadRoutes,
   routePosition,
 } from "./rail-lines";
-import { Ribbons } from "./ribbons";
 
 // 낮음에서는 그리지 않고 다른 단계는 장면당 최대 수를 고정한다.
 export function roadTrafficCap(quality: SceneQuality): number {
@@ -32,9 +32,9 @@ export function roadTrafficCap(quality: SceneQuality): number {
 }
 
 // 차를 고속도로축 길이에 비례해 나눈다(축마다 최소 한 대, 남는 대수는 소수점이 큰 축부터) — [축 번호, 축 안 순번, 축의 차 수].
-export function trafficSlots(cars: number) {
-  const total = roadRoutes.reduce((sum, line) => sum + line.length, 0);
-  const exact = roadRoutes.map((line) => (cars * line.length) / total);
+export function trafficSlots(cars: number, routes: MotionRoute[] = roadRoutes) {
+  const total = routes.reduce((sum, line) => sum + line.length, 0);
+  const exact = routes.map((line) => (cars * line.length) / total);
   const counts = exact.map((value) => Math.max(1, Math.floor(value)));
   const order = exact
     .map((value, line) => ({ rest: value - Math.floor(value), line }))
@@ -53,21 +53,22 @@ export function trafficSlots(cars: number) {
 
 // 승용차·택시·버스를 동네 3D와 같은 부품(차체·유리·지붕 — 전국 판에서는 바퀴가 점보다 작아 뺀다)으로 그린다 — 연출이며 실제 교통량이 아니다.
 const NATIONAL_VEHICLE_SIZE = 0.8;
-// 검은 아스팔트 띠(폭 2.6km)에 흰 가운데 점선, 차는 달리는 방향 오른쪽 차로(가운데서 0.9km)로 다닌다.
-const ROAD_WIDTH = 2.6;
+// 차는 도로선에서 달리는 방향 오른쪽으로 0.9km 비킨 차로로 다닌다(도로선은 바탕 지도가 그린다).
 const LANE = 0.9;
-const ROAD_DASH = { length: 1.4, gap: 2.4, width: 0.16, color: "road-dash" };
 
 export function RoadTraffic({
   quality,
   reducedMotion,
+  routes = roadRoutes,
 }: {
   quality: SceneQuality;
   reducedMotion: boolean;
+  // 차가 다닐 길 — 바탕 지도가 오면 실제 고속도로에서 만든 경로, 오기 전에는 도시를 이은 축.
+  routes?: MotionRoute[];
 }) {
   const clock = useThree((state) => state.clock);
-  const cars = roadTrafficCap(quality);
-  const slots = useMemo(() => trafficSlots(cars), [cars]);
+  const cars = routes.length ? roadTrafficCap(quality) : 0;
+  const slots = useMemo(() => trafficSlots(cars, routes), [cars, routes]);
   const refs = {
     body: useRef<InstancedMesh>(null),
     glass: useRef<InstancedMesh>(null),
@@ -100,7 +101,7 @@ export function RoadTraffic({
       };
       for (let index = 0; index < cars; index++) {
         const [route, slot, count] = slots[index];
-        const line = roadRoutes[route];
+        const line = routes[route];
         const bus = kindOf(index) === "bus";
         routePosition(
           line,
@@ -117,7 +118,7 @@ export function RoadTraffic({
       for (const ref of Object.values(refs))
         if (ref.current) ref.current.instanceMatrix.needsUpdate = true;
     },
-    [cars, point, pose, slots],
+    [cars, point, pose, slots, routes],
   );
 
   // 차체 색(승용차 7색·택시·버스)과 유리·바퀴 색은 처음 한 번만 칠한다.
@@ -167,13 +168,6 @@ export function RoadTraffic({
   if (cars === 0) return null;
   return (
     <group>
-      <Ribbons
-        routes={roadRoutes}
-        width={ROAD_WIDTH}
-        y={LAND_SURFACE_Y + 0.06}
-        color="asphalt"
-        dash={ROAD_DASH}
-      />
       {(["body", "glass", "roof"] as const).map((name) => (
         <instancedMesh
           key={name}

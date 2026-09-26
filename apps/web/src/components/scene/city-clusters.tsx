@@ -8,6 +8,8 @@ import {
   Matrix4,
   MeshLambertMaterial,
 } from "three";
+import type { Basemap } from "./basemap/national-basemap";
+import { urbanTowers } from "./basemap/urban-towers";
 import { insidePolygon, seededRandom } from "./city/free-space";
 import type { LandAnchor } from "./land-anchor";
 import type { MotionRoute } from "./motion/rail-lines";
@@ -82,6 +84,8 @@ export type ClusterLayout = {
   groups: number;
   // 멀리서 한 채씩 보일 무리 수(중심 시가지만 — 읍면·길가 마을은 중간 확대부터).
   farGroups: number;
+  // 중간 확대에서 그릴 앞쪽 건물 수(무리마다 네 채 + 실제 도시 지역 채움).
+  midCount: number;
   centers: [number, number][];
 };
 export function clusterTowers(
@@ -90,6 +94,7 @@ export function clusterTowers(
   quality: SceneQuality,
   roads: MotionRoute[] = [],
   lines: MotionRoute[] = [],
+  basemap: Basemap | null = null,
 ): ClusterLayout {
   const rounds: Tower[][] = [];
   for (const [code, anchor] of anchors) {
@@ -128,10 +133,21 @@ export function clusterTowers(
   // 읍·면 마을과 길가 마을을 더하고, 무리마다 가장 높은 건물부터 한 채씩 번갈아 적어 앞쪽 일부만 그려도 전국에 고르게 보이게 한다.
   const towns = townGroups(anchors, avoid, roads, lines, SHARE[quality]);
   rounds.push(...towns.groups);
-  const towers: Tower[] = [];
+  const interleaved: Tower[] = [];
   for (let round = 0; rounds.some((list) => round < list.length); round++)
     for (const list of rounds)
-      if (round < list.length) towers.push(list[round]);
+      if (round < list.length) interleaved.push(list[round]);
+  // 실제 도시 지역 채움 건물은 무리 건물과 겹치는 자리를 건너뛰고, 중간 확대부터 보이도록 무리마다 네 채 바로 뒤에 넣는다.
+  const taken = new Set(
+    interleaved.map((tower) => `${Math.round(tower.x)}:${Math.round(tower.z)}`),
+  );
+  const urban = basemap
+    ? urbanTowers(basemap, avoid, SHARE[quality]).filter(
+        (tower) => !taken.has(`${Math.round(tower.x)}:${Math.round(tower.z)}`),
+      )
+    : [];
+  const head = interleaved.slice(0, rounds.length * 4);
+  const towers = [...head, ...urban, ...interleaved.slice(head.length)];
   const centers: [number, number][] = [
     ...[...anchors.values()].map((anchor): [number, number] => [
       anchor.x,
@@ -143,15 +159,16 @@ export function clusterTowers(
     towers,
     groups: rounds.length,
     farGroups: rounds.length - towns.groups.length,
+    midCount: head.length + urban.length,
     centers,
   };
 }
 
 export function CityClusters({ layout }: { layout: ClusterLayout }) {
-  const { towers, groups, farGroups } = layout;
+  const { towers, farGroups, midCount } = layout;
   const mesh = useRef<InstancedMesh>(null);
   const tier = useRef<number | null>(null);
-  // 멀리(카메라 높이 480 위)는 중심 시가지마다 가장 높은 한 채, 중간(320~480)은 읍면·길가 마을까지 네 채, 가까이는 모두 그린다.
+  // 멀리(카메라 높이 480 위)는 중심 시가지마다 가장 높은 한 채, 중간(320~480)은 읍면·길가 마을까지 네 채와 도시 지역 채움, 가까이는 모두 그린다.
   useFrame(({ camera }) => {
     const target = mesh.current;
     const height = camera.position.y;
@@ -159,9 +176,7 @@ export function CityClusters({ layout }: { layout: ClusterLayout }) {
     if (!target || next === tier.current) return;
     tier.current = next;
     target.count =
-      next === 2
-        ? towers.length
-        : Math.min(towers.length, next === 0 ? farGroups : groups * 4);
+      next === 2 ? towers.length : next === 0 ? farGroups : midCount;
   });
   // 바닥이 땅 윗면에 닿도록 상자 원점을 아랫면으로 옮긴다.
   const box = useMemo(() => new BoxGeometry(1, 1, 1).translate(0, 0.5, 0), []);
@@ -173,13 +188,10 @@ export function CityClusters({ layout }: { layout: ClusterLayout }) {
     if (!target) return;
     // 건물 목록이 바뀌면 새 인스턴스에 멀리·가까이 개수를 다시 적용한다.
     tier.current = null;
-    const colors = [
-      ...[1, 2, 3, 4].map((i) => sceneColor(`bldg-apartment-${i}`)),
-      sceneColor("bldg-villa-1"),
-      sceneColor("bldg-villa-3"),
-      sceneColor("bldg-office-glass"),
-      sceneColor("bldg-shop-2"),
-    ].map((value) => new Color(value));
+    // 참고 이미지처럼 흰 건물(세 가지 명암) — 짙은 도시 바탕·녹색 숲 위에서 도드라진다.
+    const colors = [1, 2, 3].map(
+      (index) => new Color(sceneColor(`map-building-${index}`)),
+    );
     const matrix = new Matrix4();
     towers.forEach((tower, index) => {
       matrix.makeScale(tower.width, tower.height, tower.depth);

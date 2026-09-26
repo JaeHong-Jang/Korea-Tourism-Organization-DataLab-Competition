@@ -90,7 +90,9 @@ function Strip({
   useLayoutEffect(() => {
     const target = mesh.current;
     if (!target) return;
-    matrices.forEach((matrix, index) => target.setMatrixAt(index, matrix));
+    matrices.forEach((matrix, index) => {
+      target.setMatrixAt(index, matrix);
+    });
     target.instanceMatrix.needsUpdate = true;
     target.computeBoundingSphere();
   }, [matrices]);
