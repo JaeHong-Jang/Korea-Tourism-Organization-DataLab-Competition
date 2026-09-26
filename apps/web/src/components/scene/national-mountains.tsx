@@ -1,4 +1,4 @@
-// 전국 판 군·시 땅에 낮은 다각형 산을 세운다 — 도시 무리·행사 자리·도로·철도·강을 피해 둔 연출(실제 산 위치·높이 아님).
+// 전국 판 군 땅에 낮은 다각형 산을 세운다 — 도시 무리·행사 자리·도로·철도·강을 피해 둔 연출(실제 산 위치·높이 아님).
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
   Color,
@@ -40,7 +40,7 @@ function distanceToRoutes(x: number, z: number, routes: MotionRoute[]) {
   return best;
 }
 
-// 군은 산 여럿, 시는 몇 개, 구는 두지 않는다 — 땅 안·도시 무리 밖·길과 강에서 떨어진 자리만.
+// 군에만 산 둘 — 땅 안·도시와 마을 밖·길과 강에서 떨어진 자리만(건물이 주인공이 되게).
 export function placePeaks(
   anchors: Map<string, LandAnchor>,
   avoid: [number, number][],
@@ -48,11 +48,7 @@ export function placePeaks(
 ): Peak[] {
   const peaks: Peak[] = [];
   for (const [code, anchor] of anchors) {
-    const want = anchor.name.endsWith("군")
-      ? 4
-      : anchor.name.endsWith("시")
-        ? 1
-        : 0;
+    const want = anchor.name.endsWith("군") ? 2 : 0;
     if (!want) continue;
     const random = seededRandom((Number(code) || 1) * 7 + 3);
     const spread = clusterSpread(anchor);
