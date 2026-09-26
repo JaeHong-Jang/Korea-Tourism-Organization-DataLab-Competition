@@ -225,17 +225,16 @@ export async function loadVenueTiles(
   return result;
 }
 
-// 전국 z15 타일에서 아무 좌표나 반경 약 1.2km의 건물·길·녹지·역을 읽는다(동네 3D).
+// 저장소에 든 행사·시군구 중심 둘레 z15 타일을 먼저 읽고, 그 밖 좌표면(내 행사 등) 로컬에 전국 z15 원본이 있을 때만 거기서 읽는다(동네 3D, 반경 약 1.2km).
+const CITY_ARCHIVES = [
+  "/tiles/korea-z15-festivals.pmtiles",
+  "/tiles/korea-z15.pmtiles",
+];
+
 export async function loadCityTiles(
   center: Point,
   signal?: AbortSignal,
 ): Promise<VenueTiles> {
-  const key = "korea";
-  let archive = archives.get(key);
-  if (!archive) {
-    archive = new PMTiles("/tiles/korea-z15.pmtiles");
-    archives.set(key, archive);
-  }
   const result: VenueTiles = {
     buildings: [],
     roads: [],
@@ -243,14 +242,28 @@ export async function loadCityTiles(
     areas: [],
     stations: [],
   };
-  const tiles = await Promise.all(
-    nearbyTiles(center[0], center[1]).map(async ([x, y]) => {
-      signal?.throwIfAborted();
-      return [x, y, await archive.getZxy(15, x, y, signal)] as const;
-    }),
-  );
-  for (const [x, y, tile] of tiles)
-    if (tile) readVenueTile(tile.data, x, y, center, result);
+  for (const url of CITY_ARCHIVES) {
+    let archive = archives.get(url);
+    if (!archive) {
+      archive = new PMTiles(url);
+      archives.set(url, archive);
+    }
+    const source = archive;
+    // 원본 파일이 없으면(다른 사람 컴퓨터) 빈 결과로 둔다.
+    const tiles = await Promise.all(
+      nearbyTiles(center[0], center[1]).map(async ([x, y]) => {
+        signal?.throwIfAborted();
+        return [x, y, await source.getZxy(15, x, y, signal)] as const;
+      }),
+    ).catch((error: unknown) => {
+      if (signal?.aborted) throw error;
+      return [];
+    });
+    if (!tiles.some(([, , tile]) => tile)) continue;
+    for (const [x, y, tile] of tiles)
+      if (tile) readVenueTile(tile.data, x, y, center, result);
+    break;
+  }
   result.buildings.sort(
     (a, b) => a.x * a.x + a.z * a.z - b.x * b.x - b.z * b.z,
   );
