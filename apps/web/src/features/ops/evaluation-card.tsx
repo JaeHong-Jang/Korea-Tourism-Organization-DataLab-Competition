@@ -20,6 +20,24 @@ const checkLabels = [
   ["execution", "실행"],
 ] as const;
 
+// 평가 묶음 이름(영문 키)을 화면 이름으로 바꾼다.
+const suiteLabel: Record<string, string> = { scenario: "평가 시나리오" };
+export function suiteName(suite: string) {
+  return suiteLabel[suite] ?? suite;
+}
+
+// 통과하지 못한 검사 항목만 "발행 25/26"처럼 모은다.
+export function failingChecks(
+  checks: NonNullable<OpsEvaluation["evals"]>["checks"],
+): string[] {
+  return checkLabels.flatMap(([key, label]) => {
+    const check = checks?.[key];
+    return check && check.passed < check.total
+      ? [`${label} ${check.passed}/${check.total}`]
+      : [];
+  });
+}
+
 // 표본이 없는 지연은 수치로 보이지 않게 하고 측정값만 초로 표시한다.
 function latency(value: number | null): string {
   return value === null ? "측정 전" : `${value.toFixed(1)}초`;
@@ -44,8 +62,13 @@ export function EvaluationCard({
       <p
         className={`ops-verdict ${evals.passed ? "ops-verdict--passed" : "ops-verdict--failed"}`}
       >
-        {evals.passed ? "✓ 통과" : "⚠ 확인 필요"} · {evals.suite}
+        {evals.passed ? "✓ 통과" : "⚠ 확인 필요"} · {suiteName(evals.suite)}
       </p>
+      {!evals.passed && failingChecks(evals.checks).length > 0 && (
+        <p className="ops-evaluation__failing">
+          못 미친 항목: {failingChecks(evals.checks).join(" · ")}
+        </p>
+      )}
       {evals.mode === "fake" && (
         <>
           <span className="ops-detail-badge ops-detail-badge--caution">

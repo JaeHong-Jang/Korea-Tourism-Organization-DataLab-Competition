@@ -8,7 +8,14 @@ import { dateTime, lagDays } from "./ops-format";
 import type { OpsResource } from "./use-ops-resource";
 import "./ops-details.css";
 
-// 자료 기준일이 35일을 넘으면 텍스트와 아이콘으로 지연을 알린다.
+// 제목 속 긴 실행 ID·해시(16자 넘는 16진수)는 앞 8자만 남기고, 원문은 title로 둔다.
+export function tidyTitle(title: string): string {
+  return title
+    .replace(/runId\s+/g, "")
+    .replace(/([0-9a-f]{8})[0-9a-f]{8,}/g, "$1…");
+}
+
+// 자료 기준일이 35일을 넘으면 텍스트와 아이콘으로 지연을 알린다(기준일이 없는 자료는 그 줄을 숨긴다).
 export function FreshnessCard({ state }: { state: OpsResource<OpsFreshness> }) {
   const [copyState, setCopyState] = useState<"idle" | "done" | "error">("idle");
   if (state.phase === "loading")
@@ -32,7 +39,9 @@ export function FreshnessCard({ state }: { state: OpsResource<OpsFreshness> }) {
                 key={dataset.datasetId}
                 className={lag !== null && lag > 35 ? "ops-dataset--late" : ""}
               >
-                <strong>{dataset.title}</strong>
+                <strong title={dataset.title}>
+                  {tidyTitle(dataset.title)}
+                </strong>
                 {!dataset.lastCollectedAt && !dataset.lastObservedDate ? (
                   <span>아직 수집 전</span>
                 ) : (
@@ -43,24 +52,20 @@ export function FreshnessCard({ state }: { state: OpsResource<OpsFreshness> }) {
                         ? dateTime(dataset.lastCollectedAt)
                         : "아직 수집 전"}
                     </span>
-                    <span>
-                      자료 기준일: {dataset.lastObservedDate ?? "미확인"}
-                    </span>
-                    <span>
-                      {lag === null ? (
-                        "반영 지연: 확인 불가"
-                      ) : (
-                        <>
-                          반영 지연: {lag}일{" "}
-                          {lag > 35 && (
-                            <>
-                              <AlertTriangle size={15} aria-hidden="true" />{" "}
-                              35일 초과 경고
-                            </>
-                          )}
-                        </>
-                      )}
-                    </span>
+                    {dataset.lastObservedDate && (
+                      <span>자료 기준일: {dataset.lastObservedDate}</span>
+                    )}
+                    {lag !== null && (
+                      <span>
+                        반영 지연: {lag}일{" "}
+                        {lag > 35 && (
+                          <>
+                            <AlertTriangle size={15} aria-hidden="true" /> 35일
+                            초과 경고
+                          </>
+                        )}
+                      </span>
+                    )}
                   </>
                 )}
               </li>
