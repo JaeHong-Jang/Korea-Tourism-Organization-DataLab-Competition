@@ -9,6 +9,7 @@ import type {
 } from "@crowdcast/contracts/types";
 import { createKnowledgeClient } from "../../clients/knowledge-client.js";
 import { createRecordsClient } from "../../clients/records-client.js";
+import { ServiceHttpError } from "../../clients/request-json.js";
 import { responseSchema } from "../../contract/responses.js";
 import { explanationFailure } from "../../llm/explanation-failure.js";
 import { briefer } from "../report/briefer.js";
@@ -276,8 +277,11 @@ export async function publishForecast(
         signal,
         timeoutMs,
       });
-      if (saveEvent) await records.saveEvent(event);
-      await records.saveSnapshot(event.id, report as ForecastReport);
+      // 같은 행사·같은 예보서가 이미 있으면(409) 저장된 것으로 보고 다음 저장을 이어 간다
+      if (saveEvent) await records.saveEvent(event).catch(alreadyStored);
+      await records
+        .saveSnapshot(event.id, report as ForecastReport)
+        .catch(alreadyStored);
     });
   } catch {
     console.warn("발행 예보서 스냅샷 저장 실패");
@@ -287,4 +291,10 @@ export async function publishForecast(
     });
   }
   await writer.emit("suggest", { actions });
+}
+
+// 불변 저장소의 409(event_exists·snapshot_immutable)는 이미 저장됐다는 뜻이라 실패로 보지 않는다
+function alreadyStored(error: unknown): null {
+  if (error instanceof ServiceHttpError && error.status === 409) return null;
+  throw error;
 }

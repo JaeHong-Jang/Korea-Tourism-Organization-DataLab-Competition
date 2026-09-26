@@ -153,6 +153,33 @@ describe("설명 발행", () => {
     ).toBe(true);
   });
 
+  // 같은 행사를 두 번째로 예보하면 행사 저장은 409(event_exists)지만 스냅샷은 저장해야 한다(9/26 예보서 열기 실패 회귀)
+  it.each([
+    ["행사가 이미 있음", "/v1/events", "event_exists"],
+    ["같은 예보서가 이미 있음", "/snapshots", "snapshot_immutable"],
+  ])(
+    "%s(409)은 저장 성공으로 보고 안내를 붙이지 않는다",
+    async (_, path, code) => {
+      const harness = teamFixture({
+        override: async ({ url, body }) => {
+          if (url.pathname.endsWith(path))
+            return Response.json({ error: code }, { status: 409 });
+          if (
+            url.pathname === "/v1/events" ||
+            url.pathname.endsWith("/snapshots")
+          )
+            return Response.json(body);
+        },
+      });
+      const events = await harness.message(await harness.prepare());
+      validSequence(events);
+      expect(JSON.stringify(events)).not.toContain("snapshot-unavailable");
+      expect(
+        harness.calls.some((call) => call.url.pathname.endsWith("/snapshots")),
+      ).toBe(true);
+    },
+  );
+
   // 저장 실패나 지연이 원자적 발행을 되돌리거나 완료 id를 지우지 않는다
   it("스냅샷 예산은 요청의 남은 시간을 넘지 않는다", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});

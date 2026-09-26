@@ -96,7 +96,7 @@ export function ForecastPage() {
         <LoadingState message="발행된 예보서를 불러오고 있어요." />
       )}
       {state.status === "error" && (
-        <ErrorState message="예보서를 열지 못했어요. 잠시 뒤 다시 시도해 주세요." />
+        <ErrorState message="예보서를 열지 못했어요. 아직 저장되지 않은 예보일 수 있어요 — 예보 상담에서 이 행사를 다시 예보 받으면 새 예보서가 만들어져요. 잠시 뒤 다시 시도해도 돼요." />
       )}
       {state.status === "ready" && (
         <>
