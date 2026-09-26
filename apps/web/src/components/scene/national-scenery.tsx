@@ -52,9 +52,17 @@ export function NationalScenery({
       .then((value) => {
         if (controller.signal.aborted) return;
         setBasemap(withinLand(value, anchors));
+        document.documentElement.dataset.sceneBasemap = "ready";
       })
-      .catch(() => {});
-    return () => controller.abort();
+      // 지도 타일이 없으면(자료 미설치) 바탕 지도 없이 시군구 땅색만 쓴다.
+      .catch(() => {
+        if (!controller.signal.aborted)
+          document.documentElement.dataset.sceneBasemap = "none";
+      });
+    return () => {
+      controller.abort();
+      delete document.documentElement.dataset.sceneBasemap;
+    };
   }, [anchors]);
   const carRoutes = useMemo(
     () => (basemap ? highwayRoutes(basemap) : roadRoutes),

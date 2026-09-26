@@ -32,7 +32,8 @@ test("QA-2 구간 막대", async ({ page }) => {
   const bar = page.locator(".consult-preview .range-bar");
   await expect(bar.getByText("순간 최대 예상 인원과 법정 기준")).toBeVisible();
   await expect(
-    bar.getByText("법정 기준 1,000명", { exact: false }),
+    // 기준선 이름표와 1시간 기준 단위 고지 두 곳에 같은 말이 있어 첫 번째(이름표)를 본다.
+    bar.getByText("법정 기준 1,000명", { exact: false }).first(),
   ).toBeVisible();
   await bar.screenshot({ path: resolve(screens, "QA-2-rangebar.png") });
 });
