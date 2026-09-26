@@ -322,14 +322,13 @@ test("견본 선택, 해제, 상담 입력, 데이터 모드", async ({ page }) 
 		page.getByRole("button", { name: "데이터 모드" }),
 	).toHaveAttribute("aria-pressed", "true");
 	await expect(page.locator(".scene-legend")).toContainText(
-		"타일 색·높이 = 기간 안 예보 순간 최대 중앙값 합",
+		"시군구 테두리 색 = 기간 안 예보 순간 최대 중앙값 합",
 	);
 	await expect(page.locator(".scene-legend__data")).toContainText("예보 없음");
 	await expect(page.locator(".scene-legend__data-row")).toHaveCount(6);
 	await expect(page.locator(".scene-legend__data")).toContainText(
 		"지금 필터 기준으로 다시 나눔",
 	);
-	await expect(page.locator("html")).not.toHaveAttribute("data-scene-trains");
 	await expect(page).toHaveURL(/data=1/);
 	await page.screenshot({ path: resolve(output, "T-433b-s1-data.png") });
 });

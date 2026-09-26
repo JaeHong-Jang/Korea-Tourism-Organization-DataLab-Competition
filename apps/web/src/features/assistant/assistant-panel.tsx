@@ -47,7 +47,7 @@ export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
   const requestedFestival = useAssistantStore(
     (state) => state.requestedFestival,
   );
-  const clearRequest = useAssistantStore((state) => state.clearRequest);
+  const takeRequest = useAssistantStore((state) => state.takeRequest);
   const panelRef = useRef<HTMLElement>(null);
   const [nearError, setNearError] = useState("");
   const pick = (festival: { name: string; eventId: string }) =>
@@ -90,12 +90,13 @@ export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
   }, []);
   useEffect(() => {
     if (!requestedFestival || busy) return;
-    clearRequest();
+    const festival = takeRequest();
+    if (!festival) return;
     void send({
-      text: `${requestedFestival.name} 예보해 줘`,
-      eventId: requestedFestival.eventId,
+      text: `${festival.name} 예보해 줘`,
+      eventId: festival.eventId,
     });
-  }, [requestedFestival, busy, clearRequest, send]);
+  }, [requestedFestival, busy, takeRequest, send]);
 
   return (
     <aside

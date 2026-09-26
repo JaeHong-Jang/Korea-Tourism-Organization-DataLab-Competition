@@ -9,14 +9,10 @@ import {
 } from "react";
 import {
   BoxGeometry,
-  BufferGeometry,
   Color,
   type InstancedMesh,
-  LineBasicMaterial,
-  LineSegments,
   Matrix4,
   MeshLambertMaterial,
-  Vector3,
 } from "three";
 import type { Pose } from "../city/stamp";
 import { stampCart } from "../city/vehicle-kit";
@@ -28,6 +24,7 @@ import {
   railLines,
   routePosition,
 } from "./rail-lines";
+import { Ribbons } from "./ribbons";
 
 // 앞의 KTX 세 선은 두 편, 나머지 선은 한 편씩 왕복한다.
 const trainsOn = (line: number) => (line < 3 ? 2 : 1);
@@ -53,7 +50,13 @@ export function Trains({
   const roof = useRef<InstancedMesh>(null);
   const point = useMemo<MotionPoint>(() => ({ x: 0, z: 0, heading: 0 }), []);
   const pose = useMemo<Pose>(
-    () => ({ x: 0, y: LAND_SURFACE_Y, z: 0, heading: 0, size: CART_SIZE }),
+    () => ({
+      x: 0,
+      y: LAND_SURFACE_Y + 0.12,
+      z: 0,
+      heading: 0,
+      size: CART_SIZE,
+    }),
     [],
   );
   const geometry = useMemo(() => new BoxGeometry(1, 1, 1), []);
@@ -61,34 +64,6 @@ export function Trains({
     () => new MeshLambertMaterial({ flatShading: true }),
     [],
   );
-  const railMaterial = useMemo(
-    () => new LineBasicMaterial({ color: sceneColor("model-metal") }),
-    [],
-  );
-  // 모든 선로를 선분 묶음 하나로 그린다(선마다 그리면 그리기 호출이 선 수만큼 는다).
-  const railGeometry = useMemo(
-    () =>
-      new BufferGeometry().setFromPoints(
-        railLines.flatMap((line) =>
-          line.points
-            .slice(1)
-            .flatMap(([x, z], index) => [
-              new Vector3(
-                line.points[index][0],
-                LAND_SURFACE_Y + 0.5,
-                line.points[index][1],
-              ),
-              new Vector3(x, LAND_SURFACE_Y + 0.5, z),
-            ]),
-        ),
-      ),
-    [],
-  );
-  const rails = useMemo(
-    () => new LineSegments(railGeometry, railMaterial),
-    [railGeometry, railMaterial],
-  );
-
   // 열차 세 칸은 같은 경로에서 일정 거리 차를 두어 앞뒤로 왕복한다.
   const place = useCallback(
     (seconds: number) => {
@@ -111,8 +86,9 @@ export function Trains({
               train * line.length - car * CART_GAP,
               point,
             );
-            pose.x = point.x;
-            pose.z = point.z;
+            // 복선처럼 달리는 방향 오른쪽으로 0.75km 비켜 마주 오는 열차와 겹치지 않게 한다.
+            pose.x = point.x + Math.cos(point.heading) * 0.75;
+            pose.z = point.z - Math.sin(point.heading) * 0.75;
             pose.heading = point.heading;
             stampCart(parts, index++, pose);
           }
@@ -170,15 +146,19 @@ export function Trains({
     () => () => {
       geometry.dispose();
       material.dispose();
-      railMaterial.dispose();
-      railGeometry.dispose();
     },
-    [geometry, material, railMaterial, railGeometry],
+    [geometry, material],
   );
 
   return (
     <group>
-      <primitive object={rails} />
+      <Ribbons
+        routes={railLines}
+        width={2.4}
+        y={LAND_SURFACE_Y + 0.05}
+        color="rail-bed"
+        nearOnly
+      />
       {[mesh, stripe, glass, roof].map((target, part) => (
         <instancedMesh
           // biome-ignore lint/suspicious/noArrayIndexKey: 부품 순서는 고정이다.

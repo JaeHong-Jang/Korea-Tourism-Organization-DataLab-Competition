@@ -18,8 +18,18 @@ describe("전국 판 이동 연출", () => {
       "강릉 KTX",
     ]);
     expect(railLines.length).toBeGreaterThanOrEqual(10);
-    expect(railLines[0].points[0]).toEqual(projectKorea(126.9707, 37.5547));
-    expect(railLines[0].points.at(-1)).toEqual(projectKorea(129.0435, 35.1151));
+    // 철도는 같은 도시를 잇는 고속도로와 겹치지 않게 9km 옆으로 둔다.
+    const near = (
+      point: [number, number] | undefined,
+      target: [number, number],
+    ) =>
+      Math.hypot((point?.[0] ?? 0) - target[0], (point?.[1] ?? 0) - target[1]);
+    expect(
+      near(railLines[0].points[0], projectKorea(126.9707, 37.5547)),
+    ).toBeCloseTo(9, 5);
+    expect(
+      near(railLines[0].points.at(-1), projectKorea(129.0435, 35.1151)),
+    ).toBeCloseTo(9, 5);
     expect(railLines.every((line) => line.length > 40)).toBe(true);
   });
 

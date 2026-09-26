@@ -101,7 +101,7 @@ describe("S1 미리보기", () => {
     expect(legend).toContain("예보 없음");
     expect(legend).toContain("20,001~25,000명");
     expect(legend).toContain("지금 필터 기준으로 다시 나눔");
-    expect(legend).toContain("데이터 모드에서는 열차·차량을 숨겨요");
+    expect(legend).toContain("값은 테두리 색으로만 보여요");
     expect(placeFestivals([festival], totals)[0].y).toBe(10);
   });
 });

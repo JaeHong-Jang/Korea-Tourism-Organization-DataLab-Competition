@@ -8,13 +8,17 @@ import {
   Matrix4,
   MeshLambertMaterial,
 } from "three";
+import type { Basemap } from "./basemap/national-basemap";
+import { urbanTowers } from "./basemap/urban-towers";
 import { insidePolygon, seededRandom } from "./city/free-space";
 import type { LandAnchor } from "./land-anchor";
+import type { MotionRoute } from "./motion/rail-lines";
+import { townGroups } from "./national-towns";
 import type { SceneQuality } from "./quality";
 import { sceneColor } from "./quality";
 import { LAND_SURFACE_Y } from "./scene-height";
 
-type Tower = {
+export type Tower = {
   x: number;
   z: number;
   width: number;
@@ -26,33 +30,35 @@ type Tower = {
 // 구는 빽빽하고 높게, 시는 넓고 중간, 군은 읍내 몇 채(개수·퍼짐 반경 상한 km·높이 범위).
 const STYLE = {
   gu: {
-    count: 34,
+    count: 56,
     spread: 0.55,
     cap: 3.2,
     low: 1.0,
     high: 4.0,
-    size: [0.35, 0.7],
+    size: [0.55, 1.0],
   },
   si: {
-    count: 26,
+    count: 40,
     spread: 0.35,
     cap: 3.6,
     low: 0.5,
     high: 2.6,
-    size: [0.3, 0.65],
+    size: [0.5, 0.95],
   },
   gun: {
-    count: 9,
+    count: 14,
     spread: 0.2,
     cap: 1.6,
     low: 0.25,
     high: 0.7,
-    size: [0.28, 0.5],
+    size: [0.45, 0.8],
   },
 } as const;
 
 // 이 높이보다 위에서 내려다보면 멀리서 보는 것으로 친다(전국 판 첫 화면은 약 590).
 export const FAR_HEIGHT = 320;
+// 이 높이보다 위면 전국 첫 화면처럼 아주 멀리서 보는 것으로 친다.
+export const MID_HEIGHT = 480;
 
 // 품질별로 건물 수를 줄인다(낮음은 무리마다 몇 채만).
 const SHARE: Record<SceneQuality, number> = { high: 1, medium: 0.6, low: 0.3 };
@@ -73,11 +79,23 @@ export function clusterSpread(anchor: LandAnchor) {
 }
 
 // 대표점 둘레에 가운데일수록 높은 건물을 흩되, 땅 밖·행사 표시 자리(2km 안)·다른 건물과 겹치는 자리는 건너뛴다.
+export type ClusterLayout = {
+  towers: Tower[];
+  groups: number;
+  // 멀리서 한 채씩 보일 무리 수(중심 시가지만 — 읍면·길가 마을은 중간 확대부터).
+  farGroups: number;
+  // 중간 확대에서 그릴 앞쪽 건물 수(무리마다 네 채 + 실제 도시 지역 채움).
+  midCount: number;
+  centers: [number, number][];
+};
 export function clusterTowers(
   anchors: Map<string, LandAnchor>,
   avoid: [number, number][],
   quality: SceneQuality,
-): Tower[] {
+  roads: MotionRoute[] = [],
+  lines: MotionRoute[] = [],
+  basemap: Basemap | null = null,
+): ClusterLayout {
   const rounds: Tower[][] = [];
   for (const [code, anchor] of anchors) {
     const style = styleOf(anchor.name);
@@ -112,36 +130,53 @@ export function clusterTowers(
     placed.sort((a, b) => b.height - a.height);
     rounds.push(placed);
   }
-  // 무리마다 가장 높은 건물부터 한 채씩 번갈아 적어, 앞쪽 일부만 그려도 모든 도시가 보이게 한다.
-  const towers: Tower[] = [];
+  // 읍·면 마을과 길가 마을을 더하고, 무리마다 가장 높은 건물부터 한 채씩 번갈아 적어 앞쪽 일부만 그려도 전국에 고르게 보이게 한다.
+  const towns = townGroups(anchors, avoid, roads, lines, SHARE[quality]);
+  rounds.push(...towns.groups);
+  const interleaved: Tower[] = [];
   for (let round = 0; rounds.some((list) => round < list.length); round++)
     for (const list of rounds)
-      if (round < list.length) towers.push(list[round]);
-  return towers;
+      if (round < list.length) interleaved.push(list[round]);
+  // 실제 도시 지역 채움 건물은 무리 건물과 겹치는 자리를 건너뛰고, 중간 확대부터 보이도록 무리마다 네 채 바로 뒤에 넣는다.
+  const taken = new Set(
+    interleaved.map((tower) => `${Math.round(tower.x)}:${Math.round(tower.z)}`),
+  );
+  const urban = basemap
+    ? urbanTowers(basemap, avoid, SHARE[quality]).filter(
+        (tower) => !taken.has(`${Math.round(tower.x)}:${Math.round(tower.z)}`),
+      )
+    : [];
+  const head = interleaved.slice(0, rounds.length * 4);
+  const towers = [...head, ...urban, ...interleaved.slice(head.length)];
+  const centers: [number, number][] = [
+    ...[...anchors.values()].map((anchor): [number, number] => [
+      anchor.x,
+      anchor.z,
+    ]),
+    ...towns.centers,
+  ];
+  return {
+    towers,
+    groups: rounds.length,
+    farGroups: rounds.length - towns.groups.length,
+    midCount: head.length + urban.length,
+    centers,
+  };
 }
 
-export function CityClusters({
-  anchors,
-  avoid,
-  quality,
-}: {
-  anchors: Map<string, LandAnchor>;
-  avoid: [number, number][];
-  quality: SceneQuality;
-}) {
-  const towers = useMemo(
-    () => clusterTowers(anchors, avoid, quality),
-    [anchors, avoid, quality],
-  );
+export function CityClusters({ layout }: { layout: ClusterLayout }) {
+  const { towers, farGroups, midCount } = layout;
   const mesh = useRef<InstancedMesh>(null);
-  const far = useRef<boolean | null>(null);
-  // 멀리서(카메라 높이 320 위)는 무리마다 가장 높은 한 채만 그린다 — 나머지는 점보다 작다.
+  const tier = useRef<number | null>(null);
+  // 멀리(카메라 높이 480 위)는 중심 시가지마다 가장 높은 한 채, 중간(320~480)은 읍면·길가 마을까지 네 채와 도시 지역 채움, 가까이는 모두 그린다.
   useFrame(({ camera }) => {
     const target = mesh.current;
-    const next = camera.position.y > FAR_HEIGHT;
-    if (!target || next === far.current) return;
-    far.current = next;
-    target.count = next ? Math.min(towers.length, anchors.size) : towers.length;
+    const height = camera.position.y;
+    const next = height > MID_HEIGHT ? 0 : height > FAR_HEIGHT ? 1 : 2;
+    if (!target || next === tier.current) return;
+    tier.current = next;
+    target.count =
+      next === 2 ? towers.length : next === 0 ? farGroups : midCount;
   });
   // 바닥이 땅 윗면에 닿도록 상자 원점을 아랫면으로 옮긴다.
   const box = useMemo(() => new BoxGeometry(1, 1, 1).translate(0, 0.5, 0), []);
@@ -152,14 +187,11 @@ export function CityClusters({
     const target = mesh.current;
     if (!target) return;
     // 건물 목록이 바뀌면 새 인스턴스에 멀리·가까이 개수를 다시 적용한다.
-    far.current = null;
-    const colors = [
-      ...[1, 2, 3, 4].map((i) => sceneColor(`bldg-apartment-${i}`)),
-      sceneColor("bldg-villa-1"),
-      sceneColor("bldg-villa-3"),
-      sceneColor("bldg-office-glass"),
-      sceneColor("bldg-shop-2"),
-    ].map((value) => new Color(value));
+    tier.current = null;
+    // 참고 이미지처럼 흰 건물(세 가지 명암) — 짙은 도시 바탕·녹색 숲 위에서 도드라진다.
+    const colors = [1, 2, 3].map(
+      (index) => new Color(sceneColor(`map-building-${index}`)),
+    );
     const matrix = new Matrix4();
     towers.forEach((tower, index) => {
       matrix.makeScale(tower.width, tower.height, tower.depth);

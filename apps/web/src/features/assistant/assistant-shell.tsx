@@ -1,5 +1,5 @@
 // 모든 화면에 고래 봇을 띄우고 상담 화면에서는 대화 서랍을 연다.
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   useAssistantStore,
@@ -9,6 +9,7 @@ import { AssistantGuide } from "./assistant-guide";
 import { AssistantPanel } from "./assistant-panel";
 import { FestivalSpotlight } from "./festival-spotlight";
 import { FloatingWhale } from "./floating-whale";
+import type { WhalePoint, WhaleSize } from "./whale-position";
 
 const invitationKey = "crowdcast:assistant:invitation-dismissed";
 
@@ -32,6 +33,15 @@ export function AssistantShell() {
   const { busy, forecastId } = useSharedConsultSession();
   const [invitation, setInvitation] = useState(() => !wasDismissed());
   const [guideOpen, setGuideOpen] = useState(false);
+  // 고래 위치 — 고른 행사 카드를 고래 바로 아래에 붙인다.
+  const [whale, setWhale] = useState<{
+    point: WhalePoint;
+    size: WhaleSize;
+  } | null>(null);
+  const trackWhale = useCallback(
+    (point: WhalePoint, size: WhaleSize) => setWhale({ point, size }),
+    [],
+  );
   const dismiss = () => {
     setInvitation(false);
     try {
@@ -61,6 +71,7 @@ export function AssistantShell() {
           festival={spotlight}
           onTalk={() => chooseFestival(spotlight)}
           onClose={() => showSpotlight(null)}
+          whale={whale}
         />
       )}
       {invitation && !spotlight && !open && !guideOpen && (
@@ -92,6 +103,7 @@ export function AssistantShell() {
         published={Boolean(forecastId)}
         onClick={openPanel}
         onMoved={dismiss}
+        onPosition={trackWhale}
         panelOpen={open}
       />
     </div>

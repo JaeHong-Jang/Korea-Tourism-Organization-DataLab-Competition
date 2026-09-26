@@ -1,4 +1,4 @@
-// 전국 고속도로축(주요 도시를 이은 직선)에 부품으로 만든 장난감 승용차·택시·버스를 길이에 비례해 흘린다.
+// 전국 고속도로(바탕 지도의 실제 고속도로, 오기 전에는 도시를 이은 축)에 부품으로 만든 장난감 승용차·택시·버스를 길이에 비례해 흘린다.
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   useCallback,
@@ -9,13 +9,9 @@ import {
 } from "react";
 import {
   BoxGeometry,
-  BufferGeometry,
   Color,
   type InstancedMesh,
-  LineBasicMaterial,
-  LineSegments,
   MeshLambertMaterial,
-  Vector3,
 } from "three";
 import type { Pose } from "../city/stamp";
 import { kindOf, stampCar } from "../city/vehicle-kit";
@@ -24,6 +20,7 @@ import { sceneColor } from "../quality";
 import { LAND_SURFACE_Y } from "../scene-height";
 import {
   type MotionPoint,
+  type MotionRoute,
   motionSeconds,
   roadRoutes,
   routePosition,
@@ -35,9 +32,9 @@ export function roadTrafficCap(quality: SceneQuality): number {
 }
 
 // 차를 고속도로축 길이에 비례해 나눈다(축마다 최소 한 대, 남는 대수는 소수점이 큰 축부터) — [축 번호, 축 안 순번, 축의 차 수].
-export function trafficSlots(cars: number) {
-  const total = roadRoutes.reduce((sum, line) => sum + line.length, 0);
-  const exact = roadRoutes.map((line) => (cars * line.length) / total);
+export function trafficSlots(cars: number, routes: MotionRoute[] = roadRoutes) {
+  const total = routes.reduce((sum, line) => sum + line.length, 0);
+  const exact = routes.map((line) => (cars * line.length) / total);
   const counts = exact.map((value) => Math.max(1, Math.floor(value)));
   const order = exact
     .map((value, line) => ({ rest: value - Math.floor(value), line }))
@@ -56,17 +53,22 @@ export function trafficSlots(cars: number) {
 
 // 승용차·택시·버스를 동네 3D와 같은 부품(차체·유리·지붕 — 전국 판에서는 바퀴가 점보다 작아 뺀다)으로 그린다 — 연출이며 실제 교통량이 아니다.
 const NATIONAL_VEHICLE_SIZE = 0.8;
+// 차는 도로선에서 달리는 방향 오른쪽으로 0.9km 비킨 차로로 다닌다(도로선은 바탕 지도가 그린다).
+const LANE = 0.9;
 
 export function RoadTraffic({
   quality,
   reducedMotion,
+  routes = roadRoutes,
 }: {
   quality: SceneQuality;
   reducedMotion: boolean;
+  // 차가 다닐 길 — 바탕 지도가 오면 실제 고속도로에서 만든 경로, 오기 전에는 도시를 이은 축.
+  routes?: MotionRoute[];
 }) {
   const clock = useThree((state) => state.clock);
-  const cars = roadTrafficCap(quality);
-  const slots = useMemo(() => trafficSlots(cars), [cars]);
+  const cars = routes.length ? roadTrafficCap(quality) : 0;
+  const slots = useMemo(() => trafficSlots(cars, routes), [cars, routes]);
   const refs = {
     body: useRef<InstancedMesh>(null),
     glass: useRef<InstancedMesh>(null),
@@ -76,7 +78,7 @@ export function RoadTraffic({
   const pose = useMemo<Pose>(
     () => ({
       x: 0,
-      y: LAND_SURFACE_Y,
+      y: LAND_SURFACE_Y + 0.12,
       z: 0,
       heading: 0,
       size: NATIONAL_VEHICLE_SIZE,
@@ -88,38 +90,6 @@ export function RoadTraffic({
     () => new MeshLambertMaterial({ flatShading: true }),
     [],
   );
-  const roadMaterial = useMemo(
-    () => new LineBasicMaterial({ color: sceneColor("model-stage") }),
-    [],
-  );
-  const roadGeometry = useMemo(() => {
-    const points: Vector3[] = [];
-    for (const route of roadRoutes) {
-      for (let index = 1; index < route.points.length; index++) {
-        const from = route.points[index - 1];
-        const to = route.points[index];
-        const heading = Math.atan2(to[0] - from[0], to[1] - from[1]);
-        const offsetX = Math.cos(heading) * 5;
-        const offsetZ = -Math.sin(heading) * 5;
-        points.push(
-          new Vector3(
-            from[0] + offsetX,
-            LAND_SURFACE_Y + 0.5,
-            from[1] + offsetZ,
-          ),
-        );
-        points.push(
-          new Vector3(to[0] + offsetX, LAND_SURFACE_Y + 0.5, to[1] + offsetZ),
-        );
-      }
-    }
-    return new BufferGeometry().setFromPoints(points);
-  }, []);
-  const roads = useMemo(
-    () => new LineSegments(roadGeometry, roadMaterial),
-    [roadGeometry, roadMaterial],
-  );
-
   // 축마다 길이에 비례한 대수를 균등하게 벌려 달리되 실제 교통량처럼 해석되지 않게 한다.
   // biome-ignore lint/correctness/useExhaustiveDependencies: refs는 같은 useRef 객체를 가리킨다.
   const place = useCallback(
@@ -131,7 +101,7 @@ export function RoadTraffic({
       };
       for (let index = 0; index < cars; index++) {
         const [route, slot, count] = slots[index];
-        const line = roadRoutes[route];
+        const line = routes[route];
         const bus = kindOf(index) === "bus";
         routePosition(
           line,
@@ -140,15 +110,15 @@ export function RoadTraffic({
           (slot / count) * line.length * 2,
           point,
         );
-        pose.x = point.x + Math.cos(point.heading) * 5;
-        pose.z = point.z - Math.sin(point.heading) * 5;
+        pose.x = point.x + Math.cos(point.heading) * LANE;
+        pose.z = point.z - Math.sin(point.heading) * LANE;
         pose.heading = point.heading;
         stampCar(parts, index, pose, 0);
       }
       for (const ref of Object.values(refs))
         if (ref.current) ref.current.instanceMatrix.needsUpdate = true;
     },
-    [cars, point, pose, slots],
+    [cars, point, pose, slots, routes],
   );
 
   // 차체 색(승용차 7색·택시·버스)과 유리·바퀴 색은 처음 한 번만 칠한다.
@@ -191,16 +161,13 @@ export function RoadTraffic({
     () => () => {
       box.dispose();
       material.dispose();
-      roadGeometry.dispose();
-      roadMaterial.dispose();
     },
-    [box, material, roadGeometry, roadMaterial],
+    [box, material],
   );
 
   if (cars === 0) return null;
   return (
     <group>
-      <primitive object={roads} />
       {(["body", "glass", "roof"] as const).map((name) => (
         <instancedMesh
           key={name}

@@ -115,6 +115,8 @@ test("필터·목록·KPI와 선택", async ({ page }) => {
 		festival: "e-scene-1",
 		sigungu: "11110",
 	});
+	// 행사를 고르면 고래 봇 아래에 뜨는 행사 카드가 오른쪽 패널 아래쪽을 덮으므로 닫고 필터로 간다.
+	await page.getByRole("button", { name: "행사 카드 닫기" }).click();
 	await openTab(page, "필터");
 	await page.getByRole("button", { name: "모두 초기화" }).click();
 	await expect(page.locator(".festival-list__items > li")).toHaveCount(30);

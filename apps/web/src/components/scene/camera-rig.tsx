@@ -19,6 +19,9 @@ type CameraRigProps = {
   onDeepZoom?: (point: [number, number]) => void;
 };
 
+// 고른 곳을 가까이 볼 때의 카메라 위치(표적 기준, 장면 단위 km).
+const CLOSE_OFFSET = new Vector3(75, 105, 155);
+
 // 장면 컨테이너의 직접 포커스만 카메라 조작으로 인정한다.
 export function isSceneCameraKey(
   event: KeyboardEvent,
@@ -50,6 +53,11 @@ export function CameraRig({
     new Vector3(center[0] + 430, 590, center[1] + 810),
   );
   const moving = useRef(false);
+  // 마지막으로 카메라를 맞춘 선택과 "전국 보기" 횟수.
+  const shown = useRef<{
+    selected: [number, number] | null;
+    overview: number;
+  }>({ selected: null, overview: overviewRevision });
   const { camera, gl } = useThree();
   const [bounds, setBounds] = useState<PanelBounds | null>(null);
   const stage = useRef<HTMLElement | null>(null);
@@ -63,7 +71,6 @@ export function CameraRig({
   }, [gl.domElement]);
 
   // 선택 지점으로 카메라와 표적을 함께 옮겨 시선 각도를 보존한다.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 전국 보기 버튼은 선택이 비어 있어도 구도를 다시 적용한다.
   useEffect(() => {
     const overview =
       bounds && bounds.width > 0 && bounds.height > 0
@@ -71,16 +78,28 @@ export function CameraRig({
         : null;
     const point = selected ?? [center[0], center[1] + 90];
     const close = Boolean(selected && focus);
+    // 빈 곳을 눌러 선택만 풀리면 카메라는 그 자리에 둔다 — 전체 구도로는 "전국 보기"에서만 돌아간다.
+    const cleared =
+      !selected &&
+      shown.current.selected !== null &&
+      shown.current.overview === overviewRevision;
+    shown.current = { selected, overview: overviewRevision };
+    if (cleared) return;
     if (!selected && overview) {
       desired.current.copy(overview.target);
       desiredPosition.current.copy(overview.position);
+    } else if (close) {
+      // 고른 곳으로 가까이 가되, 이미 더 가까이 보고 있었다면 그 거리·각도를 유지한 채 옮기기만 한다.
+      desired.current.set(point[0], 0, point[1]);
+      const offset = controls.current
+        ? camera.position.clone().sub(controls.current.target)
+        : CLOSE_OFFSET.clone();
+      desiredPosition.current
+        .copy(offset.length() < CLOSE_OFFSET.length() ? offset : CLOSE_OFFSET)
+        .add(desired.current);
     } else {
       desired.current.set(point[0], 0, point[1]);
-      desiredPosition.current.set(
-        point[0] + (close ? 75 : 430),
-        close ? 105 : 590,
-        point[1] + (close ? 155 : 720),
-      );
+      desiredPosition.current.set(point[0] + 430, 590, point[1] + 720);
     }
     if (reducedMotion) {
       if (controls.current) {

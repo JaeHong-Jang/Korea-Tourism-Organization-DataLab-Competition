@@ -103,7 +103,8 @@ for (const scene of [
     if (scene.sky === "day") {
       await page.goto("http://127.0.0.1:5184/?sceneFixture=1&view=miniature&sceneQuality=high&sceneFocus=26470&theme=day&at=2025-10-18T13:00+09:00");
       await expect(page.locator("html")).toHaveAttribute("data-scene-ready", "true", { timeout: 30_000 });
-      await expect(page.locator(".scene-name-tag:not(.scene-name-tag--far)").first()).toBeVisible();
+      // 카메라가 초점까지 미끄러지는 시간은 소프트웨어 렌더러 프레임 속도에 달려 있어 5초를 넘길 수 있다.
+      await expect(page.locator(".scene-name-tag:not(.scene-name-tag--far)").first()).toBeVisible({ timeout: 15_000 });
       await page.screenshot({ path: resolve(output, "T-432-scene-close.png") });
     }
   });
@@ -258,12 +259,20 @@ test("데이터 모드 전환 5회 뒤 GPU 리소스 수가 늘지 않는다", a
 		"true",
 		{ timeout: 30_000 },
 	);
+	// 전국 바탕 지도(지도 타일)는 장면 준비 뒤에 따로 도착하므로 도착(또는 없음)을 기다린 뒤 잰다.
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-scene-basemap",
+		/ready|none/,
+		{ timeout: 30_000 },
+	);
 	const memory = () => page.evaluate(() => window.__crowdcastSceneMemory?.());
-	const initial = await memory();
+	let initial = await memory();
 	// 데이터 모드는 땅 모형을 다시 만들어 부하가 크면 전환에 몇 초가 걸린다.
 	test.setTimeout(150_000);
 	const toggle = page.getByRole("button", { name: "데이터 모드" });
-	for (let index = 0; index < 5; index++) {
+	// 첫 전환 한 번은 준비 운동 — 멀리서 숨겨 둔 도로·테두리처럼 처음 그릴 때 올라가는 형상은 누수가 아니므로 그 뒤 값을 기준으로 삼는다.
+	for (let index = 0; index < 6; index++) {
+		if (index === 1) initial = await memory();
 		for (const pressed of ["true", "false"]) {
 			await toggle.click();
 			await expect(toggle).toHaveAttribute("aria-pressed", pressed, {

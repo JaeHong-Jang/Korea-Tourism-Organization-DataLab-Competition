@@ -10,20 +10,25 @@ type AssistantState = {
   openPanel: () => void;
   closePanel: () => void;
   chooseFestival: (festival: FestivalSummary) => void;
-  clearRequest: () => void;
+  // 요청된 행사를 꺼내면서 곧바로 비운다 — 효과가 두 번 돌아도(개발 모드 StrictMode) 한 번만 보낸다.
+  takeRequest: () => FestivalSummary | null;
   // 지도·목록에서 고른 행사를 고래 말풍선 카드로 띄운다(없으면 null).
   spotlight: FestivalSummary | null;
   showSpotlight: (festival: FestivalSummary | null) => void;
 };
 
 // 지도와 목록에서도 같은 상담 패널을 열고 행사 요청을 전달한다.
-export const useAssistantStore = create<AssistantState>((set) => ({
+export const useAssistantStore = create<AssistantState>((set, get) => ({
   open: window.location.pathname === "/consult",
   requestedFestival: null,
   openPanel: () => set({ open: true }),
   closePanel: () => set({ open: false }),
   chooseFestival: (requestedFestival) => set({ open: true, requestedFestival }),
-  clearRequest: () => set({ requestedFestival: null }),
+  takeRequest: () => {
+    const festival = get().requestedFestival;
+    if (festival) set({ requestedFestival: null });
+    return festival;
+  },
   spotlight: null,
   showSpotlight: (spotlight) => set({ spotlight }),
 }));
