@@ -15,7 +15,8 @@ import {
   type WhalePoint,
 } from "./whale-position";
 
-const size = { width: 92, height: 100 };
+export const WHALE_SIZE = { width: 92, height: 100 };
+const size = WHALE_SIZE;
 
 // 끌기와 누르기를 구분하고 키보드 위치 변경도 저장한다.
 export function FloatingWhale({
@@ -23,12 +24,18 @@ export function FloatingWhale({
   published,
   onClick,
   onMoved,
+  onPosition,
   panelOpen,
 }: {
   working: boolean;
   published: boolean;
   onClick: () => void;
   onMoved?: () => void;
+  // 고래가 움직일 때마다 위치를 알려 고른 행사 카드가 따라오게 한다.
+  onPosition?: (
+    point: WhalePoint,
+    size: { width: number; height: number },
+  ) => void;
   panelOpen: boolean;
 }) {
   const [position, setPosition] = useState<WhalePoint>(() =>
@@ -42,6 +49,9 @@ export function FloatingWhale({
     moved: boolean;
   } | null>(null);
   const suppressClick = useRef(false);
+  useEffect(() => {
+    onPosition?.(position, size);
+  }, [position, onPosition]);
 
   // 창 크기가 바뀌면 저장 위치도 새 화면 안으로 돌려놓는다.
   useEffect(() => {

@@ -95,3 +95,28 @@ export function rememberWhale(point: WhalePoint): void {
     // 브라우저 저장소가 막힌 경우에도 화면 위치는 유지한다.
   }
 }
+
+// 고른 행사 카드를 고래 바로 아래(공간이 모자라면 바로 위)에 가운데 맞춰 두고 화면 안(여백 8px)으로 제한한다.
+export function spotlightPlacement(
+  whale: WhalePoint,
+  whaleSize: WhaleSize,
+  card: WhaleSize,
+  viewport: WhaleSize = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  },
+): { left: number; top: number; side: "below" | "above"; arrow: number } {
+  const margin = 8;
+  const gap = 10;
+  const center = whale.x + whaleSize.width / 2;
+  const left = Math.max(
+    margin,
+    Math.min(center - card.width / 2, viewport.width - card.width - margin),
+  );
+  const below = whale.y + whaleSize.height + gap;
+  const fitsBelow = below + card.height <= viewport.height - margin;
+  const top = fitsBelow ? below : Math.max(margin, whale.y - gap - card.height);
+  // 말풍선 꼬리는 카드 안에서 고래 가운데를 가리킨다(카드 가장자리 16px 안쪽으로 제한).
+  const arrow = Math.max(16, Math.min(center - left, card.width - 16));
+  return { left, top, side: fitsBelow ? "below" : "above", arrow };
+}

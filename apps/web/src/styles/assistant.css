@@ -91,3 +91,10 @@
 .assistant-spotlight .festival-summary { margin: 0; padding: 0; border: 0; }
 @media (max-width: 640px) { .assistant-invitation.assistant-spotlight { right: var(--space-4); left: var(--space-4); bottom: 120px; width: auto; } .assistant-invitation.assistant-spotlight::after { display: none; } } /* 휴대폰에서는 고래 위로 화면 폭에 맞춘다 */
 @media (max-width: 640px) { .consult-page .team-group { grid-template-columns: 48px minmax(0, 1fr); gap: var(--space-2); } .consult-page .team-members { grid-template-columns: repeat(4, minmax(52px, 1fr)); gap: var(--space-2); } .consult-page .team-group:first-child .team-members { grid-template-columns: minmax(56px, calc((100% - 3 * var(--space-2)) / 4)); } } /* 휴대폰은 팀원 네 칸이 화면 폭 안에 들어오게 간격을 줄인다 */
+/* 고래에 붙은 고른 행사 카드: 위치는 인라인 left/top, 꼬리는 고래 가운데(--arrow)를 가리킨다. */
+.assistant-invitation.assistant-spotlight--anchored { right: auto; bottom: auto; }
+.app-shell:has(.scene-page) .assistant-spotlight.assistant-spotlight--anchored { right: auto; }
+.assistant-spotlight--anchored::after { right: auto; left: calc(var(--arrow, 50%) - 7px); bottom: auto; display: block; }
+.assistant-spotlight--below::after { top: -8px; transform: rotate(-45deg); }
+.assistant-spotlight--above::after { bottom: -8px; top: auto; transform: rotate(135deg); }
+@media (min-width: 1241px) { .app-shell:has(.scene-page) .assistant-spotlight.assistant-spotlight--anchored::after { display: block; } }
