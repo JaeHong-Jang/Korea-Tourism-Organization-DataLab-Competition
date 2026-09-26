@@ -128,10 +128,14 @@ export function buildLandModelForData(
     minZ: Infinity,
     maxZ: -Infinity,
   };
-  const palette = Array.from(
-    { length: 5 },
-    (_, index) => new Color(sceneColor(`land-${index + 1}`)),
-  );
+  // 이름 끝 글자(구·시·군)로 도시·시·군 색을 고르고 시군구마다 두 가지 명암을 번갈아 쓴다.
+  const shades = (kind: string) =>
+    [1, 2].map((shade) => new Color(sceneColor(`land-${kind}-${shade}`)));
+  const palette = {
+    urban: shades("urban"),
+    city: shades("city"),
+    rural: shades("rural"),
+  };
   const edgeColor = new Color(sceneColor("land-edge"));
   const maximum = totals ? Math.max(0, ...totals.values()) : 0;
 
@@ -151,7 +155,13 @@ export function buildLandModelForData(
               .getPropertyValue(`--seq-${step}`)
               .trim(),
           )
-        : palette[index % palette.length];
+        : palette[
+            sggnm.endsWith("구")
+              ? "urban"
+              : sggnm.endsWith("시")
+                ? "city"
+                : "rural"
+          ][index % 2];
     const colors = new Float32Array(positions.count * 3);
     // 윗면은 지역색, 옆면은 토큰의 흙 가장자리 색으로 칠한다.
     for (const group of geometry.groups) {

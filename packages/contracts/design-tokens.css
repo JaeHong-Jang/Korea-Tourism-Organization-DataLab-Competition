@@ -150,12 +150,23 @@
 /* 3D 미니 대한민국(장난감 재질, docs/plan/04 §3-6·§9) — 재질 색은 테마와 무관하고 낮·노을·밤은 조명·하늘로 바꾼다.
    땅 5색은 지역마다 번갈아 칠하는 장식색이다(데이터 의미 없음). 데이터 모드는 순차형 파랑을 쓴다 */
 :root {
-  --scene-land-1: #efe6d2;
-  --scene-land-2: #e2e8c8;
-  --scene-land-3: #f1dfc4;
-  --scene-land-4: #d8e3c7;
-  --scene-land-5: #ebe2cc;
-  --scene-land-edge: #cbbd9c;
+  /* 전국 판 땅: 지도처럼 도시(구)는 회색빛, 시는 연한 녹색, 군은 숲 녹색(시군구마다 두 가지 명암) */
+  --scene-land-1: #cfe0b6;
+  --scene-land-urban-1: #dcd9cf;
+  --scene-land-urban-2: #d3d0c5;
+  --scene-land-city-1: #d6e4be;
+  --scene-land-city-2: #cbdcb0;
+  --scene-land-rural-1: #b8d29b;
+  --scene-land-rural-2: #a8c78b;
+  --scene-land-edge: #9d8b6a;
+  /* 전국 판 산·강·도로 */
+  --scene-mountain-1: #6f9a5c;
+  --scene-mountain-2: #5f8a52;
+  --scene-mountain-3: #7faa68;
+  --scene-river: #6fb2d6;
+  --scene-asphalt: #3d4148;
+  --scene-road-dash: #f4f4ef;
+  --scene-rail-bed: #8d9096;
   --scene-sea: #9ecac5;
   --scene-board-top: #c89c6c;
   --scene-board-side: #a47a4f;

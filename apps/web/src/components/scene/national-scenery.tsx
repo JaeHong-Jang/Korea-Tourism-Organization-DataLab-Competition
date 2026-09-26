@@ -1,13 +1,18 @@
-// 전국 판 풍경 연출 묶음 — 시군구 건물 무리·골목 사람, 고속도로축 차, 철도 열차, 뱃길 배, 하늘길 비행기(데이터 모드에서는 숨김).
+// 전국 판 풍경 연출 묶음 — 시군구 건물 무리·골목 사람, 주요 강·산, 고속도로축 차, 철도 열차, 뱃길 배, 하늘길 비행기(데이터 모드에서는 숨김).
 import { useMemo } from "react";
 import { CityClusters } from "./city-clusters";
 import type { LandAnchor } from "./land-anchor";
+import { rivers } from "./motion/national-rivers";
 import { Planes } from "./motion/planes";
+import { railLines, roadRoutes } from "./motion/rail-lines";
+import { Ribbons } from "./motion/ribbons";
 import { RoadTraffic } from "./motion/road-traffic";
 import { Ships } from "./motion/ships";
 import { TownWalkers } from "./motion/town-walkers";
 import { Trains } from "./motion/trains";
+import { NationalMountains } from "./national-mountains";
 import type { SceneQuality } from "./quality";
+import { LAND_SURFACE_Y } from "./scene-height";
 
 export function NationalScenery({
   anchors,
@@ -33,12 +38,23 @@ export function NationalScenery({
     () => festivals.map(({ x, z }): [number, number] => [x, z]),
     [festivals],
   );
+  // 산은 도로·철도·강 위에 서지 않는다.
+  const lines = useMemo(() => [...roadRoutes, ...railLines, ...rivers], []);
   return (
     <>
       {motion && (
         <>
           {clusters && (
             <CityClusters anchors={anchors} avoid={avoid} quality={quality} />
+          )}
+          <Ribbons
+            routes={rivers}
+            width={2.2}
+            y={LAND_SURFACE_Y + 0.04}
+            color="river"
+          />
+          {clusters && (
+            <NationalMountains anchors={anchors} avoid={avoid} lines={lines} />
           )}
           <Trains reducedMotion={reducedMotion} diagnostic={diagnostic} />
           <RoadTraffic quality={quality} reducedMotion={reducedMotion} />

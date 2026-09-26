@@ -1,4 +1,4 @@
-// 전국 고속도로축(주요 도시를 이은 직선)에 부품으로 만든 장난감 승용차·택시·버스를 길이에 비례해 흘린다.
+// 전국 고속도로축(주요 도시를 이은 직선)을 검은 도로·흰 점선으로 깔고 부품으로 만든 장난감 승용차·택시·버스를 길이에 비례해 흘린다.
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   useCallback,
@@ -9,13 +9,9 @@ import {
 } from "react";
 import {
   BoxGeometry,
-  BufferGeometry,
   Color,
   type InstancedMesh,
-  LineBasicMaterial,
-  LineSegments,
   MeshLambertMaterial,
-  Vector3,
 } from "three";
 import type { Pose } from "../city/stamp";
 import { kindOf, stampCar } from "../city/vehicle-kit";
@@ -28,6 +24,7 @@ import {
   roadRoutes,
   routePosition,
 } from "./rail-lines";
+import { Ribbons } from "./ribbons";
 
 // 낮음에서는 그리지 않고 다른 단계는 장면당 최대 수를 고정한다.
 export function roadTrafficCap(quality: SceneQuality): number {
@@ -56,6 +53,10 @@ export function trafficSlots(cars: number) {
 
 // 승용차·택시·버스를 동네 3D와 같은 부품(차체·유리·지붕 — 전국 판에서는 바퀴가 점보다 작아 뺀다)으로 그린다 — 연출이며 실제 교통량이 아니다.
 const NATIONAL_VEHICLE_SIZE = 0.8;
+// 검은 아스팔트 띠(폭 2.6km)에 흰 가운데 점선, 차는 달리는 방향 오른쪽 차로(가운데서 0.9km)로 다닌다.
+const ROAD_WIDTH = 2.6;
+const LANE = 0.9;
+const ROAD_DASH = { length: 1.4, gap: 2.4, width: 0.16, color: "road-dash" };
 
 export function RoadTraffic({
   quality,
@@ -76,7 +77,7 @@ export function RoadTraffic({
   const pose = useMemo<Pose>(
     () => ({
       x: 0,
-      y: LAND_SURFACE_Y,
+      y: LAND_SURFACE_Y + 0.12,
       z: 0,
       heading: 0,
       size: NATIONAL_VEHICLE_SIZE,
@@ -88,38 +89,6 @@ export function RoadTraffic({
     () => new MeshLambertMaterial({ flatShading: true }),
     [],
   );
-  const roadMaterial = useMemo(
-    () => new LineBasicMaterial({ color: sceneColor("model-stage") }),
-    [],
-  );
-  const roadGeometry = useMemo(() => {
-    const points: Vector3[] = [];
-    for (const route of roadRoutes) {
-      for (let index = 1; index < route.points.length; index++) {
-        const from = route.points[index - 1];
-        const to = route.points[index];
-        const heading = Math.atan2(to[0] - from[0], to[1] - from[1]);
-        const offsetX = Math.cos(heading) * 5;
-        const offsetZ = -Math.sin(heading) * 5;
-        points.push(
-          new Vector3(
-            from[0] + offsetX,
-            LAND_SURFACE_Y + 0.5,
-            from[1] + offsetZ,
-          ),
-        );
-        points.push(
-          new Vector3(to[0] + offsetX, LAND_SURFACE_Y + 0.5, to[1] + offsetZ),
-        );
-      }
-    }
-    return new BufferGeometry().setFromPoints(points);
-  }, []);
-  const roads = useMemo(
-    () => new LineSegments(roadGeometry, roadMaterial),
-    [roadGeometry, roadMaterial],
-  );
-
   // 축마다 길이에 비례한 대수를 균등하게 벌려 달리되 실제 교통량처럼 해석되지 않게 한다.
   // biome-ignore lint/correctness/useExhaustiveDependencies: refs는 같은 useRef 객체를 가리킨다.
   const place = useCallback(
@@ -140,8 +109,8 @@ export function RoadTraffic({
           (slot / count) * line.length * 2,
           point,
         );
-        pose.x = point.x + Math.cos(point.heading) * 5;
-        pose.z = point.z - Math.sin(point.heading) * 5;
+        pose.x = point.x + Math.cos(point.heading) * LANE;
+        pose.z = point.z - Math.sin(point.heading) * LANE;
         pose.heading = point.heading;
         stampCar(parts, index, pose, 0);
       }
@@ -191,16 +160,20 @@ export function RoadTraffic({
     () => () => {
       box.dispose();
       material.dispose();
-      roadGeometry.dispose();
-      roadMaterial.dispose();
     },
-    [box, material, roadGeometry, roadMaterial],
+    [box, material],
   );
 
   if (cars === 0) return null;
   return (
     <group>
-      <primitive object={roads} />
+      <Ribbons
+        routes={roadRoutes}
+        width={ROAD_WIDTH}
+        y={LAND_SURFACE_Y + 0.06}
+        color="asphalt"
+        dash={ROAD_DASH}
+      />
       {(["body", "glass", "roof"] as const).map((name) => (
         <instancedMesh
           key={name}

@@ -32,16 +32,27 @@ export function QualityControl({
     recovered: false,
   });
   const injected = useRef(false);
+  const minimum = useThree((state) => state.performance.min);
+  const restore = useRef<number | undefined>(undefined);
+  // 회귀는 해상도 계수를 곧바로 낮추고 1.5초 뒤 되돌린다 — 한 프레임이 R3F 복귀 시간(200ms)보다 길어도
+  // performance.current의 짧은 하강을 React가 놓쳐 해상도가 안 낮아지는 일이 없게 한다.
+  const lower = useCallback(() => {
+    performance.regress();
+    onRegressFactor(minimum);
+    window.clearTimeout(restore.current);
+    restore.current = window.setTimeout(() => onRegressFactor(1), 1500);
+  }, [performance, minimum, onRegressFactor]);
+  useEffect(() => () => window.clearTimeout(restore.current), []);
 
   // 실제 프레임과 진단 입력 모두 같은 히스테리시스 판정을 거친다.
   const sample = useCallback(
     (frameMs: number, nowMs: number) => {
       if (fixed) return;
       const step = sampleQuality(qualityWindow.current, frameMs, nowMs);
-      if (step === -1) performance.regress();
+      if (step === -1) lower();
       if (step !== 0) onQualityChange(step);
     },
-    [fixed, performance, onQualityChange],
+    [fixed, lower, onQualityChange],
   );
   useFrame((state, delta) => {
     if (!injected.current)
@@ -74,7 +85,7 @@ export function QualityControl({
   // 진단 모드에서 회귀 신호가 실제 DPR까지 전달되는지 검사한다.
   useEffect(() => {
     if (!diagnostic) return;
-    window.__crowdcastRegress = () => performance.regress();
+    window.__crowdcastRegress = lower;
     window.__crowdcastFeedFrame = (frameMs: number, frames: number) => {
       injected.current = true;
       let now = Math.max(
@@ -90,7 +101,7 @@ export function QualityControl({
       delete window.__crowdcastRegress;
       delete window.__crowdcastFeedFrame;
     };
-  }, [diagnostic, performance, sample]);
+  }, [diagnostic, lower, sample]);
 
   return null;
 }
