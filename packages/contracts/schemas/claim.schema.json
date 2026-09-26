@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/claim.schema.json",
+  "title": "문장",
+  "description": "설명·판정·권고 문장. 발행 후보·발행이면 근거·검사·렌더 결과가 있어야 한다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "sessionId",
+    "forecastId",
+    "text",
+    "rendered",
+    "claimType",
+    "status",
+    "evidenceIds",
+    "placeholders",
+    "generatedBy",
+    "checks"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/claimId"
+    },
+    "sessionId": {
+      "$ref": "common.schema.json#/$defs/sessionId"
+    },
+    "forecastId": {
+      "$ref": "common.schema.json#/$defs/forecastId"
+    },
+    "text": {
+      "type": "string"
+    },
+    "rendered": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "claimType": {
+      "enum": [
+        "판정",
+        "수치",
+        "요인",
+        "권고",
+        "설명"
+      ]
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "candidate",
+        "published",
+        "rejected"
+      ]
+    },
+    "evidenceIds": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/evidenceId"
+      },
+      "uniqueItems": true
+    },
+    "placeholders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "quantityId",
+          "field"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "quantityId": {
+            "$ref": "common.schema.json#/$defs/quantityId"
+          },
+          "field": {
+            "enum": [
+              "value",
+              "p10",
+              "p50",
+              "p90"
+            ]
+          }
+        }
+      }
+    },
+    "generatedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "stepId"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "common.schema.json#/$defs/agentId"
+        },
+        "stepId": {
+          "$ref": "common.schema.json#/$defs/stepId"
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "checkKind",
+          "passed",
+          "revision"
+        ],
+        "properties": {
+          "checkKind": {
+            "enum": [
+              "evidence",
+              "number",
+              "rule",
+              "uncertainty"
+            ]
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "candidate",
+              "published"
+            ]
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "evidenceIds": {
+            "type": "array",
+            "minItems": 1
+          },
+          "rendered": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "array",
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

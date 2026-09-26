@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/event.schema.json",
+  "title": "행사",
+  "description": "정규화된 행사",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "type",
+    "startsAt",
+    "endsAt",
+    "timeOfDay",
+    "venue",
+    "sido",
+    "sigunguCode",
+    "sigunguName",
+    "fee",
+    "hostType",
+    "budgetKrw",
+    "edition",
+    "promo",
+    "hazards",
+    "expectedByHost",
+    "source"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/eventId"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "$ref": "common.schema.json#/$defs/eventType"
+    },
+    "startsAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "endsAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "timeOfDay": {
+      "$ref": "common.schema.json#/$defs/timeOfDay"
+    },
+    "venue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "lat",
+        "lng"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "lat": {
+          "type": "number",
+          "minimum": 33,
+          "maximum": 39
+        },
+        "lng": {
+          "type": "number",
+          "minimum": 124,
+          "maximum": 132
+        }
+      }
+    },
+    "sido": {
+      "type": "string"
+    },
+    "sigunguCode": {
+      "$ref": "common.schema.json#/$defs/sigunguCode"
+    },
+    "sigunguName": {
+      "type": "string"
+    },
+    "fee": {
+      "$ref": "common.schema.json#/$defs/fee"
+    },
+    "hostType": {
+      "$ref": "common.schema.json#/$defs/hostType"
+    },
+    "budgetKrw": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "edition": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "promo": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hazards": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/hazard"
+      },
+      "uniqueItems": true
+    },
+    "expectedByHost": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/quantity"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source": {
+      "enum": [
+        "사용자입력",
+        "문체부",
+        "TourAPI",
+        "데이터랩"
+      ]
+    }
+  }
+}

@@ -1,0 +1,318 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/backtest-summary.schema.json",
+  "title": "백테스트 요약",
+  "description": "검증 센터 입력(정답 = 일평균 방문객)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "modelRunId",
+    "modelVersion",
+    "target",
+    "evalYears",
+    "metrics",
+    "points",
+    "golden"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "modelRunId": {
+      "$ref": "common.schema.json#/$defs/modelRunId"
+    },
+    "modelVersion": {
+      "type": "string"
+    },
+    "target": {
+      "const": "일평균 방문객"
+    },
+    "evalYears": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "minItems": 1
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mdape",
+        "coverage80",
+        "coverageN",
+        "judgmentRecall",
+        "judgmentPrecision",
+        "baselineDeltaPp",
+        "comparablePairs"
+      ],
+      "properties": {
+        "mdape": {
+          "type": "number",
+          "minimum": 0,
+          "description": "일평균 방문객 MdAPE — 백분율(%)"
+        },
+        "coverage80": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "80% 구간 포함률 — 비율(0~1), 화면 표시만 ×100"
+        },
+        "coverageN": {
+          "type": "integer"
+        },
+        "judgmentRecall": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "judgmentPrecision": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "baselineDeltaPp": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "comparablePairs": {
+          "type": "integer"
+        }
+      }
+    },
+    "points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventId",
+          "name",
+          "year",
+          "tier",
+          "actual",
+          "p10",
+          "p50",
+          "p90"
+        ],
+        "properties": {
+          "eventId": {
+            "$ref": "common.schema.json#/$defs/eventId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer"
+          },
+          "tier": {
+            "enum": [
+              "goldA",
+              "goldB",
+              "silver"
+            ]
+          },
+          "actual": {
+            "type": "number"
+          },
+          "p10": {
+            "type": "number"
+          },
+          "p50": {
+            "type": "number"
+          },
+          "p90": {
+            "type": "number"
+          },
+          "level": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "예측 분포의 환산 판정 등급(1~4, 3 이상 = 수립 대상) — 순간 최대 환산은 가정"
+          },
+          "actualLevel": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "실측 일평균을 같은 환산으로 판정한 등급 — 사분면(예측 × 실측 대상 여부)용, 가정"
+          }
+        }
+      }
+    },
+    "golden": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventId",
+          "name",
+          "hostExpected",
+          "model",
+          "actual",
+          "unitsComparable",
+          "verdict"
+        ],
+        "properties": {
+          "eventId": {
+            "$ref": "common.schema.json#/$defs/eventId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "hostExpected": {
+            "anyOf": [
+              {
+                "$ref": "common.schema.json#/$defs/quantity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "p10",
+              "p50",
+              "p90",
+              "unit",
+              "timeUnit"
+            ],
+            "properties": {
+              "p10": {
+                "type": "number"
+              },
+              "p50": {
+                "type": "number"
+              },
+              "p90": {
+                "type": "number"
+              },
+              "unit": {
+                "$ref": "common.schema.json#/$defs/unit"
+              },
+              "timeUnit": {
+                "$ref": "common.schema.json#/$defs/timeUnit"
+              }
+            }
+          },
+          "actual": {
+            "$ref": "common.schema.json#/$defs/quantity"
+          },
+          "unitsComparable": {
+            "type": "boolean"
+          },
+          "verdict": {
+            "enum": [
+              "포함",
+              "벗어남",
+              "정성 비교"
+            ]
+          }
+        }
+      }
+    },
+    "disclosure": {
+      "description": "보고서의 핵심 분모·한계(주 모델 평가 표본 기준) — 서식4·S6가 그대로 인용한다",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evaluated",
+        "covered",
+        "byTier",
+        "skippedYears",
+        "unscorable",
+        "belowThresholdActual",
+        "baselinePairs"
+      ],
+      "properties": {
+        "evaluated": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "covered": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "byTier": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "gold",
+            "silver"
+          ],
+          "properties": {
+            "gold": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "silver": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "skippedYears": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "year",
+              "reason"
+            ],
+            "properties": {
+              "year": {
+                "type": "integer"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "unscorable": {
+          "description": "명절 실버 등 채점 불가 건수",
+          "type": "integer",
+          "minimum": 0
+        },
+        "belowThresholdActual": {
+          "description": "실측 판정이 수립 대상 미만인 평가 표본 수 — 0이면 경계 성능을 말할 수 없다",
+          "type": "integer",
+          "minimum": 0
+        },
+        "baselinePairs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "b0",
+            "b1",
+            "b2"
+          ],
+          "properties": {
+            "b0": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "b1": {
+              "description": "전회차 골드 실측 쌍",
+              "type": "integer",
+              "minimum": 0
+            },
+            "b2": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+# 사용된 관측값 정의를 없애 관측값 계보를 요구하는 S08·S09를 함께 위반한다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX id: <http://crowdcast.local/id/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE WHERE { id:obs-28110-sat-nonlocal ?predicate ?object . }

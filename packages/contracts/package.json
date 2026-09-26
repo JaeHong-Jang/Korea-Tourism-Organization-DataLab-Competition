@@ -1,0 +1,24 @@
+{
+  "name": "@crowdcast/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "인파예보 서비스 간 계약(JSON Schema·OpenAPI·SSE·JSON-LD·디자인 토큰)",
+  "type": "module",
+  "exports": {
+    "./schemas/*": "./schemas/*",
+    "./types": "./generated/ts/index.d.ts",
+    "./design-tokens.css": "./design-tokens.css",
+    "./jsonld/*": "./jsonld/*",
+    "./rules/*": "./rules/*"
+  },
+  "scripts": {
+    "gen": "node scripts/gen.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "json-schema-to-typescript": "^15.0.4",
+    "yaml": "^2.6.0"
+  }
+}

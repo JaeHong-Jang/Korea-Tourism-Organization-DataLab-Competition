@@ -1,0 +1,12 @@
+/* 타임라인 브러시는 좁은 패널에서도 주별 선택과 키보드 핸들을 유지한다. */
+.weekly-brush { display: grid; gap: var(--space-1); margin-top: var(--space-2); }
+.weekly-brush__heading { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
+.weekly-brush__heading span { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.weekly-brush__heading button { padding: 0 var(--space-1); }
+.weekly-brush__heading button:disabled { opacity: .5; cursor: default; }
+.weekly-brush__track { display: flex; gap: 2px; width: 100%; height: 18px; padding: 2px; touch-action: none; }
+.weekly-brush__track span { flex: 1; min-width: 2px; background: var(--surface-sunken); border-radius: var(--radius-input); }
+.weekly-brush__track span.is-selected { background: var(--brand); }
+.weekly-brush__handles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.weekly-brush__handles label { display: grid; gap: var(--space-1); color: var(--ink-2); }
+.weekly-brush__handles input { width: 100%; margin: 0; accent-color: var(--brand); }

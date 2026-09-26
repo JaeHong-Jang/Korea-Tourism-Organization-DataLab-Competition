@@ -1,0 +1,166 @@
+{
+  "note": "services/knowledge/ontology/master/*.ttl에서 생성 — 손으로 고치지 않는다(scripts/master_labels.py)",
+  "clauses": {
+    "law-disaster-act-enf-73-9": {
+      "title": "재난 및 안전관리 기본법 시행령 제73조의9",
+      "publisher": "국가법령정보센터",
+      "url": "https://www.law.go.kr/법령/재난및안전관리기본법시행령/제73조의9"
+    }
+  },
+  "rules": {
+    "rule-legal-1000": {
+      "title": "순간 최대 예상 인원 기준",
+      "kind": "법정",
+      "clauseId": "law-disaster-act-enf-73-9"
+    },
+    "rule-legal-hazard": {
+      "title": "인원 무관 위험 요소 기준",
+      "kind": "법정",
+      "clauseId": "law-disaster-act-enf-73-9"
+    },
+    "rule-check-capacity": {
+      "title": "동시 최대 수용인원 산정(사람이 다니는 면적 × 면적당 인원 상한)과 초과 시 입장 제한·대기 장소",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.134 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
+    "rule-check-fire": {
+      "title": "화기 관리",
+      "kind": "자체",
+      "clauseId": null
+    },
+    "rule-check-night-lighting": {
+      "title": "야간 조명",
+      "kind": "자체",
+      "clauseId": null
+    },
+    "rule-check-org-chart": {
+      "title": "안전관리 조직도·종합상황실·분야별 책임자 지정",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.137 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
+    "rule-check-org-hq": {
+      "title": "재난안전대책본부 구성과 유관기관 협조 체계",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.142 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
+    "rule-check-rain-shelter": {
+      "title": "우천 시 대피 공간",
+      "kind": "자체",
+      "clauseId": null
+    },
+    "rule-check-single-exit": {
+      "title": "단일 출입구",
+      "kind": "자체",
+      "clauseId": null
+    },
+    "rule-check-staff-distinct": {
+      "title": "행사진행요원과 안전관리요원 구분 표기",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.26 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
+    "rule-check-staff-focus": {
+      "title": "요원 규모는 지자체·경찰·소방과 협의, 출입구·주차장·차량 이동로·종료 시 출구 집중 배치",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.46·p.49~50 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
+    "rule-check-staff-plan": {
+      "title": "안전관리요원 배치도와 구역별 인원·임무·책임자, 비상연락망 마련",
+      "kind": "자체",
+      "clauseId": null,
+      "source": "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.26·p.138 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047"
+    },
+    "rule-check-stage-crowd": {
+      "title": "무대 앞 밀집",
+      "kind": "자체",
+      "clauseId": null
+    },
+    "rule-check-vehicle": {
+      "title": "차량 진입·보행 동선 분리",
+      "kind": "자체",
+      "clauseId": null
+    },
+    "rule-check-water-slope": {
+      "title": "수변·경사 구역 안전",
+      "kind": "자체",
+      "clauseId": null
+    },
+    "rule-internal-10pct": {
+      "title": "경계선 수립 권고 기준",
+      "kind": "자체",
+      "clauseId": null
+    },
+    "rule-internal-5000": {
+      "title": "대규모 기준",
+      "kind": "자체",
+      "clauseId": null
+    },
+    "rule-internal-50pct": {
+      "title": "수립 대상 가능성 기준",
+      "kind": "자체",
+      "clauseId": null
+    }
+  },
+  "datasets": {
+    "ds-admdongkor-boundaries": {
+      "title": "시군구 경계(admdongkor ver20251231)",
+      "url": "https://github.com/vuski/admdongkor/tree/master/ver20251231"
+    },
+    "ds-datalab-diy": {
+      "title": "행사/축제 DIY 맞춤 분석",
+      "url": "https://datalab.visitkorea.or.kr/datalab/portal/myd/myFstvList.do"
+    },
+    "ds-datalab-festival-status": {
+      "title": "문화관광축제 현황",
+      "url": "https://datalab.visitkorea.or.kr/datalab/portal/fes/getFesDataForm.do"
+    },
+    "ds-datalab-navi-search": {
+      "title": "지역별 검색건수(내비게이션)",
+      "url": "https://datalab.visitkorea.or.kr/datalab/portal/bda/getDomInqCnt.do"
+    },
+    "ds-datalab-poi-rank": {
+      "title": "지역별 관광지 검색순위(내비게이션)",
+      "url": "https://datalab.visitkorea.or.kr/datalab/portal/bda/getTourVisitCnt.do"
+    },
+    "ds-datalab-region-status": {
+      "title": "지역별 관광현황(성/연령·유입유출)",
+      "url": "https://datalab.visitkorea.or.kr/datalab/portal/loc/getAreaDataForm.do"
+    },
+    "ds-kasi-holidays-15012690": {
+      "title": "한국천문연구원_특일 정보",
+      "url": "https://www.data.go.kr/data/15012690/openapi.do"
+    },
+    "ds-kma-mid-15059468": {
+      "title": "기상청_중기예보 조회서비스",
+      "url": "https://www.data.go.kr/data/15059468/openapi.do"
+    },
+    "ds-kma-short-15084084": {
+      "title": "기상청_단기예보 조회서비스",
+      "url": "https://www.data.go.kr/data/15084084/openapi.do"
+    },
+    "ds-kto-concentration-15128555": {
+      "title": "한국관광공사_관광지 집중률 방문자 추이 예측 정보",
+      "url": "https://www.data.go.kr/data/15128555/openapi.do"
+    },
+    "ds-kto-tourapi-15101578": {
+      "title": "한국관광공사_국문 관광정보 서비스_GW",
+      "url": "https://www.data.go.kr/data/15101578/openapi.do"
+    },
+    "ds-kto-visitors-15101972": {
+      "title": "한국관광공사_빅데이터_지역별 방문자수_GW",
+      "url": "https://www.data.go.kr/data/15101972/openapi.do"
+    },
+    "ds-mcst-festival-plans": {
+      "title": "문화체육관광부_지역축제 정보",
+      "url": "https://www.data.go.kr/data/15143175/fileData.do"
+    },
+    "ds-mois-crowd-manual": {
+      "title": "지역축제 안전관리 매뉴얼",
+      "url": "https://www.mois.go.kr/"
+    }
+  }
+}

@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/event-draft.schema.json",
+  "title": "행사 초안",
+  "description": "받아쓰기 결과. 빠진 값(missing)은 코드가 계산한다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "type",
+    "startsAt",
+    "endsAt",
+    "timeOfDay",
+    "venueText",
+    "sigunguCode",
+    "sigunguName",
+    "fee",
+    "hostType",
+    "budgetKrw",
+    "promo",
+    "hazards",
+    "missing",
+    "ambiguities"
+  ],
+  "properties": {
+    "name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "type": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/eventType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "startsAt": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/datetime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "endsAt": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/datetime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "timeOfDay": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/timeOfDay"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "venueText": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sigunguCode": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/sigunguCode"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sigunguName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fee": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/fee"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "hostType": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/hostType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "budgetKrw": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "promo": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hazards": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/hazard"
+      },
+      "uniqueItems": true
+    },
+    "missing": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "name",
+          "type",
+          "startsAt",
+          "endsAt",
+          "venue",
+          "fee",
+          "budgetKrw"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "ambiguities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "candidates"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "label",
+                "value"
+              ],
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              }
+            },
+            "minItems": 2
+          }
+        }
+      }
+    }
+  }
+}

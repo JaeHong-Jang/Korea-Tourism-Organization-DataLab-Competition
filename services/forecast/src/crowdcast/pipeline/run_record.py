@@ -1,0 +1,250 @@
+"""실행 상태를 계약으로 검증하고 상대 경로·파일 해시와 함께 원자적으로 저장한다."""
+
+import hashlib
+import json
+import logging
+from datetime import date, datetime
+from pathlib import Path
+from secrets import token_hex
+from typing import Any
+
+from crowdcast import paths
+from crowdcast.api.contract import validate
+from crowdcast.data.call_ledger import KST, atomic_write
+from crowdcast.pipeline.record_privacy import public_text, record_path, relative_artifact
+from jsonschema import ValidationError
+
+FETCH_STATE_MARKER = "; 수집 상태 JSON: "
+LOGGER = logging.getLogger(__name__)
+
+
+# 후보 = 마지막 완료 실행(latest.json), 사용 모델 = 백테스트 게이트를 악화 없이 지난 실행(promoted.json).
+CANDIDATE_POINTER = "backtest/latest.json"
+PROMOTED_POINTER = "backtest/promoted.json"
+
+
+# 포인터가 가리키는 모델 버전 폴더를 찾는다(기본은 이번 실행의 후보).
+def model_directory(pointer_name: str = CANDIDATE_POINTER) -> Path | None:
+    pointer = paths.REPORTS / pointer_name
+    if not pointer.is_file():
+        return None
+    version = json.loads(pointer.read_bytes())["modelVersion"]
+    if (
+        not isinstance(version, str)
+        or not version
+        or Path(version).name != version
+        or version.startswith(".")
+    ):
+        raise ValueError("모델 버전은 models/ 아래 디렉터리 이름이어야 합니다")
+    return paths.MODELS / version
+
+
+# 포인터가 가리키는 버전의 파일만 모아 다른 학습 실행의 산출물을 섞지 않는다.
+def model_files() -> list[Path]:
+    directory = model_directory()
+    if directory is None or not directory.is_dir():
+        return []
+    return [
+        path
+        for path in directory.rglob("*")
+        if path.is_file() and not any(part.startswith(".") for part in path.relative_to(directory).parts)
+    ]
+
+
+# 필수 산출물 표의 모든 파일이 이번 단계에서 갱신됐는지 나노초 수정 시각으로 확인한다.
+def current_outputs(required: tuple[str, ...], started_ns: int) -> list[Path]:
+    roots = {"data": paths.DATA, "models": paths.MODELS, "reports": paths.REPORTS}
+    files = []
+    for relative in required:
+        root, _, name = relative.partition("/")
+        path = roots[root] / name
+        if not path.is_file():
+            raise ValueError(f"필수 산출물 없음: {relative}")
+        if path.stat().st_mtime_ns < started_ns:
+            raise ValueError(f"이번 단계에서 갱신되지 않은 산출물: {artifact_path(path)}")
+        files.append(path)
+    return files
+
+
+# 결정적인 runId를 재사용해도 이번 완료 표식이 새로 기록됐으면 해당 결과를 인정한다.
+def current_backtest(started_ns: int) -> Path:
+    pointer = paths.REPORTS / "backtest/latest.json"
+    if not pointer.is_file():
+        raise ValueError("이번 백테스트 완료 표식 없음: reports/backtest/latest.json")
+    latest = json.loads(pointer.read_bytes())
+    finished = datetime.fromisoformat(latest["finishedAt"])
+    if finished.tzinfo is None or finished.timestamp() < started_ns / 1_000_000_000:
+        raise ValueError("backtest/latest.json finishedAt이 이번 단계 시작보다 이전이거나 시간대 없음")
+    run_id = latest["runId"]
+    if not isinstance(run_id, str) or not run_id or Path(run_id).name != run_id or run_id.startswith("."):
+        raise ValueError("백테스트 runId는 reports/backtest/ 아래 디렉터리 이름이어야 합니다")
+    directory = pointer.parent / run_id
+    summary = directory / "backtest.json"
+    if not summary.is_file():
+        raise ValueError("이번 백테스트 backtest.json 없음")
+    result = json.loads(summary.read_bytes())
+    if result["runId"] != run_id or result["modelVersion"] != latest["modelVersion"]:
+        raise ValueError("백테스트 완료 표식과 결과의 runId·modelVersion 불일치")
+    return directory
+
+
+# dry·진행 중 기록을 제외하고 직전 수집 단계의 관측일·성공 시각을 이어받는다.
+def fetch_history() -> dict[str, str | None]:
+    for record in list_records(limit=None):
+        if record["runId"].startswith("dry-"):
+            continue
+        if record["finishedAt"] is None:
+            continue
+        for stage in record["stages"]:
+            message = stage["gate"]["message"]
+            if stage["name"] == "fetch" and FETCH_STATE_MARKER in message:
+                try:
+                    history = json.loads(message.rsplit(FETCH_STATE_MARKER, 1)[1])
+                    if isinstance(history, dict) and set(history) == {"latest", "last_success"}:
+                        if history["latest"] is not None:
+                            date.fromisoformat(history["latest"])
+                        if history["last_success"] is not None:
+                            if datetime.fromisoformat(history["last_success"]).tzinfo is None:
+                                raise ValueError("수집 성공 시각의 시간대 누락")
+                        return history
+                except (ValueError, TypeError):
+                    LOGGER.warning("실행 기록의 수집 상태 JSON을 건너뜁니다")
+    return {"latest": None, "last_success": None}
+
+
+# 깨진 파일·식별자 불일치·비공개 경로는 목록에서 제외하고 읽은 기록만 반환한다.
+def read_record(run_id: str, *, public: bool = True) -> dict[str, Any]:
+    record = json.loads(record_path(run_id).read_bytes())
+    validate("pipeline-run", record)
+    if record["runId"] != run_id:
+        raise ValueError("실행 식별자 불일치")
+    for stage in record["stages"]:
+        if any(not relative_artifact(item["path"]) for item in stage["artifacts"]):
+            raise ValueError("산출물 상대 경로 오류")
+        if public:
+            stage["gate"]["message"] = public_text(stage["gate"]["message"])
+    if public and record["summary"] is not None:
+        record["summary"] = public_text(record["summary"])
+    return record
+
+
+# 폴더 이름 대신 시간대가 있는 실제 시작 시각으로 정렬하고 유효 기록에만 상한을 적용한다.
+def list_records(limit: int | None = 50) -> list[dict[str, Any]]:
+    records = []
+    for path in (paths.REPORTS / "runs").glob("*/run.json"):
+        try:
+            records.append(read_record(path.parent.name))
+        except (OSError, ValueError, ValidationError) as error:
+            LOGGER.warning("실행 기록을 건너뜁니다 (%s)", type(error).__name__)
+    records.sort(key=lambda row: (datetime.fromisoformat(row["startedAt"]), row["runId"]), reverse=True)
+    return records if limit is None else records[:limit]
+
+
+# 큰 산출물도 한 번에 메모리에 올리지 않고 실제 파일 바이트를 해시한다.
+def sha256(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+# 공유 링크의 실제 위치와 무관하게 계약에는 저장소 기준 경로를 남긴다.
+def artifact_path(path: Path) -> str:
+    resolved = path.resolve()
+    for prefix, root in (("data", paths.DATA), ("models", paths.MODELS), ("reports", paths.REPORTS)):
+        if resolved.is_relative_to(root.resolve()):
+            return f"{prefix}/{resolved.relative_to(root.resolve()).as_posix()}"
+    # reports/runs·reports/backtest만 링크된 워크트리에서도 본 레포의 절대 경로를 노출하지 않는다.
+    for linked in ("runs", "backtest"):
+        folder = (paths.REPORTS / linked).resolve()
+        if resolved.is_relative_to(folder):
+            return f"reports/{linked}/" + resolved.relative_to(folder).as_posix()
+    raise ValueError("산출물은 data/·models/·reports/ 안에 있어야 합니다")
+
+
+# 같은 파일 목록은 같은 순서와 해시로 기록한다.
+def artifacts(files: list[Path]) -> list[dict[str, str]]:
+    return sorted(
+        ({"path": artifact_path(path), "sha256": sha256(path)} for path in set(files) if path.is_file()),
+        key=lambda row: row["path"],
+    )
+
+
+# 선택 범위 밖은 건너뜀, 실행 전인 선택 단계는 대기로 구별한다.
+def new_record(names: tuple[str, ...], selected: tuple[str, ...], dry: bool) -> dict[str, Any]:
+    started = datetime.now(KST)
+    run_id = started.strftime("%Y%m%dT%H%M%S%f+0900") + "-" + token_hex(3)
+    return {
+        "runId": ("dry-" if dry else "") + run_id,
+        "startedAt": started.isoformat(),
+        "finishedAt": None,
+        "status": "running",
+        "stages": [
+            {
+                "name": name,
+                "status": "pending" if name in selected else "skipped",
+                "gate": {"passed": None, "message": "실행 대기" if name in selected else "선택 범위 밖"},
+                "ms": None,
+                "artifacts": [],
+            }
+            for name in names
+        ],
+        "summary": "dry 입력·게이트 검사 중" if dry else "파이프라인 실행 중",
+    }
+
+
+# 사람이 보는 기록도 JSON의 게이트 문구·해시를 그대로 사용한다.
+def markdown(record: dict[str, Any]) -> str:
+    lines = [
+        f"# 실행 {record['runId']}",
+        "",
+        record["summary"],
+        "",
+        f"시작: {record['startedAt']}; 종료: {record['finishedAt']}",
+        "",
+        "참고용 — 담당자 검토 필수",
+        "",
+    ]
+    for stage in record["stages"]:
+        lines += [
+            f"## {stage['name']} · {stage['status']}",
+            "",
+            f"소요: {stage['ms']} ms; gate.passed={stage['gate']['passed']}",
+            "",
+            stage["gate"]["message"],
+            "",
+        ]
+        lines += [f"- {item['path']} · `{item['sha256']}`" for item in stage["artifacts"]]
+        lines.append("")
+    return "\n".join(lines)
+
+
+# 계약 위반이면 디렉터리조차 만들지 않고 직전 유효 기록을 보존한다.
+def write_record(record: dict[str, Any], *, update_latest: bool = True) -> Path:
+    validate("pipeline-run", record)
+    target = record_path(record["runId"])
+    content = json.dumps(record, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n"
+    directory = target.parent
+    atomic_write(directory / "run.json", content.encode())
+    atomic_write(directory / "run.md", markdown(record).encode())
+    if update_latest:
+        atomic_write(
+            directory.parent / "latest.json", (json.dumps({"runId": record["runId"]}) + "\n").encode()
+        )
+    return directory / "run.json"
+
+
+# 선택 단계의 미완료는 실패로 기록하고 게이트 실패와 다른 종료 코드를 준다.
+def finish_record(record: dict[str, Any], dry: bool, selected: tuple[str, ...]) -> int:
+    record["finishedAt"] = datetime.now(KST).isoformat()
+    failed = next((stage for stage in record["stages"] if stage["status"] == "failed"), None)
+    skipped = [s["name"] for s in record["stages"] if s["name"] in selected and s["status"] == "skipped"]
+    absent = [
+        s["name"] for s in record["stages"] if s["name"] in skipped and "진입점 없음:" in s["gate"]["message"]
+    ]
+    record["status"] = "failed" if failed or skipped else "passed"
+    summary = "; ".join(f"{stage['name']}={stage['status']}" for stage in record["stages"])
+    record["summary"] = ("dry 검사: " if dry else "실행 결과: ") + summary + "."
+    if absent:
+        record["summary"] += " 미구현 단계: " + ", ".join(absent) + "."
+    if unverified := [name for name in skipped if name not in absent]:
+        record["summary"] += " 미검증 단계: " + ", ".join(unverified) + "."
+    return 1 if failed else (2 if skipped else 0)

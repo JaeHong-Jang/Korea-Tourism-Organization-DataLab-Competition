@@ -1,0 +1,61 @@
+/* 전체 근거 그래프는 검증 화면 안에서 찾을 수 있게 하고 토큰 색만 사용한다. */
+.validation-graph-nav { display: flex; gap: var(--space-3); align-items: center; width: min(100% - 2 * var(--space-8), 1320px); margin: var(--space-6) auto 0; }
+.validation-graph-nav span, .validation-graph-nav a, .knowledge-page__nav > * { padding: var(--space-2) var(--space-3); border-radius: var(--radius-button); font-size: var(--text-ui); }
+.validation-graph-nav span, .knowledge-page__nav span { background: var(--surface-sunken); color: var(--ink); font-weight: 700; }
+.validation-graph-nav a, .knowledge-page__nav a { color: var(--ink-2); text-decoration: none; font-weight: 600; cursor: pointer; }
+.validation-graph-nav a:hover, .knowledge-page__nav a:hover { background: var(--surface-sunken); color: var(--ink); }
+.knowledge-page__nav { display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-6); }
+.knowledge-graph { padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.knowledge-graph__toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
+.knowledge-graph__toolbar p { margin: 0; color: var(--ink-2); font-size: var(--text-ui); }
+.knowledge-graph__filters button { display: inline-flex; align-items: center; gap: var(--space-2); }
+.knowledge-graph__toolbar button, .knowledge-graph__filters button { padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--ink); cursor: pointer; }
+.knowledge-graph__filters { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; border: 0; }
+.knowledge-graph__filters legend { margin-bottom: var(--space-2); color: var(--ink-2); font-size: var(--text-caption); }
+.knowledge-graph__filters button[aria-pressed="true"] { border-color: var(--select); background: var(--select-soft); color: var(--select-ink); font-weight: 700; }
+.knowledge-graph__search { position: relative; display: grid; gap: var(--space-2); }
+.knowledge-graph__search label { font-weight: 700; }
+.knowledge-graph__search input { width: 100%; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); }
+.knowledge-graph__search p { margin: 0; color: var(--ink-2); font-size: var(--text-ui); }
+.knowledge-graph__results { max-height: 250px; overflow: auto; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.knowledge-graph__results ul { margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+.knowledge-graph__results button, .knowledge-detail button, .knowledge-table button { padding: 0; border: 0; background: transparent; color: var(--link); text-align: left; text-decoration: underline; cursor: pointer; }
+.knowledge-graph__body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: var(--space-4); margin-top: var(--space-4); }
+.knowledge-graph__side { display: grid; align-content: start; gap: var(--space-4); min-width: 0; }
+.knowledge-graph__side .knowledge-graph__filters button { padding: var(--space-1) var(--space-2); font-size: var(--text-caption); }
+.knowledge-graph__canvas { height: min(76vh, 780px); min-height: 460px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.knowledge-graph__canvas { position: relative; }
+.knowledge-graph__canvas > p { padding: var(--space-5); }
+.knowledge-graph__canvas > .knowledge-graph__hint { position: absolute; left: var(--space-3); bottom: var(--space-3); margin: 0; padding: var(--space-1) var(--space-3); border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); font-size: var(--text-caption); pointer-events: none; }
+.knowledge3d-label { display: inline-block; padding: 2px var(--space-2); border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); font-size: var(--text-caption); font-weight: 600; white-space: nowrap; }
+.knowledge3d-label.is-selected { border-color: var(--select); box-shadow: var(--select-glow); color: var(--select-ink); }
+.knowledge-graph__swatch { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+.knowledge-graph__swatch--octahedron { border-radius: 1px; transform: rotate(45deg); }
+.knowledge-graph__swatch--box { border-radius: 2px; }
+.knowledge-graph__swatch--tetrahedron, .knowledge-graph__swatch--cone { border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.knowledge-graph__swatch--icosahedron { border-radius: 0; clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%); }
+.knowledge-graph__swatch--torus { box-shadow: inset 0 0 0 3px var(--ink-2); }
+.knowledge-graph__swatch--dot { width: 6px; height: 6px; }
+.knowledge-detail { min-height: 430px; max-height: min(68vh, 660px); overflow: auto; padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.knowledge-detail__kind { color: var(--link); font-size: var(--text-caption); font-weight: 700; }
+.knowledge-detail h2 { margin: var(--space-2) 0; font-size: var(--text-section); overflow-wrap: anywhere; }
+.knowledge-detail h3 { margin: var(--space-6) 0 var(--space-3); font-size: var(--text-subtitle); }
+.knowledge-detail p { color: var(--ink-2); overflow-wrap: anywhere; }
+.knowledge-detail a, .knowledge-table a { color: var(--link); text-decoration: underline; }
+.knowledge-detail ul { margin: 0; padding: 0; list-style: none; }
+.knowledge-detail li { display: grid; gap: var(--space-1); padding: var(--space-3) 0; border-top: 1px solid var(--line); }
+.knowledge-graph__results li + li { margin-top: var(--space-2); }
+.knowledge-detail li span { color: var(--ink-2); font-size: var(--text-caption); }
+.knowledge-table-wrap { max-height: min(68vh, 660px); overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-card); }
+.knowledge-table { width: 100%; border-collapse: collapse; font-size: var(--text-ui); }
+.knowledge-table caption { padding: var(--space-3); color: var(--ink-2); text-align: left; }
+.knowledge-table th, .knowledge-table td { min-width: 130px; padding: var(--space-3); border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+.knowledge-table th { background: var(--surface-sunken); }
+
+/* 좁은 화면에는 상세를 그래프 아래에 놓아 조작 영역을 유지한다. */
+@media (max-width: 800px) { .knowledge-graph__body { grid-template-columns: minmax(0, 1fr); } .knowledge-detail { min-height: 0; } }
+@media (max-width: 640px) { .knowledge-graph { padding: var(--space-4); } .knowledge-graph__canvas { min-height: 360px; height: 55vh; } }
+
+/* 동작 감소 설정에서는 노드 강조와 이동 애니메이션을 생략한다. */
+@media (prefers-reduced-motion: reduce) { .knowledge-graph *, .knowledge-graph *::before, .knowledge-graph *::after { animation-duration: 0s; transition-duration: 0s; } }
+@media (max-width: 960px) { .knowledge-graph__body { grid-template-columns: 1fr; } .knowledge-graph__canvas { height: 62vh; min-height: 380px; } }

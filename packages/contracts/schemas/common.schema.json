@@ -1,0 +1,559 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/common.schema.json",
+  "title": "공통 정의",
+  "description": "여러 계약이 함께 쓰는 형식. 날짜는 KST ISO 8601, 인원·금액은 정수, 값 없음은 null. id는 종류 접두사를 가진다",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*-[a-z0-9][a-z0-9_.:-]{1,120}$",
+      "description": "종류 접두사-이름. IRI = http://crowdcast.local/id/<id>"
+    },
+    "eventId": {
+      "type": "string",
+      "pattern": "^e-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "forecastId": {
+      "type": "string",
+      "pattern": "^f-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "evidenceId": {
+      "type": "string",
+      "pattern": "^ev-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "claimId": {
+      "type": "string",
+      "pattern": "^c-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "quantityId": {
+      "type": "string",
+      "pattern": "^q-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "observationId": {
+      "type": "string",
+      "pattern": "^obs-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "predictionRunId": {
+      "type": "string",
+      "pattern": "^pr-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "modelRunId": {
+      "type": "string",
+      "pattern": "^mr-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "sessionId": {
+      "type": "string",
+      "pattern": "^s-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "stepId": {
+      "type": "string",
+      "pattern": "^st-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "ruleId": {
+      "type": "string",
+      "pattern": "^rule-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "clauseId": {
+      "type": "string",
+      "pattern": "^law-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "assumptionId": {
+      "type": "string",
+      "pattern": "^as-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "datasetId": {
+      "type": "string",
+      "pattern": "^ds-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "factorId": {
+      "type": "string",
+      "pattern": "^fa-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "checklistId": {
+      "type": "string",
+      "pattern": "^ck-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "datetime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sigunguCode": {
+      "type": "string",
+      "pattern": "^[0-9]{5}$",
+      "description": "2025년 시군구 코드(방문자 API와 같다). IRI = http://crowdcast.local/id/<코드>"
+    },
+    "eventType": {
+      "enum": [
+        "불꽃",
+        "공연",
+        "대학",
+        "먹거리",
+        "꽃",
+        "전통",
+        "기타"
+      ]
+    },
+    "timeOfDay": {
+      "enum": [
+        "주간",
+        "야간",
+        "종일",
+        "미상"
+      ]
+    },
+    "fee": {
+      "enum": [
+        "무료",
+        "유료",
+        "미상"
+      ]
+    },
+    "hostType": {
+      "enum": [
+        "지자체",
+        "민간",
+        "대학",
+        "기타"
+      ]
+    },
+    "hazard": {
+      "enum": [
+        "폭죽",
+        "불",
+        "가연성가스",
+        "석유류",
+        "산",
+        "수면",
+        "차량진입",
+        "단일출입구",
+        "무대밀집",
+        "야간조명부족"
+      ]
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4,
+      "description": "1 소규모 · 2 수립 권고 · 3 수립 대상 · 4 대규모"
+    },
+    "timeUnit": {
+      "enum": [
+        "순간",
+        "일",
+        "기간누적"
+      ]
+    },
+    "spatialScope": {
+      "enum": [
+        "행사장",
+        "행정동",
+        "시군구"
+      ]
+    },
+    "valueKind": {
+      "enum": [
+        "사전예상",
+        "사후집계",
+        "예측",
+        "관측"
+      ]
+    },
+    "unit": {
+      "enum": [
+        "명",
+        "명/일",
+        "%",
+        "원",
+        "배",
+        "비율",
+        "일"
+      ],
+      "description": "인원(명·명/일)·비율(%·비율·배)·금액(원)·기간(일 — 예: 반영한 임시공휴일 일수)"
+    },
+    "agentId": {
+      "enum": [
+        "lead",
+        "dictation",
+        "local-guide",
+        "archivist",
+        "forecaster",
+        "source-check",
+        "number-check",
+        "rule-check",
+        "skeptic",
+        "explainer",
+        "card-maker",
+        "plan-writer",
+        "briefer"
+      ]
+    },
+    "team": {
+      "enum": [
+        "lead",
+        "analysis",
+        "verification",
+        "report"
+      ]
+    },
+    "period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/date"
+        },
+        "to": {
+          "$ref": "#/$defs/date"
+        }
+      }
+    },
+    "quantity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "value",
+        "p10",
+        "p50",
+        "p90",
+        "unit",
+        "timeUnit",
+        "spatialScope",
+        "valueKind",
+        "estimated",
+        "assumptionIds",
+        "announcedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/quantityId"
+        },
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "p10": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "p50": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "p90": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "unit": {
+          "$ref": "#/$defs/unit"
+        },
+        "timeUnit": {
+          "$ref": "#/$defs/timeUnit"
+        },
+        "spatialScope": {
+          "$ref": "#/$defs/spatialScope"
+        },
+        "valueKind": {
+          "$ref": "#/$defs/valueKind"
+        },
+        "estimated": {
+          "type": "boolean"
+        },
+        "assumptionIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assumptionId"
+          }
+        },
+        "announcedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "description": "수치 노드. 자리표시자는 id와 필드를 가리킨다"
+    },
+    "dailyMeanQuantity": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/quantity"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "const": "명/일"
+            },
+            "timeUnit": {
+              "const": "일"
+            },
+            "estimated": {
+              "const": false
+            },
+            "valueKind": {
+              "const": "예측"
+            },
+            "p10": {
+              "type": "number"
+            },
+            "p50": {
+              "type": "number"
+            },
+            "p90": {
+              "type": "number"
+            }
+          }
+        }
+      ],
+      "description": "일평균 방문객 예측(데이터랩 정의, 정답과 같은 단위)"
+    },
+    "peakQuantity": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/quantity"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "const": "명"
+            },
+            "timeUnit": {
+              "const": "순간"
+            },
+            "estimated": {
+              "const": true
+            },
+            "valueKind": {
+              "const": "예측"
+            },
+            "assumptionIds": {
+              "type": "array",
+              "minItems": 2
+            },
+            "p10": {
+              "type": "number"
+            },
+            "p50": {
+              "type": "number"
+            },
+            "p90": {
+              "type": "number"
+            }
+          }
+        }
+      ],
+      "description": "순간 최대(가정 2개 — 피크일 계수·동시체류율 — 로 환산한 추정)"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "datasetId",
+        "title",
+        "publisher",
+        "datalabMenu",
+        "accessUrl"
+      ],
+      "properties": {
+        "datasetId": {
+          "$ref": "#/$defs/datasetId"
+        },
+        "title": {
+          "type": "string"
+        },
+        "publisher": {
+          "type": "string"
+        },
+        "datalabMenu": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "accessUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "featureName",
+        "value",
+        "unit",
+        "datasetId",
+        "observedAt",
+        "availableAt",
+        "sigunguCode"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/observationId"
+        },
+        "featureName": {
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "$ref": "#/$defs/unit"
+        },
+        "datasetId": {
+          "$ref": "#/$defs/datasetId"
+        },
+        "observedAt": {
+          "$ref": "#/$defs/date"
+        },
+        "availableAt": {
+          "$ref": "#/$defs/date"
+        },
+        "sigunguCode": {
+          "$ref": "#/$defs/sigunguCode"
+        }
+      },
+      "description": "예측에 쓴 피처 관측값(S09 입력)"
+    },
+    "predictionRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "modelRunId",
+        "modelVersion",
+        "asOf",
+        "observationIds",
+        "trainRange"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/predictionRunId"
+        },
+        "modelRunId": {
+          "$ref": "#/$defs/modelRunId"
+        },
+        "modelVersion": {
+          "type": "string"
+        },
+        "asOf": {
+          "$ref": "#/$defs/date"
+        },
+        "observationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observationId"
+          },
+          "minItems": 1
+        },
+        "trainRange": {
+          "$ref": "#/$defs/period"
+        },
+        "modelVerdict": {
+          "enum": [
+            "통과",
+            "미검증"
+          ],
+          "description": "사용 모델의 검증 상태(reports/backtest/promoted.json의 verdict, 06 §8). 미검증이면 화면·인쇄·docx에 '골든 사례 0건 — 사례 재현 검증 전 임시 사용'"
+        }
+      }
+    },
+    "assumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "value",
+        "low",
+        "high",
+        "unit",
+        "basis",
+        "note"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/assumptionId"
+        },
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        },
+        "low": {
+          "type": "number"
+        },
+        "high": {
+          "type": "number"
+        },
+        "unit": {
+          "$ref": "#/$defs/unit"
+        },
+        "basis": {
+          "enum": [
+            "가정",
+            "매뉴얼",
+            "추정"
+          ]
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "description": "환산 가정(값과 범위)"
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "href": {
+          "type": "string",
+          "pattern": "^/api/[A-Za-z0-9_.:/-]+$",
+          "description": "누르면 여는 게이트웨이 경로(예: 계획 초안 docx 받기). 없으면 같은 상담에 id를 요청으로 보낸다(9/25 추가, 선택)."
+        }
+      }
+    }
+  }
+}

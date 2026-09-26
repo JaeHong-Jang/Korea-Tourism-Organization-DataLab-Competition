@@ -1,0 +1,128 @@
+# 규모 외 위험 항목은 docs/plan/06 §6의 자체 기준이며 conditions 중 하나라도 맞으면 켠다.
+rules:
+  rule-check-vehicle: # 기준 그래프에 등록된 자체 규칙
+    id: ck-vehicle # 체크리스트 항목 식별자
+    kind: 자체 # 법정 규모 판정과 별개의 자체 점검
+    clause_id: null # 자체 규칙에는 법정 조항을 붙이지 않는다
+    title: 차량 진입·보행 동선 분리 # docs/plan/06 §6 항목 문구
+    text: 차량 진입·보행 동선 분리 # docs/plan/06 §6 고정 문구
+    conditions:
+      hazards: [차량진입] # 자체: 행사 위험 요소에 차량진입
+  rule-check-water-slope: # 기준 그래프에 등록된 자체 규칙
+    id: ck-water-slope # 체크리스트 항목 식별자
+    kind: 자체 # 법정 규모 판정과 별개의 자체 점검
+    clause_id: null # 자체 규칙에는 법정 조항을 붙이지 않는다
+    title: 수변·경사 구역 안전 # docs/plan/06 §6 항목 문구
+    text: 수변·경사 구역 안전 # docs/plan/06 §6 고정 문구
+    conditions:
+      hazards: [수면, 산] # 자체: 행사 위험 요소 중 하나라도 해당
+  rule-check-night-lighting: # 기준 그래프에 등록된 자체 규칙
+    id: ck-night-lighting # 체크리스트 항목 식별자
+    kind: 자체 # 법정 규모 판정과 별개의 자체 점검
+    clause_id: null # 자체 규칙에는 법정 조항을 붙이지 않는다
+    title: 야간 조명 # docs/plan/06 §6 항목 문구
+    text: 야간 조명 # docs/plan/06 §6 고정 문구
+    conditions:
+      timeOfDay: [야간] # 자체: 행사 시간대가 야간
+      hazards: [야간조명부족] # 자체: 야간조명부족도 독립적으로 켠다
+  rule-check-fire: # 기준 그래프에 등록된 자체 규칙
+    id: ck-fire # 체크리스트 항목 식별자
+    kind: 자체 # 법정 규모 판정과 별개의 자체 점검
+    clause_id: null # 자체 규칙에는 법정 조항을 붙이지 않는다
+    title: 화기 관리 # docs/plan/06 §6 항목 문구
+    text: 화기 관리 # docs/plan/06 §6 고정 문구
+    conditions:
+      hazards: [불, 폭죽, 가연성가스, 석유류] # 자체: 행사 위험 요소 중 하나라도 해당
+  rule-check-single-exit: # 기준 그래프에 등록된 자체 규칙
+    id: ck-single-exit # 체크리스트 항목 식별자
+    kind: 자체 # 법정 규모 판정과 별개의 자체 점검
+    clause_id: null # 자체 규칙에는 법정 조항을 붙이지 않는다
+    title: 단일 출입구 # docs/plan/06 §6 항목 문구
+    text: 단일 출입구 # docs/plan/06 §6 고정 문구
+    conditions:
+      hazards: [단일출입구] # 자체: 행사 위험 요소에 단일출입구
+  rule-check-stage-crowd: # 기준 그래프에 등록된 자체 규칙
+    id: ck-stage-crowd # 체크리스트 항목 식별자
+    kind: 자체 # 법정 규모 판정과 별개의 자체 점검
+    clause_id: null # 자체 규칙에는 법정 조항을 붙이지 않는다
+    title: 무대 앞 밀집 # docs/plan/06 §6 항목 문구
+    text: 무대 앞 밀집 # docs/plan/06 §6 고정 문구
+    conditions:
+      hazards: [무대밀집] # 자체: 행사 위험 요소에 무대밀집
+      type: [공연] # 자체: 공연 유형도 독립적으로 켠다
+  rule-check-rain-shelter: # 기준 그래프에 등록된 자체 규칙
+    id: ck-rain-shelter # 체크리스트 항목 식별자
+    kind: 자체 # 법정 규모 판정과 별개의 자체 점검
+    clause_id: null # 자체 규칙에는 법정 조항을 붙이지 않는다
+    title: 우천 시 대피 공간 # docs/plan/06 §6 항목 문구
+    text: 우천 시 대피 공간 # docs/plan/06 §6 고정 문구
+    conditions:
+      pop: 30 # 자체: 이 값 이상이거나 pop·pty가 모두 null이면 켠다
+      pty: [비, 비/눈, 눈, 소나기] # 자체: 강수 형태 중 하나라도 해당
+      source: [없음] # 자체: weather 미제공도 source 없음으로 보아 대비한다
+      at: # 자체: 행사 시작이 날씨 at부터 아래 일수까지의 범위를 벗어나면 켠다
+        초단기실황: 0 # 자체 보수적 처리: 실황은 관측 순간에만 쓰고 미래 날씨로 간주하지 않는다
+        단기예보: 3 # T-202 게이트 피드백: 단기예보 유효 범위(일), 경계 포함
+        중기예보: 10 # T-202 게이트 피드백 및 docs/plan/06 §6: 중기예보 유효 범위(일), 경계 포함
+
+  # 매뉴얼의 계획 항목은 등급 판정 후 수립 권고 이상에 자체 점검으로 적용한다.
+  rule-check-staff-plan:
+    id: ck-staff-plan
+    kind: 자체
+    clause_id: null
+    title: 안전관리요원 배치도와 구역별 인원·임무·책임자, 비상연락망 마련
+    text: 안전관리요원 배치도와 구역별 인원·임무·책임자, 비상연락망 마련
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.26·p.138 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 요원 배치계획과 비상연락망을 마련한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
+  rule-check-staff-distinct:
+    id: ck-staff-distinct
+    kind: 자체
+    clause_id: null
+    title: 행사진행요원과 안전관리요원 구분 표기
+    text: 행사진행요원과 안전관리요원 구분 표기
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.26 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 단순 행사진행요원과 안전관리요원을 구분한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
+  rule-check-staff-focus:
+    id: ck-staff-focus
+    kind: 자체
+    clause_id: null
+    title: 요원 규모는 지자체·경찰·소방과 협의, 출입구·주차장·차량 이동로·종료 시 출구 집중 배치
+    text: 요원 규모는 지자체·경찰·소방과 협의, 출입구·주차장·차량 이동로·종료 시 출구 집중 배치
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.46·p.49~50 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 매뉴얼에 요원 인원 비율은 없으며 관계기관과 협의한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
+  rule-check-org-chart:
+    id: ck-org-chart
+    kind: 자체
+    clause_id: null
+    title: 안전관리 조직도·종합상황실·분야별 책임자 지정
+    text: 안전관리 조직도·종합상황실·분야별 책임자 지정
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.137 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 안전관리 조직과 책임 체계를 마련한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
+  rule-check-org-hq:
+    id: ck-org-hq
+    kind: 자체
+    clause_id: null
+    title: 재난안전대책본부 구성과 유관기관 협조 체계
+    text: 재난안전대책본부 구성과 유관기관 협조 체계
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.142 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 재난 대응 조직과 유관기관 협조 체계를 마련한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다
+  rule-check-capacity:
+    id: ck-capacity
+    kind: 자체
+    clause_id: null
+    title: 동시 최대 수용인원 산정(사람이 다니는 면적 × 면적당 인원 상한)과 초과 시 입장 제한·대기 장소
+    text: 동시 최대 수용인원 산정(사람이 다니는 면적 × 면적당 인원 상한)과 초과 시 입장 제한·대기 장소
+    source: 행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.134 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047
+    note: 순수점유면적 기준으로 1㎡당 4인 이하 권고. 면적당 상한은 현장 여건에 따라 지자체가 정한다.
+    conditions:
+      level_min: 2 # 자체 적용 조건: 최종 판정이 수립 권고 이상일 때 켠다

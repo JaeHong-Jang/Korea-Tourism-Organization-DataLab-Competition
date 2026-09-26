@@ -1,0 +1,8 @@
+# 기록 서비스의 정적 분석 수준과 검사 경로를 고정한다
+parameters:
+    level: 6
+    paths:
+        - src
+        - public
+        - bin
+        - tests

@@ -1,0 +1,161 @@
+[
+  {
+    "event": "agent_status",
+    "seq": 0,
+    "data": {
+      "agentId": "lead",
+      "team": "lead",
+      "state": "working",
+      "note": "요청을 나눠 맡겼어요",
+      "stepId": null,
+      "at": "2026-09-24T20:00:00+09:00"
+    }
+  },
+  {
+    "event": "agent_status",
+    "seq": 1,
+    "data": {
+      "agentId": "dictation",
+      "team": "analysis",
+      "state": "working",
+      "note": "행사 내용을 받아 적는 중",
+      "stepId": "st-dictation-01",
+      "at": "2026-09-24T20:00:01+09:00"
+    }
+  },
+  {
+    "event": "agent_step",
+    "seq": 2,
+    "data": {
+      "stepId": "st-dictation-01",
+      "agentId": "dictation",
+      "team": "analysis",
+      "startedAt": "2026-09-24T20:00:01+09:00",
+      "finishedAt": "2026-09-24T20:00:02+09:00",
+      "ms": 640,
+      "status": "done",
+      "inputSummary": "사용자 메시지 1건",
+      "outputEvidenceIds": [],
+      "outputClaimIds": [],
+      "usedLlm": true,
+      "model": "qwen3:8b",
+      "note": "행사 카드 채움"
+    }
+  },
+  {
+    "event": "event_card",
+    "seq": 3,
+    "data": {
+      "name": "영종 씨사이드파크 불꽃축제",
+      "type": "불꽃",
+      "startsAt": "2025-10-18T19:00:00+09:00",
+      "endsAt": "2025-10-18T21:00:00+09:00",
+      "timeOfDay": "야간",
+      "venueText": "영종 씨사이드파크",
+      "sigunguCode": "28110",
+      "sigunguName": "인천 중구",
+      "fee": "무료",
+      "hostType": "지자체",
+      "budgetKrw": null,
+      "promo": [],
+      "hazards": [
+        "폭죽"
+      ],
+      "missing": [
+        "budgetKrw"
+      ],
+      "ambiguities": []
+    }
+  },
+  {
+    "event": "agent_status",
+    "seq": 4,
+    "data": {
+      "agentId": "local-guide",
+      "team": "analysis",
+      "state": "done",
+      "note": "인천 중구로 찾았어요",
+      "stepId": "st-local-guide-01",
+      "at": "2026-09-24T20:00:02+09:00"
+    }
+  },
+  {
+    "event": "agent_step",
+    "seq": 5,
+    "data": {
+      "stepId": "st-local-guide-01",
+      "agentId": "local-guide",
+      "team": "analysis",
+      "startedAt": "2026-09-24T20:00:01+09:00",
+      "finishedAt": "2026-09-24T20:00:02+09:00",
+      "ms": 640,
+      "status": "done",
+      "inputSummary": "장소 \"영종 씨사이드파크\"",
+      "outputEvidenceIds": [
+        "ev-baseline-28110"
+      ],
+      "outputClaimIds": [],
+      "usedLlm": false,
+      "model": null,
+      "note": "후보 1곳"
+    }
+  },
+  {
+    "event": "agent_status",
+    "seq": 6,
+    "data": {
+      "agentId": "forecaster",
+      "team": "analysis",
+      "state": "done",
+      "note": "숫자를 뽑았어요",
+      "stepId": "st-forecaster-01",
+      "at": "2026-09-24T20:00:03+09:00"
+    }
+  },
+  {
+    "event": "gate",
+    "seq": 7,
+    "data": {
+      "gate": "A",
+      "passed": false,
+      "revision": 4,
+      "masterVersion": 1,
+      "violations": [
+        {
+          "check": "shacl",
+          "shapeId": "S09",
+          "nodeId": "obs-28110-sat-nonlocal",
+          "message": "관측값 공개일이 예보 기준일보다 늦다"
+        }
+      ]
+    }
+  },
+  {
+    "event": "agent_status",
+    "seq": 8,
+    "data": {
+      "agentId": "lead",
+      "team": "lead",
+      "state": "blocked",
+      "note": "관측값 날짜가 맞지 않아 멈췄어요",
+      "stepId": null,
+      "at": "2026-09-24T20:00:04+09:00"
+    }
+  },
+  {
+    "event": "error",
+    "seq": 9,
+    "data": {
+      "code": "ANALYSIS_GATE_FAILED",
+      "message": "분석 결과 검사를 통과하지 못해 숫자를 보내지 않았어요"
+    }
+  },
+  {
+    "event": "done",
+    "seq": 10,
+    "data": {
+      "sessionId": "s-demo-0001",
+      "forecastId": null
+    }
+  }
+]

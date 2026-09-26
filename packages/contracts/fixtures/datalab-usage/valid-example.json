@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-09-28T20:00:00+09:00",
+  "publishedClaims": 12,
+  "claimsWithEvidence": 12,
+  "claimsReachingDatalab": 7,
+  "evidenceByDataset": [
+    {
+      "datasetId": "ds-kto-visitors-15101972",
+      "title": "지역별 방문자수",
+      "datalabMenu": "빅데이터 > 지역별 방문자수(이동통신)",
+      "count": 7
+    }
+  ],
+  "shaclPassRate": 1.0
+}

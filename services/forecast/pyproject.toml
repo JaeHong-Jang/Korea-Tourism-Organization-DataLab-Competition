@@ -1,0 +1,56 @@
+# 예측 서비스 패키지 — 데이터 수집·라벨·모델·판정·API (레인 L1·L2, 이 파일은 오케스트레이터 소유)
+[project]
+name = "crowdcast-forecast"
+version = "0.1.0"
+description = "인파예보 예측 서비스"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic>=2.8",
+  "orjson>=3.10",
+  "polars>=1.8",
+  "holidays==0.105",
+  "duckdb>=1.1",
+  "pyarrow>=17",
+  "pandera[polars]>=0.20",
+  "lightgbm==4.6.*",
+  "mapie>=1.0",
+  "scikit-learn>=1.5",
+  "shap>=0.46",
+  "numba>=0.61",
+  "numpy>=1.26",
+  "scipy>=1.13",
+  "httpx>=0.27",
+  "tenacity>=9",
+  "typer>=0.12",
+  "openpyxl>=3.1",
+  "python-dotenv>=1.0",
+  "jsonschema>=4.23",
+  "pyyaml>=6.0",
+]
+
+[dependency-groups]
+challenger = [
+    "pymc>=5.20",
+]
+dev = ["pytest>=8", "ruff>=0.6", "respx>=0.21"]
+pipeline = [
+    "dagster>=1.10",
+    "dagster-webserver>=1.10",
+]
+
+[project.scripts]
+crowdcast = "crowdcast.pipeline.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/crowdcast"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["golden: 골든 케이스 평가(느림)", "network: 실제 API 호출(기본 제외)"]
+addopts = "-m 'not network'"

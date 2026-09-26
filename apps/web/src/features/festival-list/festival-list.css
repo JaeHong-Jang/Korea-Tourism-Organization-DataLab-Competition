@@ -1,0 +1,13 @@
+/* 접힌 목록의 본문과 정렬 입력은 접근성 상태에 맞춰 숨긴다. */
+.festival-list__body { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.festival-list__body[hidden] { display: none; }
+.festival-list__sort { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); font-size: var(--text-sm); white-space: nowrap; }
+.festival-list .festival-list__sort select { width: auto; min-width: 128px; } /* 선택 상자가 칸을 다 차지하면 '정렬'이 한 글자씩 꺾인다 */
+
+/* 접기 버튼은 패널 안에서 키보드 포커스를 분명히 드러낸다. */
+.festival-list__toggle { padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--link); cursor: pointer; }
+.festival-list__toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* 목록과 선택 요약이 접힌 만큼 떠 있는 패널의 높이를 줄인다. */
+.scene-page > .scene-list:has(.festival-list--collapsed) { min-height: 0; }
+.scene-list .festival-list--collapsed { flex: none; }

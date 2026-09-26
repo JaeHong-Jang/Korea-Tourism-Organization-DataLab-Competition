@@ -1,0 +1,86 @@
+[
+  {
+    "datasetId": "ds-admdongkor-boundaries",
+    "title": "시군구 경계(admdongkor ver20251231)",
+    "datalabMenu": null,
+    "count": 0
+  },
+  {
+    "datasetId": "ds-datalab-diy",
+    "title": "행사/축제 DIY 맞춤 분석",
+    "datalabMenu": "행사/축제 DIY 맞춤 분석",
+    "count": 0
+  },
+  {
+    "datasetId": "ds-datalab-festival-status",
+    "title": "문화관광축제 현황",
+    "datalabMenu": "[테마] 문화관광축제 현황",
+    "count": 0
+  },
+  {
+    "datasetId": "ds-datalab-navi-search",
+    "title": "지역별 검색건수(내비게이션)",
+    "datalabMenu": "빅데이터 › 지역별 검색건수(내비게이션)",
+    "count": 0
+  },
+  {
+    "datasetId": "ds-datalab-poi-rank",
+    "title": "지역별 관광지 검색순위(내비게이션)",
+    "datalabMenu": "빅데이터 › 지역별 관광지 검색순위(내비게이션)",
+    "count": 0
+  },
+  {
+    "datasetId": "ds-datalab-region-status",
+    "title": "지역별 관광현황(성/연령·유입유출)",
+    "datalabMenu": "지역별 관광현황(성/연령·유입유출)",
+    "count": 0
+  },
+  {
+    "datasetId": "ds-kasi-holidays-15012690",
+    "title": "한국천문연구원_특일 정보",
+    "datalabMenu": null,
+    "count": 0
+  },
+  {
+    "datasetId": "ds-kma-mid-15059468",
+    "title": "기상청_중기예보 조회서비스",
+    "datalabMenu": null,
+    "count": 0
+  },
+  {
+    "datasetId": "ds-kma-short-15084084",
+    "title": "기상청_단기예보 조회서비스",
+    "datalabMenu": null,
+    "count": 0
+  },
+  {
+    "datasetId": "ds-kto-concentration-15128555",
+    "title": "한국관광공사_관광지 집중률 방문자 추이 예측 정보",
+    "datalabMenu": "관광지 집중률 방문자 추이 예측",
+    "count": 0
+  },
+  {
+    "datasetId": "ds-kto-tourapi-15101578",
+    "title": "한국관광공사_국문 관광정보 서비스_GW",
+    "datalabMenu": null,
+    "count": 0
+  },
+  {
+    "datasetId": "ds-kto-visitors-15101972",
+    "title": "한국관광공사_빅데이터_지역별 방문자수_GW",
+    "datalabMenu": "빅데이터 › 지역별 방문자수(이동통신)",
+    "count": 0
+  },
+  {
+    "datasetId": "ds-mcst-festival-plans",
+    "title": "문화체육관광부_지역축제 정보",
+    "datalabMenu": null,
+    "count": 0
+  },
+  {
+    "datasetId": "ds-mois-crowd-manual",
+    "title": "지역축제 안전관리 매뉴얼",
+    "datalabMenu": null,
+    "count": 0
+  }
+]

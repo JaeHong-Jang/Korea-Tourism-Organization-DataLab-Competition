@@ -1,0 +1,52 @@
+{
+  "mode": "followup",
+  "forecastId": "f-yeongjong-2025",
+  "note": "후속 초안: 새 문장 없이 발행된 문장을 섹션에 배치 → 다음 할 일(docx 링크)만 보낸다(R6 예외 — 9/25)",
+  "events": [
+    {
+      "event": "agent_status",
+      "seq": 0,
+      "data": {
+        "agentId": "lead",
+        "team": "lead",
+        "state": "working",
+        "note": "요인 설명을 맡겼어요",
+        "stepId": null,
+        "at": "2026-09-24T20:05:00+09:00"
+      }
+    },
+    {
+      "event": "agent_status",
+      "seq": 1,
+      "data": {
+        "agentId": "plan-writer",
+        "team": "report",
+        "state": "done",
+        "note": "초안 9섹션 중 5섹션을 발행 문장으로 채웠어요",
+        "stepId": null,
+        "at": "2026-09-24T20:05:00+09:00"
+      }
+    },
+    {
+      "event": "suggest",
+      "seq": 2,
+      "data": {
+        "actions": [
+          {
+            "id": "plan-docx",
+            "label": "계획 초안 docx 받기",
+            "href": "/api/plans/plan-yeongjong-2025/export.docx"
+          }
+        ]
+      }
+    },
+    {
+      "event": "done",
+      "seq": 3,
+      "data": {
+        "sessionId": "s-demo-0001",
+        "forecastId": "f-yeongjong-2025"
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "event": "reply",
+  "seq": 3,
+  "data": {
+    "text": "약 12000명이 올 거예요",
+    "source": "template"
+  }
+}

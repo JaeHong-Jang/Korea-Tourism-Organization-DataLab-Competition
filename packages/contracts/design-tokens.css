@@ -1,0 +1,330 @@
+/* 인파예보 디자인 토큰 — 정본은 docs/plan/04 §3. 색 대비·색각 검사는 validate_palette.js로 계산했다 */
+
+/* 낮(기본) 테마: 따뜻한 중성 배경, 색은 데이터와 등급에만 */
+:root,
+[data-theme="day"] {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #ffffff;
+  --surface-sunken: #f3f2ee;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --line: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+  --brand: #256abf;
+  --brand-hover: #1c5cab;
+  --link: #256abf;
+  --focus: #256abf;
+  --on-brand: #ffffff;
+  --team-analysis: #2a78d6;
+  --team-report: #eb6834;
+  --team-verification: #1baf7a;
+  --team-lead: #1c2f55;
+  --diverging-mid: #f0efec;
+  /* 선택 표시: 낮은 파란 테두리, 밤은 달빛 노랑 테두리 + 은은한 빛(색만으로 구분하지 않게 늘 테두리와 함께) */
+  --select: #256abf;
+  --select-soft: #eaf1fb;
+  --select-ink: #1c4f8f;
+  --select-glow: 0 0 0 3px rgba(37, 106, 191, 0.18);
+}
+
+/* 밤 테마: 해 고도 −6° 이하이거나 사용자가 밤을 고르면 */
+[data-theme="night"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-sunken: #232321;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --line: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+  --brand: #256abf;
+  --brand-hover: #1c5cab;
+  --link: #86b6ef;
+  --focus: #86b6ef;
+  --on-brand: #ffffff;
+  --team-analysis: #3987e5;
+  --team-report: #d95926;
+  --team-verification: #199e70;
+  --team-lead: #9aa9c9;
+  --diverging-mid: #383835;
+  --select: #f3d27a;
+  --select-soft: rgba(243, 210, 122, 0.12);
+  --select-ink: #ffe7a8;
+  --select-glow: 0 0 0 3px rgba(243, 210, 122, 0.22), 0 0 18px rgba(243, 210, 122, 0.28);
+}
+
+/* 낮·밤 공통: 등급(상태 팔레트, 의미 고정), 차트, 타이포, 간격, 모서리, 그림자, 층, 모션 */
+:root {
+  /* 등급은 항상 아이콘 + 글자와 함께 쓴다(2·3등급은 흰 바탕 3:1 미만) */
+  --level-1: #0ca30c;
+  --level-2: #fab219;
+  --level-3: #ec835a;
+  --level-4: #d03b3b;
+
+  /* 범주형(행사 유형 7) 고정 순서 */
+  --cat-1: #2a78d6;
+  --cat-2: #eb6834;
+  --cat-3: #1baf7a;
+  --cat-4: #eda100;
+  --cat-5: #e87ba4;
+  --cat-6: #008300;
+  --cat-7: #4a3aa7;
+
+  /* 순차형(크기) 파랑 5단계 — 지도·타일 */
+  --seq-1: #cde2fb;
+  --seq-2: #86b6ef;
+  --seq-3: #3987e5;
+  --seq-4: #1c5cab;
+  --seq-5: #0d366b;
+
+  /* 발산형(괴리) 양 끝 */
+  --div-low: #2a78d6;
+  --div-high: #e34948;
+
+  /* 타이포 */
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --text-caption: 12px;
+  --text-sm: 13px;
+  --text-ui: 14px;
+  --text-body: 16px;
+  --text-subtitle: 18px;
+  --text-section: 22px;
+  --text-title: 28px;
+  --text-hero: 56px;
+
+  /* 간격(4px 단위) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-14: 56px;
+
+  /* 모서리 */
+  --radius-input: 6px;
+  --radius-button: 10px;
+  --radius-card: 14px;
+  --radius-panel: 20px;
+
+  /* 그림자 */
+  --shadow-1: 0 1px 2px rgba(11, 11, 11, 0.06);
+  --shadow-float: 0 12px 32px rgba(11, 11, 11, 0.14);
+
+  /* 층 */
+  --z-scene: 0;
+  --z-panel: 10;
+  --z-header: 20;
+  --z-sheet: 30;
+  --z-popover: 40;
+  --z-toast: 50;
+  --z-modal: 60;
+
+  /* 모션 */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-hover: 150ms;
+  --dur-panel: 250ms;
+  --dur-count: 400ms;
+  --dur-camera: 900ms;
+  --dur-daynight: 2000ms;
+}
+
+/* 움직임 줄이기 설정이면 전환을 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-hover: 0ms;
+    --dur-panel: 0ms;
+    --dur-count: 0ms;
+    --dur-camera: 0ms;
+    --dur-daynight: 0ms;
+  }
+}
+
+/* 3D 미니 대한민국(장난감 재질, docs/plan/04 §3-6·§9) — 재질 색은 테마와 무관하고 낮·노을·밤은 조명·하늘로 바꾼다.
+   땅 5색은 지역마다 번갈아 칠하는 장식색이다(데이터 의미 없음). 데이터 모드는 순차형 파랑을 쓴다 */
+:root {
+  /* 전국 판 땅: 지도처럼 도시(구)는 회색빛, 시는 연한 녹색, 군은 숲 녹색(시군구마다 두 가지 명암) */
+  --scene-land-1: #9dbb7e;
+  --scene-land-urban-1: #62666b;
+  --scene-land-urban-2: #5a5e63;
+  --scene-land-city-1: #9fbb80;
+  --scene-land-city-2: #97b479;
+  --scene-land-rural-1: #93b574;
+  --scene-land-rural-2: #8bae6c;
+  /* 전국 바탕 지도(실제 토지 피복): 도시 지역은 짙은 회색, 숲·농지·풀밭은 녹색 계열 — 흰 건물이 도드라지게 */
+  --scene-cover-urban: #5f6368;
+  --scene-cover-forest: #5f8f45;
+  --scene-cover-farm: #a8c27c;
+  --scene-cover-grass: #88b264;
+  --scene-map-highway: #f7f7f2;
+  --scene-map-road: #d8d8d2;
+  --scene-land-edge: #9d8b6a;
+  /* 전국 판 강·도로·흰 건물 */
+  --scene-map-building-1: #f6f6f3;
+  --scene-map-building-2: #e8e8e4;
+  --scene-map-building-3: #d9dad6;
+  --scene-river: #6fb2d6;
+  --scene-asphalt: #3d4148;
+  --scene-road-dash: #f4f4ef;
+  --scene-rail-bed: #8d9096;
+  --scene-sea: #9ecac5;
+  --scene-board-top: #c89c6c;
+  --scene-board-side: #a47a4f;
+  --scene-sky-day: #dde9f1;
+  --scene-sky-dusk: #f0c7a6;
+  --scene-sky-night: #1a2335;
+  /* 하늘 공 그라데이션: 위(천정)·지평선(위 3색)·아래(판 둘레 빈 공간) */
+  --scene-sky-day-top: #a9cdea;
+  --scene-sky-day-low: #cfe2ee;
+  --scene-sky-dusk-top: #6f86b3;
+  --scene-sky-dusk-low: #3b3552;
+  --scene-sky-night-top: #0e1830;
+  --scene-sky-night-low: #070c19;
+  /* 달(장식): 번짐·원판·무늬 */
+  --scene-moon-glow: rgba(255, 236, 196, 0.42);
+  --scene-moon-face: #fffaf0;
+  --scene-moon-shade: #e8d7ad;
+  --scene-moonlight: #cfdcff;
+  /* 낮 햇빛 번짐(장식, 더하기 합성) */
+  --scene-sunlight: #ffe2a8;
+  /* 동네 3D(참고 도시 모형): 짙은 회색 도시 바닥·밝은 도로·흰 건물·녹지·푸른 물 — 재질 색, 낮밤은 조명으로 */
+  --scene-city-land: #5d6166;
+  --scene-city-road: #aeb2b4;
+  --scene-city-road-major: #d2d5d6;
+  --scene-city-road-line: #e9c250;
+  --scene-city-path: #8d9296;
+  --scene-city-rail: #7b8087;
+  --scene-city-park: #6f9d57;
+  --scene-city-water: #6aa8c6;
+  --scene-city-wall: #f3f2ee;
+  --scene-city-roof: #fbf6ec;
+  --scene-city-wall-tall: #ebebe7;
+  --scene-city-wall-cool: #e3e3de;
+  --scene-glass-window: #9fb2c2;
+  --scene-city-window: #ffd27a;
+  /* 동네 3D 건물 종류별 벽·지붕·간판 색(정점 색 — 창문 그림과 곱해진다) */
+  --scene-bldg-apartment-1: #f4f1ea;
+  --scene-bldg-apartment-2: #efeeea;
+  --scene-bldg-apartment-3: #e1e4e3;
+  --scene-bldg-apartment-4: #f2f0ea;
+  --scene-bldg-accent-1: #3d5d8e;
+  --scene-bldg-accent-2: #4f7d5c;
+  --scene-bldg-accent-3: #8e4c46;
+  --scene-bldg-accent-4: #3f7f86;
+  --scene-bldg-office-1: #dde9f2;
+  --scene-bldg-office-2: #d4ebe5;
+  --scene-bldg-office-3: #e6e7e8;
+  --scene-bldg-office-4: #eceae5;
+  --scene-bldg-office-glass: #5d7f99;
+  --scene-bldg-villa-1: #eceae4;
+  --scene-bldg-villa-2: #e2e1dc;
+  --scene-bldg-villa-3: #f1efe9;
+  --scene-bldg-villa-4: #d9dad8;
+  --scene-bldg-house-1: #f6f0e1;
+  --scene-bldg-house-2: #f0eee6;
+  --scene-bldg-house-3: #eceae6;
+  --scene-bldg-house-4: #e3e5e2;
+  --scene-bldg-house-roof-1: #8e9397;
+  --scene-bldg-house-roof-2: #a4a8ab;
+  --scene-bldg-house-roof-3: #7f8589;
+  --scene-bldg-house-roof-4: #b6b9bb;
+  --scene-bldg-shop-1: #e8e2d6;
+  --scene-bldg-shop-2: #d8dcd8;
+  --scene-bldg-shop-3: #efeee9;
+  --scene-bldg-shop-4: #d5dce3;
+  --scene-bldg-sign-1: #d9453b;
+  --scene-bldg-sign-2: #2f6fb3;
+  --scene-bldg-sign-3: #f2c230;
+  --scene-bldg-sign-4: #3c9a5f;
+  --scene-bldg-sign-5: #ef7d2d;
+  --scene-bldg-sign-6: #f6f6f2;
+  --scene-bldg-school-1: #f1f0ea;
+  --scene-bldg-school-2: #e6e6e2;
+  --scene-bldg-factory-1: #dcdfe1;
+  --scene-bldg-factory-2: #cdd2d6;
+  /* 옥상: 옅은 초록 방수(빌라·상가·학교)·회색 콘크리트·공장 금속 */
+  --scene-bldg-roof-green: #bccab9;
+  --scene-bldg-roof-grey: #e2e2de;
+  --scene-bldg-roof-dark: #9aa1a6;
+  --scene-bldg-roof-metal: #7e94a7;
+  /* 동네 3D 귀가 길 띠 */
+  --scene-homeward: #f0a23a;
+  /* 전국 판 배·비행기 부품 색 */
+  --scene-ship-hull: #2f5f8f;
+  --scene-ship-cabin: #f6f4ee;
+  --scene-ship-funnel: #e0703a;
+  --scene-plane-body: #f4f5f7;
+  --scene-plane-tail: #2c6fb5;
+  /* 동네 사람 옷(장식 — 크림 바탕에서 보이게 진하되 등급 4색과 겹치지 않는 차분한 색) */
+  --scene-person-1: #4f68a8;
+  --scene-person-2: #9a4f74;
+  --scene-person-3: #2f8a86;
+  --scene-person-4: #7c5f35;
+  --scene-person-5: #6452a0;
+  --scene-person-6: #2f4a6e;
+  --scene-person-7: #6f8034;
+  --scene-person-8: #5a5f66;
+  /* 동네 사람 살색·머리·바지(장식) */
+  --scene-skin-1: #f3d2b3;
+  --scene-skin-2: #dcaf88;
+  --scene-skin-3: #b88363;
+  --scene-skin-4: #8e5d43;
+  --scene-hair-1: #2b2525;
+  --scene-hair-2: #4f3524;
+  --scene-hair-3: #23262f;
+  --scene-hair-4: #7c5a3a;
+  --scene-trouser-1: #2d3b52;
+  --scene-trouser-2: #3b3a42;
+  --scene-trouser-3: #555c6c;
+  --scene-trouser-4: #d9ccb0;
+  /* 동네 차·택시·버스·기차 재료(장식) */
+  --scene-car-1: #f7f5ee;
+  --scene-car-2: #c9473d;
+  --scene-car-3: #3f6fb5;
+  --scene-car-4: #7fbeb5;
+  --scene-car-5: #d8b453;
+  --scene-car-6: #5a5e6e;
+  --scene-car-7: #b7bac2;
+  --scene-taxi: #f2a93b;
+  --scene-bus-blue: #2d6fb7;
+  --scene-bus-green: #3a9a5c;
+  --scene-glass: #2b4257;
+  --scene-tire: #262c33;
+  --scene-headlamp: #fff3c4;
+  --scene-taillamp: #e04040;
+  --scene-train-body: #eef1f4;
+  --scene-train-stripe: #2f68b0;
+  --scene-train-roof: #8d949c;
+  /* 동네 나무 잎·줄기 */
+  --scene-tree-1: #6f9a6c;
+  --scene-tree-2: #86ad78;
+  --scene-tree-3: #5c8a64;
+  --scene-trunk: #9a7b55;
+  --scene-window-glow: #ffd98a;
+  --scene-shadow: rgba(40, 30, 20, 0.28);
+  /* 블록 인형 옷(데이터 의미 없음 — 등급·팀 색과 겹치지 않게 채도를 낮춘 파스텔 8색)과 칠하지 않은 나무 머리 */
+  --scene-doll-1: #c9b9dd;
+  --scene-doll-2: #e2bcc6;
+  --scene-doll-3: #cfd6c4;
+  --scene-doll-4: #e3d3b4;
+  --scene-doll-5: #b9c6d3;
+  --scene-doll-6: #d7c2d4;
+  --scene-doll-7: #c4ccd0;
+  --scene-doll-8: #e6c9b5;
+  --scene-doll-head: #efe3cf;
+  /* 축제 모형 재료(깃발 색은 --level-1~4) */
+  --scene-model-stage: #8d7f6e;
+  --scene-model-canvas: #f3ede2;
+  --scene-model-roof: #5b6168;
+  --scene-model-metal: #7b8087;
+  --scene-model-bed: #b98a78;
+  --scene-model-bloom: #e8a9bc;
+  --scene-model-banner: #f6f1e7;
+}

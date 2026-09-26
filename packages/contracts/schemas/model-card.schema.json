@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/model-card.schema.json",
+  "title": "모델 카드",
+  "description": "학습 실행(ModelRun). 기준 그래프에 등록한다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "modelVersion",
+    "target",
+    "trainRange",
+    "features",
+    "evalYears",
+    "backtestRunId",
+    "createdAt",
+    "notes"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/modelRunId"
+    },
+    "modelVersion": {
+      "type": "string"
+    },
+    "target": {
+      "const": "일평균 방문객"
+    },
+    "trainRange": {
+      "$ref": "common.schema.json#/$defs/period"
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "evalYears": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "backtestRunId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "createdAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

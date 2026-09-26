@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/weather.schema.json",
+  "title": "날씨",
+  "description": "기상청 실황·예보",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "lat",
+    "lng",
+    "at",
+    "sky",
+    "pty",
+    "temp",
+    "pop",
+    "source",
+    "fetchedAt"
+  ],
+  "properties": {
+    "lat": {
+      "type": "number"
+    },
+    "lng": {
+      "type": "number"
+    },
+    "at": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "sky": {
+      "enum": [
+        "맑음",
+        "구름많음",
+        "흐림",
+        null
+      ]
+    },
+    "pty": {
+      "enum": [
+        "없음",
+        "비",
+        "비/눈",
+        "눈",
+        "소나기",
+        null
+      ]
+    },
+    "temp": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "pop": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 100
+    },
+    "source": {
+      "enum": [
+        "초단기실황",
+        "단기예보",
+        "중기예보",
+        "없음"
+      ]
+    },
+    "fetchedAt": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/datetime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "tempMin": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "그날 최저기온(℃) — 단기예보 TMN·중기예보 도시 기온. 시각 기온(temp)과 따로, 없으면 null"
+    },
+    "tempMax": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "그날 최고기온(℃) — 단기예보 TMX·중기예보 도시 기온. 없으면 null"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "fixture": "fixtures/similar-event/valid-yeongjong-2024.json",
+  "schema": "similar-event",
+  "triples": [
+    ["*", "rdf:type", "cc:SimilarCase"],
+    ["*", "cc:aboutCase", "e-yeongjong-fireworks-2024"],
+    ["*", "cc:measured", "q-e-yeongjong-2024-measured"],
+    ["*", "cc:announced", "q-e-yeongjong-2024-announced"],
+    ["*", "cc:unitsComparable", "\"false\"^^xsd:boolean"],
+    ["*", "cc:similarity", "\"0.92\"^^xsd:double"],
+    ["*", "cc:supportedBy", "ev-case-e-yeongjong-2024"],
+    ["q-e-yeongjong-2024-measured", "rdf:type", "cc:Quantity"],
+    ["q-e-yeongjong-2024-measured", "cc:value", "\"15200\"^^xsd:double"],
+    ["q-e-yeongjong-2024-measured", "cc:timeUnit", "\"일\""],
+    ["ev-case-e-yeongjong-2024", "rdf:type", "cc:CaseEvidence"],
+    ["ev-case-e-yeongjong-2024", "cc:aboutCase", "e-yeongjong-fireworks-2024"],
+    ["ev-case-e-yeongjong-2024", "cc:derivedFromDataset", "ds-datalab-festival-status"]
+  ],
+  "absent": [
+    ["*", "cc:predictedFor", "*"]
+  ]
+}

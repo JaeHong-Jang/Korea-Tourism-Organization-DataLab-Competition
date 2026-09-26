@@ -1,0 +1,492 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/sse-event.schema.json",
+  "title": "SSE 이벤트",
+  "description": "게이트웨이 → 웹 스트림. forecast는 숫자 카드만, claim·evidence는 발행 뒤에만",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event",
+    "seq",
+    "data"
+  ],
+  "properties": {
+    "event": {
+      "enum": [
+        "agent_status",
+        "agent_step",
+        "event_card",
+        "ask",
+        "forecast",
+        "gate",
+        "claim",
+        "evidence",
+        "recommend",
+        "suggest",
+        "reply",
+        "done",
+        "error"
+      ]
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "data": {}
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "agent_status"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "agent-status.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "agent_step"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "agent-step.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "event_card"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "event-draft.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "ask"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "field",
+              "question",
+              "options"
+            ],
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "question": {
+                "type": "string"
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "label",
+                    "value"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "forecast"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "forecast-card.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "gate"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "gate-report.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "claim"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "allOf": [
+              {
+                "$ref": "claim.schema.json"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "const": "published"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "evidence"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "evidence.schema.json"
+                },
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "suggest"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "actions"
+            ],
+            "properties": {
+              "actions": {
+                "type": "array",
+                "items": {
+                  "$ref": "common.schema.json#/$defs/action"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "done"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sessionId",
+              "forecastId"
+            ],
+            "properties": {
+              "sessionId": {
+                "$ref": "common.schema.json#/$defs/sessionId"
+              },
+              "forecastId": {
+                "anyOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/forecastId"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "error"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "enum": [
+                  "ANALYSIS_GATE_FAILED",
+                  "SERVICE_UNAVAILABLE",
+                  "DEADLINE_EXCEEDED",
+                  "OUT_OF_SCOPE"
+                ]
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "recommend"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "query",
+              "items",
+              "total",
+              "note"
+            ],
+            "description": "방문객 행사 찾기(recommend 모드): 다가오는 일괄 예보에서 조건에 맞는 행사. 숫자는 festival-summary 값 그대로(새로 계산하지 않음)",
+            "properties": {
+              "query": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "text",
+                  "type",
+                  "sido",
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "anyOf": [
+                      {
+                        "$ref": "common.schema.json#/$defs/eventType"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "sido": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "from": {
+                    "anyOf": [
+                      {
+                        "$ref": "common.schema.json#/$defs/date"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "to": {
+                    "anyOf": [
+                      {
+                        "$ref": "common.schema.json#/$defs/date"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              },
+              "items": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "summary",
+                    "reason"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "$ref": "festival-summary.schema.json"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "description": "고른 이유(조건 일치 — 유형·지역·기간, 덜 붐비는 순 등). 숫자는 summary 값만"
+                    }
+                  }
+                }
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "조건에 맞는 행사 수(목록은 최대 10)"
+              },
+              "note": {
+                "type": "string",
+                "description": "고지(혼잡 예보는 참고용·추정 산식 기반 등)"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "reply"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "text",
+              "source"
+            ],
+            "description": "팀장의 대화형 답(모든 모드). 새 사실·숫자를 담지 않는다 — 숫자는 forecast 카드·recommend 목록·발행 문장에만. 게이트 대상이 아니므로 숫자(0-9)를 넣으면 계약 위반",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400,
+                "pattern": "^[^0-9]*$"
+              },
+              "source": {
+                "enum": [
+                  "llm",
+                  "template"
+                ],
+                "description": "로컬 LLM이 썼는지(검사 통과), 규칙 문장인지"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

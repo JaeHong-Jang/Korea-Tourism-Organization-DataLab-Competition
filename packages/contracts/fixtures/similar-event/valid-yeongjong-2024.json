@@ -1,0 +1,71 @@
+{
+  "eventId": "e-yeongjong-fireworks-2024",
+  "name": "영종 씨사이드파크 불꽃축제",
+  "year": 2024,
+  "sigunguName": "인천 중구",
+  "type": "불꽃",
+  "measured": {
+    "id": "q-e-yeongjong-2024-measured",
+    "name": "2024 일평균 방문객(실측)",
+    "value": 15200,
+    "p10": null,
+    "p50": null,
+    "p90": null,
+    "unit": "명/일",
+    "timeUnit": "일",
+    "spatialScope": "시군구",
+    "valueKind": "사후집계",
+    "estimated": false,
+    "assumptionIds": [],
+    "announcedAt": "2025-01-15"
+  },
+  "announced": {
+    "id": "q-e-yeongjong-2024-announced",
+    "name": "2024 주최측 발표",
+    "value": 50000,
+    "p10": null,
+    "p50": null,
+    "p90": null,
+    "unit": "명",
+    "timeUnit": "기간누적",
+    "spatialScope": "행사장",
+    "valueKind": "사후집계",
+    "estimated": false,
+    "assumptionIds": [],
+    "announcedAt": "2024-10-21"
+  },
+  "unitsComparable": false,
+  "similarity": 0.92,
+  "evidenceId": "ev-case-e-yeongjong-2024",
+  "evidence": [
+    {
+      "quantityIds": [
+        "q-e-yeongjong-2024-measured",
+        "q-e-yeongjong-2024-announced"
+      ],
+      "period": {
+        "from": "2024-10-19",
+        "to": "2024-10-19"
+      },
+      "source": {
+        "datasetId": "ds-datalab-festival-status",
+        "title": "데이터랩 문화관광축제 현황",
+        "publisher": "한국관광공사",
+        "datalabMenu": "축제 > 문화관광축제 현황",
+        "accessUrl": "https://datalab.visitkorea.or.kr"
+      },
+      "availableAt": "2025-01-15",
+      "ruleId": null,
+      "clauseId": null,
+      "caseEventId": "e-yeongjong-fireworks-2024",
+      "assumptionId": null,
+      "forecastId": null,
+      "modelVersion": null,
+      "checkResult": null,
+      "id": "ev-case-e-yeongjong-2024",
+      "kind": "case",
+      "title": "2024 영종 불꽃축제",
+      "summary": "같은 행사 전년 실측(데이터랩 기준 일평균)"
+    }
+  ]
+}

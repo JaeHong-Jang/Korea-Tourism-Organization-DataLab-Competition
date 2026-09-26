@@ -1,0 +1,1668 @@
+{
+ "nodes": {
+  "P-03": {
+   "status": "done"
+  },
+  "P-04": {
+   "status": "done"
+  },
+  "P-05": {
+   "status": "done"
+  },
+  "P-06": {
+   "status": "done"
+  },
+  "P-09": {
+   "status": "done"
+  },
+  "P-10": {
+   "status": "done"
+  },
+  "P-11": {
+   "status": "done"
+  },
+  "H1": {
+   "status": "done",
+   "updated": "2026-09-24T10:39:51.048Z",
+   "note": "키 발급·호출 확인(resultCode 0000)"
+  },
+  "H2": {
+   "status": "todo",
+   "note": "연천구석기축제 1건만 받음 — 문화관광축제·명예·예비 65개 축제별 다운로드 필요"
+  },
+  "H3": {
+   "status": "done",
+   "updated": "2026-09-25T04:53:41.943Z",
+   "evidence": "취소 — 데이터랩 DIY는 문화관광축제만·데이터 없음(9/25 사용자 결정, T-203b 조치 1로 대체)"
+  },
+  "H4": {
+   "status": "done",
+   "updated": "2026-09-24T10:39:51.158Z",
+   "note": "문체부 개최계획 2017~2026 xlsx"
+  },
+  "H5": {
+   "status": "done",
+   "updated": "2026-09-25T05:59:21.843Z",
+   "evidence": "docs/research/04_행안부_지역축제장_안전관리_매뉴얼_2024_요약.md (c7686c4)"
+  },
+  "H6": {
+   "status": "done",
+   "updated": "2026-09-24T10:39:51.274Z",
+   "note": "PHP 8.5.4, 확장 5종, Composer 2.9.5"
+  },
+  "H7": {
+   "status": "todo"
+  },
+  "H8": {
+   "status": "todo"
+  },
+  "H9a": {
+   "status": "todo"
+  },
+  "H10": {
+   "status": "todo"
+  },
+  "T-000": {
+   "status": "done",
+   "updated": "2026-09-24T10:49:28.155Z",
+   "evidence": "uv lock 81패키지(py3.12.14, lightgbm 4.6.0), check-ignore: graph·package·계약·backtest 추적/데이터·.env 제외, dev.mjs --check: Ollama 172.20.32.1 감지, sigungu.topo.json 252개 = API 코드 252(교집합), 부모 시 코드 12개 이중 계산 주의 기록"
+  },
+  "T-001": {
+   "status": "done",
+   "updated": "2026-09-24T12:50:00.337Z",
+   "evidence": "contracts v1.5: check 스키마29·픽스처128·오류0(재검사·자연 키·masterVersion 고정·revision 단조)"
+  },
+  "R-01": {
+   "status": "done",
+   "updated": "2026-09-24T12:56:50.543Z",
+   "evidence": "R-01 6차 PASS(gpt-6-astra, 0590c11): 체크리스트 ①~④ PASS, High 0. Med 1(masterVersion 재검사)은 후속 커밋에서 반영, check 129·오류 0"
+  },
+  "T-100": {
+   "status": "done",
+   "updated": "2026-09-24T14:33:42.642Z",
+   "evidence": "10,198행·DIY 60, test 181, 1회차 대비 날짜 교정 12건·모호 원문만 제외 42건(행 대조), 교차 리뷰 sol 반복 → 반례 테스트 고정, 3f45a36"
+  },
+  "T-101": {
+   "status": "done",
+   "updated": "2026-09-24T15:58:17.375Z",
+   "evidence": "test 250·키 누출 0, 2026 코드 대응·35일 공개일 산출물 확인, 교차 리뷰 sol PASS, region_daily 861505행"
+  },
+  "T-102": {
+   "status": "done",
+   "updated": "2026-09-24T17:31:34.481Z",
+   "evidence": "develop 병합 971f446, forecast 668 통과, events 10,179행·채움률 95.16%·가을 213건 계약 변환. TourAPI 보강 실행은 9/26 오케스트레이터(backlog)"
+  },
+  "T-103": {
+   "status": "done",
+   "updated": "2026-09-24T19:16:16.222Z",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  "T-107": {
+   "status": "todo"
+  },
+  "T-104": {
+   "status": "done",
+   "updated": "2026-09-24T20:40:11.210Z",
+   "evidence": "develop 병합, forecast 899, 실제 실행 3종(데이터 미수집 → 종료 1 정상), sol PASS"
+  },
+  "T-105": {
+   "status": "done",
+   "updated": "2026-09-25T05:20:41.121Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  },
+  "T-106": {
+   "status": "done",
+   "updated": "2026-09-25T07:05:07.080Z",
+   "evidence": "forecast 1448 (orchestrator L6), merge a9daf42"
+  },
+  "T-108": {
+   "status": "done",
+   "updated": "2026-09-25T07:24:32.893Z",
+   "evidence": "forecast 1619 (orchestrator L1), dagster validate (worker), merge 9e90ccf"
+  },
+  "T-201": {
+   "status": "done",
+   "updated": "2026-09-24T13:53:08.889Z",
+   "evidence": "게이트 1~4: test 38·ruff·✓ forecast, 교차 리뷰 sol PASS(형식 검사 반례 확인), f2b0916"
+  },
+  "T-202": {
+   "status": "done",
+   "updated": "2026-09-24T14:51:02.199Z",
+   "evidence": "test 185(규칙)·forecast 전체 통과, 경계 표시 표 직접 확인, 교차 리뷰 sol PASS"
+  },
+  "T-203": {
+   "status": "done",
+   "updated": "2026-09-24T22:44:11.807Z",
+   "evidence": "R-04 되돌림 반영: 전회차 골드만·분모 공개(disclosure)·단순 모델 등급 가중치, 사용 모델 v1-01c9b4 단순 49.3%·57.0%(49/86), forecast 1010"
+  },
+  "R-04": {
+   "status": "done",
+   "updated": "2026-09-24T22:44:11.891Z",
+   "evidence": "sol r3 PASS — 라벨·가중치/공개 시점 646칸 위반 0/연도 분리/분모 공개 모두 PASS, Med(골드B 영역) → backlog T-203b"
+  },
+  "T-204": {
+   "status": "done",
+   "updated": "2026-09-25T00:20:31.474Z",
+   "evidence": "develop 병합, forecast 1115, 계약 오류 0, gateway 744, 실사용 게이트 A 통과, sol PASS"
+  },
+  "T-205": {
+   "status": "done",
+   "updated": "2026-09-25T02:06:16.943Z",
+   "evidence": "develop 53559d1 · forecast 1166 통과 · sol PASS(3회차) · runId 세 산출물 일치"
+  },
+  "T-206": {
+   "status": "done",
+   "updated": "2026-09-25T06:49:10.363Z",
+   "evidence": "forecast 1456 (worker), 7 JSON contract-valid, merge 75b288e"
+  },
+  "T-207": {
+   "status": "done",
+   "updated": "2026-09-25T04:09:27.072Z",
+   "evidence": "develop 442924c · forecast 1294 · sol PASS · 선정 20건(등록은 9/29 오케스트레이터)"
+  },
+  "T-203b": {
+   "status": "done",
+   "updated": "2026-09-25T05:20:41.021Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  },
+  "T-210": {
+   "status": "done",
+   "updated": "2026-09-25T06:50:19.300Z",
+   "evidence": "weather 192 (orchestrator), full forecast 1517 (worker), merge 1ff0942; 실호출은 9/26 00시 이후"
+  },
+  "T-208": {
+   "status": "done",
+   "updated": "2026-09-25T07:34:00.195Z",
+   "evidence": "forecast 1676·knowledge 299 (orchestrator, merged L2), merge 0cb2c37"
+  },
+  "T-209": {
+   "status": "done",
+   "updated": "2026-09-25T06:49:10.453Z",
+   "evidence": "T-206에 합침(I3~I6)"
+  },
+  "T-211": {
+   "status": "done",
+   "updated": "2026-09-25T07:25:44.747Z",
+   "evidence": "challenger 25 tests·forecast 1595 (worker uvloop), comparison bt-v1 2025 n=86, merge c316b38"
+  },
+  "T-601": {
+   "status": "done",
+   "updated": "2026-09-24T13:53:08.965Z",
+   "evidence": "게이트 1~4: test 89·ruff·✓ knowledge·경고 37268→1, 교차 리뷰 sol PASS(Python/JS 판정 불일치 0/112, 422 무쓰기 20/20), a97cacd"
+  },
+  "T-602": {
+   "status": "done",
+   "updated": "2026-09-24T14:45:40.654Z",
+   "evidence": "test 222·ruff, 교차 리뷰 sol 재리뷰 PASS(S09 발행 거부·응답 계약·위반 집합 확인), 300트리플 76ms"
+  },
+  "T-603": {
+   "status": "done",
+   "updated": "2026-09-24T15:37:38.607Z",
+   "evidence": "test 246·ruff·✓ knowledge, 교차 리뷰 sol PASS(Med → T-604)"
+  },
+  "T-604": {
+   "status": "done",
+   "updated": "2026-09-24T23:08:40.104Z",
+   "evidence": "develop 병합(4bc542f), knowledge 290, sol PASS, 기동 적재 promoted.json"
+  },
+  "T-605": {
+   "status": "done",
+   "updated": "2026-09-25T07:43:37.781Z",
+   "evidence": "knowledge 324 (orchestrator L6 merged), merge f8ca90a"
+  },
+  "T-301": {
+   "status": "done",
+   "updated": "2026-09-24T14:22:49.426Z",
+   "evidence": "되돌림 1회차: 메서드 명시·계약 오류 응답·.env, test 79·build·lint, 교차 리뷰 sol PASS"
+  },
+  "T-302": {
+   "status": "done",
+   "updated": "2026-09-24T15:26:37.827Z",
+   "evidence": "게이트 1~4 통과, 교차 리뷰 PASS"
+  },
+  "T-303": {
+   "status": "done",
+   "updated": "2026-09-24T17:00:27.136Z",
+   "evidence": "피드백 2회(S04·fake 제한·되묻기 3개·위험 확인·마감·병합 규칙), sol 교차 리뷰 PASS, develop 병합 뒤 gateway 276·build·lint, 수동 확인 실제 Ollama·knowledge"
+  },
+  "T-304": {
+   "status": "done",
+   "updated": "2026-09-25T02:21:40.872Z",
+   "evidence": "develop a352073 · gateway 821·forecast 1173·web 137(깨끗한 상태) · sol PASS · 실사용 T-304.live.md"
+  },
+  "T-305": {
+   "status": "done",
+   "updated": "2026-09-25T03:21:16.365Z",
+   "evidence": "develop 2e83ebb · gateway 853(깨끗한 상태) · sol PASS · 실사용 후속 6종"
+  },
+  "R-05": {
+   "status": "done",
+   "updated": "2026-09-25T03:44:24.854Z",
+   "evidence": "2차 PASS — 체크리스트 5/5, develop b71906d"
+  },
+  "T-306": {
+   "status": "done",
+   "updated": "2026-09-25T04:10:57.488Z",
+   "evidence": "develop 76596bc · gateway 898 · sol PASS · docx 실사용"
+  },
+  "T-307": {
+   "status": "done",
+   "updated": "2026-09-24T21:51:25.491Z",
+   "evidence": "develop 병합 0a5502e, gateway 744·build·lint·✓, sol PASS 3회(재디스패치 2회)"
+  },
+  "T-308": {
+   "status": "done",
+   "updated": "2026-09-25T05:20:41.219Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  },
+  "T-309": {
+   "status": "done",
+   "updated": "2026-09-25T07:34:07.000Z",
+   "evidence": "gateway 1016 (orchestrator L3), whatif 10 scenarios, eval 23/23, merge 618c6f6"
+  },
+  "T-501": {
+   "status": "done",
+   "updated": "2026-09-24T13:29:43.654Z",
+   "evidence": "게이트 1~4 통과(게이트 3 두 번 되돌림: REPLACE 우회 → rowid 충돌 우회), composer test 7·46, stan 0, 우회 7종 직접 재현 거부, 교차 리뷰 astra 3차 PASS, a288638"
+  },
+  "T-502": {
+   "status": "done",
+   "updated": "2026-09-24T14:54:56.287Z",
+   "evidence": "test 18·151·stan 0, 실서버 무결성 픽스처 13/13 계약과 같은 판정, 교차 리뷰 astra PASS(Med 2 직접 반영)"
+  },
+  "T-504": {
+   "status": "done",
+   "updated": "2026-09-24T17:42:16.657Z",
+   "evidence": "develop 병합 111eabf, records 38·stan·✓, docx 예시 직접 대조, astra PASS"
+  },
+  "T-503": {
+   "status": "done",
+   "updated": "2026-09-24T15:26:37.748Z",
+   "evidence": "게이트 1~4 통과, 교차 리뷰 PASS"
+  },
+  "T-505": {
+   "status": "done",
+   "updated": "2026-09-24T19:46:32.886Z",
+   "evidence": "develop 병합 40b9b50, records 42·stan, 토큰 마스킹 실측, astra PASS"
+  },
+  "R-02": {
+   "status": "done",
+   "updated": "2026-09-24T14:57:48.381Z",
+   "evidence": "R-02 3차 PASS(sol): 1차 High(게이트웨이 메서드)→T-301 되돌림 해결, 2차 High(dev.mjs .env)→직접 수정 해결, 새 결함 0, Med·Low는 backlog"
+  },
+  "T-430": {
+   "status": "done",
+   "updated": "2026-09-24T15:02:21.395Z",
+   "evidence": "test 20·build·lint·색 하드코딩 0, 스크린샷 낮·밤 직접 확인, 교차 리뷰 astra PASS"
+  },
+  "T-401": {
+   "status": "done",
+   "updated": "2026-09-24T13:28:09.527Z",
+   "evidence": "게이트 1~4 통과: build·test 4·lint·e2e 10·스크린샷 9(직접 확인)·Range 206·색 하드코딩 0, 교차 리뷰 astra PASS(Med 4 → T-402 이월), d5db41a"
+  },
+  "T-402": {
+   "status": "done",
+   "updated": "2026-09-24T16:58:02.594Z",
+   "evidence": "R-03 되돌림 2회: 근거 오연결 등 5건 + 칩 배치 해결(astra 확인), 포커스 복귀 Med는 T-406 이월(견본 페이지). test 73·build·lint, 시각 확인"
+  },
+  "R-03": {
+   "status": "done",
+   "updated": "2026-09-24T17:40:30.801Z",
+   "evidence": "2차 PASS: 1차 5건 중 4건 해결·간격 일부 Low, 밤 중앙선 대비 Low → T-406·T-405로 이월"
+  },
+  "T-405": {
+   "status": "done",
+   "updated": "2026-09-24T19:19:08.954Z",
+   "evidence": "develop 병합, web 121·build·lint, 녹화 SSE 3클릭 e2e, astra PASS"
+  },
+  "T-406": {
+   "status": "done",
+   "updated": "2026-09-25T04:59:11.460Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과(web 152), develop 73aa3fe"
+  },
+  "R-06": {
+   "status": "todo"
+  },
+  "T-404": {
+   "status": "done",
+   "updated": "2026-09-24T19:16:16.055Z",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  "T-407": {
+   "status": "done",
+   "updated": "2026-09-25T00:31:37.381Z",
+   "evidence": "develop 병합, web 137·build, astra PASS, 스크린샷 확인"
+  },
+  "T-431": {
+   "status": "done",
+   "updated": "2026-09-24T16:34:41.612Z",
+   "evidence": "워커 sol 피드백 2회 + 오케스트레이터 DPR 직접 수정(astra 교차 리뷰 PASS). develop 병합 후 web 71·e2e 17·build·lint 통과, 낮 스크린샷 확인. 수정 전 코드에서 새 DPR 테스트 실패 확인"
+  },
+  "T-432": {
+   "status": "done",
+   "updated": "2026-09-24T19:16:15.972Z",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  "T-433": {
+   "status": "done",
+   "updated": "2026-09-25T03:34:22.807Z",
+   "evidence": "develop 0bfe5d4 · web 142·e2e 3/3 · astra PASS · 211건 p95 1.26배"
+  },
+  "R-07": {
+   "status": "done",
+   "updated": "2026-09-25T04:21:57.237Z",
+   "evidence": "PASS(High 0), Med → T-433b·T-407b"
+  },
+  "T-412a": {
+   "status": "done",
+   "updated": "2026-09-25T08:57:24.069Z",
+   "evidence": "T-412b에 합침(e2e 220)"
+  },
+  "G1": {
+   "status": "done",
+   "updated": "2026-09-24T23:08:40.179Z",
+   "evidence": "백테스트 v1 수치·서비스 5개 기동·SHACL 게이트 A 실사용 통과(위반 0)"
+  },
+  "G2": {
+   "status": "todo"
+  },
+  "R-08": {
+   "status": "todo"
+  },
+  "T-002": {
+   "status": "todo"
+  },
+  "G3": {
+   "status": "todo"
+  },
+  "T-403": {
+   "status": "done",
+   "updated": "2026-09-25T06:29:38.357Z",
+   "evidence": "web 180 tests·build·lint (worker), merge 2816e63"
+  },
+  "T-408": {
+   "status": "done",
+   "updated": "2026-09-25T06:41:24.350Z",
+   "evidence": "web 181·build·lint (worker), records 43·stan (orchestrator, migration 008), merge 08d3cd8"
+  },
+  "T-409": {
+   "status": "done",
+   "updated": "2026-09-25T07:05:07.154Z",
+   "evidence": "pending merge",
+   "note": "merge faf6f27; S5 e2e 통과(오케스트레이터 — 픽스처 발행 시각 수정 후 2회 연속)"
+  },
+  "T-413": {
+   "status": "done",
+   "updated": "2026-09-25T06:35:20.696Z",
+   "evidence": "web 182 tests·build·lint (worker), merge e1365e2"
+  },
+  "T-410": {
+   "status": "done",
+   "updated": "2026-09-25T06:51:45.964Z",
+   "evidence": "web 184·build·lint, merge 8de371f",
+   "note": "T-410b(평가 상세) 추가 디스패치"
+  },
+  "T-434": {
+   "status": "done",
+   "updated": "2026-09-25T06:48:45.552Z",
+   "evidence": "web 193·build·lint, e2e s3-venue 4/4 + screenshots (orchestrator), merge 68fde24",
+   "note": "perf 미달 1.55배(수원) — T-436 뒤 재측정"
+  },
+  "T-435": {
+   "status": "done",
+   "updated": "2026-09-25T07:43:50.258Z",
+   "evidence": "web 205 (worker), e2e 통과(orchestrator), perf 미달 — T-436 뒤 재측정, merge 48ab7dc"
+  },
+  "R-09": {
+   "status": "todo"
+  },
+  "T-411": {
+   "status": "done",
+   "updated": "2026-09-25T07:55:49.026Z",
+   "evidence": "T-411a·T-411b 병합, web 220·e2e 79(최종 수정 뒤 S1·a11y 15 재통과) (orchestrator)"
+  },
+  "T-436": {
+   "status": "done",
+   "updated": "2026-09-25T08:06:25.192Z",
+   "evidence": "web 224·e2e 83/84(캡처 버튼 가림 → T-435b), perf t436 0.82·t435 0.81 통과·t434 2.10 미달 → T-435b",
+   "note": "T-435b 뒤 perf t434 0.83·t435 0.79·t436 0.73 통과"
+  },
+  "T-412b": {
+   "status": "done",
+   "updated": "2026-09-25T08:57:23.982Z",
+   "evidence": "e2e 220/220(기능 88 + 스크린샷 132) (orchestrator L4d)"
+  },
+  "R-10": {
+   "status": "todo"
+  },
+  "T-003": {
+   "status": "todo"
+  },
+  "G4": {
+   "status": "todo"
+  },
+  "T-310": {
+   "status": "done",
+   "updated": "2026-09-24T19:16:16.138Z",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  "T-102b": {
+   "status": "done",
+   "updated": "2026-09-25T02:21:40.979Z",
+   "evidence": "develop bf7056d · 빌드 0.88초·동등성 테스트 · sol PASS"
+  },
+  "T-204b": {
+   "status": "done",
+   "updated": "2026-09-25T02:47:53.219Z",
+   "evidence": "develop 7b8adca·27d7f1d · forecast 1206 · sol PASS · OOD 211→65·등급 불변"
+  },
+  "T-304b": {
+   "status": "done",
+   "updated": "2026-09-25T03:39:16.820Z",
+   "evidence": "develop b71906d · gateway 862 · sol PASS · 실사용 게이트 A 앞 세 단계"
+  },
+  "T-306b": {
+   "status": "done",
+   "updated": "2026-09-25T06:40:31.555Z",
+   "evidence": "forecast 1436·knowledge 298·gateway 942·contracts check (orchestrator rerun in L3), merge ee47a68"
+  },
+  "T-306c": {
+   "status": "done",
+   "updated": "2026-09-25T04:26:57.572Z",
+   "evidence": "develop f1989b3 · gateway 914 · sol PASS · 실사용 두 경로 같은 계획"
+  },
+  "T-407b": {
+   "status": "done",
+   "updated": "2026-09-25T04:58:02.243Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(교차 리뷰는 전체 QA)"
+  },
+  "T-433b": {
+   "status": "done",
+   "updated": "2026-09-25T04:58:02.322Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(교차 리뷰는 전체 QA)"
+  },
+  "T-430b": {
+   "status": "done",
+   "updated": "2026-09-25T05:06:07.978Z",
+   "evidence": "구현 우선 모드 — G1·G2(web 156) 통과, 펫 스크린샷 확인"
+  },
+  "T-434a": {
+   "status": "done",
+   "updated": "2026-09-25T05:20:41.325Z",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  }
+ },
+ "history": [
+  {
+   "at": "2026-09-24T10:39:51.048Z",
+   "id": "H1",
+   "status": "done",
+   "note": "키 발급·호출 확인(resultCode 0000)"
+  },
+  {
+   "at": "2026-09-24T10:39:51.158Z",
+   "id": "H4",
+   "status": "done",
+   "note": "문체부 개최계획 2017~2026 xlsx"
+  },
+  {
+   "at": "2026-09-24T10:39:51.274Z",
+   "id": "H6",
+   "status": "done",
+   "note": "PHP 8.5.4, 확장 5종, Composer 2.9.5"
+  },
+  {
+   "at": "2026-09-24T10:43:02.696Z",
+   "id": "T-000",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T10:49:28.155Z",
+   "id": "T-000",
+   "status": "done",
+   "evidence": "uv lock 81패키지(py3.12.14, lightgbm 4.6.0), check-ignore: graph·package·계약·backtest 추적/데이터·.env 제외, dev.mjs --check: Ollama 172.20.32.1 감지, sigungu.topo.json 252개 = API 코드 252(교집합), 부모 시 코드 12개 이중 계산 주의 기록"
+  },
+  {
+   "at": "2026-09-24T10:50:18.035Z",
+   "id": "T-001",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T10:58:56.789Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "스키마 20(strict Ajv 2020 컴파일), 픽스처 11(유효 6·무효 5) TS·Python·PHP 판정 일치 = 기대, pydantic 생성 모델도 유효 통과·무효 거부, OpenAPI 4종 $ref 확인, SSE 10종 문서화, 재생성 diff 없음"
+  },
+  {
+   "at": "2026-09-24T10:58:59.260Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T11:34:36.368Z",
+   "id": "R-01",
+   "status": "failed",
+   "note": "→ T-001: JSON-LD 타입·관계 소실, 게이트 A에 근거·요인 문장 노출, 예보서 재구성 계약 없음, 단위·가정·계보 제약 약함, id 참조 무결성 없음(리뷰 10건, High 9)"
+  },
+  {
+   "at": "2026-09-24T11:34:36.369Z",
+   "id": "T-001",
+   "status": "todo",
+   "note": "되돌림: R-01 실패 — JSON-LD 타입·관계 소실, 게이트 A에 근거·요인 문장 노출, 예보서 재구성 계약 없음, 단위·가정·계보 제약 약함, id 참조 무결성 없음(리뷰 10건, High 9)"
+  },
+  {
+   "at": "2026-09-24T11:34:36.369Z",
+   "id": "R-01",
+   "status": "stale",
+   "note": "상위 T-001 되돌림"
+  },
+  {
+   "at": "2026-09-24T11:37:24.811Z",
+   "id": "T-001",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T11:49:02.152Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "contracts v1.1: check 스키마27·픽스처41·오류0(TS·PY·PHP 판정 일치, 무결성 7, JSON-LD 기대 트리플 41/41), R-01 지적 10건 반영"
+  },
+  {
+   "at": "2026-09-24T11:51:55.187Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T11:59:40.254Z",
+   "id": "R-01",
+   "status": "failed",
+   "note": "→ T-001: r2 FAIL(astra): Event 적재 경로·similar/baseline 변환 규칙 없음, gate-report에 integrity 없음(High), 무결성 검사 범위(modelRunId·assumptionId·세션·유사 행사 수치·report 카드/배치), SSE 순서 검사, 활용 명세·운영 계약"
+  },
+  {
+   "at": "2026-09-24T11:59:40.254Z",
+   "id": "T-001",
+   "status": "todo",
+   "note": "되돌림: R-01 실패 — r2 FAIL(astra): Event 적재 경로·similar/baseline 변환 규칙 없음, gate-report에 integrity 없음(High), 무결성 검사 범위(modelRunId·assumptionId·세션·유사 행사 수치·report 카드/배치), SSE 순서 검사, 활용 명세·운영 계약"
+  },
+  {
+   "at": "2026-09-24T11:59:40.254Z",
+   "id": "R-01",
+   "status": "stale",
+   "note": "상위 T-001 되돌림"
+  },
+  {
+   "at": "2026-09-24T12:12:16.877Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "contracts v1.2: check 스키마29·픽스처79·오류0(세 언어 판정 일치, 무결성 22, 카드 투영 3, SSE 순서 6, JSON-LD 5종 기대·금지·형식 오류 0), R-01 r2 지적 반영"
+  },
+  {
+   "at": "2026-09-24T12:12:41.161Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T12:20:22.732Z",
+   "id": "R-01",
+   "status": "failed",
+   "note": "→ T-001: r3 FAIL(astra): 개별 claim·evidence 적재의 참조 검사 없음(High), 예보서 중복 근거·수치 id 내용 충돌, SSE 게이트 역행, composition 근거 참조(Med 4)"
+  },
+  {
+   "at": "2026-09-24T12:20:22.732Z",
+   "id": "T-001",
+   "status": "todo",
+   "note": "되돌림: R-01 실패 — r3 FAIL(astra): 개별 claim·evidence 적재의 참조 검사 없음(High), 예보서 중복 근거·수치 id 내용 충돌, SSE 게이트 역행, composition 근거 참조(Med 4)"
+  },
+  {
+   "at": "2026-09-24T12:20:22.732Z",
+   "id": "R-01",
+   "status": "stale",
+   "note": "상위 T-001 되돌림"
+  },
+  {
+   "at": "2026-09-24T12:24:03.471Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "contracts v1.3: check 스키마29·픽스처101·오류0(무결성 45 — 세션 범위·충돌, SSE 순서 11 — 게이트 전이 R1~R9)"
+  },
+  {
+   "at": "2026-09-24T12:24:36.471Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T12:31:17.283Z",
+   "id": "R-01",
+   "status": "failed",
+   "note": "→ T-001: r4 FAIL(astra): 충돌 검사가 Claim 상태 전환(draft→candidate) 차단(High 회귀), Event·Forecast 내용 충돌 누락, 예보서 내부 가정 등록 검사 누락, 후속 플레이북 SSE 오판(Med 3)"
+  },
+  {
+   "at": "2026-09-24T12:31:17.283Z",
+   "id": "T-001",
+   "status": "todo",
+   "note": "되돌림: R-01 실패 — r4 FAIL(astra): 충돌 검사가 Claim 상태 전환(draft→candidate) 차단(High 회귀), Event·Forecast 내용 충돌 누락, 예보서 내부 가정 등록 검사 누락, 후속 플레이북 SSE 오판(Med 3)"
+  },
+  {
+   "at": "2026-09-24T12:31:17.283Z",
+   "id": "R-01",
+   "status": "stale",
+   "note": "상위 T-001 되돌림"
+  },
+  {
+   "at": "2026-09-24T12:39:04.672Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "contracts v1.4: check 스키마29·픽스처118·오류0(문장 수명 주기·내용 revision·적재 순서 10, SSE 14 — 후속 요청 모드·R10)"
+  },
+  {
+   "at": "2026-09-24T12:39:15.638Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T12:47:48.589Z",
+   "id": "R-01",
+   "status": "failed",
+   "note": "→ T-001: r5 FAIL(astra): 새 사실 뒤 재검증 경로 없음 — candidate 검사 갱신·게이트 B 재실행 금지(High), id 없는 평시·유사 사례 revision 누락, B·발행 masterVersion 비교 누락(Med 2)"
+  },
+  {
+   "at": "2026-09-24T12:47:48.589Z",
+   "id": "T-001",
+   "status": "todo",
+   "note": "되돌림: R-01 실패 — r5 FAIL(astra): 새 사실 뒤 재검증 경로 없음 — candidate 검사 갱신·게이트 B 재실행 금지(High), id 없는 평시·유사 사례 revision 누락, B·발행 masterVersion 비교 누락(Med 2)"
+  },
+  {
+   "at": "2026-09-24T12:47:48.589Z",
+   "id": "R-01",
+   "status": "stale",
+   "note": "상위 T-001 되돌림"
+  },
+  {
+   "at": "2026-09-24T12:50:00.337Z",
+   "id": "T-001",
+   "status": "done",
+   "evidence": "contracts v1.5: check 스키마29·픽스처128·오류0(재검사·자연 키·masterVersion 고정·revision 단조)"
+  },
+  {
+   "at": "2026-09-24T12:50:10.216Z",
+   "id": "R-01",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T12:56:50.543Z",
+   "id": "R-01",
+   "status": "done",
+   "evidence": "R-01 6차 PASS(gpt-6-astra, 0590c11): 체크리스트 ①~④ PASS, High 0. Med 1(masterVersion 재검사)은 후속 커밋에서 반영, check 129·오류 0"
+  },
+  {
+   "at": "2026-09-24T13:03:12.669Z",
+   "id": "T-100",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:03:12.748Z",
+   "id": "T-601",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:03:12.827Z",
+   "id": "T-401",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:03:12.906Z",
+   "id": "T-501",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:28:09.527Z",
+   "id": "T-401",
+   "status": "done",
+   "evidence": "게이트 1~4 통과: build·test 4·lint·e2e 10·스크린샷 9(직접 확인)·Range 206·색 하드코딩 0, 교차 리뷰 astra PASS(Med 4 → T-402 이월), d5db41a"
+  },
+  {
+   "at": "2026-09-24T13:29:43.654Z",
+   "id": "T-501",
+   "status": "done",
+   "evidence": "게이트 1~4 통과(게이트 3 두 번 되돌림: REPLACE 우회 → rowid 충돌 우회), composer test 7·46, stan 0, 우회 7종 직접 재현 거부, 교차 리뷰 astra 3차 PASS, a288638"
+  },
+  {
+   "at": "2026-09-24T13:34:26.116Z",
+   "id": "T-201",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:34:26.192Z",
+   "id": "T-301",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:53:08.889Z",
+   "id": "T-201",
+   "status": "done",
+   "evidence": "게이트 1~4: test 38·ruff·✓ forecast, 교차 리뷰 sol PASS(형식 검사 반례 확인), f2b0916"
+  },
+  {
+   "at": "2026-09-24T13:53:08.965Z",
+   "id": "T-601",
+   "status": "done",
+   "evidence": "게이트 1~4: test 89·ruff·✓ knowledge·경고 37268→1, 교차 리뷰 sol PASS(Python/JS 판정 불일치 0/112, 422 무쓰기 20/20), a97cacd"
+  },
+  {
+   "at": "2026-09-24T13:54:23.119Z",
+   "id": "T-301",
+   "status": "done",
+   "evidence": "게이트 1~4: test 42·tsc·biome·/api/health 200(분리)·404, 교차 리뷰 sol PASS(Med 1 → T-302), bbdab1f"
+  },
+  {
+   "at": "2026-09-24T13:59:25.683Z",
+   "id": "R-02",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:59:40.626Z",
+   "id": "T-202",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:59:40.710Z",
+   "id": "T-602",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T13:59:40.795Z",
+   "id": "T-502",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T14:04:19.104Z",
+   "id": "R-02",
+   "status": "failed",
+   "note": "→ T-301: R-02 FAIL(sol): 게이트웨이 요청 함수가 본문 유무로 메서드를 정해 /validate에 {} 전송(High), 오류 본문 폐기로 422 gate-report 전달 불가, knowledge 422 런타임 검증 없음, dev.mjs 포트 고정(Med 3)"
+  },
+  {
+   "at": "2026-09-24T14:04:19.104Z",
+   "id": "T-301",
+   "status": "todo",
+   "note": "되돌림: R-02 실패 — R-02 FAIL(sol): 게이트웨이 요청 함수가 본문 유무로 메서드를 정해 /validate에 {} 전송(High), 오류 본문 폐기로 422 gate-report 전달 불가, knowledge 422 런타임 검증 없음, dev.mjs 포트 고정(Med 3)"
+  },
+  {
+   "at": "2026-09-24T14:04:19.104Z",
+   "id": "R-02",
+   "status": "stale",
+   "note": "상위 T-301 되돌림"
+  },
+  {
+   "at": "2026-09-24T14:06:10.480Z",
+   "id": "T-301",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T14:22:49.426Z",
+   "id": "T-301",
+   "status": "done",
+   "evidence": "되돌림 1회차: 메서드 명시·계약 오류 응답·.env, test 79·build·lint, 교차 리뷰 sol PASS"
+  },
+  {
+   "at": "2026-09-24T14:30:43.186Z",
+   "id": "T-302",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T14:33:42.642Z",
+   "id": "T-100",
+   "status": "done",
+   "evidence": "10,198행·DIY 60, test 181, 1회차 대비 날짜 교정 12건·모호 원문만 제외 42건(행 대조), 교차 리뷰 sol 반복 → 반례 테스트 고정, 3f45a36"
+  },
+  {
+   "at": "2026-09-24T14:41:08.577Z",
+   "id": "T-430",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T14:45:40.654Z",
+   "id": "T-602",
+   "status": "done",
+   "evidence": "test 222·ruff, 교차 리뷰 sol 재리뷰 PASS(S09 발행 거부·응답 계약·위반 집합 확인), 300트리플 76ms"
+  },
+  {
+   "at": "2026-09-24T14:45:58.422Z",
+   "id": "R-02",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T14:51:02.199Z",
+   "id": "T-202",
+   "status": "done",
+   "evidence": "test 185(규칙)·forecast 전체 통과, 경계 표시 표 직접 확인, 교차 리뷰 sol PASS"
+  },
+  {
+   "at": "2026-09-24T14:54:56.287Z",
+   "id": "T-502",
+   "status": "done",
+   "evidence": "test 18·151·stan 0, 실서버 무결성 픽스처 13/13 계약과 같은 판정, 교차 리뷰 astra PASS(Med 2 직접 반영)"
+  },
+  {
+   "at": "2026-09-24T14:57:48.381Z",
+   "id": "R-02",
+   "status": "done",
+   "evidence": "R-02 3차 PASS(sol): 1차 High(게이트웨이 메서드)→T-301 되돌림 해결, 2차 High(dev.mjs .env)→직접 수정 해결, 새 결함 0, Med·Low는 backlog"
+  },
+  {
+   "at": "2026-09-24T15:00:28.274Z",
+   "id": "T-101",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:02:21.395Z",
+   "id": "T-430",
+   "status": "done",
+   "evidence": "test 20·build·lint·색 하드코딩 0, 스크린샷 낮·밤 직접 확인, 교차 리뷰 astra PASS"
+  },
+  {
+   "at": "2026-09-24T15:02:44.563Z",
+   "id": "T-503",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:02:48.576Z",
+   "id": "T-402",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:06:19.294Z",
+   "id": "T-431",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:06:19.368Z",
+   "id": "T-603",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:26:37.748Z",
+   "id": "T-503",
+   "status": "done",
+   "evidence": "게이트 1~4 통과, 교차 리뷰 PASS"
+  },
+  {
+   "at": "2026-09-24T15:26:37.827Z",
+   "id": "T-302",
+   "status": "done",
+   "evidence": "게이트 1~4 통과, 교차 리뷰 PASS"
+  },
+  {
+   "at": "2026-09-24T15:37:38.607Z",
+   "id": "T-603",
+   "status": "done",
+   "evidence": "test 246·ruff·✓ knowledge, 교차 리뷰 sol PASS(Med → T-604)"
+  },
+  {
+   "at": "2026-09-24T15:38:45.126Z",
+   "id": "T-303",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T15:58:17.375Z",
+   "id": "T-101",
+   "status": "done",
+   "evidence": "test 250·키 누출 0, 2026 코드 대응·35일 공개일 산출물 확인, 교차 리뷰 sol PASS, region_daily 861505행"
+  },
+  {
+   "at": "2026-09-24T15:58:20.593Z",
+   "id": "T-102",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:02:19.518Z",
+   "id": "T-402",
+   "status": "done",
+   "evidence": "test 69·build·lint·색 0, 스크린샷 낮·밤·모바일 확인(기준선 정렬·단위 분리), 교차 리뷰 astra PASS"
+  },
+  {
+   "at": "2026-09-24T16:04:03.737Z",
+   "id": "R-03",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:20:54.315Z",
+   "id": "R-03",
+   "status": "failed",
+   "note": "→ T-402: 사용성 검토 FAIL — High 근거 오연결(순간 최대 → 평시 관측), Med 로그축·범례, KPI 출처, 밤 선택 대비 2.11:1(T-401 파일 — T-402 회차에서 함께), Low 블록 간격 3곳. 지적 전부 오케스트레이터가 코드·픽스처로 확인"
+  },
+  {
+   "at": "2026-09-24T16:20:54.315Z",
+   "id": "T-402",
+   "status": "todo",
+   "note": "되돌림: R-03 실패 — 사용성 검토 FAIL — High 근거 오연결(순간 최대 → 평시 관측), Med 로그축·범례, KPI 출처, 밤 선택 대비 2.11:1(T-401 파일 — T-402 회차에서 함께), Low 블록 간격 3곳. 지적 전부 오케스트레이터가 코드·픽스처로 확인"
+  },
+  {
+   "at": "2026-09-24T16:20:54.315Z",
+   "id": "R-03",
+   "status": "stale",
+   "note": "상위 T-402 되돌림"
+  },
+  {
+   "at": "2026-09-24T16:20:54.393Z",
+   "id": "T-402",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:34:41.612Z",
+   "id": "T-431",
+   "status": "done",
+   "evidence": "워커 sol 피드백 2회 + 오케스트레이터 DPR 직접 수정(astra 교차 리뷰 PASS). develop 병합 후 web 71·e2e 17·build·lint 통과, 낮 스크린샷 확인. 수정 전 코드에서 새 DPR 테스트 실패 확인"
+  },
+  {
+   "at": "2026-09-24T16:48:16.212Z",
+   "id": "T-504",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T16:58:02.594Z",
+   "id": "T-402",
+   "status": "done",
+   "evidence": "R-03 되돌림 2회: 근거 오연결 등 5건 + 칩 배치 해결(astra 확인), 포커스 복귀 Med는 T-406 이월(견본 페이지). test 73·build·lint, 시각 확인"
+  },
+  {
+   "at": "2026-09-24T17:00:27.136Z",
+   "id": "T-303",
+   "status": "done",
+   "evidence": "피드백 2회(S04·fake 제한·되묻기 3개·위험 확인·마감·병합 규칙), sol 교차 리뷰 PASS, develop 병합 뒤 gateway 276·build·lint, 수동 확인 실제 Ollama·knowledge"
+  },
+  {
+   "at": "2026-09-24T17:00:51.613Z",
+   "id": "R-03",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:03:52.124Z",
+   "id": "T-432",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:31:34.481Z",
+   "id": "T-102",
+   "status": "done",
+   "evidence": "develop 병합 971f446, forecast 668 통과, events 10,179행·채움률 95.16%·가을 213건 계약 변환. TourAPI 보강 실행은 9/26 오케스트레이터(backlog)"
+  },
+  {
+   "at": "2026-09-24T17:31:36.077Z",
+   "id": "T-103",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:40:30.801Z",
+   "id": "R-03",
+   "status": "done",
+   "evidence": "2차 PASS: 1차 5건 중 4건 해결·간격 일부 Low, 밤 중앙선 대비 Low → T-406·T-405로 이월"
+  },
+  {
+   "at": "2026-09-24T17:40:32.762Z",
+   "id": "T-405",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:42:16.657Z",
+   "id": "T-504",
+   "status": "done",
+   "evidence": "develop 병합 111eabf, records 38·stan·✓, docx 예시 직접 대조, astra PASS"
+  },
+  {
+   "at": "2026-09-24T17:44:20.929Z",
+   "id": "T-404",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T17:48:54.397Z",
+   "id": "T-310",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T19:16:15.972Z",
+   "id": "T-432",
+   "status": "done",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  {
+   "at": "2026-09-24T19:16:16.055Z",
+   "id": "T-404",
+   "status": "done",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  {
+   "at": "2026-09-24T19:16:16.138Z",
+   "id": "T-310",
+   "status": "done",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  {
+   "at": "2026-09-24T19:16:16.222Z",
+   "id": "T-103",
+   "status": "done",
+   "evidence": "develop 통합·교차 리뷰 PASS — LEDGER 참조"
+  },
+  {
+   "at": "2026-09-24T19:19:08.954Z",
+   "id": "T-405",
+   "status": "done",
+   "evidence": "develop 병합, web 121·build·lint, 녹화 SSE 3클릭 e2e, astra PASS"
+  },
+  {
+   "at": "2026-09-24T19:19:12.816Z",
+   "id": "T-203",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T19:20:23.514Z",
+   "id": "T-505",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T19:22:02.639Z",
+   "id": "T-104",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T19:46:32.886Z",
+   "id": "T-505",
+   "status": "done",
+   "evidence": "develop 병합 40b9b50, records 42·stan, 토큰 마스킹 실측, astra PASS"
+  },
+  {
+   "at": "2026-09-24T20:40:11.210Z",
+   "id": "T-104",
+   "status": "done",
+   "evidence": "develop 병합, forecast 899, 실제 실행 3종(데이터 미수집 → 종료 1 정상), sol PASS"
+  },
+  {
+   "at": "2026-09-24T20:56:01.527Z",
+   "id": "T-307",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T21:51:25.491Z",
+   "id": "T-307",
+   "status": "done",
+   "evidence": "develop 병합 0a5502e, gateway 744·build·lint·✓, sol PASS 3회(재디스패치 2회)"
+  },
+  {
+   "at": "2026-09-24T22:09:10.420Z",
+   "id": "T-203",
+   "status": "done",
+   "evidence": "develop be35341+8354ef4+c98b8dc, forecast 1005, 계약 29·픽스처 129 오류 0, gateway 744, sol PASS·astra 계획 PASS, 실데이터 파이프라인 features→publish(백테스트 미검증 승격 v1-af1d52)"
+  },
+  {
+   "at": "2026-09-24T22:09:52.826Z",
+   "id": "T-604",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T22:09:56.097Z",
+   "id": "R-04",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T22:16:22.251Z",
+   "id": "R-04",
+   "status": "failed",
+   "note": "→ T-203: 전회차 피처·B1이 실버 순증까지 사용(계획 06 §3은 골드 실측), 분모·한계가 backtest.json·모델 카드에 없음"
+  },
+  {
+   "at": "2026-09-24T22:16:22.252Z",
+   "id": "T-203",
+   "status": "todo",
+   "note": "되돌림: R-04 실패 — 전회차 피처·B1이 실버 순증까지 사용(계획 06 §3은 골드 실측), 분모·한계가 backtest.json·모델 카드에 없음"
+  },
+  {
+   "at": "2026-09-24T22:16:22.252Z",
+   "id": "T-604",
+   "status": "stale",
+   "note": "상위 T-203 되돌림"
+  },
+  {
+   "at": "2026-09-24T22:16:22.252Z",
+   "id": "R-04",
+   "status": "stale",
+   "note": "상위 T-203 되돌림"
+  },
+  {
+   "at": "2026-09-24T22:17:04.038Z",
+   "id": "T-204",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-24T22:44:11.807Z",
+   "id": "T-203",
+   "status": "done",
+   "evidence": "R-04 되돌림 반영: 전회차 골드만·분모 공개(disclosure)·단순 모델 등급 가중치, 사용 모델 v1-01c9b4 단순 49.3%·57.0%(49/86), forecast 1010"
+  },
+  {
+   "at": "2026-09-24T22:44:11.891Z",
+   "id": "R-04",
+   "status": "done",
+   "evidence": "sol r3 PASS — 라벨·가중치/공개 시점 646칸 위반 0/연도 분리/분모 공개 모두 PASS, Med(골드B 영역) → backlog T-203b"
+  },
+  {
+   "at": "2026-09-24T23:08:40.104Z",
+   "id": "T-604",
+   "status": "done",
+   "evidence": "develop 병합(4bc542f), knowledge 290, sol PASS, 기동 적재 promoted.json"
+  },
+  {
+   "at": "2026-09-24T23:08:40.179Z",
+   "id": "G1",
+   "status": "done",
+   "evidence": "백테스트 v1 수치·서비스 5개 기동·SHACL 게이트 A 실사용 통과(위반 0)"
+  },
+  {
+   "at": "2026-09-24T23:09:09.473Z",
+   "id": "T-407",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T00:20:31.474Z",
+   "id": "T-204",
+   "status": "done",
+   "evidence": "develop 병합, forecast 1115, 계약 오류 0, gateway 744, 실사용 게이트 A 통과, sol PASS"
+  },
+  {
+   "at": "2026-09-25T00:21:05.419Z",
+   "id": "T-205",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T00:21:07.767Z",
+   "id": "T-304",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T00:31:37.381Z",
+   "id": "T-407",
+   "status": "done",
+   "evidence": "develop 병합, web 137·build, astra PASS, 스크린샷 확인"
+  },
+  {
+   "at": "2026-09-25T01:30:56.676Z",
+   "id": "T-102b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T02:06:16.943Z",
+   "id": "T-205",
+   "status": "done",
+   "evidence": "develop 53559d1 · forecast 1166 통과 · sol PASS(3회차) · runId 세 산출물 일치"
+  },
+  {
+   "at": "2026-09-25T02:08:17.586Z",
+   "id": "T-204b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T02:21:40.872Z",
+   "id": "T-304",
+   "status": "done",
+   "evidence": "develop a352073 · gateway 821·forecast 1173·web 137(깨끗한 상태) · sol PASS · 실사용 T-304.live.md"
+  },
+  {
+   "at": "2026-09-25T02:21:40.979Z",
+   "id": "T-102b",
+   "status": "done",
+   "evidence": "develop bf7056d · 빌드 0.88초·동등성 테스트 · sol PASS"
+  },
+  {
+   "at": "2026-09-25T02:25:38.771Z",
+   "id": "T-305",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T02:31:49.227Z",
+   "id": "T-433",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T02:47:53.219Z",
+   "id": "T-204b",
+   "status": "done",
+   "evidence": "develop 7b8adca·27d7f1d · forecast 1206 · sol PASS · OOD 211→65·등급 불변"
+  },
+  {
+   "at": "2026-09-25T02:50:13.774Z",
+   "id": "T-207",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T03:21:16.365Z",
+   "id": "T-305",
+   "status": "done",
+   "evidence": "develop 2e83ebb · gateway 853(깨끗한 상태) · sol PASS · 실사용 후속 6종"
+  },
+  {
+   "at": "2026-09-25T03:21:16.438Z",
+   "id": "R-05",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T03:26:44.419Z",
+   "id": "T-304b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T03:34:22.807Z",
+   "id": "T-433",
+   "status": "done",
+   "evidence": "develop 0bfe5d4 · web 142·e2e 3/3 · astra PASS · 211건 p95 1.26배"
+  },
+  {
+   "at": "2026-09-25T03:39:16.820Z",
+   "id": "T-304b",
+   "status": "done",
+   "evidence": "develop b71906d · gateway 862 · sol PASS · 실사용 게이트 A 앞 세 단계"
+  },
+  {
+   "at": "2026-09-25T03:44:24.854Z",
+   "id": "R-05",
+   "status": "done",
+   "evidence": "2차 PASS — 체크리스트 5/5, develop b71906d"
+  },
+  {
+   "at": "2026-09-25T03:44:26.277Z",
+   "id": "T-306",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:09:27.072Z",
+   "id": "T-207",
+   "status": "done",
+   "evidence": "develop 442924c · forecast 1294 · sol PASS · 선정 20건(등록은 9/29 오케스트레이터)"
+  },
+  {
+   "at": "2026-09-25T04:10:57.488Z",
+   "id": "T-306",
+   "status": "done",
+   "evidence": "develop 76596bc · gateway 898 · sol PASS · docx 실사용"
+  },
+  {
+   "at": "2026-09-25T04:14:37.719Z",
+   "id": "T-306c",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:14:37.799Z",
+   "id": "T-406",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:15:45.352Z",
+   "id": "R-07",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:21:57.237Z",
+   "id": "R-07",
+   "status": "done",
+   "evidence": "PASS(High 0), Med → T-433b·T-407b"
+  },
+  {
+   "at": "2026-09-25T04:22:23.529Z",
+   "id": "T-433b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:22:23.604Z",
+   "id": "T-407b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:26:57.572Z",
+   "id": "T-306c",
+   "status": "done",
+   "evidence": "develop f1989b3 · gateway 914 · sol PASS · 실사용 두 경로 같은 계획"
+  },
+  {
+   "at": "2026-09-25T04:28:14.018Z",
+   "id": "T-308",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:31:02.733Z",
+   "id": "T-308",
+   "status": "blocked",
+   "note": "9/25 13:30 사용자 요청으로 중단 — 워크트리에 부분 결과, 같은 명세로 재디스패치해 이어 감"
+  },
+  {
+   "at": "2026-09-25T04:31:02.828Z",
+   "id": "T-406",
+   "status": "blocked",
+   "note": "9/25 13:30 사용자 요청으로 중단 — 워크트리에 부분 결과, 같은 명세로 재디스패치해 이어 감"
+  },
+  {
+   "at": "2026-09-25T04:31:02.927Z",
+   "id": "T-433b",
+   "status": "blocked",
+   "note": "9/25 13:30 사용자 요청으로 중단 — 워크트리에 부분 결과, 같은 명세로 재디스패치해 이어 감"
+  },
+  {
+   "at": "2026-09-25T04:31:03.017Z",
+   "id": "T-407b",
+   "status": "blocked",
+   "note": "9/25 13:30 사용자 요청으로 중단 — 워크트리에 부분 결과, 같은 명세로 재디스패치해 이어 감"
+  },
+  {
+   "at": "2026-09-25T04:51:02.457Z",
+   "id": "T-308",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:51:02.544Z",
+   "id": "T-406",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:51:02.637Z",
+   "id": "T-433b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:51:02.728Z",
+   "id": "T-407b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:53:41.943Z",
+   "id": "H3",
+   "status": "done",
+   "evidence": "취소 — 데이터랩 DIY는 문화관광축제만·데이터 없음(9/25 사용자 결정, T-203b 조치 1로 대체)"
+  },
+  {
+   "at": "2026-09-25T04:54:09.475Z",
+   "id": "T-430b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:54:09.564Z",
+   "id": "T-203b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:54:09.646Z",
+   "id": "T-105",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:58:02.243Z",
+   "id": "T-407b",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(교차 리뷰는 전체 QA)"
+  },
+  {
+   "at": "2026-09-25T04:58:02.322Z",
+   "id": "T-433b",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(교차 리뷰는 전체 QA)"
+  },
+  {
+   "at": "2026-09-25T04:58:03.686Z",
+   "id": "T-434a",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T04:59:11.460Z",
+   "id": "T-406",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과(web 152), develop 73aa3fe"
+  },
+  {
+   "at": "2026-09-25T05:06:07.978Z",
+   "id": "T-430b",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2(web 156) 통과, 펫 스크린샷 확인"
+  },
+  {
+   "at": "2026-09-25T05:20:41.021Z",
+   "id": "T-203b",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  },
+  {
+   "at": "2026-09-25T05:20:41.121Z",
+   "id": "T-105",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  },
+  {
+   "at": "2026-09-25T05:20:41.219Z",
+   "id": "T-308",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  },
+  {
+   "at": "2026-09-25T05:20:41.325Z",
+   "id": "T-434a",
+   "status": "done",
+   "evidence": "구현 우선 모드 — G1·G2 통과, develop 병합(전체 QA 대기)"
+  },
+  {
+   "at": "2026-09-25T05:59:21.843Z",
+   "id": "H5",
+   "status": "done",
+   "evidence": "docs/research/04_행안부_지역축제장_안전관리_매뉴얼_2024_요약.md (c7686c4)"
+  },
+  {
+   "at": "2026-09-25T06:13:59.548Z",
+   "id": "T-210",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:15:13.128Z",
+   "id": "T-306b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:16:10.725Z",
+   "id": "T-408",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:16:11.395Z",
+   "id": "T-403",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:17:35.075Z",
+   "id": "T-434",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:17:35.819Z",
+   "id": "T-413",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:29:38.357Z",
+   "id": "T-403",
+   "status": "done",
+   "evidence": "web 180 tests·build·lint (worker), merge 2816e63"
+  },
+  {
+   "at": "2026-09-25T06:30:06.118Z",
+   "id": "T-410",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:33:36.717Z",
+   "id": "T-106",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:35:20.696Z",
+   "id": "T-413",
+   "status": "done",
+   "evidence": "web 182 tests·build·lint (worker), merge e1365e2"
+  },
+  {
+   "at": "2026-09-25T06:40:31.555Z",
+   "id": "T-306b",
+   "status": "done",
+   "evidence": "forecast 1436·knowledge 298·gateway 942·contracts check (orchestrator rerun in L3), merge ee47a68"
+  },
+  {
+   "at": "2026-09-25T06:41:24.350Z",
+   "id": "T-408",
+   "status": "done",
+   "evidence": "web 181·build·lint (worker), records 43·stan (orchestrator, migration 008), merge 08d3cd8"
+  },
+  {
+   "at": "2026-09-25T06:42:45.193Z",
+   "id": "T-409",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:48:45.552Z",
+   "id": "T-434",
+   "status": "done",
+   "evidence": "web 193·build·lint, e2e s3-venue 4/4 + screenshots (orchestrator), merge 68fde24"
+  },
+  {
+   "at": "2026-09-25T06:49:10.363Z",
+   "id": "T-206",
+   "status": "done",
+   "evidence": "forecast 1456 (worker), 7 JSON contract-valid, merge 75b288e"
+  },
+  {
+   "at": "2026-09-25T06:49:10.453Z",
+   "id": "T-209",
+   "status": "done",
+   "evidence": "T-206에 합침(I3~I6)"
+  },
+  {
+   "at": "2026-09-25T06:50:19.300Z",
+   "id": "T-210",
+   "status": "done",
+   "evidence": "weather 192 (orchestrator), full forecast 1517 (worker), merge 1ff0942; 실호출은 9/26 00시 이후"
+  },
+  {
+   "at": "2026-09-25T06:51:45.964Z",
+   "id": "T-410",
+   "status": "done",
+   "evidence": "web 184·build·lint, merge 8de371f"
+  },
+  {
+   "at": "2026-09-25T06:55:54.573Z",
+   "id": "T-208",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:55:54.656Z",
+   "id": "T-211",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:56:50.994Z",
+   "id": "T-435",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:57:01.022Z",
+   "id": "T-108",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T06:58:33.456Z",
+   "id": "T-411",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T07:05:07.080Z",
+   "id": "T-106",
+   "status": "done",
+   "evidence": "forecast 1448 (orchestrator L6), merge a9daf42"
+  },
+  {
+   "at": "2026-09-25T07:05:07.154Z",
+   "id": "T-409",
+   "status": "done",
+   "evidence": "pending merge"
+  },
+  {
+   "at": "2026-09-25T07:06:31.873Z",
+   "id": "T-309",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T07:24:32.893Z",
+   "id": "T-108",
+   "status": "done",
+   "evidence": "forecast 1619 (orchestrator L1), dagster validate (worker), merge 9e90ccf"
+  },
+  {
+   "at": "2026-09-25T07:25:44.747Z",
+   "id": "T-211",
+   "status": "done",
+   "evidence": "challenger 25 tests·forecast 1595 (worker uvloop), comparison bt-v1 2025 n=86, merge c316b38"
+  },
+  {
+   "at": "2026-09-25T07:27:11.435Z",
+   "id": "T-605",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T07:34:00.195Z",
+   "id": "T-208",
+   "status": "done",
+   "evidence": "forecast 1676·knowledge 299 (orchestrator, merged L2), merge 0cb2c37"
+  },
+  {
+   "at": "2026-09-25T07:34:07.000Z",
+   "id": "T-309",
+   "status": "done",
+   "evidence": "gateway 1016 (orchestrator L3), whatif 10 scenarios, eval 23/23, merge 618c6f6"
+  },
+  {
+   "at": "2026-09-25T07:36:18.716Z",
+   "id": "T-436",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T07:43:37.781Z",
+   "id": "T-605",
+   "status": "done",
+   "evidence": "knowledge 324 (orchestrator L6 merged), merge f8ca90a"
+  },
+  {
+   "at": "2026-09-25T07:43:50.258Z",
+   "id": "T-435",
+   "status": "done",
+   "evidence": "web 205 (worker), e2e 통과(orchestrator), perf 미달 — T-436 뒤 재측정, merge 48ab7dc"
+  },
+  {
+   "at": "2026-09-25T07:55:49.026Z",
+   "id": "T-411",
+   "status": "done",
+   "evidence": "T-411a·T-411b 병합, web 220·e2e 79(최종 수정 뒤 S1·a11y 15 재통과) (orchestrator)"
+  },
+  {
+   "at": "2026-09-25T08:06:25.192Z",
+   "id": "T-436",
+   "status": "done",
+   "evidence": "web 224·e2e 83/84(캡처 버튼 가림 → T-435b), perf t436 0.82·t435 0.81 통과·t434 2.10 미달 → T-435b"
+  },
+  {
+   "at": "2026-09-25T08:36:51.238Z",
+   "id": "T-412b",
+   "status": "running"
+  },
+  {
+   "at": "2026-09-25T08:57:23.982Z",
+   "id": "T-412b",
+   "status": "done",
+   "evidence": "e2e 220/220(기능 88 + 스크린샷 132) (orchestrator L4d)"
+  },
+  {
+   "at": "2026-09-25T08:57:24.069Z",
+   "id": "T-412a",
+   "status": "done",
+   "evidence": "T-412b에 합침(e2e 220)"
+  }
+ ]
+}

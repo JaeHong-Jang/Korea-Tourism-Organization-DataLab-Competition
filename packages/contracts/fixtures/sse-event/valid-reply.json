@@ -1,0 +1,8 @@
+{
+  "event": "reply",
+  "seq": 3,
+  "data": {
+    "text": "불꽃 축제를 가까운 날짜 순으로 골라 봤어요.",
+    "source": "template"
+  }
+}

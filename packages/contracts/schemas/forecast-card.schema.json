@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/forecast-card.schema.json",
+  "title": "숫자 카드",
+  "description": "게이트 A 통과 직후 화면에 보내는 것 — 숫자·판정 배너만. 근거·요인 문장은 담지 않는다 forecast의 결정적 투영이다(rules/card-projection.mjs의 projectCard). 따로 계산하지 않는다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "eventId",
+    "asOf",
+    "modelVersion",
+    "dailyMean",
+    "peakConcurrent",
+    "probabilities",
+    "peakHours",
+    "judgment",
+    "ood",
+    "oodReasons"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/forecastId"
+    },
+    "eventId": {
+      "$ref": "common.schema.json#/$defs/eventId"
+    },
+    "asOf": {
+      "$ref": "common.schema.json#/$defs/date"
+    },
+    "modelVersion": {
+      "type": "string"
+    },
+    "dailyMean": {
+      "$ref": "common.schema.json#/$defs/dailyMeanQuantity"
+    },
+    "peakConcurrent": {
+      "$ref": "common.schema.json#/$defs/peakQuantity"
+    },
+    "probabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "threshold",
+          "probability",
+          "display"
+        ],
+        "properties": {
+          "threshold": {
+            "type": "integer"
+          },
+          "probability": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "display": {
+            "type": "string"
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "peakHours": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "to"
+          ],
+          "properties": {
+            "from": {
+              "type": "string",
+              "pattern": "^[0-2][0-9]:[0-5][0-9]$"
+            },
+            "to": {
+              "type": "string",
+              "pattern": "^[0-2][0-9]:[0-5][0-9]$"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "judgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "label",
+        "reasons"
+      ],
+      "properties": {
+        "level": {
+          "$ref": "common.schema.json#/$defs/level"
+        },
+        "label": {
+          "enum": [
+            "소규모",
+            "수립 권고",
+            "수립 대상",
+            "대규모"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ruleId",
+              "kind",
+              "text"
+            ],
+            "properties": {
+              "ruleId": {
+                "$ref": "common.schema.json#/$defs/ruleId"
+              },
+              "kind": {
+                "enum": [
+                  "법정",
+                  "자체"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            }
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "ood": {
+      "type": "boolean"
+    },
+    "oodReasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

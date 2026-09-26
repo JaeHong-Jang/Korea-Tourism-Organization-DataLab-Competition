@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/ledger-entry.schema.json",
+  "title": "사전 등록 원장 항목",
+  "description": "해시 체인: hash = sha256(prevHash + payloadHash)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "seq",
+    "forecastId",
+    "eventId",
+    "registeredAt",
+    "leadDays",
+    "forecast",
+    "payloadHash",
+    "prevHash",
+    "hash"
+  ],
+  "properties": {
+    "seq": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "forecastId": {
+      "$ref": "common.schema.json#/$defs/forecastId"
+    },
+    "eventId": {
+      "$ref": "common.schema.json#/$defs/eventId"
+    },
+    "registeredAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "leadDays": {
+      "type": "integer"
+    },
+    "forecast": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dailyMeanP10",
+        "dailyMeanP50",
+        "dailyMeanP90",
+        "level"
+      ],
+      "properties": {
+        "dailyMeanP10": {
+          "type": "integer"
+        },
+        "dailyMeanP50": {
+          "type": "integer"
+        },
+        "dailyMeanP90": {
+          "type": "integer"
+        },
+        "level": {
+          "$ref": "common.schema.json#/$defs/level"
+        }
+      }
+    },
+    "payloadHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "prevHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

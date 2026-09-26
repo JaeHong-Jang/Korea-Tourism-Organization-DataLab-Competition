@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/concentration.schema.json",
+  "title": "관광지 집중률 요약",
+  "description": "한국관광공사 관광지 집중률 방문자 추이 예측(15128555) — 시군구 관광지의 조회일부터 30일 예측, 최성수기=100 상대치",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sigunguCode", "from", "to", "status", "fetchedAt", "windowFrom", "windowTo", "attractions", "eventMean", "windowMean", "days", "top", "datasetId"],
+  "properties": {
+    "sigunguCode": { "type": "string", "pattern": "^[0-9]{5}$" },
+    "from": { "type": "string", "format": "date" },
+    "to": { "type": "string", "format": "date" },
+    "status": { "enum": ["ok", "out_of_window", "empty"], "description": "ok=행사일이 예측 범위 안, out_of_window=행사일이 30일 예측 범위 밖, empty=시군구 관광지 예측 없음" },
+    "fetchedAt": { "type": ["string", "null"], "description": "API 응답을 처음 받은 시각(ISO 8601)" },
+    "windowFrom": { "type": ["string", "null"], "format": "date" },
+    "windowTo": { "type": ["string", "null"], "format": "date" },
+    "attractions": { "type": "integer", "minimum": 0 },
+    "eventMean": { "type": ["number", "null"], "minimum": 0, "description": "행사 기간 모든 관광지 집중률 평균" },
+    "windowMean": { "type": ["number", "null"], "minimum": 0, "description": "예측 30일 전체 평균" },
+    "days": {
+      "type": "array",
+      "maxItems": 31,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["date", "mean", "max"],
+        "properties": {
+          "date": { "type": "string", "format": "date" },
+          "mean": { "type": "number", "minimum": 0 },
+          "max": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "top": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "rate"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "rate": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "datasetId": { "const": "ds-kto-concentration-15128555" }
+  }
+}

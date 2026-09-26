@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/plan.schema.json",
+  "title": "계획 초안",
+  "description": "안전관리계획 초안(참고용)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "forecastId",
+    "eventId",
+    "sessionId",
+    "title",
+    "createdAt",
+    "updatedAt",
+    "sections",
+    "watermark"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^plan-[a-z0-9][a-z0-9_.:-]{1,120}$"
+    },
+    "forecastId": {
+      "$ref": "common.schema.json#/$defs/forecastId"
+    },
+    "eventId": {
+      "$ref": "common.schema.json#/$defs/eventId"
+    },
+    "sessionId": {
+      "$ref": "common.schema.json#/$defs/sessionId"
+    },
+    "title": {
+      "type": "string"
+    },
+    "createdAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "updatedAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "$ref": "plan-section.schema.json"
+      },
+      "minItems": 9,
+      "maxItems": 9
+    },
+    "watermark": {
+      "const": "참고용 초안 — 담당자 검토 필수"
+    }
+  }
+}

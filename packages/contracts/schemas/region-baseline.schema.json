@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/region-baseline.schema.json",
+  "title": "개최지 평시",
+  "description": "행사 전 기간의 요일별 평시 방문",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sigunguCode",
+    "sigunguName",
+    "period",
+    "weekdayMean",
+    "nonlocalShare",
+    "evidenceId",
+    "evidence"
+  ],
+  "properties": {
+    "sigunguCode": {
+      "$ref": "common.schema.json#/$defs/sigunguCode"
+    },
+    "sigunguName": {
+      "type": "string"
+    },
+    "period": {
+      "$ref": "common.schema.json#/$defs/period"
+    },
+    "weekdayMean": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "weekday",
+          "local",
+          "nonlocal",
+          "foreign"
+        ],
+        "properties": {
+          "weekday": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6
+          },
+          "local": {
+            "type": "number"
+          },
+          "nonlocal": {
+            "type": "number"
+          },
+          "foreign": {
+            "type": "number"
+          }
+        }
+      },
+      "minItems": 7,
+      "maxItems": 7
+    },
+    "nonlocalShare": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "evidenceId": {
+      "$ref": "common.schema.json#/$defs/evidenceId"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "evidence.schema.json"
+      },
+      "minItems": 1
+    }
+  }
+}

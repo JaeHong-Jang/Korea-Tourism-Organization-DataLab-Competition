@@ -1,0 +1,27 @@
+# 등록된 모델에서 선행 단계·입출력 파일·기준 데이터셋까지 한 번에 읽는다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?modelVersion ?model ?root ?stage ?parent ?name ?order ?runId ?dagsterRunId
+                ?status ?gateResult ?gatePassed ?gateMessage
+                ?file ?direction ?path ?sha256 ?note ?dataset ?title
+WHERE {
+  ?model a cc:ModelRun ; cc:modelVersion ?modelVersion ; prov:wasInformedBy ?root .
+  ?root prov:wasInformedBy* ?stage .
+  ?stage a cc:PipelineStage ; cc:name ?name ; cc:stageOrder ?order ;
+         cc:stageStatus ?status ; cc:gateResult ?gateResult ; cc:gateMessage ?gateMessage .
+  OPTIONAL { ?stage prov:wasInformedBy ?parent }
+  OPTIONAL { ?stage cc:lastRunId ?runId }
+  OPTIONAL { ?stage cc:dagsterRunId ?dagsterRunId }
+  OPTIONAL { ?stage cc:gatePassed ?gatePassed }
+  OPTIONAL {
+    { ?stage prov:used ?file . BIND("input" AS ?direction) }
+    UNION
+    { ?file prov:wasGeneratedBy ?stage . BIND("output" AS ?direction) }
+    ?file a prov:Entity ; cc:filePath ?path .
+    OPTIONAL { ?file cc:sha256 ?sha256 }
+    OPTIONAL { ?file cc:note ?note }
+    OPTIONAL { ?file prov:wasDerivedFrom ?dataset . ?dataset a cc:Dataset ; dcterms:title ?title }
+  }
+}

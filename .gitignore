@@ -28,6 +28,12 @@ models/*.h5
 models/*.pkl
 models/*.joblib
 models/*.onnx
+# 백테스트가 만드는 모델 버전 폴더와 발행 중 임시 폴더(Git 미포함 — 해시는 LEDGER에 기록)
+models/v*/
+models/g0/
+models/.staging-*/
+models/.backtest.lock
+reports/backtest/.staging-*/
 *.model
 *.weights
 
@@ -88,6 +94,62 @@ ehthumbs.db
 !configs/*.json
 !configs/*.yaml
 !configs/*.yml
-
-# OMC local session state (not for sharing)
 .omc/
+
+# -------------------- 인파예보 추가 규칙 (2026-09-24, T-000) --------------------
+# data/ 아래는 README·.gitkeep만 추적한다(원본·가공 데이터는 git 대상 아님)
+data/**
+!data/**/
+!data/**/.gitkeep
+!data/**/README.md
+# 실행 산출물·로컬 상태
+node_modules/
+traces/
+.harness/logs/
+.harness/locks/
+.fablize/
+.pytest_cache/
+.ruff_cache/
+apps/web/public/map/
+# 전역 *.json·*.csv 규칙의 예외: 설정·계약·공개 산출물은 추적한다
+!.harness/*.json
+!**/package.json
+!**/package-lock.json
+!**/tsconfig*.json
+!**/composer.json
+!**/composer.lock
+!**/biome.json
+!apps/web/components.json
+!packages/contracts/**
+!services/*/tests/fixtures/**
+!services/*/tests/**/fixtures/**
+!services/gateway/evals/**
+!apps/web/src/**/*.json
+!reports/backtest/*.json
+!reports/preregistered/*.csv
+# PHP 의존성
+vendor/
+# 도구 상태 폴더는 위 예외와 관계없이 항상 제외한다(마지막 규칙이 이긴다)
+**/.omc/
+**/vendor/
+# Codex 샌드박스가 쓰기 허용 폴더(--add-dir)에 만드는 보호용 빈 폴더
+**/.agents/
+**/.codex/
+apps/web/public/geo/
+# 지도 타일은 잘라 낸 작은 파일만 추적하고, 100MB가 넘는 전국 원본은 제외한다(apps/web/public/tiles/README.md)
+apps/web/public/tiles/korea-z13.pmtiles
+apps/web/public/tiles/korea-z15.pmtiles
+apps/web/public/tiles/원본_안내.txt
+# 백테스트 결과(데이터랩 실측 포함)와 공유 자료 압축 안내는 공개 저장소에 올리지 않는다 — 팀 드라이브 압축으로 받는다(data/raw/README.md)
+reports/backtest/
+/압축_안내.txt
+# 워크트리의 공유 산출물 링크(심볼릭 링크는 디렉터리 규칙에 안 걸리므로 따로 적는다)
+/traces
+/reports/runs
+/reports/evals
+/reports/figures/screens
+/reports/figures/perf
+
+# Playwright 실행 결과물(워크트리마다 생김)
+**/test-results/
+**/playwright-report/

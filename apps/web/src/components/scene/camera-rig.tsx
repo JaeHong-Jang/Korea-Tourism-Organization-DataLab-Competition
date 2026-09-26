@@ -1,0 +1,278 @@
+// 전국 판을 비스듬히 보고 키보드와 선택 시군구로 카메라를 옮긴다.
+import { OrbitControls } from "@react-three/drei";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { MOUSE, TOUCH, Vector3 } from "three";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { overviewPose } from "./camera-framing";
+import { observePanelBounds, type PanelBounds } from "./scene-panel-bounds";
+
+type CameraRigProps = {
+  center: [number, number];
+  selected: [number, number] | null;
+  reducedMotion: boolean;
+  focus?: boolean;
+  width: number;
+  depth: number;
+  overviewRevision: number;
+  // 끝까지 확대하면 화면 중심 좌표로 동네 3D에 들어갈지 묻는다.
+  onDeepZoom?: (point: [number, number]) => void;
+};
+
+// 고른 곳을 가까이 볼 때의 카메라 위치(표적 기준, 장면 단위 km).
+const CLOSE_OFFSET = new Vector3(75, 105, 155);
+
+// 장면 컨테이너의 직접 포커스만 카메라 조작으로 인정한다.
+export function isSceneCameraKey(
+  event: KeyboardEvent,
+  stage: HTMLElement,
+): boolean {
+  const target = event.target;
+  return (
+    !event.defaultPrevented &&
+    document.activeElement === stage &&
+    target instanceof Element &&
+    (target === stage || target instanceof HTMLCanvasElement)
+  );
+}
+
+// 포인터 궤도는 고정 범위로 묶고 키보드 이동을 같은 표적으로 모은다.
+export function CameraRig({
+  center,
+  selected,
+  reducedMotion,
+  focus = false,
+  width,
+  depth,
+  overviewRevision,
+  onDeepZoom,
+}: CameraRigProps) {
+  const controls = useRef<OrbitControlsImpl>(null);
+  const desired = useRef(new Vector3(center[0], 0, center[1] + 90));
+  const desiredPosition = useRef(
+    new Vector3(center[0] + 430, 590, center[1] + 810),
+  );
+  const moving = useRef(false);
+  // 마지막으로 카메라를 맞춘 선택과 "전국 보기" 횟수.
+  const shown = useRef<{
+    selected: [number, number] | null;
+    overview: number;
+  }>({ selected: null, overview: overviewRevision });
+  const { camera, gl } = useThree();
+  const [bounds, setBounds] = useState<PanelBounds | null>(null);
+  const stage = useRef<HTMLElement | null>(null);
+
+  // 이름표와 같은 패널 경계 캐시를 구독해 접힘과 화면 크기 변화를 반영한다.
+  useLayoutEffect(() => {
+    const container = gl.domElement.closest(".scene-stage");
+    if (!(container instanceof HTMLElement)) return;
+    stage.current = container;
+    return observePanelBounds(container, setBounds);
+  }, [gl.domElement]);
+
+  // 선택 지점으로 카메라와 표적을 함께 옮겨 시선 각도를 보존한다.
+  useEffect(() => {
+    const overview =
+      bounds && bounds.width > 0 && bounds.height > 0
+        ? overviewPose(bounds, center, width, depth, 44)
+        : null;
+    const point = selected ?? [center[0], center[1] + 90];
+    const close = Boolean(selected && focus);
+    // 빈 곳을 눌러 선택만 풀리면 카메라는 그 자리에 둔다 — 전체 구도로는 "전국 보기"에서만 돌아간다.
+    const cleared =
+      !selected &&
+      shown.current.selected !== null &&
+      shown.current.overview === overviewRevision;
+    shown.current = { selected, overview: overviewRevision };
+    if (cleared) return;
+    if (!selected && overview) {
+      desired.current.copy(overview.target);
+      desiredPosition.current.copy(overview.position);
+    } else if (close) {
+      // 고른 곳으로 가까이 가되, 이미 더 가까이 보고 있었다면 그 거리·각도를 유지한 채 옮기기만 한다.
+      desired.current.set(point[0], 0, point[1]);
+      const offset = controls.current
+        ? camera.position.clone().sub(controls.current.target)
+        : CLOSE_OFFSET.clone();
+      desiredPosition.current
+        .copy(offset.length() < CLOSE_OFFSET.length() ? offset : CLOSE_OFFSET)
+        .add(desired.current);
+    } else {
+      desired.current.set(point[0], 0, point[1]);
+      desiredPosition.current.set(point[0] + 430, 590, point[1] + 720);
+    }
+    if (reducedMotion) {
+      if (controls.current) {
+        controls.current.target.copy(desired.current);
+        camera.position.copy(desiredPosition.current);
+        controls.current.update();
+      }
+      moving.current = false;
+      return;
+    }
+    moving.current = true;
+  }, [
+    selected,
+    reducedMotion,
+    focus,
+    camera,
+    center[0],
+    center[1],
+    bounds,
+    width,
+    depth,
+    overviewRevision,
+  ]);
+
+  // E2E 진단에서만 실제 OrbitControls 표적을 읽을 수 있게 한다.
+  useEffect(() => {
+    if (
+      new URLSearchParams(window.location.search).get("sceneDiagnostic") !== "1"
+    )
+      return;
+    window.__crowdcastCameraTarget = () => {
+      const point = controls.current?.target;
+      return point ? [point.x, point.y, point.z] : null;
+    };
+    window.__crowdcastBoardCorners = () => {
+      camera.updateMatrixWorld();
+      return [
+        [center[0] - width / 2, center[1] - depth / 2],
+        [center[0] + width / 2, center[1] - depth / 2],
+        [center[0] - width / 2, center[1] + depth / 2],
+        [center[0] + width / 2, center[1] + depth / 2],
+      ].map(([x, z]) => {
+        const point = new Vector3(x, 8, z).project(camera);
+        const canvas = gl.domElement.getBoundingClientRect();
+        return [
+          canvas.left + ((point.x + 1) * canvas.width) / 2,
+          canvas.top + ((1 - point.y) * canvas.height) / 2,
+        ];
+      });
+    };
+    return () => {
+      delete window.__crowdcastCameraTarget;
+      delete window.__crowdcastBoardCorners;
+    };
+  }, [camera, center, width, depth, gl.domElement]);
+
+  // 방향키는 판 위를 이동하고 +/-는 현재 표적을 향해 확대한다.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const orbit = controls.current;
+      if (!orbit || !stage.current || !isSceneCameraKey(event, stage.current))
+        return;
+      const movement: Record<string, [number, number]> = {
+        ArrowLeft: [-20, 0],
+        ArrowRight: [20, 0],
+        ArrowUp: [0, -20],
+        ArrowDown: [0, 20],
+      };
+      const step = movement[event.key];
+      if (step) {
+        event.preventDefault();
+        orbit.target.x += step[0];
+        orbit.target.z += step[1];
+        camera.position.x += step[0];
+        camera.position.z += step[1];
+        desired.current.copy(orbit.target);
+        desiredPosition.current.copy(camera.position);
+        moving.current = false;
+      } else if (event.key === "+" || event.key === "=" || event.key === "-") {
+        event.preventDefault();
+        const factor = event.key === "-" ? 1.12 : 0.89;
+        camera.position
+          .sub(orbit.target)
+          .multiplyScalar(factor)
+          .add(orbit.target);
+        desiredPosition.current.copy(camera.position);
+        moving.current = false;
+      } else return;
+      orbit.update();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [camera]);
+
+  // 자동 이동이 아닐 때 최소 거리 가까이 확대하면 한 번만 알린다(다시 멀어지면 재무장).
+  const deepZoomed = useRef(false);
+  useFrame(() => {
+    const orbit = controls.current;
+    if (!orbit || !onDeepZoom || moving.current) return;
+    const close = camera.position.distanceTo(orbit.target) < 58;
+    if (close && !deepZoomed.current) {
+      deepZoomed.current = true;
+      onDeepZoom([orbit.target.x, orbit.target.z]);
+    } else if (!close) deepZoomed.current = false;
+  });
+
+  // 자동 이동은 매 프레임 기존 벡터를 재사용해 부드럽게 끝낸다.
+  useFrame((_, delta) => {
+    const orbit = controls.current;
+    if (!orbit || reducedMotion || !moving.current) return;
+    const step = Math.min(1, delta * 4);
+    orbit.target.lerp(desired.current, step);
+    camera.position.lerp(desiredPosition.current, step);
+    orbit.update();
+    if (
+      orbit.target.distanceToSquared(desired.current) < 0.01 &&
+      camera.position.distanceToSquared(desiredPosition.current) < 0.01
+    )
+      moving.current = false;
+  });
+
+  // 끌어서 옮긴 표적이 판 밖으로 나가면 카메라와 함께 판 가장자리로 되돌린다.
+  const keepOnBoard = () => {
+    const orbit = controls.current;
+    if (!orbit) return;
+    const x = Math.min(
+      center[0] + width / 2,
+      Math.max(center[0] - width / 2, orbit.target.x),
+    );
+    const z = Math.min(
+      center[1] + depth / 2,
+      Math.max(center[1] - depth / 2, orbit.target.z),
+    );
+    const dx = x - orbit.target.x;
+    const dz = z - orbit.target.z;
+    if (dx === 0 && dz === 0) return;
+    orbit.target.x = x;
+    orbit.target.z = z;
+    camera.position.x += dx;
+    camera.position.z += dz;
+  };
+
+  // 왼쪽 끌기·한 손가락은 이동, 휠 버튼·오른쪽 끌기는 회전, 휠은 커서 위치로 확대한다(성남 3D 여행과 같은 조작).
+  return (
+    <OrbitControls
+      ref={controls}
+      target={[center[0], 0, center[1] + 90]}
+      minPolarAngle={0.35}
+      maxPolarAngle={1.25}
+      minDistance={50}
+      maxDistance={4000}
+      enableDamping={!reducedMotion}
+      dampingFactor={0.09}
+      enablePan
+      screenSpacePanning={false}
+      zoomToCursor
+      mouseButtons={{
+        LEFT: MOUSE.PAN,
+        MIDDLE: MOUSE.ROTATE,
+        RIGHT: MOUSE.ROTATE,
+      }}
+      touches={{ ONE: TOUCH.PAN, TWO: TOUCH.DOLLY_ROTATE }}
+      onStart={() => {
+        moving.current = false;
+      }}
+      onChange={keepOnBoard}
+    />
+  );
+}
+
+declare global {
+  interface Window {
+    __crowdcastCameraTarget?: () => [number, number, number] | null;
+    __crowdcastBoardCorners?: () => number[][];
+  }
+}

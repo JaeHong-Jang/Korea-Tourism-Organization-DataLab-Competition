@@ -1,0 +1,22 @@
+{
+  "fixture": "fixtures/event/valid-yeongjong.json",
+  "schema": "event",
+  "triples": [
+    ["e-yeongjong-fireworks-2025", "rdf:type", "cc:Event"],
+    ["e-yeongjong-fireworks-2025", "cc:inRegion", "28110"],
+    ["e-yeongjong-fireworks-2025", "cc:eventTypeLabel", "\"불꽃\""],
+    ["e-yeongjong-fireworks-2025", "cc:startsAt", "\"2025-10-18T19:00:00+09:00\"^^xsd:dateTime"],
+    ["e-yeongjong-fireworks-2025", "cc:hazardLabel", "\"폭죽\""],
+    ["e-yeongjong-fireworks-2025", "cc:eventSource", "\"사용자입력\""],
+    ["e-yeongjong-fireworks-2025", "cc:heldAt", "*"],
+    ["*", "rdf:type", "cc:Venue"],
+    ["*", "cc:lat", "\"37.49\"^^xsd:double"],
+    ["e-yeongjong-fireworks-2025", "cc:expectedByHost", "q-e-yeongjong-host"],
+    ["q-e-yeongjong-host", "rdf:type", "cc:Quantity"],
+    ["q-e-yeongjong-host", "cc:valueKind", "\"사전예상\""]
+  ],
+  "absent": [
+    ["e-yeongjong-fireworks-2025", "cc:derivedFromDataset", "*"],
+    ["e-yeongjong-fireworks-2025", "cc:aboutRegion", "*"]
+  ]
+}

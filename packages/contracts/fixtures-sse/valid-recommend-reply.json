@@ -1,0 +1,99 @@
+{
+  "mode": "recommend",
+  "forecastId": null,
+  "note": "방문객 행사 찾기(\"불꽃놀이 행사에 가고 싶어\") + 팀장 대화형 답",
+  "events": [
+    {
+      "event": "agent_status",
+      "seq": 0,
+      "data": {
+        "agentId": "lead",
+        "team": "lead",
+        "state": "working",
+        "note": "행사 찾기를 맡겼어요",
+        "stepId": null,
+        "at": "2026-09-25T20:00:00+09:00"
+      }
+    },
+    {
+      "event": "agent_status",
+      "seq": 1,
+      "data": {
+        "agentId": "lead",
+        "team": "lead",
+        "state": "done",
+        "note": "조건에 맞는 행사를 골랐어요",
+        "stepId": null,
+        "at": "2026-09-25T20:00:01+09:00"
+      }
+    },
+    {
+      "event": "recommend",
+      "seq": 2,
+      "data": {
+        "query": {
+          "text": "불꽃놀이 행사에 가고 싶어",
+          "type": "불꽃",
+          "sido": null,
+          "from": "2026-09-26",
+          "to": "2026-10-25"
+        },
+        "items": [
+          {
+            "summary": {
+              "eventId": "e-yeongjong-fireworks-2025",
+              "forecastId": "f-yeongjong-2025",
+              "name": "영종 씨사이드파크 불꽃축제",
+              "type": "불꽃",
+              "startsAt": "2025-10-18T19:00:00+09:00",
+              "endsAt": "2025-10-18T21:00:00+09:00",
+              "sigunguCode": "28110",
+              "sigunguName": "인천 중구",
+              "lat": 37.49,
+              "lng": 126.58,
+              "level": 4,
+              "peakP10": 12000,
+              "peakP50": 21000,
+              "peakP90": 35000,
+              "pOver1000": 0.99,
+              "ood": false,
+              "modelVerdict": "미검증"
+            },
+            "reason": "불꽃 · 다가오는 30일 안 · 예보 규모 작은 순"
+          }
+        ],
+        "total": 1,
+        "note": "혼잡 예보는 참고용 — 추정 산식 기반"
+      }
+    },
+    {
+      "event": "reply",
+      "seq": 3,
+      "data": {
+        "text": "불꽃 축제를 가까운 날짜 순으로 골라 봤어요. 붐비는 정도도 함께 보세요.",
+        "source": "template"
+      }
+    },
+    {
+      "event": "suggest",
+      "seq": 4,
+      "data": {
+        "actions": [
+          {
+            "id": "open-map",
+            "label": "지도에서 보기",
+            "href": "/api/festivals"
+          }
+        ]
+      }
+    },
+    {
+      "event": "done",
+      "seq": 5,
+      "data": {
+        "sessionId": "s-demo-0001",
+        "forecastId": null
+      }
+    }
+  ]
+}

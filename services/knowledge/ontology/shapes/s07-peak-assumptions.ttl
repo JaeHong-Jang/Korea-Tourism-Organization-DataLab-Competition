@@ -1,0 +1,7 @@
+# 순간 최대 수치가 환산 가정을 두 개 이상 가리키는지 검사한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+cc:S07 a sh:NodeShape ; sh:targetObjectsOf cc:peakConcurrent ;
+    sh:class cc:Quantity ;
+    sh:property [ sh:path cc:dependsOnAssumption ; sh:minCount 2 ; sh:class cc:Assumption ] .

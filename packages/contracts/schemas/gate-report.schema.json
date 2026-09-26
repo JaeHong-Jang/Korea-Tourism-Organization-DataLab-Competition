@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/gate-report.schema.json",
+  "title": "게이트 결과",
+  "description": "게이트 A·B·발행 검사. 검증 범위 = 세션 revision + 기준 그래프 버전",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gate",
+    "passed",
+    "revision",
+    "masterVersion",
+    "violations"
+  ],
+  "properties": {
+    "gate": {
+      "enum": [
+        "A",
+        "B",
+        "publish",
+        "integrity"
+      ],
+      "description": "A 분석 결과 · B 문장 · publish 발행 · integrity 적재 시 참조 무결성(knowledge /facts 422). SSE에는 A·B·publish만 보낸다"
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "masterVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check",
+          "shapeId",
+          "nodeId",
+          "message"
+        ],
+        "properties": {
+          "check": {
+            "enum": [
+              "shacl",
+              "number",
+              "rule",
+              "uncertainty",
+              "integrity"
+            ]
+          },
+          "shapeId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nodeId": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

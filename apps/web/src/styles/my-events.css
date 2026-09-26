@@ -1,0 +1,66 @@
+/* 내 행사 표와 선택 행사 상세를 화면 너비에 맞춰 나란히 배치한다. */
+.my-events-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); align-items: start; gap: var(--space-8); }
+.my-events-layout > *, .my-events-detail > * { min-width: 0; }
+.my-events-detail { display: grid; gap: var(--space-8); }
+.my-events-list { min-height: 500px; }
+.my-events-filters { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: var(--space-5) 0; }
+.my-events-filters label, .my-events-actual-form label, .my-events-share label { display: grid; gap: var(--space-1); color: var(--ink-2); font-size: var(--text-sm); }
+.my-events-filters select, .my-events-actual-form select, .my-events-actual-form input, .my-events-share input { min-height: 38px; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font: inherit; }
+
+/* 행 전체의 선택 상태와 좁은 화면의 가로 스크롤을 보이게 한다. */
+.my-events-table-wrap { overflow-x: auto; }
+.my-events-table { width: 100%; min-width: 690px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.my-events-table th, .my-events-table td { padding: var(--space-3) var(--space-2); border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.my-events-table thead th { color: var(--ink-2); font-size: var(--text-sm); white-space: nowrap; }
+.my-events-table tbody th { font-weight: 600; }
+.my-events-table tbody tr.is-selected { background: var(--select-soft); outline: 1px solid var(--select); outline-offset: -1px; }
+.my-events-table button { padding: var(--space-1); border: 0; background: transparent; color: var(--link); font: inherit; text-align: left; cursor: pointer; }
+.my-events-table button:focus-visible, .my-events-detail :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.my-events-table .level-badge { white-space: nowrap; }
+
+/* 발행 이력과 변화 카드의 값은 계약 순서대로 읽을 수 있게 배치한다. */
+.my-events-timeline { display: grid; gap: var(--space-4); margin: var(--space-5) 0 0; padding-left: var(--space-5); }
+.my-events-timeline li { position: relative; padding-left: var(--space-2); }
+.my-events-timeline li::before { position: absolute; top: var(--space-2); left: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--brand); content: ""; }
+.my-events-timeline a, .my-events-timeline small { display: grid; gap: var(--space-1); }
+.my-events-timeline small { color: var(--ink-2); }
+.my-events-reforecast-card { display: grid; gap: var(--space-3); margin-top: var(--space-5); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.my-events-reforecast-card h3, .my-events-reforecast-card p { margin: 0; }
+.my-events-reforecast-card dl { display: grid; gap: var(--space-3); margin: 0; }
+.my-events-change-row { display: grid; gap: var(--space-1); padding-bottom: var(--space-2); border-bottom: 1px solid var(--line); }
+.my-events-change-row dt { color: var(--ink-2); }
+.my-events-change-row dd { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; font-variant-numeric: tabular-nums; }
+.my-events-evidence-links { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.my-events-evidence-links a { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); }
+.my-events-report-link { justify-self: start; padding: var(--space-2) var(--space-4); border: 1px solid var(--brand); border-radius: var(--radius-button); background: var(--brand); color: var(--on-brand); font-weight: 700; }
+
+/* 입력·공유 행동은 한 패널 안에서 로딩과 오류 문장까지 유지한다. */
+.my-events-actual-form { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+.my-events-actual-form button, .my-events-share button, .my-events-detail > .feature-panel > button { justify-self: start; padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--link); font: inherit; cursor: pointer; }
+.my-events-detail > .feature-panel > button.my-events-primary { border-color: var(--brand); background: var(--brand); color: var(--on-brand); }
+.my-events-detail button:disabled { cursor: wait; opacity: .6; }
+.my-events-share { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+.my-events-share input { width: 100%; }
+.my-events-share input { min-width: 0; overflow-wrap: anywhere; }
+.my-events-detail [role="alert"] { color: var(--ink); }
+@media (max-width: 1100px) { .my-events-layout { grid-template-columns: 1fr; } }
+
+/* 좁은 화면에서는 같은 표 행을 항목별 이름이 붙은 카드로 읽는다. */
+@media (max-width: 640px) {
+  .my-events-table-wrap { overflow: visible; }
+  .my-events-table { display: block; min-width: 0; }
+  .my-events-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .my-events-table tbody { display: grid; gap: var(--space-3); }
+  .my-events-table tbody tr { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); }
+  .my-events-table tbody tr.is-selected { border-color: var(--select); }
+  .my-events-table tbody th, .my-events-table tbody td { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(0, 2fr); align-items: start; gap: var(--space-2); min-width: 0; padding: 0; border: 0; overflow-wrap: anywhere; }
+  .my-events-table tbody th::before, .my-events-table tbody td::before { content: attr(data-label); color: var(--ink-2); font-size: var(--text-caption); font-weight: 400; }
+  .my-events-table button { padding: 0; }
+  .my-events-detail { gap: var(--space-4); }
+  .my-events-share input { width: 100%; }
+}
+/* what-if로 바꾼 조건의 이력은 저장 행사와 다르다는 것을 글자로 밝힌다 */
+.my-events-whatif { color: var(--ink-2); font-weight: 600; }
+/* 재예보 "바뀐 것 없음"은 오류가 아니라 안내라서 차분한 칸으로 보여 준다. */
+.my-events-unchanged { display: grid; gap: var(--space-1); margin-top: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); font-size: var(--text-sm); }
+.my-events-unchanged p { margin: 0; color: var(--ink-2); }

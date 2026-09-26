@@ -1,0 +1,399 @@
+# 인파예보 forecast 서비스 OpenAPI v1.2 — 스키마는 ../schemas를 참조한다(계약 정본)
+openapi: 3.1.0
+info:
+  title: 인파예보 예측 서비스
+  version: 1.2.0
+servers:
+  - url: http://127.0.0.1:8010
+paths:
+  /health:
+    get:
+      summary: 상태 확인
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - version
+                properties:
+                  status:
+                    const: ok
+                  version:
+                    type: string
+  /v1/geocode:
+    post:
+      summary: 장소 → 시군구 후보
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - venueText
+              properties:
+                venueText:
+                  type: string
+                sidoHint:
+                  type:
+                    - string
+                    - "null"
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - candidates
+                properties:
+                  candidates:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - sigunguCode
+                        - sigunguName
+                        - lat
+                        - lng
+                        - score
+                      properties:
+                        sigunguCode:
+                          type: string
+                          pattern: ^[0-9]{5}$
+                        sigunguName:
+                          type: string
+                        lat:
+                          type: number
+                        lng:
+                          type: number
+                        score:
+                          type: number
+  /v1/predict:
+    post:
+      summary: 예보 전체(내부용 — 게이트웨이·근거 그래프만)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/event.schema.json
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/forecast.schema.json
+        "400":
+          description: 계약 위반 요청
+        "503":
+          description: 하위 서비스 연결 실패
+  /v1/whatif:
+    post:
+      summary: 조건을 바꾼 예보(P1)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - event
+                - changes
+              properties:
+                event:
+                  $ref: ../schemas/event.schema.json
+                changes:
+                  type: object
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/forecast.schema.json
+  /v1/similar:
+    post:
+      summary: 유사 행사(근거 조각 포함)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/event.schema.json
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/similar-event.schema.json
+  /v1/baseline:
+    get:
+      summary: 개최지 평시(근거 조각 포함)
+      parameters:
+        - name: sigunguCode
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: before
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/region-baseline.schema.json
+  /v1/festivals/upcoming/{eventId}/event:
+    get:
+      summary: 일괄 예보가 쓴 행사 입력 그대로(목록에서 고른 행사로 상담을 시작할 때 — 결과가 대시보드 숫자와 같게)
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^e-[a-z0-9][a-z0-9_.:-]{1,120}$
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/event.schema.json
+        "404":
+          description: 다가오는 일괄 예보에 없는 행사
+  /v1/images/{eventId}:
+    get:
+      summary: 행사 대표 이미지(TourAPI firstimage를 받아 둔 로컬 캐시만 — 요청마다 외부 호출 없음)
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^e-[a-z0-9][a-z0-9_.:-]{1,120}$
+      responses:
+        "200":
+          description: 이미지
+          content:
+            image/jpeg: {}
+            image/png: {}
+            image/webp: {}
+        "404":
+          description: 캐시에 없음
+  /v1/weather:
+    get:
+      summary: 날씨(실황·단기·중기)
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: at
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/weather.schema.json
+  /v1/concentration:
+    get:
+      summary: 행사 기간 시군구 관광지 집중률 예측 요약(한국관광공사 15128555)
+      parameters:
+        - name: sigunguCode
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]{5}$"
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: 성공(예측 범위 밖·자료 없음도 status로 알린다)
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/concentration.schema.json
+  /v1/festivals/upcoming:
+    get:
+      summary: 다가오는 행사 일괄 예보
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/festival-summary.schema.json
+  /v1/regions/topojson:
+    get:
+      summary: 시군구 경계(TopoJSON)
+      responses:
+        "200":
+          description: TopoJSON(admdongkor ver20251231, CC BY 4.0)
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/backtest/{runId}:
+    get:
+      summary: 백테스트 요약(latest 가능)
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/backtest-summary.schema.json
+  /v1/model-card/{version}:
+    get:
+      summary: 모델 카드(latest 가능)
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/model-card.schema.json
+  /v1/insights/{key}:
+    get:
+      summary: 인사이트 지표
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            enum:
+              - I1
+              - I2
+              - I3
+              - I4
+              - I5
+              - I6
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/insight.schema.json
+  /v1/preregistration/select:
+    post:
+      summary: 사전 등록 대상 선정(공개 규칙)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/festival-summary.schema.json
+  /v1/preregistration/scores:
+    get:
+      summary: 사전 등록 채점
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/preregistration-scores.schema.json
+  /v1/runs:
+    get:
+      summary: 파이프라인 실행 기록
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/pipeline-run.schema.json
+  /v1/datalab/spec:
+    get:
+      summary: 데이터랩 활용 명세(M7-F2, 실제로 읽은 데이터만)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/datalab-spec.schema.json
+  /v1/ops/freshness:
+    get:
+      summary: 데이터 최신성(M8-F3)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/ops-status.schema.json#/$defs/freshness

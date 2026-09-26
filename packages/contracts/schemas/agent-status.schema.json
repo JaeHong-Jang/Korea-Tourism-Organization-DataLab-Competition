@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/agent-status.schema.json",
+  "title": "에이전트 상태",
+  "description": "작업판이 펫을 그리는 입력",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "agentId",
+    "team",
+    "state",
+    "note",
+    "stepId",
+    "at"
+  ],
+  "properties": {
+    "agentId": {
+      "$ref": "common.schema.json#/$defs/agentId"
+    },
+    "team": {
+      "$ref": "common.schema.json#/$defs/team"
+    },
+    "state": {
+      "enum": [
+        "idle",
+        "working",
+        "waiting",
+        "done",
+        "blocked",
+        "error"
+      ]
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 60
+    },
+    "stepId": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/stepId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "at": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    }
+  }
+}

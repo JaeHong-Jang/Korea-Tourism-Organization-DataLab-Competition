@@ -1,0 +1,12 @@
+{
+  "name": "crowdcast/contracts-php-check",
+  "description": "계약 픽스처를 PHP로 검증하는 도구(오케스트레이터 전용)",
+  "type": "project",
+  "require": {
+    "php": ">=8.4",
+    "opis/json-schema": "^2.4"
+  },
+  "config": {
+    "sort-packages": true
+  }
+}

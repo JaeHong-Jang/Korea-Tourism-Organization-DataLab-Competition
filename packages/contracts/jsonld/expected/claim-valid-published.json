@@ -1,0 +1,17 @@
+{
+  "fixture": "fixtures/claim/valid-published.json",
+  "schema": "claim",
+  "triples": [
+    ["c-yeongjong-3", "rdf:type", "cc:Claim"],
+    ["c-yeongjong-3", "cc:status", "\"published\""],
+    ["c-yeongjong-3", "cc:claimType", "\"판정\""],
+    ["c-yeongjong-3", "cito:citesAsEvidence", "ev-rule-legal-hazard"],
+    ["c-yeongjong-3", "cc:inSession", "s-demo-0001"],
+    ["c-yeongjong-3", "cc:aboutForecast", "f-yeongjong-2025"],
+    ["c-yeongjong-3", "prov:wasGeneratedBy", "st-explainer-01"],
+    ["st-explainer-01", "rdf:type", "cc:AgentStep"],
+    ["st-explainer-01", "prov:wasAssociatedWith", "agent-explainer"],
+    ["*", "cc:checkKind", "\"evidence\""],
+    ["*", "cc:checksRevision", "\"7\"^^xsd:integer"]
+  ]
+}

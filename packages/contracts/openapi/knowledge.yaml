@@ -1,0 +1,267 @@
+# 인파예보 knowledge 서비스 OpenAPI v1.4 — 스키마는 ../schemas를 참조한다(계약 정본)
+openapi: 3.1.0
+info:
+  title: 인파예보 근거 그래프 서비스
+  version: 1.4.0
+servers:
+  - url: http://127.0.0.1:8020
+paths:
+  /health:
+    get:
+      summary: 상태 확인
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - version
+                properties:
+                  status:
+                    const: ok
+                  version:
+                    type: string
+  /v1/sessions/{id}/facts:
+    post:
+      summary: "계약 JSON 적재 → 새 revision. 변환 = jsonld/types.json + context.jsonld, 판정 = rules/integrity.mjs(참조·충돌) + rules/claim-lifecycle.mjs(문장 전이: 새 문장은 draft, 같은 id 재적재로 draft→candidate·→rejected, 발행은 /publish만). 행사·예보 등은 세션 안에서 불변. forecast-report는 적재하지 않는다"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^s-
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - schema
+                - items
+              properties:
+                schema:
+                  enum:
+                    - event
+                    - forecast
+                    - claim
+                    - evidence
+                    - similar-event
+                    - region-baseline
+                items:
+                  type: array
+                  minItems: 1
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - revision
+                properties:
+                  revision:
+                    type: integer
+        "422":
+          description: 끊긴 참조·같은 id 내용 충돌·허용되지 않는 문장 전이 — 아무것도 쓰지 않고 거부(gate = integrity)
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/gate-report.schema.json
+  /v1/sessions/{id}/validate:
+    post:
+      summary: SHACL 검증 — 범위 = 세션 revision 스냅샷 + 기준 그래프 masterVersion + TBox
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^s-
+        - name: revision
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: masterVersion
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: shapes
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/gate-report.schema.json
+        "409":
+          description: revision 또는 masterVersion이 현재와 다름
+  /v1/sessions/{id}/publish:
+    post:
+      summary: S12 확인 후 candidate → published(한 트랜잭션, rules/claim-lifecycle.mjs의 publishProblems — candidate만). 검증한 revision·masterVersion과 같아야 한다
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^s-
+        - name: revision
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: masterVersion
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/gate-report.schema.json
+        "409":
+          description: revision·masterVersion이 바뀌어 거부
+  /v1/sessions/{id}/graph:
+    get:
+      summary: 발행된 부분의 세션 그래프(JSON-LD)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^s-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/claims/{id}/evidence:
+    get:
+      summary: 문장의 근거 카드
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^c-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/evidence.schema.json
+  /v1/evidence/{id}:
+    get:
+      summary: 근거 하나
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^ev-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/evidence.schema.json
+  /v1/stats/datalab-usage:
+    get:
+      summary: 근거 통계(전체 연결률·데이터랩까지 이어지는 비율)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/datalab-usage.schema.json
+  /v1/master/model-runs:
+    post:
+      summary: 모델 카드를 기준 그래프에 등록(masterVersion 증가)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/model-card.schema.json
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - masterVersion
+                properties:
+                  masterVersion:
+                    type: integer
+  /v1/master/graph:
+    get:
+      summary: 전체 근거 그래프(TBox 클래스·관계 + 기준 그래프 — 규칙·조항·데이터셋·가정·모델 실행·파이프라인 계보·에이전트), 온톨로지 시각화용
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/knowledge-graph.schema.json
+  /v1/master/version:
+    get:
+      summary: 현재 기준 그래프 버전
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - masterVersion
+                properties:
+                  masterVersion:
+                    type: integer
+  /v1/ontology:
+    get:
+      summary: 온톨로지(TTL)
+      responses:
+        "200":
+          description: Turtle
+          content:
+            text/turtle:
+              schema:
+                type: string
+  /v1/stats/graph:
+    get:
+      summary: 근거 그래프 크기(M8-F3)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ops-status.schema.json#/$defs/graphStats

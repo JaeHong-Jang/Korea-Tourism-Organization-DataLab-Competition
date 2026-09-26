@@ -1,0 +1,218 @@
+{
+  "mode": "followup",
+  "forecastId": "f-yeongjong-2025",
+  "note": "발행된 예보에 대한 후속 요청(\"왜 이렇게 많아?\")",
+  "events": [
+    {
+      "event": "agent_status",
+      "seq": 0,
+      "data": {
+        "agentId": "lead",
+        "team": "lead",
+        "state": "working",
+        "note": "요인 설명을 맡겼어요",
+        "stepId": null,
+        "at": "2026-09-24T20:05:00+09:00"
+      }
+    },
+    {
+      "event": "agent_status",
+      "seq": 1,
+      "data": {
+        "agentId": "explainer",
+        "team": "report",
+        "state": "done",
+        "note": "요인 근거로 설명했어요",
+        "stepId": "st-explainer-03",
+        "at": "2026-09-24T20:05:01+09:00"
+      }
+    },
+    {
+      "event": "forecast",
+      "seq": 2,
+      "data": {
+        "id": "f-yeongjong-2025",
+        "eventId": "e-yeongjong-fireworks-2025",
+        "asOf": "2025-10-04",
+        "modelVersion": "v0.1.0",
+        "dailyMean": {
+          "id": "q-f-yeongjong-2025-mean",
+          "name": "일평균 방문객",
+          "p10": 7400,
+          "p50": 13000,
+          "p90": 22000,
+          "unit": "명/일",
+          "timeUnit": "일",
+          "estimated": false,
+          "assumptionIds": [],
+          "value": null,
+          "spatialScope": "행사장",
+          "valueKind": "예측",
+          "announcedAt": null
+        },
+        "peakConcurrent": {
+          "id": "q-f-yeongjong-2025-peak",
+          "name": "순간 최대",
+          "p10": 12000,
+          "p50": 21000,
+          "p90": 35000,
+          "unit": "명",
+          "timeUnit": "순간",
+          "estimated": true,
+          "assumptionIds": [
+            "as-peak-day-factor",
+            "as-concurrency-fireworks"
+          ],
+          "value": null,
+          "spatialScope": "행사장",
+          "valueKind": "예측",
+          "announcedAt": null
+        },
+        "probabilities": [
+          {
+            "threshold": 1000,
+            "probability": 0.99,
+            "display": "99%"
+          },
+          {
+            "threshold": 5000,
+            "probability": 0.9,
+            "display": "90%"
+          }
+        ],
+        "peakHours": {
+          "from": "19:00",
+          "to": "21:00"
+        },
+        "ood": false,
+        "oodReasons": [],
+        "judgment": {
+          "level": 4,
+          "label": "대규모",
+          "reasons": [
+            {
+              "ruleId": "rule-legal-hazard",
+              "kind": "법정",
+              "text": "폭죽 사용 — 법정 기준(인원 무관)"
+            },
+            {
+              "ruleId": "rule-internal-5000",
+              "kind": "자체",
+              "text": "5,000명 초과 90% — 자체 기준"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "event": "gate",
+      "seq": 3,
+      "data": {
+        "gate": "B",
+        "passed": true,
+        "revision": 9,
+        "masterVersion": 1,
+        "violations": []
+      }
+    },
+    {
+      "event": "gate",
+      "seq": 4,
+      "data": {
+        "gate": "publish",
+        "passed": true,
+        "revision": 9,
+        "masterVersion": 1,
+        "violations": []
+      }
+    },
+    {
+      "event": "claim",
+      "seq": 5,
+      "data": {
+        "id": "c-yeongjong-6",
+        "sessionId": "s-demo-0001",
+        "forecastId": "f-yeongjong-2025",
+        "text": "토요일 저녁에 열려서 평소보다 사람이 많이 몰려요",
+        "rendered": "토요일 저녁에 열려서 평소보다 사람이 많이 몰려요",
+        "claimType": "요인",
+        "status": "published",
+        "evidenceIds": [
+          "ev-model-f-yeongjong-2025",
+          "ev-as-concurrency-fireworks"
+        ],
+        "placeholders": [],
+        "generatedBy": {
+          "agentId": "explainer",
+          "stepId": "st-explainer-03"
+        },
+        "checks": [
+          {
+            "checkKind": "evidence",
+            "passed": true,
+            "revision": 9
+          },
+          {
+            "checkKind": "number",
+            "passed": true,
+            "revision": 9
+          }
+        ]
+      }
+    },
+    {
+      "event": "evidence",
+      "seq": 6,
+      "data": {
+        "items": [
+          {
+            "quantityIds": [
+              "q-f-yeongjong-2025-mean"
+            ],
+            "period": null,
+            "source": null,
+            "availableAt": null,
+            "ruleId": null,
+            "clauseId": null,
+            "caseEventId": null,
+            "assumptionId": null,
+            "forecastId": "f-yeongjong-2025",
+            "modelVersion": "v0.1.0",
+            "checkResult": null,
+            "id": "ev-model-f-yeongjong-2025",
+            "kind": "model",
+            "title": "예측 모델",
+            "summary": "LightGBM 분위수 + CQR"
+          },
+          {
+            "quantityIds": [
+              "q-f-yeongjong-2025-peak"
+            ],
+            "period": null,
+            "source": null,
+            "availableAt": null,
+            "ruleId": null,
+            "clauseId": null,
+            "caseEventId": null,
+            "assumptionId": "as-concurrency-fireworks",
+            "forecastId": null,
+            "modelVersion": null,
+            "checkResult": null,
+            "id": "ev-as-concurrency-fireworks",
+            "kind": "assumption",
+            "title": "동시체류율(불꽃)",
+            "summary": "불꽃 행사 동시체류율 1.0(범위 0.8~1.0, 가정)"
+          }
+        ]
+      }
+    },
+    {
+      "event": "done",
+      "seq": 7,
+      "data": {
+        "sessionId": "s-demo-0001",
+        "forecastId": "f-yeongjong-2025"
+      }
+    }
+  ]
+}

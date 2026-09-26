@@ -1,0 +1,206 @@
+# 인파예보의 행사·수치·근거·문장·계보 어휘를 정의한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <https://schema.org/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix cito: <http://purl.org/spar/cito/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+cc: a owl:Ontology ; dcterms:title "인파예보 근거 그래프" ; owl:versionInfo "1.0.0" .
+
+# 행사와 지역, 출처, 예보 및 실행 계보의 클래스를 정의한다.
+cc:Event a owl:Class ; rdfs:subClassOf schema:Event ; rdfs:label "행사"@ko .
+cc:Venue a owl:Class ; rdfs:subClassOf schema:Place ; rdfs:label "개최 장소"@ko .
+cc:Region a owl:Class ; rdfs:subClassOf schema:Place ; rdfs:label "시군구"@ko .
+cc:Dataset a owl:Class ; rdfs:subClassOf dcat:Dataset ; rdfs:label "데이터 출처"@ko .
+cc:Observation a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "관측값"@ko .
+cc:Quantity a owl:Class ; rdfs:label "수치"@ko .
+cc:Forecast a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "예보"@ko .
+cc:PredictionRun a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:label "예측 실행"@ko .
+cc:ModelRun a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:label "모델 학습 실행"@ko .
+cc:Period a owl:Class ; rdfs:label "기간"@ko .
+
+# 법정 규칙과 자체 규칙을 분리하고 가정·사례·판정의 종류를 정의한다.
+cc:Rule a owl:Class ; rdfs:label "판정 규칙"@ko .
+cc:LegalRule a owl:Class ; rdfs:subClassOf cc:Rule ; rdfs:label "법정 규칙"@ko .
+cc:InternalRule a owl:Class ; rdfs:subClassOf cc:Rule ; rdfs:label "자체 규칙"@ko .
+cc:LegalClause a owl:Class ; rdfs:label "법령 조항"@ko .
+cc:Assumption a owl:Class ; rdfs:label "가정"@ko .
+cc:SimilarCase a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "유사 행사"@ko .
+cc:GoldenCase a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "골든 사례"@ko .
+cc:Judgment a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "판정"@ko .
+cc:Factor a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "예측 요인"@ko .
+cc:JudgmentReason a owl:Class ; rdfs:label "판정 사유"@ko .
+cc:ChecklistItem a owl:Class ; rdfs:label "체크리스트 항목"@ko .
+cc:ProbabilityStatement a owl:Class ; rdfs:label "임계값별 확률"@ko .
+cc:RegionBaseline a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "개최지 평시"@ko .
+cc:WeekdayMean a owl:Class ; rdfs:label "요일별 평균"@ko .
+cc:ForecastReport a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "발행 예보서"@ko .
+
+# 근거의 종류와 문장의 발행 계보를 정의한다.
+cc:Evidence a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "근거"@ko .
+cc:DataEvidence a owl:Class ; rdfs:subClassOf cc:Evidence ; rdfs:label "데이터 근거"@ko .
+cc:ModelEvidence a owl:Class ; rdfs:subClassOf cc:Evidence ; rdfs:label "모델 근거"@ko .
+cc:RuleEvidence a owl:Class ; rdfs:subClassOf cc:Evidence ; rdfs:label "규정 근거"@ko .
+cc:CaseEvidence a owl:Class ; rdfs:subClassOf cc:Evidence ; rdfs:label "사례 근거"@ko .
+cc:AssumptionEvidence a owl:Class ; rdfs:subClassOf cc:Evidence ; rdfs:label "가정 근거"@ko .
+cc:CheckEvidence a owl:Class ; rdfs:subClassOf cc:Evidence ; rdfs:label "검증 근거"@ko .
+cc:Claim a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "문장"@ko .
+cc:Placeholder a owl:Class ; rdfs:label "수치 자리표시자"@ko .
+cc:TeamAgent a owl:Class ; rdfs:subClassOf prov:Agent ; rdfs:label "예보팀 에이전트"@ko .
+cc:AgentStep a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:label "에이전트 작업"@ko .
+cc:Session a owl:Class ; rdfs:label "예보 세션"@ko .
+cc:Check a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "검사 결과"@ko .
+
+# 행사 정보와 관측값·출처의 관계를 정의한다.
+cc:heldAt a owl:ObjectProperty ; rdfs:domain cc:Event ; rdfs:range cc:Venue .
+cc:inRegion a owl:ObjectProperty ; rdfs:domain cc:Event ; rdfs:range cc:Region .
+cc:eventTypeLabel a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:hazardLabel a owl:DatatypeProperty ; rdfs:domain cc:Event ; rdfs:range xsd:string .
+cc:eventSource a owl:DatatypeProperty ; rdfs:domain cc:Event ; rdfs:range xsd:string .
+cc:startsAt a owl:DatatypeProperty ; rdfs:domain cc:Event ; rdfs:range xsd:dateTime .
+cc:endsAt a owl:DatatypeProperty ; rdfs:domain cc:Event ; rdfs:range xsd:dateTime .
+cc:predictedFor a owl:ObjectProperty ; rdfs:domain cc:Forecast ; rdfs:range cc:Event .
+cc:asOf a owl:DatatypeProperty ; rdfs:domain cc:Forecast ; rdfs:range xsd:date .
+cc:featureName a owl:DatatypeProperty ; rdfs:domain cc:Observation ; rdfs:range xsd:string .
+cc:availableAt a owl:DatatypeProperty ; rdfs:range xsd:date .
+cc:observedAt a owl:DatatypeProperty ; rdfs:domain cc:Observation ; rdfs:range xsd:date .
+cc:aboutRegion a owl:ObjectProperty ; rdfs:range cc:Region .
+cc:derivedFromDataset a owl:ObjectProperty ; rdfs:range cc:Dataset .
+cc:datalabMenu a owl:DatatypeProperty ; rdfs:domain cc:Dataset ; rdfs:range xsd:string .
+cc:accessUrl a owl:DatatypeProperty ; rdfs:range xsd:anyURI .
+cc:hasObservation a owl:ObjectProperty ; rdfs:domain cc:Forecast ; rdfs:range cc:Observation .
+cc:modelVersion a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:trainRange a owl:ObjectProperty ; rdfs:range cc:Period .
+cc:createdAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+
+# 수치·구간·가정의 리터럴은 JSON-LD 계약과 같은 타입을 쓴다.
+cc:dailyMean a owl:ObjectProperty ; rdfs:domain cc:Forecast ; rdfs:range cc:Quantity .
+cc:peakConcurrent a owl:ObjectProperty ; rdfs:domain cc:Forecast ; rdfs:range cc:Quantity .
+cc:value a owl:DatatypeProperty ; rdfs:range xsd:double .
+cc:p10 a owl:DatatypeProperty ; rdfs:domain cc:Quantity ; rdfs:range xsd:double .
+cc:p50 a owl:DatatypeProperty ; rdfs:domain cc:Quantity ; rdfs:range xsd:double .
+cc:p90 a owl:DatatypeProperty ; rdfs:domain cc:Quantity ; rdfs:range xsd:double .
+cc:rangeLow a owl:DatatypeProperty ; rdfs:range xsd:double .
+cc:rangeHigh a owl:DatatypeProperty ; rdfs:range xsd:double .
+cc:unit a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:timeUnit a owl:DatatypeProperty ; rdfs:domain cc:Quantity ; rdfs:range xsd:string .
+cc:spatialScope a owl:DatatypeProperty ; rdfs:domain cc:Quantity ; rdfs:range xsd:string .
+cc:valueKind a owl:DatatypeProperty ; rdfs:domain cc:Quantity ; rdfs:range xsd:string .
+cc:estimated a owl:DatatypeProperty ; rdfs:range xsd:boolean .
+cc:dependsOnAssumption a owl:ObjectProperty ; rdfs:domain cc:Quantity ; rdfs:range cc:Assumption .
+cc:usesAssumption a owl:ObjectProperty ; rdfs:domain cc:Forecast ; rdfs:range cc:Assumption .
+cc:basis a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:note a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:announcedAt a owl:DatatypeProperty ; rdfs:range xsd:date .
+cc:period a owl:ObjectProperty ; rdfs:range cc:Period .
+cc:periodFrom a owl:DatatypeProperty ; rdfs:domain cc:Period ; rdfs:range xsd:date .
+cc:periodTo a owl:DatatypeProperty ; rdfs:domain cc:Period ; rdfs:range xsd:date .
+
+# 판정 규칙과 요인이 참조하는 근거와 조항을 정의한다.
+cc:hasFactor a owl:ObjectProperty ; rdfs:domain cc:Forecast ; rdfs:range cc:Factor .
+cc:contribution a owl:DatatypeProperty ; rdfs:domain cc:Factor ; rdfs:range xsd:double .
+cc:factorFeature a owl:DatatypeProperty ; rdfs:domain cc:Factor ; rdfs:range xsd:string .
+cc:judgedBy a owl:ObjectProperty ; rdfs:domain cc:Judgment ; rdfs:range cc:Rule .
+cc:basedOnClause a owl:ObjectProperty ; rdfs:domain cc:LegalRule ; rdfs:range cc:LegalClause .
+cc:aboutRule a owl:ObjectProperty ; rdfs:domain cc:RuleEvidence ; rdfs:range cc:Rule .
+cc:aboutCase a owl:ObjectProperty ; rdfs:range cc:Event .
+cc:aboutAssumption a owl:ObjectProperty ; rdfs:domain cc:AssumptionEvidence ; rdfs:range cc:Assumption .
+cc:aboutForecast a owl:ObjectProperty ; rdfs:range cc:Forecast .
+cc:mentionsClause a owl:ObjectProperty ; rdfs:range cc:LegalClause .
+cc:hasJudgment a owl:ObjectProperty ; rdfs:domain cc:Forecast ; rdfs:range cc:Judgment .
+cc:hasReason a owl:ObjectProperty ; rdfs:domain cc:Judgment ; rdfs:range cc:JudgmentReason .
+cc:reasonRule a owl:ObjectProperty ; rdfs:domain cc:JudgmentReason ; rdfs:range cc:Rule .
+cc:reasonClause a owl:ObjectProperty ; rdfs:domain cc:JudgmentReason ; rdfs:range cc:LegalClause .
+cc:reasonEvidence a owl:ObjectProperty ; rdfs:domain cc:JudgmentReason ; rdfs:range cc:Evidence .
+cc:hasChecklistItem a owl:ObjectProperty ; rdfs:domain cc:Judgment ; rdfs:range cc:ChecklistItem .
+cc:checklistRule a owl:ObjectProperty ; rdfs:domain cc:ChecklistItem ; rdfs:range cc:Rule .
+cc:supportedBy a owl:ObjectProperty ; rdfs:range cc:Evidence .
+cc:probabilityOver a owl:ObjectProperty ; rdfs:domain cc:Forecast ; rdfs:range cc:ProbabilityStatement .
+cc:threshold a owl:DatatypeProperty ; rdfs:range xsd:integer .
+cc:probability a owl:DatatypeProperty ; rdfs:range xsd:double .
+cc:level a owl:DatatypeProperty ; rdfs:domain cc:Judgment ; rdfs:range xsd:integer .
+cc:levelLabel a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:ruleKind a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:direction a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:display a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:label a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:ood a owl:DatatypeProperty ; rdfs:domain cc:Forecast ; rdfs:range xsd:boolean .
+
+# 문장의 수치 연결과 검사 revision을 정의한다.
+cc:text a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:rendered a owl:DatatypeProperty ; rdfs:domain cc:Claim ; rdfs:range xsd:string .
+cc:claimType a owl:DatatypeProperty ; rdfs:domain cc:Claim ; rdfs:range xsd:string .
+cc:status a owl:DatatypeProperty ; rdfs:domain cc:Claim ; rdfs:range xsd:string .
+cc:hasPlaceholder a owl:ObjectProperty ; rdfs:domain cc:Claim ; rdfs:range cc:Placeholder .
+cc:name a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:quantity a owl:ObjectProperty ; rdfs:domain cc:Placeholder ; rdfs:range cc:Quantity .
+cc:field a owl:DatatypeProperty ; rdfs:domain cc:Placeholder ; rdfs:range xsd:string .
+cc:revision a owl:DatatypeProperty ; rdfs:domain cc:Session ; rdfs:range xsd:integer .
+cc:checksRevision a owl:DatatypeProperty ; rdfs:domain cc:Check ; rdfs:range xsd:integer .
+cc:inSession a owl:ObjectProperty ; rdfs:domain cc:Claim ; rdfs:range cc:Session .
+cc:checkedBy a owl:ObjectProperty ; rdfs:domain cc:Claim ; rdfs:range cc:Check .
+cc:checkKind a owl:DatatypeProperty ; rdfs:domain cc:Check ; rdfs:range xsd:string .
+cc:passed a owl:DatatypeProperty ; rdfs:domain cc:Check ; rdfs:range xsd:boolean .
+cc:checkResult a owl:ObjectProperty ; rdfs:domain cc:CheckEvidence ; rdfs:range cc:Check .
+cc:statesQuantity a owl:ObjectProperty ; rdfs:domain cc:Evidence ; rdfs:range cc:Quantity .
+cc:hasEvidence a owl:ObjectProperty ; rdfs:range cc:Evidence .
+cc:hasClaim a owl:ObjectProperty ; rdfs:domain cc:ForecastReport ; rdfs:range cc:Claim .
+cc:summary a owl:DatatypeProperty ; rdfs:range xsd:string .
+cito:citesAsEvidence a owl:ObjectProperty ; rdfs:range cc:Evidence .
+
+# 유사 행사와 평시 및 예보서의 연결을 정의한다.
+cc:hasSimilarCase a owl:ObjectProperty ; rdfs:domain cc:ForecastReport ; rdfs:range cc:SimilarCase .
+cc:measured a owl:ObjectProperty ; rdfs:domain cc:SimilarCase ; rdfs:range cc:Quantity .
+cc:announced a owl:ObjectProperty ; rdfs:domain cc:SimilarCase ; rdfs:range cc:Quantity .
+cc:hasBaseline a owl:ObjectProperty ; rdfs:domain cc:ForecastReport ; rdfs:range cc:RegionBaseline .
+cc:weekdayMean a owl:ObjectProperty ; rdfs:domain cc:RegionBaseline ; rdfs:range cc:WeekdayMean .
+cc:weekday a owl:DatatypeProperty ; rdfs:domain cc:WeekdayMean ; rdfs:range xsd:integer .
+cc:local a owl:DatatypeProperty ; rdfs:range xsd:double .
+cc:nonlocal a owl:DatatypeProperty ; rdfs:range xsd:double .
+cc:foreign a owl:DatatypeProperty ; rdfs:range xsd:double .
+cc:nonlocalShare a owl:DatatypeProperty ; rdfs:range xsd:double .
+cc:year a owl:DatatypeProperty ; rdfs:range xsd:integer .
+cc:unitsComparable a owl:DatatypeProperty ; rdfs:range xsd:boolean .
+cc:similarity a owl:DatatypeProperty ; rdfs:range xsd:double .
+cc:aboutEvent a owl:ObjectProperty ; rdfs:domain cc:ForecastReport ; rdfs:range cc:Event .
+cc:reportOf a owl:ObjectProperty ; rdfs:domain cc:ForecastReport ; rdfs:range cc:Forecast .
+
+# 행사 입력의 부가 필드와 저장소 내부 원문 메타데이터를 정의한다.
+cc:timeOfDay a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:sidoName a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:sigunguName a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:fee a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:hostType a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:budgetKrw a owl:DatatypeProperty ; rdfs:range xsd:integer .
+cc:edition a owl:DatatypeProperty ; rdfs:range xsd:integer .
+cc:promoChannel a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:lat a owl:DatatypeProperty ; rdfs:domain cc:Venue ; rdfs:range xsd:double .
+cc:lng a owl:DatatypeProperty ; rdfs:domain cc:Venue ; rdfs:range xsd:double .
+cc:expectedByHost a owl:ObjectProperty ; rdfs:domain cc:Event ; rdfs:range cc:Quantity .
+cc:masterVersion a owl:DatatypeProperty ; rdfs:range xsd:integer .
+cc:loadedDocument a owl:ObjectProperty ; rdfs:domain cc:Session .
+cc:sourceDocument a owl:DatatypeProperty ; rdfs:range rdf:JSON .
+cc:documentSchema a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:documentOrder a owl:DatatypeProperty ; rdfs:range xsd:integer .
+
+# 파이프라인 계보는 실행 단계와 파일을 PROV로 잇고 가져온 스냅샷을 보존한다.
+cc:PipelineStage a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:label "파이프라인 단계"@ko .
+cc:LineageSnapshot a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "계보 스냅샷"@ko .
+cc:stageOrder a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:integer .
+cc:stageStatus a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:string .
+cc:gateResult a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:string .
+cc:gatePassed a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:boolean .
+cc:gateMessage a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:string .
+cc:lastRunId a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:string .
+cc:dagsterRunId a owl:DatatypeProperty ; rdfs:domain cc:PipelineStage ; rdfs:range xsd:string .
+cc:filePath a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:sha256 a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:lineageSha256 a owl:DatatypeProperty ; rdfs:range xsd:string .
+cc:exportedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+cc:hasStage a owl:ObjectProperty ; rdfs:domain cc:LineageSnapshot ; rdfs:range cc:PipelineStage .
+cc:currentLineage a owl:ObjectProperty ; rdfs:range cc:LineageSnapshot .

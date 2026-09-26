@@ -1,0 +1,85 @@
+# 법정·자체 판정과 행사 위험·매뉴얼 계획 체크리스트 규칙의 근거를 정의한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix id: <http://crowdcast.local/id/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# 법정 규칙은 반드시 지정한 법령 조항으로 이어진다.
+id:rule-legal-1000 a cc:LegalRule ;
+    dcterms:title "순간 최대 예상 인원 기준" ; cc:threshold 1000 ;
+    cc:basedOnClause id:law-disaster-act-enf-73-9 ;
+    cc:note "순간 최대 관람객 1,000명 이상 예상. 참고용 — 담당자 검토 필수" .
+id:rule-legal-hazard a cc:LegalRule ;
+    dcterms:title "인원 무관 위험 요소 기준" ;
+    cc:basedOnClause id:law-disaster-act-enf-73-9 ;
+    cc:note "산·수면 개최 또는 불·폭죽·석유류·가연성 가스 사용. 참고용 — 담당자 검토 필수" .
+
+# 자체 확률 기준은 법정 의무와 별개의 권고 판단이다.
+id:rule-internal-10pct a cc:InternalRule ;
+    dcterms:title "경계선 수립 권고 기준" ; cc:threshold 1000 ; cc:probability "0.1"^^xsd:double ;
+    cc:note "자체 기준 — docs/plan/03의 판정 규칙" .
+id:rule-internal-50pct a cc:InternalRule ;
+    dcterms:title "수립 대상 가능성 기준" ; cc:threshold 1000 ; cc:probability "0.5"^^xsd:double ;
+    cc:note "자체 기준 — docs/plan/03의 판정 규칙" .
+id:rule-internal-5000 a cc:InternalRule ;
+    dcterms:title "대규모 기준" ; cc:threshold 5000 ; cc:probability "0.5"^^xsd:double ;
+    cc:note "자체 기준 — 순간 최대 5,000명 초과 확률 50% 이상" .
+
+# 규모 외 위험 체크리스트 규칙은 등급과 무관하게 행사 정보·날씨로 켜진다(자체 기준, docs/plan/06 §6).
+id:rule-check-vehicle a cc:InternalRule ;
+    dcterms:title "차량 진입·보행 동선 분리" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: hazards에 차량진입. 안성 사례 — 차량과 관람객 동선이 겹치면 사고 위험. 자체 기준" .
+id:rule-check-water-slope a cc:InternalRule ;
+    dcterms:title "수변·경사 구역 안전" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: hazards에 수면 또는 산. 물가·비탈에서 밀림·추락 위험. 자체 기준" .
+id:rule-check-night-lighting a cc:InternalRule ;
+    dcterms:title "야간 조명" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: timeOfDay가 야간 또는 hazards에 야간조명부족. 어두운 구간에서 넘어짐·밀집 인지 지연. 자체 기준" .
+id:rule-check-fire a cc:InternalRule ;
+    dcterms:title "화기 관리" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: hazards에 불·폭죽·가연성가스·석유류. 화재·화상, 대피로 확보. 자체 기준" .
+id:rule-check-single-exit a cc:InternalRule ;
+    dcterms:title "단일 출입구" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: hazards에 단일출입구. 출입구 한 곳에 몰리는 병목. 자체 기준" .
+id:rule-check-stage-crowd a cc:InternalRule ;
+    dcterms:title "무대 앞 밀집" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: hazards에 무대밀집 또는 type이 공연. 무대 앞 압착(군중 밀림). 자체 기준" .
+id:rule-check-rain-shelter a cc:InternalRule ;
+    dcterms:title "우천 시 대피 공간" ; cc:ruleKind "checklist" ;
+    cc:note "켜는 조건: 날씨 pop ≥ 30 또는 pty가 비·비/눈·눈·소나기, 날씨를 모르면(source 없음·10일 넘게 남음) 켠다. 갑작스러운 비에 한곳으로 몰림. 자체 기준" .
+
+# p.26·p.138의 계획 항목을 수립 권고 이상에서 자체 점검으로 안내한다.
+id:rule-check-staff-plan a cc:InternalRule ;
+    dcterms:title "안전관리요원 배치도와 구역별 인원·임무·책임자, 비상연락망 마련" ; cc:ruleKind "checklist" ;
+    dcterms:source "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.26·p.138 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047" ;
+    cc:note "켜는 조건: 최종 판정 등급 2 이상. 자체 기준·매뉴얼 참고 권고. 요원 배치계획과 비상연락망을 마련한다." .
+
+# p.26의 계획 항목을 수립 권고 이상에서 자체 점검으로 안내한다.
+id:rule-check-staff-distinct a cc:InternalRule ;
+    dcterms:title "행사진행요원과 안전관리요원 구분 표기" ; cc:ruleKind "checklist" ;
+    dcterms:source "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.26 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047" ;
+    cc:note "켜는 조건: 최종 판정 등급 2 이상. 자체 기준·매뉴얼 참고 권고. 단순 행사진행요원과 안전관리요원을 구분한다." .
+
+# p.46·p.49~50의 계획 항목을 수립 권고 이상에서 자체 점검으로 안내한다.
+id:rule-check-staff-focus a cc:InternalRule ;
+    dcterms:title "요원 규모는 지자체·경찰·소방과 협의, 출입구·주차장·차량 이동로·종료 시 출구 집중 배치" ; cc:ruleKind "checklist" ;
+    dcterms:source "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) p.46·p.49~50 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047" ;
+    cc:note "켜는 조건: 최종 판정 등급 2 이상. 자체 기준·매뉴얼 참고 권고. 매뉴얼에 요원 인원 비율은 없으며 관계기관과 협의한다." .
+
+# 표준안 p.137의 계획 항목을 수립 권고 이상에서 자체 점검으로 안내한다.
+id:rule-check-org-chart a cc:InternalRule ;
+    dcterms:title "안전관리 조직도·종합상황실·분야별 책임자 지정" ; cc:ruleKind "checklist" ;
+    dcterms:source "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.137 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047" ;
+    cc:note "켜는 조건: 최종 판정 등급 2 이상. 자체 기준·매뉴얼 참고 권고. 안전관리 조직과 책임 체계를 마련한다." .
+
+# 표준안 p.142의 계획 항목을 수립 권고 이상에서 자체 점검으로 안내한다.
+id:rule-check-org-hq a cc:InternalRule ;
+    dcterms:title "재난안전대책본부 구성과 유관기관 협조 체계" ; cc:ruleKind "checklist" ;
+    dcterms:source "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.142 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047" ;
+    cc:note "켜는 조건: 최종 판정 등급 2 이상. 자체 기준·매뉴얼 참고 권고. 재난 대응 조직과 유관기관 협조 체계를 마련한다." .
+
+# 표준안 p.134의 계획 항목을 수립 권고 이상에서 자체 점검으로 안내한다.
+id:rule-check-capacity a cc:InternalRule ;
+    dcterms:title "동시 최대 수용인원 산정(사람이 다니는 면적 × 면적당 인원 상한)과 초과 시 입장 제한·대기 장소" ; cc:ruleKind "checklist" ;
+    dcterms:source "행정안전부 「지역축제장 안전관리 매뉴얼」(2024. 9.) 표준안 p.134 — https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000000015&nttId=113047" ;
+    cc:note "켜는 조건: 최종 판정 등급 2 이상. 자체 기준·매뉴얼 참고 권고. 순수점유면적 기준으로 1㎡당 4인 이하 권고. 면적당 상한은 현장 여건에 따라 지자체가 정한다." .

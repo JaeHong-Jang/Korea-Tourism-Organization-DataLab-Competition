@@ -1,0 +1,86 @@
+/* 예보팀 펫의 팀 색, 상태 동작, 견본 배치를 디자인 토큰으로 정의한다. */
+.pet-avatar {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  margin: 0;
+  color: var(--ink);
+  text-align: center;
+}
+.pet-avatar__caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%;
+  line-height: 1.2;
+}
+.pet-avatar__name { font-size: var(--text-caption); font-weight: 700; white-space: nowrap; }
+.pet-avatar__detail { color: var(--ink-2); font-size: var(--text-caption); }
+.pet-avatar--96 .pet-avatar__name { font-size: var(--text-ui); }
+.pet-body { display: block; flex: none; overflow: visible; }
+.pet-body--lead { --pet-shell: var(--team-lead); }
+.pet-body--analysis { --pet-shell: var(--team-analysis); }
+.pet-body--verification { --pet-shell: var(--team-verification); }
+.pet-body--report { --pet-shell: var(--team-report); }
+.pet-body__shadow { fill: var(--border); }
+
+/* 꼬리와 둥근 머리는 팀 색으로, 물결은 모든 고래에게 같은 장식색으로 그린다. */
+.pet-body__tail, .pet-body__shell, .pet-body__fin { fill: var(--pet-shell); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.pet-body__shell-detail { fill: none; stroke: var(--surface); stroke-width: 3; stroke-linecap: round; }
+.pet-body__wave { stroke: var(--page); stroke-width: 2; stroke-linejoin: round; }
+.pet-body__wave--teal { fill: var(--scene-sea); }
+.pet-body__wave--yellow { fill: var(--scene-window-glow); }
+.pet-body__wave--orange { fill: var(--scene-doll-8); }
+.pet-body__belly, .pet-body__eye-patch { fill: var(--surface); }
+.pet-body__fin--raised { display: none; }
+.pet-body--waiting .pet-body__fin--rest, .pet-body--blocked .pet-body__fin--rest { display: none; }
+.pet-body--waiting .pet-body__fin--raised, .pet-body--blocked .pet-body__fin--raised { display: block; }
+
+/* 한쪽 눈을 크게 두어 32px에서도 상태 표정이 구별되게 한다. */
+.pet-body__eye { fill: var(--ink); stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.pet-body__eye--done, .pet-body__eye--waiting, .pet-body__eye--error { display: none; fill: none; }
+.pet-body--done .pet-body__eye--open, .pet-body--waiting .pet-body__eye--open,
+.pet-body--blocked .pet-body__eye--open, .pet-body--error .pet-body__eye--open { display: none; }
+.pet-body--done .pet-body__eye--done, .pet-body--waiting .pet-body__eye--waiting,
+.pet-body--blocked .pet-body__eye--waiting, .pet-body--error .pet-body__eye--error { display: block; }
+.pet-body__smile { fill: none; stroke: var(--surface); stroke-width: 2.5; stroke-linecap: round; }
+.pet-body__mark { fill: var(--ink); font-family: var(--font-sans); font-size: 22px; font-weight: 800; }
+.pet-body__spout { fill: none; stroke: var(--scene-sea); stroke-width: 3.5; stroke-linecap: round; }
+.pet-body__flagpole { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; }
+.pet-body__pennant { fill: var(--scene-window-glow); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+.pet-body--working .pet-body__float { animation: pet-work 1.2s var(--ease) infinite; transform-origin: 50% 75%; }
+.pet-body--working .pet-body__spout { animation: pet-spout .8s var(--ease) infinite; transform-origin: 62px 29px; }
+.pet-body--idle .pet-body__eye--open { animation: pet-blink 6s steps(1, end) infinite; transform-origin: 71px 44px; }
+
+/* 견본은 다섯 표정 모두에서 열세 이름표를 한 화면에 비교하게 한다. */
+.pets-gallery { padding-block: var(--space-6) var(--space-10); }
+.pets-gallery__intro { display: flex; align-items: center; gap: var(--space-6); margin-bottom: var(--space-6); }
+.pets-gallery__intro h1 { margin: 0 0 var(--space-2); font-size: var(--text-title); }
+.pets-gallery__intro p { margin: 0; color: var(--ink-2); font-size: var(--text-ui); }
+.pets-gallery__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-5); }
+.pets-gallery__state { min-width: 0; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.pets-gallery__state h2 { margin: 0 0 var(--space-3); font-size: var(--text-ui); }
+.pets-gallery__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3) var(--space-1); }
+.pets-gallery__list .pet-avatar { justify-self: center; }
+@media (max-width: 900px) { .pets-gallery__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .pets-gallery__grid { grid-template-columns: 1fr; } .pets-gallery__intro { gap: var(--space-3); } }
+
+@keyframes pet-work {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.035, .97); }
+}
+@keyframes pet-spout {
+  0%, 100% { transform: translateY(2px) scaleY(.8); }
+  50% { transform: translateY(-2px) scaleY(1.08); }
+}
+@keyframes pet-blink {
+  0%, 96%, 100% { transform: scaleY(1); }
+  97%, 98% { transform: scaleY(.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pet-body--working .pet-body__float,
+  .pet-body--working .pet-body__spout,
+  .pet-body--idle .pet-body__eye--open { animation: none; }
+}

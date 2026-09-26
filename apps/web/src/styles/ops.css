@@ -1,0 +1,79 @@
+/* 운영 카드의 표·단계·평가·최신성 상태를 토큰으로 구분한다. */
+.ops-layout { align-items: start; }
+.ops-layout > .feature-panel { min-width: 0; }
+.ops-layout .kit-screen-state { padding-block: var(--space-5); }
+.ops-status, .ops-stage__heading { display: inline-flex; align-items: center; gap: var(--space-2); }
+.ops-status { white-space: nowrap; } /* "실패"가 한 글자씩 꺾이지 않게 */
+.ops-status--failed, .ops-stage--failed .ops-stage__heading, .ops-dataset--late > span:last-child, .ops-verdict--failed { color: var(--level-4); }
+.ops-status--passed, .ops-stage--passed .ops-stage__heading, .ops-verdict--passed { color: var(--link); }
+.ops-run__details { margin-top: var(--space-2); }
+.ops-run__details summary { color: var(--link); cursor: pointer; }
+.ops-stages { display: grid; gap: var(--space-2); padding-left: var(--space-4); }
+.ops-stage { padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); }
+.ops-stage--failed { border-color: var(--level-4); }
+.ops-stage p { margin: var(--space-1) 0 0; }
+.ops-artifacts { display: grid; gap: var(--space-1); margin-top: var(--space-2); padding-left: var(--space-4); }
+.ops-artifacts li { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); overflow-wrap: anywhere; }
+.ops-artifacts code { font-variant-numeric: tabular-nums; }
+.ops-artifacts button, .weekly-brush button { border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--link); cursor: pointer; }
+.ops-artifacts button { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1); }
+.ops-facts { display: grid; gap: var(--space-2); margin: var(--space-3) 0; }
+.ops-facts div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); min-width: 0; border-bottom: 1px solid var(--line); }
+.ops-facts dt { color: var(--ink-2); }
+.ops-facts dd { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-1); min-width: 0; margin: 0; overflow-wrap: anywhere; text-align: right; font-variant-numeric: tabular-nums; }
+.ops-run-id { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-1); min-width: 0; }
+.ops-run-id button { padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--link); cursor: pointer; }
+.ops-evaluation, .ops-freshness { margin-top: var(--space-4); font-size: var(--text-sm); }
+.ops-freshness h3 { margin: var(--space-4) 0 var(--space-2); font-size: var(--text-ui); }
+.ops-freshness ul { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ops-freshness li { display: grid; gap: var(--space-1); min-width: 0; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); overflow-wrap: anywhere; }
+.ops-freshness li span:last-child { display: inline-flex; align-items: center; gap: var(--space-1); }
+.ops-freshness li.ops-dataset--late { border-color: var(--level-4); }
+/* 단계 사슬: 통과는 파랑, 실패는 빨강, 돌았지만 검증 못 함은 노랑 점선, 건너뜀은 흐리게 */
+.ops-chain { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0 0 var(--space-2); padding: 0; list-style: none; }
+.ops-chain__step { padding: 2px var(--space-2); border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2); font-size: var(--text-caption); white-space: nowrap; }
+.ops-chain__step--passed { border-color: var(--link); color: var(--link); }
+.ops-chain__step--failed { border-color: var(--level-4); color: var(--level-4); font-weight: 700; }
+.ops-chain__step--unverified { border-style: dashed; border-color: var(--level-3); color: var(--level-3); font-weight: 700; }
+.ops-chain__step--skipped, .ops-chain__step--pending { opacity: .55; }
+.ops-run__reason { margin: 0; color: var(--ink); font-size: var(--text-sm); }
+/* 지금 상태 네 칸: 상태는 제목 글자·아이콘 색으로만 가른다(왼쪽 색 띠 없음). */
+.ops-overview { margin-bottom: var(--space-6); }
+.ops-overview h2 { margin: 0 0 var(--space-3); font-size: var(--text-h3, 1.15rem); }
+.ops-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.ops-tile { display: grid; align-content: start; gap: var(--space-2); min-width: 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); font-size: var(--text-sm); }
+.ops-tile h3 { margin: 0; color: var(--ink-2); font-size: var(--text-caption); font-weight: 600; }
+.ops-tile p { margin: 0; }
+.ops-tile small { color: var(--ink-2); }
+.ops-tile__lead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--ink); font-size: 1.15rem; font-weight: 700; }
+.ops-tile__note { color: var(--ink-2); }
+.ops-overview__glossary { margin: var(--space-3) 0 0; color: var(--ink-2); font-size: var(--text-caption); }
+/* 실행 기록 카드 */
+.ops-run-list { margin-top: var(--space-4); }
+.ops-runs { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; font-size: var(--text-sm); }
+.ops-run { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); }
+.ops-run--neutral { background: var(--surface-sunken); }
+.ops-run__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.ops-run__head time { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ops-outcome { display: inline-flex; align-items: center; gap: var(--space-1); font-weight: 700; white-space: nowrap; }
+.ops-outcome--ok, .ops-outcome--info { color: var(--link); }
+.ops-outcome--caution { color: var(--level-3); }
+.ops-outcome--danger { color: var(--level-4); }
+.ops-outcome--neutral { color: var(--ink-2); }
+.ops-run .ops-chain { margin: 0; }
+.ops-run__id { margin: var(--space-2) 0; color: var(--ink-2); overflow-wrap: anywhere; }
+.ops-metrics { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ops-metrics li { padding: 2px var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); font-size: var(--text-caption); }
+.ops-metric--ok span { color: var(--link); }
+.ops-metric--bad { border-color: var(--level-4); }
+.ops-metric--bad span { color: var(--level-4); font-weight: 700; }
+.ops-run-list__more { margin-top: var(--space-3); padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--link); font: inherit; cursor: pointer; }
+.ops-run-list__source { margin: var(--space-3) 0 0; color: var(--ink-2); font-size: var(--text-caption); }
+@media (max-width: 1100px) { .ops-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .ops-tiles { grid-template-columns: 1fr; } }
+.ops-tile__lead .ops-detail-badge { font-size: var(--text-caption); font-weight: 600; }
+.ops-evaluation__failing { margin: var(--space-1) 0 0; color: var(--level-3); }
+/* 실행 목록이 왼쪽 두 줄을 차지하고 평가·최신성은 오른쪽 열에 쌓는다. */
+.ops-layout > .ops-main { grid-row: span 2; }
+.ops-tile--caution .ops-tile__lead { color: var(--level-3); }
+.ops-tile--danger .ops-tile__lead { color: var(--level-4); }

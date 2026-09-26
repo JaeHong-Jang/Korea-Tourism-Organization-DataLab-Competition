@@ -1,0 +1,20 @@
+{
+  "fixture": "fixtures/region-baseline/valid-28110.json",
+  "schema": "region-baseline",
+  "triples": [
+    ["*", "rdf:type", "cc:RegionBaseline"],
+    ["*", "cc:aboutRegion", "28110"],
+    ["*", "cc:nonlocalShare", "\"0.49\"^^xsd:double"],
+    ["*", "cc:weekdayMean", "*"],
+    ["*", "rdf:type", "cc:WeekdayMean"],
+    ["*", "cc:weekday", "\"5\"^^xsd:integer"],
+    ["*", "cc:nonlocal", "\"61000\"^^xsd:double"],
+    ["*", "cc:supportedBy", "ev-baseline-28110"],
+    ["*", "cc:periodFrom", "\"2025-09-06\"^^xsd:date"],
+    ["ev-baseline-28110", "rdf:type", "cc:DataEvidence"],
+    ["ev-baseline-28110", "cc:derivedFromDataset", "ds-kto-visitors-15101972"]
+  ],
+  "absent": [
+    ["*", "cc:inRegion", "*"]
+  ]
+}

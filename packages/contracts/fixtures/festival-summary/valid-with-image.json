@@ -1,0 +1,23 @@
+{
+  "eventId": "e-yeongjong-fireworks-2025",
+  "forecastId": "f-yeongjong-2025",
+  "name": "영종 씨사이드파크 불꽃축제",
+  "type": "불꽃",
+  "startsAt": "2025-10-18T19:00:00+09:00",
+  "endsAt": "2025-10-18T21:00:00+09:00",
+  "sigunguCode": "28110",
+  "sigunguName": "인천 중구",
+  "lat": 37.49,
+  "lng": 126.58,
+  "level": 4,
+  "peakP10": 12000,
+  "peakP50": 21000,
+  "peakP90": 35000,
+  "pOver1000": 0.99,
+  "ood": false,
+  "modelVerdict": "미검증",
+  "image": {
+    "url": "/api/images/e-yeongjong-fireworks-2025",
+    "credit": "한국관광공사 TourAPI · 공공누리 제1유형"
+  }
+}

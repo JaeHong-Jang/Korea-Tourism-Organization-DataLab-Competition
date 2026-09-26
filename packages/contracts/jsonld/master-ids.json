@@ -1,0 +1,69 @@
+{
+  "note": "기준 그래프(services/knowledge/ontology/master)가 반드시 정의하는 id. 계약 무결성 검사와 T-601 테스트가 이 목록을 쓴다. 모델 실행(mr-)은 /v1/master/model-runs로 등록되므로 여기엔 없고, 검사에서는 fixtures/model-card의 id를 등록된 것으로 본다. rule-check-*는 규모와 무관하게 켜지는 체크리스트 규칙(자체 기준, cc:InternalRule) — 켜는 조건은 docs/plan/06 §6",
+  "datasets": [
+    "ds-kto-visitors-15101972",
+    "ds-kto-concentration-15128555",
+    "ds-kto-tourapi-15101578",
+    "ds-kasi-holidays-15012690",
+    "ds-kma-short-15084084",
+    "ds-kma-mid-15059468",
+    "ds-mcst-festival-plans",
+    "ds-mois-crowd-manual",
+    "ds-datalab-festival-status",
+    "ds-datalab-diy",
+    "ds-datalab-navi-search",
+    "ds-datalab-poi-rank",
+    "ds-datalab-region-status",
+    "ds-admdongkor-boundaries"
+  ],
+  "clauses": [
+    "law-disaster-act-enf-73-9"
+  ],
+  "rules": [
+    "rule-legal-1000",
+    "rule-legal-hazard",
+    "rule-internal-10pct",
+    "rule-internal-50pct",
+    "rule-internal-5000",
+    "rule-check-vehicle",
+    "rule-check-water-slope",
+    "rule-check-night-lighting",
+    "rule-check-fire",
+    "rule-check-single-exit",
+    "rule-check-stage-crowd",
+    "rule-check-rain-shelter",
+    "rule-check-staff-plan",
+    "rule-check-staff-distinct",
+    "rule-check-staff-focus",
+    "rule-check-org-chart",
+    "rule-check-org-hq",
+    "rule-check-capacity"
+  ],
+  "assumptions": [
+    "as-peak-day-factor",
+    "as-concurrency-fireworks",
+    "as-concurrency-performance",
+    "as-concurrency-university",
+    "as-concurrency-food",
+    "as-concurrency-flower",
+    "as-concurrency-traditional",
+    "as-concurrency-other",
+    "as-temporary-holiday-excluded",
+    "as-weather-adjustment"
+  ],
+  "agents": [
+    "agent-lead",
+    "agent-dictation",
+    "agent-local-guide",
+    "agent-archivist",
+    "agent-forecaster",
+    "agent-source-check",
+    "agent-number-check",
+    "agent-rule-check",
+    "agent-skeptic",
+    "agent-explainer",
+    "agent-card-maker",
+    "agent-plan-writer",
+    "agent-briefer"
+  ]
+}

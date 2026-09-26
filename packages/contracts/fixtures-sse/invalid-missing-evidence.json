@@ -1,0 +1,346 @@
+[
+  {
+    "event": "agent_status",
+    "seq": 0,
+    "data": {
+      "agentId": "lead",
+      "team": "lead",
+      "state": "working",
+      "note": "요청을 나눠 맡겼어요",
+      "stepId": null,
+      "at": "2026-09-24T20:00:00+09:00"
+    }
+  },
+  {
+    "event": "agent_status",
+    "seq": 1,
+    "data": {
+      "agentId": "dictation",
+      "team": "analysis",
+      "state": "working",
+      "note": "행사 내용을 받아 적는 중",
+      "stepId": "st-dictation-01",
+      "at": "2026-09-24T20:00:01+09:00"
+    }
+  },
+  {
+    "event": "agent_step",
+    "seq": 2,
+    "data": {
+      "stepId": "st-dictation-01",
+      "agentId": "dictation",
+      "team": "analysis",
+      "startedAt": "2026-09-24T20:00:01+09:00",
+      "finishedAt": "2026-09-24T20:00:02+09:00",
+      "ms": 640,
+      "status": "done",
+      "inputSummary": "사용자 메시지 1건",
+      "outputEvidenceIds": [],
+      "outputClaimIds": [],
+      "usedLlm": true,
+      "model": "qwen3:8b",
+      "note": "행사 카드 채움"
+    }
+  },
+  {
+    "event": "event_card",
+    "seq": 3,
+    "data": {
+      "name": "영종 씨사이드파크 불꽃축제",
+      "type": "불꽃",
+      "startsAt": "2025-10-18T19:00:00+09:00",
+      "endsAt": "2025-10-18T21:00:00+09:00",
+      "timeOfDay": "야간",
+      "venueText": "영종 씨사이드파크",
+      "sigunguCode": "28110",
+      "sigunguName": "인천 중구",
+      "fee": "무료",
+      "hostType": "지자체",
+      "budgetKrw": null,
+      "promo": [],
+      "hazards": [
+        "폭죽"
+      ],
+      "missing": [
+        "budgetKrw"
+      ],
+      "ambiguities": []
+    }
+  },
+  {
+    "event": "agent_status",
+    "seq": 4,
+    "data": {
+      "agentId": "local-guide",
+      "team": "analysis",
+      "state": "done",
+      "note": "인천 중구로 찾았어요",
+      "stepId": "st-local-guide-01",
+      "at": "2026-09-24T20:00:02+09:00"
+    }
+  },
+  {
+    "event": "agent_step",
+    "seq": 5,
+    "data": {
+      "stepId": "st-local-guide-01",
+      "agentId": "local-guide",
+      "team": "analysis",
+      "startedAt": "2026-09-24T20:00:01+09:00",
+      "finishedAt": "2026-09-24T20:00:02+09:00",
+      "ms": 640,
+      "status": "done",
+      "inputSummary": "장소 \"영종 씨사이드파크\"",
+      "outputEvidenceIds": [
+        "ev-baseline-28110"
+      ],
+      "outputClaimIds": [],
+      "usedLlm": false,
+      "model": null,
+      "note": "후보 1곳"
+    }
+  },
+  {
+    "event": "agent_status",
+    "seq": 6,
+    "data": {
+      "agentId": "forecaster",
+      "team": "analysis",
+      "state": "done",
+      "note": "숫자를 뽑았어요",
+      "stepId": "st-forecaster-01",
+      "at": "2026-09-24T20:00:03+09:00"
+    }
+  },
+  {
+    "event": "gate",
+    "seq": 7,
+    "data": {
+      "gate": "A",
+      "passed": true,
+      "revision": 4,
+      "masterVersion": 1,
+      "violations": []
+    }
+  },
+  {
+    "event": "forecast",
+    "seq": 8,
+    "data": {
+      "id": "f-yeongjong-2025",
+      "eventId": "e-yeongjong-fireworks-2025",
+      "asOf": "2025-10-04",
+      "modelVersion": "v0.1.0",
+      "dailyMean": {
+        "id": "q-f-yeongjong-2025-mean",
+        "name": "일평균 방문객",
+        "p10": 7400,
+        "p50": 13000,
+        "p90": 22000,
+        "unit": "명/일",
+        "timeUnit": "일",
+        "estimated": false,
+        "assumptionIds": [],
+        "value": null,
+        "spatialScope": "행사장",
+        "valueKind": "예측",
+        "announcedAt": null
+      },
+      "peakConcurrent": {
+        "id": "q-f-yeongjong-2025-peak",
+        "name": "순간 최대",
+        "p10": 12000,
+        "p50": 21000,
+        "p90": 35000,
+        "unit": "명",
+        "timeUnit": "순간",
+        "estimated": true,
+        "assumptionIds": [
+          "as-peak-day-factor",
+          "as-concurrency-fireworks"
+        ],
+        "value": null,
+        "spatialScope": "행사장",
+        "valueKind": "예측",
+        "announcedAt": null
+      },
+      "probabilities": [
+        {
+          "threshold": 1000,
+          "probability": 0.99,
+          "display": "99%"
+        },
+        {
+          "threshold": 5000,
+          "probability": 0.9,
+          "display": "90%"
+        }
+      ],
+      "peakHours": {
+        "from": "19:00",
+        "to": "21:00"
+      },
+      "ood": false,
+      "oodReasons": [],
+      "judgment": {
+        "level": 4,
+        "label": "대규모",
+        "reasons": [
+          {
+            "ruleId": "rule-legal-hazard",
+            "kind": "법정",
+            "text": "폭죽 사용 — 법정 기준(인원 무관)"
+          },
+          {
+            "ruleId": "rule-internal-5000",
+            "kind": "자체",
+            "text": "5,000명 초과 90% — 자체 기준"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "event": "agent_status",
+    "seq": 9,
+    "data": {
+      "agentId": "explainer",
+      "team": "report",
+      "state": "done",
+      "note": "설명을 붙였어요",
+      "stepId": "st-explainer-01",
+      "at": "2026-09-24T20:00:05+09:00"
+    }
+  },
+  {
+    "event": "gate",
+    "seq": 10,
+    "data": {
+      "gate": "B",
+      "passed": true,
+      "revision": 7,
+      "masterVersion": 1,
+      "violations": []
+    }
+  },
+  {
+    "event": "agent_status",
+    "seq": 11,
+    "data": {
+      "agentId": "card-maker",
+      "team": "report",
+      "state": "done",
+      "note": "카드를 골랐어요",
+      "stepId": "st-card-maker-01",
+      "at": "2026-09-24T20:00:07+09:00"
+    }
+  },
+  {
+    "event": "gate",
+    "seq": 12,
+    "data": {
+      "gate": "publish",
+      "passed": true,
+      "revision": 7,
+      "masterVersion": 1,
+      "violations": []
+    }
+  },
+  {
+    "event": "claim",
+    "seq": 13,
+    "data": {
+      "id": "c-yeongjong-3",
+      "sessionId": "s-demo-0001",
+      "forecastId": "f-yeongjong-2025",
+      "text": "폭죽을 쓰는 행사라 인원과 관계없이 안전관리계획 수립 대상이에요",
+      "rendered": "폭죽을 쓰는 행사라 인원과 관계없이 안전관리계획 수립 대상이에요",
+      "claimType": "판정",
+      "status": "published",
+      "evidenceIds": [
+        "ev-rule-legal-hazard"
+      ],
+      "placeholders": [],
+      "generatedBy": {
+        "agentId": "explainer",
+        "stepId": "st-explainer-01"
+      },
+      "checks": [
+        {
+          "checkKind": "evidence",
+          "passed": true,
+          "revision": 7
+        },
+        {
+          "checkKind": "rule",
+          "passed": true,
+          "revision": 7
+        }
+      ]
+    }
+  },
+  {
+    "event": "claim",
+    "seq": 14,
+    "data": {
+      "id": "c-yeongjong-4",
+      "sessionId": "s-demo-0001",
+      "forecastId": "f-yeongjong-2025",
+      "text": "순간 최대는 {{peak_p50}}명 안팎으로 예상돼요",
+      "rendered": "순간 최대는 21000명 안팎으로 예상돼요",
+      "claimType": "수치",
+      "status": "published",
+      "evidenceIds": [
+        "ev-model-f-yeongjong-2025",
+        "ev-as-concurrency-fireworks"
+      ],
+      "placeholders": [
+        {
+          "name": "peak_p50",
+          "quantityId": "q-f-yeongjong-2025-peak",
+          "field": "p50"
+        }
+      ],
+      "generatedBy": {
+        "agentId": "explainer",
+        "stepId": "st-explainer-01"
+      },
+      "checks": [
+        {
+          "checkKind": "evidence",
+          "passed": true,
+          "revision": 7
+        },
+        {
+          "checkKind": "number",
+          "passed": true,
+          "revision": 7
+        }
+      ]
+    }
+  },
+  {
+    "event": "suggest",
+    "seq": 15,
+    "data": {
+      "actions": [
+        {
+          "id": "plan",
+          "label": "계획 초안 받기"
+        },
+        {
+          "id": "save",
+          "label": "내 행사에 저장"
+        }
+      ]
+    }
+  },
+  {
+    "event": "done",
+    "seq": 16,
+    "data": {
+      "sessionId": "s-demo-0001",
+      "forecastId": "f-yeongjong-2025"
+    }
+  }
+]

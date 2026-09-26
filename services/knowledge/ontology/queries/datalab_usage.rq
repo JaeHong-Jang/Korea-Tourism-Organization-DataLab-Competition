@@ -1,0 +1,49 @@
+# 발행 문장은 세션·문장 쌍으로, 데이터셋별 인용 근거는 전역 고유 id로 집계한다.
+PREFIX cc: <http://crowdcast.local/ont#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?datasetId ?title ?datalabMenu (COUNT(DISTINCT ?evidence) AS ?count)
+       ?publishedClaims ?claimsWithEvidence ?claimsReachingDatalab
+WHERE {
+  {
+    SELECT (COUNT(?claim) AS ?publishedClaims)
+           (COUNT(?citingClaim) AS ?claimsWithEvidence)
+           (COUNT(?linkedClaim) AS ?claimsReachingDatalab)
+    WHERE {
+      # 근거·계보가 여러 개여도 같은 세션의 문장은 한 행만 남긴다.
+      {
+        SELECT DISTINCT ?session ?claim ?citingClaim ?linkedClaim
+        WHERE {
+          GRAPH ?session {
+            ?claim a cc:Claim ; cc:status "published" .
+            OPTIONAL { ?claim cito:citesAsEvidence ?cited . BIND(?claim AS ?citingClaim) }
+          }
+          FILTER(STRSTARTS(STR(?session), "http://crowdcast.local/id/s-"))
+          OPTIONAL {
+            GRAPH ?session {
+              ?claim cito:citesAsEvidence/
+                (cc:derivedFromDataset|cc:aboutForecast/prov:wasGeneratedBy/prov:used/cc:derivedFromDataset) ?source .
+            }
+            GRAPH <http://crowdcast.local/id/master> { ?source a cc:Dataset ; cc:datalabMenu ?menu }
+            BIND(?claim AS ?linkedClaim)
+          }
+        }
+      }
+    }
+  }
+  GRAPH <http://crowdcast.local/id/master> {
+    ?datasetId a cc:Dataset ; dcterms:title ?title .
+    OPTIONAL { ?datasetId cc:datalabMenu ?datalabMenu }
+  }
+  OPTIONAL {
+    GRAPH ?evidenceSession {
+      ?published a cc:Claim ; cc:status "published" ; cito:citesAsEvidence ?evidence .
+      ?evidence (cc:derivedFromDataset|cc:aboutForecast/prov:wasGeneratedBy/prov:used/cc:derivedFromDataset) ?datasetId .
+    }
+    FILTER(STRSTARTS(STR(?evidenceSession), "http://crowdcast.local/id/s-"))
+  }
+}
+GROUP BY ?datasetId ?title ?datalabMenu ?publishedClaims ?claimsWithEvidence ?claimsReachingDatalab
+ORDER BY ?datasetId

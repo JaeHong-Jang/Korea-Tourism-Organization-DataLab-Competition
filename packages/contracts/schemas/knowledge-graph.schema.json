@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/knowledge-graph.schema.json",
+  "title": "근거 그래프(전체)",
+  "description": "온톨로지 시각화용: TBox 클래스·관계 + 기준 그래프(규칙·조항·데이터셋·가정·모델 실행·파이프라인 단계·파일·에이전트). 세션 그래프는 넣지 않는다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "masterVersion",
+    "generatedAt",
+    "nodes",
+    "edges"
+  ],
+  "properties": {
+    "masterVersion": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "generatedAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "class",
+              "rule",
+              "clause",
+              "dataset",
+              "assumption",
+              "model",
+              "stage",
+              "file",
+              "agent",
+              "other"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "target",
+          "predicate",
+          "label"
+        ],
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "predicate": {
+            "type": "string",
+            "description": "CURIE(예: cc:basedOn, prov:used)"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

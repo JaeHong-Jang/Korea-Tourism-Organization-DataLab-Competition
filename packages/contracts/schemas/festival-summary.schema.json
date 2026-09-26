@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/festival-summary.schema.json",
+  "title": "행사 요약",
+  "description": "미니 대한민국·행사 목록 카드",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "forecastId",
+    "name",
+    "type",
+    "startsAt",
+    "endsAt",
+    "sigunguCode",
+    "sigunguName",
+    "lat",
+    "lng",
+    "level",
+    "peakP10",
+    "peakP50",
+    "peakP90",
+    "pOver1000",
+    "ood"
+  ],
+  "properties": {
+    "eventId": {
+      "$ref": "common.schema.json#/$defs/eventId"
+    },
+    "forecastId": {
+      "$ref": "common.schema.json#/$defs/forecastId"
+    },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "$ref": "common.schema.json#/$defs/eventType"
+    },
+    "startsAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "endsAt": {
+      "$ref": "common.schema.json#/$defs/datetime"
+    },
+    "sigunguCode": {
+      "$ref": "common.schema.json#/$defs/sigunguCode"
+    },
+    "sigunguName": {
+      "type": "string"
+    },
+    "lat": {
+      "type": "number"
+    },
+    "lng": {
+      "type": "number"
+    },
+    "level": {
+      "$ref": "common.schema.json#/$defs/level"
+    },
+    "peakP10": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "peakP50": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "peakP90": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pOver1000": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "ood": {
+      "type": "boolean"
+    },
+    "modelVerdict": {
+      "enum": [
+        "통과",
+        "미검증"
+      ],
+      "description": "이 예보를 만든 사용 모델의 검증 상태(reports/backtest/promoted.json의 verdict, 06 §8). 미검증이면 지도·목록에 '골든 사례 0건 — 사례 재현 검증 전 임시 사용'을 표시한다. 없으면 표시 근거가 없는 것으로 본다(선택 필드 — 9/25 추가)."
+    },
+    "coordSource": {
+      "enum": [
+        "venue",
+        "centroid"
+      ],
+      "description": "lat·lng의 출처(선택 — 9/25 추가). venue = TourAPI 등으로 확인한 행사장 좌표, centroid = 행사장 좌표를 확인하기 전의 시군구 중심점. 동네 3D는 centroid면 '시군구 중심 동네'라고 밝힌다."
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "credit"
+      ],
+      "description": "대표 이미지(선택 — TourAPI firstimage를 로컬 캐시로). 없으면 화면은 유형 그림",
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^/api/images/e-[a-z0-9][a-z0-9_.:-]{1,120}$"
+        },
+        "credit": {
+          "type": "string",
+          "description": "출처 표기(예: 한국관광공사 TourAPI · 공공누리 제1유형)"
+        }
+      }
+    }
+  }
+}

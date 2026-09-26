@@ -1,0 +1,20 @@
+# 모든 파이프라인 단계에 통과·실패·미검증 중 하나와 원문 메시지를 요구한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+cc:PipelineStageGateShape a sh:NodeShape ;
+    sh:targetClass cc:PipelineStage ;
+    sh:property [ sh:path cc:gateResult ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ; sh:in ("passed" "failed" "unverified") ] ;
+    sh:property [ sh:path cc:gateMessage ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path cc:gatePassed ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:or (
+        [ sh:property [ sh:path cc:gateResult ; sh:hasValue "passed" ] ;
+          sh:property [ sh:path cc:gatePassed ; sh:hasValue true ] ]
+        [ sh:property [ sh:path cc:gateResult ; sh:hasValue "failed" ] ;
+          sh:property [ sh:path cc:gatePassed ; sh:hasValue false ] ]
+        [ sh:property [ sh:path cc:gateResult ; sh:hasValue "unverified" ] ;
+          sh:property [ sh:path cc:gatePassed ; sh:maxCount 0 ] ]
+    ) ;
+    sh:message "파이프라인 단계는 게이트 결과·메시지를 보존하고 미검증을 통과·실패와 구분해야 한다"@ko .

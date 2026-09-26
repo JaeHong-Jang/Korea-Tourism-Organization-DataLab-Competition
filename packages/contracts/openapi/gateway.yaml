@@ -1,0 +1,555 @@
+# 인파예보 gateway 서비스 OpenAPI v1.2 — 스키마는 ../schemas를 참조한다(계약 정본)
+openapi: 3.1.0
+info:
+  title: 인파예보 게이트웨이
+  version: 1.2.0
+servers:
+  - url: http://127.0.0.1:8787
+paths:
+  /api/health:
+    get:
+      summary: 앱 서비스·Ollama 상태(따로 표시)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - services
+                  - ollama
+                properties:
+                  services:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      required:
+                        - ok
+                        - latencyMs
+                      properties:
+                        ok:
+                          type: boolean
+                        latencyMs:
+                          type:
+                            - integer
+                            - "null"
+                  ollama:
+                    type: object
+                    required:
+                      - ok
+                      - host
+                    properties:
+                      ok:
+                        type: boolean
+                      host:
+                        type:
+                          - string
+                          - "null"
+  /api/team/sessions:
+    post:
+      summary: 상담 세션 만들기
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - sessionId
+                properties:
+                  sessionId:
+                    type: string
+                    pattern: ^s-
+  /api/team/sessions/{id}/messages:
+    post:
+      summary: 메시지 → SSE 스트림(sse-events.md)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^s-
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                answer:
+                  type:
+                    - object
+                    - "null"
+                near:
+                  type: object
+                  additionalProperties: false
+                  required:
+                    - lat
+                    - lng
+                  description: 브라우저 위치(사용자가 허락한 경우만) — 행사 찾기에서 가까운 순 정렬에 쓴다. 저장하지 않는다
+                  properties:
+                    lat:
+                      type: number
+                      minimum: 33
+                      maximum: 39
+                    lng:
+                      type: number
+                      minimum: 124
+                      maximum: 132
+                    label:
+                      type: string
+                eventId:
+                  type: string
+                  pattern: ^e-[a-z0-9][a-z0-9_.:-]{1,120}$
+                  description: 목록에서 고른 다가오는 행사(일괄 예보의 eventId) — 게이트웨이가 그 행사 입력으로 추출·장소 되묻기 없이 새 예보를 시작한다(빠진 필수값만 되묻기). text는 화면에 보일 문장
+      responses:
+        "200":
+          description: "SSE — 모드: new(새 예보) · followup(발행 예보 후속) · recommend(방문객 행사 찾기: 게이트·숫자 카드·문장 없이 recommend 한 번 → done, forecastId null)"
+          content:
+            text/event-stream:
+              schema:
+                $ref: ../schemas/sse-event.schema.json
+  /api/team/sessions/{id}/steps:
+    get:
+      summary: 세션의 에이전트 작업 기록(M2-F3-c)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^s-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/agent-step.schema.json
+  /api/team/replay/{traceId}:
+    get:
+      summary: 데모 재생 SSE
+      parameters:
+        - name: traceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SSE
+          content:
+            text/event-stream:
+              schema:
+                $ref: ../schemas/sse-event.schema.json
+  /api/festivals:
+    get:
+      summary: 다가오는 행사(필터) — forecast /v1/festivals/upcoming 중계 + 필터
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: sido
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: ../schemas/common.schema.json#/$defs/eventType
+        - name: level
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 4
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/festival-summary.schema.json
+  /api/records/{path}:
+    get:
+      summary: records 중계(허용 목록 — events·events/{id}/snapshots·plans/{id}·plans/{id}/export.docx·ledger·ledger/verify·snapshots/{forecastId}·shares/{token}). 요청·응답은 records.yaml의 같은 경로 계약으로 검증
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: records 응답 그대로(계약 검증 통과분)
+        "404":
+          description: 허용 목록 밖 경로
+        "503":
+          description: records 연결 실패·계약 위반
+    post:
+      summary: records 중계(허용 목록 — events·plans·actuals·shares)
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: records 응답 그대로(계약 검증 통과분)
+        "400":
+          description: 계약 위반 요청
+        "404":
+          description: 허용 목록 밖 경로
+        "503":
+          description: records 연결 실패·계약 위반
+    put:
+      summary: records 중계(허용 목록 — plans/{id})
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: records 응답 그대로(계약 검증 통과분)
+        "409":
+          description: 오래된 수정
+        "503":
+          description: records 연결 실패·계약 위반
+  /api/regions.topojson:
+    get:
+      summary: 시군구 경계
+      responses:
+        "200":
+          description: TopoJSON
+          content:
+            application/json:
+              schema:
+                type: object
+  /api/forecasts/{id}:
+    get:
+      summary: 발행된 예보서 전체(새로고침·공유 링크)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^f-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/forecast-report.schema.json
+        "404":
+          description: 발행 전이거나 없음
+  /api/forecasts/{id}/plan:
+    post:
+      summary: 세션 없이 발행 예보서 스냅샷으로 계획 초안 만들기(이미 있으면 그대로 — 새 문장 없음, T-306c)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^f-
+      responses:
+        "200":
+          description: 계획과 docx 경로
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - plan
+                  - docxHref
+                properties:
+                  plan:
+                    $ref: ../schemas/plan.schema.json
+                  docxHref:
+                    type: string
+                    pattern: ^/api/plans/plan-[a-z0-9][a-z0-9_.:-]{1,120}/export\.docx$
+        "404":
+          description: 발행 예보서 스냅샷 없음
+        "502":
+          description: records가 계획을 거부(plan_rejected)
+  /api/events/{id}/reforecast:
+    post:
+      summary: 저장한 행사를 상담 없이 다시 예보·검증·발행하고 직전 발행 스냅샷과 비교(M5-F3, T-409). 추출·되묻기 없이 저장된 행사 입력으로 예보관 → 게이트 A → 보고팀 → 게이트 B → 발행을 거치고, 새 스냅샷을 records events/{id}/snapshots에 더한다(이전 스냅샷은 그대로). 게이트 실패면 발행하지 않는다
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^e-
+      responses:
+        "200":
+          description: 새 발행 스냅샷과 비교
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/reforecast-result.schema.json
+        "404":
+          description: 저장한 행사 없음
+        "409":
+          description: 게이트 실패로 발행하지 않음(code·message에 이유)
+        "503":
+          description: 하위 서비스 연결 실패
+  /api/images/{eventId}:
+    get:
+      summary: 행사 대표 이미지(로컬 캐시 — forecast 프록시, 바이트·Content-Type 그대로)
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^e-[a-z0-9][a-z0-9_.:-]{1,120}$
+      responses:
+        "200":
+          description: 이미지
+          content:
+            image/jpeg: {}
+            image/png: {}
+            image/webp: {}
+        "404":
+          description: 이미지 없음
+  /api/evidence/graph:
+    get:
+      summary: 전체 근거 그래프(온톨로지 시각화 — knowledge /v1/master/graph 프록시)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/knowledge-graph.schema.json
+  /api/plans/{id}:
+    get:
+      summary: 계획 초안(records 프록시, T-306)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^plan-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/plan.schema.json
+        "404":
+          description: 없음
+  /api/plans/{id}/export.docx:
+    get:
+      summary: 계획 초안 docx(records 프록시 — 바이트·헤더 그대로)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^plan-
+      responses:
+        "200":
+          description: docx
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: 없음
+  /api/evidence/{id}:
+    get:
+      summary: 근거 하나(knowledge 프록시)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^ev-
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/evidence.schema.json
+  /api/evidence/stats:
+    get:
+      summary: 근거 통계(M6-F5)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/datalab-usage.schema.json
+  /api/concentration:
+    get:
+      summary: 행사 기간 시군구 관광지 집중률 예측 요약(한국관광공사 15128555)
+      parameters:
+        - name: sigunguCode
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]{5}$"
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: 성공(예측 범위 밖·자료 없음도 status로 알린다)
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/concentration.schema.json
+  /api/weather:
+    get:
+      summary: 날씨(forecast 프록시)
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: at
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/weather.schema.json
+  /api/validation/backtest:
+    get:
+      summary: 백테스트 요약(M6-F1~F3)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/backtest-summary.schema.json
+  /api/validation/preregistration:
+    get:
+      summary: 사전 등록 채점판(M6-F4)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/preregistration-scores.schema.json
+  /api/validation/model-card:
+    get:
+      summary: 모델 카드(M6-F6)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/model-card.schema.json
+  /api/insights/{key}:
+    get:
+      summary: 인사이트(M7-F1)
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/insight.schema.json
+  /api/ops/runs:
+    get:
+      summary: 파이프라인 실행 기록(M8-F1)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../schemas/pipeline-run.schema.json
+  /api/insights/datalab-spec:
+    get:
+      summary: 데이터랩 활용 명세표(M7-F2, forecast 프록시 + 근거 수는 knowledge datalab-usage)
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/datalab-spec.schema.json
+  /api/ops/status:
+    get:
+      summary: "운영 상태(M8-F2·F3): forecast 최신성·모델 카드 + knowledge 그래프 크기 + reports/evals/latest.json"
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: ../schemas/ops-status.schema.json

@@ -1,0 +1,22 @@
+{
+  "id": "mr-v0-1-0",
+  "modelVersion": "v0.1.0",
+  "target": "일평균 방문객",
+  "trainRange": {
+    "from": "2018-01-01",
+    "to": "2024-12-31"
+  },
+  "features": [
+    "유형",
+    "기간",
+    "주말 일수",
+    "평시 외지인"
+  ],
+  "evalYears": [
+    2024,
+    2025
+  ],
+  "backtestRunId": null,
+  "createdAt": "2026-09-27T12:00:00+09:00",
+  "notes": "예시"
+}

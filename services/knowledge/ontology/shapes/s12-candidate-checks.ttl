@@ -1,0 +1,56 @@
+# 발행 후보의 필수 검사 종류·통과 여부·현재 내용 revision을 검사한다.
+@prefix cc: <http://crowdcast.local/ont#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# 후보에만 구조 제약을 적용하되 이미 발행된 문장의 과거 검사는 다시 요구하지 않는다.
+cc:S12 a sh:NodeShape ; sh:targetClass cc:Claim ;
+    sh:or (
+        [ sh:not [ sh:property [ sh:path cc:status ; sh:hasValue "candidate" ] ] ]
+        [ sh:node cc:S12Candidate ]
+    ) ;
+    sh:sparql [
+        sh:message "발행 후보에 필요한 evidence·number·rule·uncertainty 검사 중 빠진 종류가 있다" ;
+        sh:select """
+            PREFIX cc: <http://crowdcast.local/ont#>
+            SELECT DISTINCT $this WHERE {
+                $this cc:status "candidate" .
+                FILTER (
+                    NOT EXISTS { $this cc:checkedBy/cc:checkKind "evidence" }
+                    || (EXISTS { $this cc:hasPlaceholder ?placeholder }
+                        && NOT EXISTS { $this cc:checkedBy/cc:checkKind "number" })
+                    || (EXISTS { $this cc:claimType "판정" }
+                        && NOT EXISTS { $this cc:checkedBy/cc:checkKind "rule" })
+                    || (EXISTS { $this cc:aboutForecast/cc:ood true }
+                        && NOT EXISTS { $this cc:checkedBy/cc:checkKind "uncertainty" })
+                )
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "문장 검사 revision이 현재 세션 내용 revision과 다르다" ;
+        sh:select """
+            PREFIX cc: <http://crowdcast.local/ont#>
+            SELECT DISTINCT $this ?value WHERE {
+                $this cc:status "candidate" ; cc:inSession/cc:revision ?revision ; cc:checkedBy ?value .
+                ?value cc:checksRevision ?checkedRevision .
+                FILTER (?checkedRevision != ?revision)
+            }
+        """
+    ] .
+
+# 검사 속성의 누락·중복·잘못된 타입도 실패로 처리한다.
+cc:S12Candidate a sh:NodeShape ;
+    sh:property [ sh:path cc:inSession ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cc:Session ;
+        sh:node [ sh:property [ sh:path cc:revision ; sh:minCount 1 ; sh:maxCount 1 ;
+            sh:datatype xsd:integer ; sh:minInclusive 0 ] ] ] ;
+    sh:property [ sh:path cc:checkedBy ; sh:minCount 1 ; sh:class cc:Check ; sh:node cc:S12Check ] .
+
+# 필수 종류뿐 아니라 연결된 모든 검사가 유효한 통과 결과여야 한다.
+cc:S12Check a sh:NodeShape ;
+    sh:property [ sh:path cc:checkKind ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ("evidence" "number" "rule" "uncertainty") ] ;
+    sh:property [ sh:path cc:passed ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:boolean ; sh:hasValue true ] ;
+    sh:property [ sh:path cc:checksRevision ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:integer ; sh:minInclusive 0 ] .

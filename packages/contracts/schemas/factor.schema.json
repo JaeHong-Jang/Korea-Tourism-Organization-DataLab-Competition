@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crowdcast.local/schemas/factor.schema.json",
+  "title": "예측 요인",
+  "description": "SHAP 기여. label은 템플릿 문장(숫자 없음) — 발행 뒤에만 화면에 나간다",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "feature",
+    "direction",
+    "contribution",
+    "label",
+    "evidenceIds"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/factorId"
+    },
+    "feature": {
+      "type": "string"
+    },
+    "direction": {
+      "enum": [
+        "up",
+        "down"
+      ]
+    },
+    "contribution": {
+      "type": "number"
+    },
+    "label": {
+      "type": "string"
+    },
+    "evidenceIds": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/evidenceId"
+      },
+      "minItems": 1
+    }
+  }
+}

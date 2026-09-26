@@ -1,0 +1,282 @@
+// 상담 스트림의 상태와 메시지 전송을 화면 밖에서 관리한다.
+import type {
+  AgentStatus,
+  AgentStep,
+  Claim,
+  EventDraft,
+  Evidence,
+  FestivalSummary,
+  ForecastCard,
+  GateReport,
+  SseEvent,
+} from "@crowdcast/contracts/types";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { createTeamSession } from "../../lib/api-client";
+import type { Ask } from "./answers";
+import { postConsultMessage } from "./post-consult-message";
+
+export type Message = {
+  text: string;
+  answer?: object;
+  eventId?: string;
+  near?: { lat: number; lng: number; label?: string };
+};
+export type Recommendation = {
+  items: { summary: FestivalSummary; reason: string }[];
+  total: number;
+  note: string;
+};
+export type ClaimReply = { messageId: string; claim: Claim };
+export type StatusReply = {
+  messageId: string;
+  seq: number;
+  status: AgentStatus;
+};
+export type TextReply = { messageId: string; seq: number; text: string };
+export type GateReply = { messageId: string; gate: GateReport };
+export type ForecastSnapshot = {
+  card: ForecastCard;
+  draft: EventDraft | null;
+  request: string;
+  // 이 카드를 받은 요청 — 그 요청의 스트림이 검사에 걸리면 카드를 거둔다
+  messageId: string;
+};
+
+// 검증된 스트림 이벤트만 상담 상태에 반영한다.
+export function useConsultSession() {
+  const [searchParams] = useSearchParams();
+  const linkedText = searchParams.get("text");
+  const [text, setText] = useState(() => searchParams.get("text") ?? "");
+  const [sent, setSent] = useState<{ id: string; text: string }[]>([]);
+  const [asks, setAsks] = useState<Ask[]>([]);
+  const [draft, setDraft] = useState<EventDraft | null>(null);
+  const [statuses, setStatuses] = useState<AgentStatus[]>([]);
+  const [work, setWork] = useState<StatusReply[]>([]);
+  const [replies, setReplies] = useState<TextReply[]>([]);
+  const [completed, setCompleted] = useState<string[]>([]);
+  const [stepCounts, setStepCounts] = useState<Record<string, number>>({});
+  const [gates, setGates] = useState<GateReport[]>([]);
+  const [gateReplies, setGateReplies] = useState<GateReply[]>([]);
+  const [forecasts, setForecasts] = useState<ForecastSnapshot[]>([]);
+  const [forecastId, setForecastId] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<
+    { id: string; label: string; href?: string }[]
+  >([]);
+  const [claims, setClaims] = useState<ClaimReply[]>([]);
+  const [evidence, setEvidence] = useState<Evidence[]>([]);
+  const [error, setError] = useState("");
+  const [replyError, setReplyError] = useState("");
+  const [busy, setBusy] = useState(false);
+  // 처음에는 입력칸 안내와 겹치지 않게 비워 두고 진행 상황만 알린다.
+  const [summary, setSummary] = useState("");
+  const [recommendation, setRecommendation] = useState<Recommendation | null>(
+    null,
+  );
+  const session = useRef<string | null>(null);
+  const controller = useRef<AbortController | null>(null);
+  const lastMessage = useRef<Message | null>(null);
+  const requestId = useRef<string | null>(null);
+  const draftRef = useRef<EventDraft | null>(null);
+  // 페이지를 옮기며 들어온 기존 상담 링크의 문장을 공용 입력칸에 반영한다.
+  useEffect(() => {
+    if (linkedText !== null) setText(linkedText);
+  }, [linkedText]);
+  useEffect(() => () => controller.current?.abort(), []);
+
+  // 검증된 이벤트의 카드·문장·근거를 요청 순서에 맞게 누적한다.
+  const handleEvent = (event: SseEvent) => {
+    switch (event.event) {
+      case "agent_status":
+        setStatuses((current) => [...current, event.data as AgentStatus]);
+        setWork((current) => [
+          ...current,
+          {
+            messageId: requestId.current ?? "",
+            seq: event.seq,
+            status: event.data as AgentStatus,
+          },
+        ]);
+        break;
+      case "agent_step": {
+        const step = event.data as AgentStep;
+        setStepCounts((current) => ({
+          ...current,
+          [step.agentId]: (current[step.agentId] ?? 0) + 1,
+        }));
+        break;
+      }
+      case "event_card":
+        draftRef.current = event.data as EventDraft;
+        setDraft(draftRef.current);
+        setSummary("행사 정보를 확인했어요.");
+        break;
+      case "ask":
+        setAsks((current) => [...current, event.data as Ask]);
+        setSummary("확인이 필요한 항목이 있어요.");
+        break;
+      case "gate": {
+        const gate = event.data as GateReport;
+        setGates((current) => [...current, gate]);
+        setGateReplies((current) => [
+          ...current,
+          { messageId: requestId.current ?? "", gate },
+        ]);
+        setSummary(
+          gate.passed
+            ? `${gate.gate === "A" ? "분석 검증" : gate.gate === "B" ? "문장 검증" : "발행"}을 통과했어요.`
+            : `${gate.gate === "A" ? "분석 검증" : gate.gate === "B" ? "문장 검증" : "발행"}에서 멈췄어요.`,
+        );
+        break;
+      }
+      case "forecast": {
+        const next = event.data as ForecastCard;
+        setForecasts((current) =>
+          current.some((item) => item.card.id === next.id)
+            ? current
+            : [
+                ...current,
+                {
+                  card: next,
+                  draft: draftRef.current,
+                  request: lastMessage.current?.text ?? "",
+                  messageId: requestId.current ?? "",
+                },
+              ],
+        );
+        setSummary("숫자 예보를 확인했어요.");
+        break;
+      }
+      case "claim":
+        setClaims((current) => [
+          ...current,
+          { messageId: requestId.current ?? "", claim: event.data as Claim },
+        ]);
+        break;
+      case "evidence":
+        setEvidence((current) => [
+          ...current,
+          ...(event.data as { items: Evidence[] }).items,
+        ]);
+        break;
+      case "suggest":
+        setSuggestions(
+          (
+            event.data as {
+              actions: { id: string; label: string; href?: string }[];
+            }
+          ).actions,
+        );
+        break;
+      case "recommend":
+        setRecommendation(event.data as Recommendation);
+        setSummary("조건에 맞는 행사를 골랐어요.");
+        break;
+      case "reply":
+        setReplies((current) => [
+          ...current,
+          {
+            messageId: requestId.current ?? "",
+            seq: event.seq,
+            text: (event.data as { text: string }).text,
+          },
+        ]);
+        break;
+      case "done":
+        setCompleted((current) => [...current, requestId.current ?? ""]);
+        setForecastId(
+          (current) =>
+            (event.data as { forecastId: string | null }).forecastId ?? current,
+        );
+        break;
+      case "error":
+        setError((event.data as { message: string }).message);
+        break;
+    }
+  };
+
+  // 첫 메시지는 새 세션을 만들고 되묻기는 같은 세션으로 이어 보낸다.
+  const send = async (message: Message) => {
+    if (!message.text.trim() || busy) return;
+    const abort = new AbortController();
+    controller.current = abort;
+    lastMessage.current = { ...message, near: undefined };
+    setBusy(true);
+    setError("");
+    setReplyError("");
+    setRecommendation(null);
+    const messageId = crypto.randomUUID();
+    requestId.current = messageId;
+    setSent((current) => [...current, { id: messageId, text: message.text }]);
+    setText("");
+    setSummary("예보팀이 확인하고 있어요.");
+    try {
+      session.current ??= await createTeamSession(abort.signal);
+      let firstEvent = true;
+      await postConsultMessage(
+        session.current,
+        message,
+        abort.signal,
+        forecastId,
+        (event) => {
+          // 응답이 실제로 시작할 때 이전 질문을 지워 400이면 입력을 보존한다.
+          if (firstEvent) {
+            setAsks([]);
+            firstEvent = false;
+          }
+          handleEvent(event);
+        },
+      );
+    } catch (cause) {
+      if (abort.signal.aborted) setSummary("상담을 중단했어요.");
+      else if (
+        message.answer &&
+        cause instanceof Error &&
+        cause.message === "상담 연결 실패: 400"
+      ) {
+        setSent((current) => current.filter((item) => item.id !== messageId));
+        setReplyError("답을 확인해 주세요. 고쳐서 다시 보내 주세요.");
+      } else {
+        // 순서·형식 검사에 걸린 스트림의 숫자 카드는 보이지 않게 거둔다(오류 카드가 우선)
+        setForecasts((current) =>
+          current.filter((item) => item.messageId !== messageId),
+        );
+        setRecommendation(null);
+        setError(
+          cause instanceof Error ? cause.message : "상담 연결을 확인해 주세요.",
+        );
+      }
+    } finally {
+      setBusy(false);
+      controller.current = null;
+    }
+  };
+  return {
+    text,
+    setText,
+    sent,
+    asks,
+    draft,
+    statuses,
+    work,
+    replies,
+    completed,
+    stepCounts,
+    gates,
+    gateReplies,
+    forecasts,
+    forecastId,
+    suggestions,
+    claims,
+    evidence,
+    error,
+    replyError,
+    busy,
+    summary,
+    recommendation,
+    session,
+    controller,
+    lastMessage,
+    send,
+  };
+}

@@ -1,0 +1,34 @@
+{
+  "level": 4,
+  "label": "대규모",
+  "ruleIds": [
+    "rule-legal-hazard",
+    "rule-internal-5000"
+  ],
+  "reasons": [
+    {
+      "ruleId": "rule-legal-hazard",
+      "kind": "법정",
+      "text": "폭죽 사용 — 법정 기준(인원 무관)",
+      "clauseId": null,
+      "evidenceId": "ev-rule-legal-hazard"
+    },
+    {
+      "ruleId": "rule-internal-5000",
+      "kind": "자체",
+      "text": "5,000명 초과 90% — 자체 기준",
+      "clauseId": null,
+      "evidenceId": "ev-rule-internal-5000"
+    }
+  ],
+  "checklist": [
+    {
+      "id": "ck-traffic",
+      "text": "교통·주차 통제 계획과 경찰·소방 사전 협의",
+      "ruleId": "rule-internal-5000",
+      "evidenceIds": [
+        "ev-rule-internal-5000"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "gate": "integrity",
+  "passed": false,
+  "revision": 3,
+  "masterVersion": 1,
+  "violations": [
+    {
+      "check": "integrity",
+      "shapeId": null,
+      "nodeId": "f-yeongjong-2025",
+      "message": "predictionRun → 관측값 obs-28110-sun-nonlocal 없음"
+    }
+  ]
+}
