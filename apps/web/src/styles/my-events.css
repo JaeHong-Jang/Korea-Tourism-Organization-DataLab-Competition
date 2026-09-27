@@ -1,7 +1,8 @@
 /* 내 행사 표와 선택 행사 상세를 화면 너비에 맞춰 나란히 배치한다. */
 .my-events-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); align-items: start; gap: var(--space-8); }
 .my-events-layout > *, .my-events-detail > * { min-width: 0; }
-.my-events-detail { display: grid; gap: var(--space-8); }
+/* 선택한 표 행의 높이에서 상세 패널이 시작되도록 목록이 계산한 간격을 적용한다. */
+.my-events-detail { display: grid; gap: var(--space-8); margin-top: var(--my-events-detail-offset, 0); }
 .my-events-list { min-height: 500px; }
 .my-events-filters { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: var(--space-5) 0; }
 .my-events-filters label, .my-events-actual-form label, .my-events-share label { display: grid; gap: var(--space-1); color: var(--ink-2); font-size: var(--text-sm); }
@@ -55,7 +56,10 @@
 .my-events-share input { width: 100%; }
 .my-events-share input { min-width: 0; overflow-wrap: anywhere; }
 .my-events-detail [role="alert"] { color: var(--ink); }
-@media (max-width: 1100px) { .my-events-layout { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) {
+  .my-events-layout { grid-template-columns: 1fr; }
+  .my-events-detail { margin-top: 0; }
+}
 
 /* 좁은 화면에서는 같은 표 행을 항목별 이름이 붙은 카드로 읽는다. */
 @media (max-width: 640px) {

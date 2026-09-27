@@ -1,5 +1,5 @@
 // 저장 행사 목록과 선택한 행사의 예보 이력·후속 행동을 연결한다.
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { EmptyState } from "../components/common/empty-state";
 import { ErrorState } from "../components/common/error-state";
@@ -22,6 +22,7 @@ export function MyEventsPage() {
   const linkedForecastId = searchParams.get("forecastId");
   const [rows, setRows] = useState<SavedEvent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailOffset, setDetailOffset] = useState(0);
   const [savedActuals, setSavedActuals] = useState<Set<string>>(
     () => new Set(),
   );
@@ -91,7 +92,14 @@ export function MyEventsPage() {
         />
       )}
       {state === "ready" && rows.length > 0 && (
-        <div className="my-events-layout">
+        <div
+          className="my-events-layout"
+          style={
+            {
+              "--my-events-detail-offset": `${detailOffset}px`,
+            } as CSSProperties
+          }
+        >
           <FeaturePanel
             id="M5-F1"
             title="저장한 행사"
@@ -102,6 +110,7 @@ export function MyEventsPage() {
               rows={rows}
               selectedId={selectedId}
               onSelect={setSelectedId}
+              onSelectedOffset={setDetailOffset}
               saved={savedActuals}
             />
           </FeaturePanel>

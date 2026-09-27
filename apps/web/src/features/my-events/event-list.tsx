@@ -1,6 +1,6 @@
 // 저장 행사 표의 정렬·상태 필터와 행 선택을 제공한다.
 import type { Event, ForecastReport } from "@crowdcast/contracts/types";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { LevelBadge } from "../../components/common/level-badge";
 import { formatDate } from "../../lib/format";
 
@@ -82,16 +82,38 @@ export function EventList({
   rows,
   selectedId,
   onSelect,
+  onSelectedOffset,
   saved,
 }: {
   rows: SavedEvent[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onSelectedOffset?: (offset: number) => void;
   saved: ReadonlySet<string>;
 }) {
   const [sort, setSort] = useState<SortKey>("date");
   const [filter, setFilter] = useState<EventStatus | "전체">("전체");
   const visible = sortAndFilter(rows, sort, filter, saved);
+  const selectedRow = useRef<HTMLTableRowElement | null>(null);
+
+  // 상단 목록은 기존 배치를 지키고 스크롤한 목록은 선택 행 옆으로 상세를 내린다.
+  useLayoutEffect(() => {
+    const update = () => {
+      const row = selectedRow.current;
+      const layout = row?.closest<HTMLElement>(".my-events-layout");
+      if (!row || !layout) {
+        onSelectedOffset?.(0);
+        return;
+      }
+      const layoutTop = layout.getBoundingClientRect().top;
+      const offset =
+        layoutTop >= 0 ? 0 : row.getBoundingClientRect().top - layoutTop;
+      onSelectedOffset?.(Math.max(0, Math.round(offset)));
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  });
   return (
     <>
       <div className="my-events-filters">
@@ -143,6 +165,7 @@ export function EventList({
                 return (
                   <tr
                     key={event.id}
+                    ref={selectedId === event.id ? selectedRow : undefined}
                     className={selectedId === event.id ? "is-selected" : ""}
                     aria-selected={selectedId === event.id}
                     onClick={() => onSelect(event.id)}

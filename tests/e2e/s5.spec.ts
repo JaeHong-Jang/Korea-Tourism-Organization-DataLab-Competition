@@ -109,3 +109,54 @@ test("S5 저장 행사에서 공유된 읽기 전용 예보서까지", async ({
 	await expect(page.getByRole("button", { name: /계획 초안/ })).toHaveCount(0);
 	await page.screenshot({ path: resolve(screens, "T-409-shared.png") });
 });
+
+// 긴 목록의 아래 행을 선택해도 오른쪽 상세가 같은 화면에 남는지 확인한다.
+test("S5 아래쪽 행사 선택 시 상세 패널이 같은 높이에서 시작한다", async ({
+	page,
+}) => {
+	await page.setViewportSize({ width: 1440, height: 900 });
+	const events = Array.from({ length: 20 }, (_, index) => {
+		const day = String(index + 1).padStart(2, "0");
+		return {
+			...event,
+			id: `e-test-${day}`,
+			name: `테스트 행사 ${day}`,
+			startsAt: `2025-11-${day}T19:00:00+09:00`,
+			endsAt: `2025-11-${day}T21:00:00+09:00`,
+		};
+	});
+	await page.route("**/api/records/events", (route) =>
+		route.fulfill({ json: events }),
+	);
+	await page.route("**/api/records/events/*/snapshots", (route) =>
+		route.fulfill({ json: [] }),
+	);
+	await page.goto("/my");
+	const layout = page.locator(".my-events-layout");
+	const detail = page.locator(".my-events-detail");
+	await expect(detail).toBeVisible();
+	const layoutBox = await layout.boundingBox();
+	const initialDetailBox = await detail.boundingBox();
+	expect(
+		layoutBox &&
+			initialDetailBox &&
+			Math.abs(layoutBox.y - initialDetailBox.y) <= 2,
+	).toBe(true);
+	const selectedRow = page.getByRole("row").filter({
+		has: page.getByRole("button", { name: "테스트 행사 20" }),
+	});
+	await selectedRow.scrollIntoViewIfNeeded();
+	await selectedRow.click();
+	await expect(detail).toBeInViewport();
+	await expect
+		.poll(async () => {
+			const rowBox = await selectedRow.boundingBox();
+			const detailBox = await detail.boundingBox();
+			if (!rowBox || !detailBox) return Number.POSITIVE_INFINITY;
+			return Math.abs(rowBox.y - detailBox.y);
+		})
+		.toBeLessThanOrEqual(2);
+	await page.screenshot({
+		path: resolve(screens, "T-409-lower-selection.png"),
+	});
+});
