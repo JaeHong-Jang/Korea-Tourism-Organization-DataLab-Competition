@@ -70,7 +70,6 @@ export function EventDetail({
   const [copied, setCopied] = useState(false);
   const { event, snapshots } = row;
   const latest = snapshots.at(-1);
-  const past = Date.parse(event.endsAt) < Date.now();
   return (
     <div className="my-events-detail">
       <FeaturePanel
@@ -168,15 +167,13 @@ export function EventDetail({
           />
         )}
       </FeaturePanel>
-      {past && (
-        <FeaturePanel
-          id="M5-F4"
-          title="실측 입력·채점"
-          description="행사 후 확인한 인원과 관측 범위를 남겨요."
-        >
-          <ActualForm event={event} onSaved={() => onActualSaved(event.id)} />
-        </FeaturePanel>
-      )}
+      <FeaturePanel
+        id="M5-F4"
+        title="실측 입력"
+        description="행사 후 확인한 인원과 관측 범위를 남겨요."
+      >
+        <ActualForm event={event} onSaved={() => onActualSaved(event.id)} />
+      </FeaturePanel>
       <FeaturePanel
         id="M5-F5"
         title="공유 링크"

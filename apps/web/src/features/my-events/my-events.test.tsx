@@ -15,9 +15,19 @@ import {
   postActual,
   postReforecast,
 } from "../../lib/my-events-api";
-import { actualQuantity } from "./actual-form";
+import {
+  ActualForm,
+  actualQuantity,
+  actualSubmitLabel,
+} from "./actual-form";
 import { changedCondition, isUnchanged, reforecastError } from "./event-detail";
-import { orderedSnapshots, type SavedEvent, sortAndFilter } from "./event-list";
+import {
+  eventIdForForecast,
+  firstEventIdByDate,
+  orderedSnapshots,
+  type SavedEvent,
+  sortAndFilter,
+} from "./event-list";
 import { ReforecastCard } from "./reforecast-card";
 import { SharedReport } from "./shared-report";
 
@@ -55,6 +65,9 @@ it("스냅샷을 발행 시각 순으로 놓고 최신 발행으로 표를 정�
       (item) => item.event.id,
     ),
   ).toEqual([event.id]);
+  expect(eventIdForForecast(rows, newer.forecastId)).toBe(event.id);
+  expect(eventIdForForecast(rows, "없는-예보")).toBeNull();
+  expect(firstEventIdByDate(rows)).toBe(other.id);
 });
 
 // 변화 카드의 인원은 비교 응답의 p50 값을 그대로 표기한다.
@@ -148,6 +161,36 @@ it("실측은 양수만 허용하고 항목에 맞는 단위를 붙인다", () =
     valueKind: "사후집계",
     estimated: false,
   });
+  expect(actualSubmitLabel(false, false)).toBe("실측 저장");
+  expect(actualSubmitLabel(false, true)).toBe("실측 수정");
+  expect(actualSubmitLabel(true, true)).toBe("저장 중…");
+});
+
+// 미래 행사에는 열리는 시점만 안내해 비활성 입력칸을 고장으로 오해하지 않게 한다.
+it("행사 종료 전에는 실측 입력칸 대신 열리는 시점을 보여 준다", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-09-27T12:00:00+09:00"));
+  try {
+    const html = renderToStaticMarkup(
+      <ActualForm
+        event={{ ...event, endsAt: "2026-10-04T23:59:59+09:00" }}
+        onSaved={() => {}}
+      />,
+    );
+    expect(html).toContain("행사 종료 후 입력할 수 있어요");
+    expect(html).toContain("10.04");
+    expect(html).not.toContain('type="submit"');
+    const past = renderToStaticMarkup(
+      <ActualForm
+        event={{ ...event, endsAt: "2026-09-26T23:59:59+09:00" }}
+        onSaved={() => {}}
+      />,
+    );
+    expect(past).not.toContain("행사 종료 후 입력할 수 있어요");
+    expect(past).not.toContain('type="submit" disabled=""');
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 // 저장 요청은 기록 서비스가 받는 quantity 본문만 전송한다.
