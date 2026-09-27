@@ -1,4 +1,4 @@
-// 지도부터 근거 그래프까지 화면 요소를 가리키며 사용법을 안내한다.
+// 지도부터 예보 근거까지 화면 요소를 가리키며 사용법을 안내한다.
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAssistantStore } from "../../lib/consult-store";
@@ -29,8 +29,8 @@ const steps = [
     target: ".assistant-panel",
   },
   {
-    title: "근거 그래프 보기",
-    text: "근거 그래프 메뉴에서 예보의 근거 관계를 살펴보세요.",
+    title: "예보 근거 보기",
+    text: "예보 근거 메뉴에서 행사와 발행 시점을 고르고 계산에 연결된 자료·가정·규칙을 살펴보세요.",
     path: "/graph",
     target: '.main-nav__link[href="/graph"]',
   },

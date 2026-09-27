@@ -1,6 +1,5 @@
 /* 상담 서랍은 화면 끝에 붙이고 넓은 화면에서는 본문 옆 공간을 쓴다. */
 .assistant-shell { position: relative; z-index: var(--z-sheet); }
-.graph-menu-slot { display: contents; }
 .assistant-panel { position: fixed; z-index: var(--z-sheet); top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; width: min(420px, 100vw); padding: var(--space-4); border-left: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); overflow-y: auto; }
 .assistant-panel__header { display: flex; justify-content: space-between; align-items: start; gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--line); }
 .assistant-panel__header > div { flex: 1; }

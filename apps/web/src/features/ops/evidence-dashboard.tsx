@@ -1,8 +1,8 @@
-// 발행 문장의 근거 연결과 데이터랩 도달을 각각 계산해 보여 준다.
+// 전체 발행 문장의 근거 연결과 데이터랩 도달을 운영 지표로 보여 준다.
 import type { DatalabUsage } from "@crowdcast/contracts/types";
 import { formatDate } from "../../lib/format";
 import type { ContractState } from "../../lib/validation/use-contract";
-import { ContractMessage } from "./contract-state";
+import { ContractMessage } from "../validation/contract-state";
 
 // 분모가 없는 비율은 계산하지 않고 기록 부재를 명시한다.
 export function EvidenceDashboard({

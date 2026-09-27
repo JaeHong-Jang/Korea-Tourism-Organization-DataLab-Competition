@@ -64,12 +64,13 @@ test("전체 근거 그래프를 탐색한다", async ({ page }) => {
 	);
 	await page.goto("/validation");
 	await page
-		.getByRole("navigation", { name: "검증 둘러보기" })
-		.getByRole("link", { name: "근거 그래프" })
+		.getByRole("navigation", { name: "주 메뉴" })
+		.getByRole("link", { name: "예보 근거", exact: true })
 		.click();
 	await expect(
-		page.getByRole("heading", { name: "근거 그래프" }),
+		page.getByRole("heading", { name: "예보 근거", exact: true }),
 	).toBeVisible();
+	await page.getByRole("link", { name: "전체 자료·규칙 연결 살펴보기 →", exact: true }).click();
 	await expect(
 		page.getByRole("region", { name: "온톨로지와 기준 그래프" }),
 	).toBeVisible();
@@ -78,18 +79,18 @@ test("전체 근거 그래프를 탐색한다", async ({ page }) => {
 		"휠 버튼 끌기 회전",
 	);
 	await expect(
-		page.getByRole("button", { name: "가정", exact: true }),
+		page.getByRole("button", { name: "판정", exact: true }),
 	).toHaveAttribute("aria-pressed", "true");
 	await page.screenshot({ path: resolve(screens, "T-444-graph.png") });
 
 	// 종류 버튼으로 가정을 껐다 켜고 검색 결과에서 데이터셋으로 이동한다.
-	await page.getByRole("button", { name: "가정", exact: true }).click();
+	await page.getByRole("button", { name: "판정", exact: true }).click();
 	await expect(
-		page.getByRole("button", { name: "가정", exact: true }),
+		page.getByRole("button", { name: "판정", exact: true }),
 	).toHaveAttribute("aria-pressed", "false");
-	await page.getByRole("button", { name: "가정", exact: true }).click();
+	await page.getByRole("button", { name: "판정", exact: true }).click();
 	await expect(
-		page.getByRole("button", { name: "가정", exact: true }),
+		page.getByRole("button", { name: "판정", exact: true }),
 	).toHaveAttribute("aria-pressed", "true");
 	await page.getByRole("searchbox", { name: "노드 검색" }).fill("관광");
 	await page

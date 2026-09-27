@@ -2,12 +2,14 @@
 import { FeaturePanel } from "../components/common/feature-panel";
 import { PageHeading } from "../components/common/page-heading";
 import { EvaluationCard } from "../features/ops/evaluation-card";
+import { EvidenceDashboard } from "../features/ops/evidence-dashboard";
 import { FreshnessCard } from "../features/ops/freshness-card";
 import { OpsOverview } from "../features/ops/ops-overview";
 import { RunList } from "../features/ops/run-list";
 import { useOpsResource } from "../features/ops/use-ops-resource";
 import { getOpsEvaluation, getOpsFreshness, getOpsRuns } from "../lib/ops-api";
-import { getBacktest, getModelCard } from "../lib/validation/api";
+import { getBacktest, getModelCard, getUsage } from "../lib/validation/api";
+import { useContract } from "../lib/validation/use-contract";
 
 // 실행 목록은 넓게 두고 상태 진단 패널은 별도 열에 둔다.
 export function OpsPage() {
@@ -16,6 +18,7 @@ export function OpsPage() {
   const freshness = useOpsResource(getOpsFreshness);
   const backtest = useOpsResource(getBacktest);
   const modelCard = useOpsResource(getModelCard);
+  const evidence = useContract(getUsage);
   return (
     <div className="page-wrap regular-page ops-page">
       <PageHeading
@@ -52,6 +55,14 @@ export function OpsPage() {
           description="마지막 수집일과 모델 버전, 근거 그래프 상태를 살펴보세요."
         >
           <FreshnessCard state={freshness} />
+        </FeaturePanel>
+        <FeaturePanel
+          id="M8-F4"
+          title="전체 발행 기록의 근거 연결 현황"
+          description="전체 발행 문장의 근거·출처 연결을 집계해요. 예측 정확도와는 별도의 운영 지표예요."
+          className="ops-evidence"
+        >
+          <EvidenceDashboard state={evidence} />
         </FeaturePanel>
       </div>
     </div>

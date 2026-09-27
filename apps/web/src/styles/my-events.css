@@ -13,7 +13,10 @@
 .my-events-table th, .my-events-table td { padding: var(--space-3) var(--space-2); border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
 .my-events-table thead th { color: var(--ink-2); font-size: var(--text-sm); white-space: nowrap; }
 .my-events-table tbody th { font-weight: 600; }
-.my-events-table tbody tr.is-selected { background: var(--select-soft); outline: 1px solid var(--select); outline-offset: -1px; }
+.my-events-table tbody tr { cursor: pointer; }
+.my-events-table tbody tr:hover { background: var(--surface-sunken); }
+.my-events-table tbody tr.is-selected,
+.my-events-table tbody tr.is-selected:hover { background: var(--select-soft); outline: 1px solid var(--select); outline-offset: -1px; }
 .my-events-table button { padding: var(--space-1); border: 0; background: transparent; color: var(--link); font: inherit; text-align: left; cursor: pointer; }
 .my-events-table button:focus-visible, .my-events-detail :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .my-events-table .level-badge { white-space: nowrap; }

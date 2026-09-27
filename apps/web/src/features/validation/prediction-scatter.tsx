@@ -23,6 +23,7 @@ export function PredictionScatter({
       : "chart",
   );
   const [activePoint, setActivePoint] = useState<string | null>(null);
+  const [pinnedPoint, setPinnedPoint] = useState<string | null>(null);
   if (!state.value)
     return (
       <ContractMessage
@@ -95,6 +96,8 @@ export function PredictionScatter({
           <span className="validation-legend--outside">
             <i aria-hidden="true">◆</i> 구간 밖
           </span>
+          {" · "}
+          표의 등급은 정답 종류(시군구 순증 · 행사장)입니다
         </span>
         <button
           type="button"
@@ -194,6 +197,7 @@ export function PredictionScatter({
                     onMouseLeave={() => setActivePoint(null)}
                     onFocus={() => setActivePoint(key)}
                     onBlur={() => setActivePoint(null)}
+                    onClick={() => setPinnedPoint(key)}
                   >
                     {active && point.p90 > 0 && (
                       <>
@@ -284,6 +288,15 @@ export function PredictionScatter({
             </tbody>
           </table>
         </section>
+      )}
+      {pinnedPoint && grouped.get(pinnedPoint) && (
+        <p className="validation-point-detail">
+          {grouped.get(pinnedPoint)?.names.join(", ")} · 예측 구간{" "}
+          {fmt(grouped.get(pinnedPoint)?.point.p10 ?? 0)}~
+          {fmt(grouped.get(pinnedPoint)?.point.p90 ?? 0)}명/일 · 중앙값{" "}
+          {fmt(grouped.get(pinnedPoint)?.point.p50 ?? 0)}명/일 · 실측{" "}
+          {fmt(grouped.get(pinnedPoint)?.point.actual ?? 0)}명/일
+        </p>
       )}
     </div>
   );

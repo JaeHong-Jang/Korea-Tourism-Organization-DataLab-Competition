@@ -1,65 +1,47 @@
-// 전체 근거 그래프를 계약 API에서 받아 독립 화면으로 보여 준다.
-import type { KnowledgeGraph } from "@crowdcast/contracts/types";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { ErrorState } from "../components/common/error-state";
-import { LoadingState } from "../components/common/loading-state";
+// 발행 예보의 근거를 읽고 하단에서 전체 자료·규칙의 상세 탐색으로 이동한다.
+import { Link, useSearchParams } from "react-router-dom";
 import { PageHeading } from "../components/common/page-heading";
-import { getKnowledgeGraph } from "../features/knowledge-graph/api";
-import { KnowledgeGraphView } from "../features/knowledge-graph/knowledge-graph";
+import { ForecastEvidenceBrowser } from "../features/knowledge-graph/forecast-evidence-browser";
+import { MasterGraph } from "../features/knowledge-graph/master-graph";
+import "../styles/snapshot-evidence.css";
 
-// 로딩·빈 값·계약 오류를 분리하고 재시도할 수 있게 한다.
+// 보기 전환에도 행사·발행 식별자를 보존해 같은 예보로 돌아온다.
 export function KnowledgeGraphPage() {
-  const [graph, setGraph] = useState<KnowledgeGraph | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [attempt, setAttempt] = useState(0);
-  // 재시도 횟수가 바뀌면 같은 계약 주소에서 최신 그래프를 다시 읽는다.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 재시도 횟수는 요청을 다시 시작하는 신호다.
-  useEffect(() => {
-    const controller = new AbortController();
-    setError(null);
-    getKnowledgeGraph(controller.signal)
-      .then(setGraph)
-      .catch((reason: unknown) => {
-        if (!controller.signal.aborted)
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "자료를 불러오지 못했어요.",
-          );
-      });
-    return () => controller.abort();
-  }, [attempt]);
+  const [params] = useSearchParams();
+  const master = params.get("view") === "master";
+  const snapshotParams = new URLSearchParams(params);
+  snapshotParams.delete("view");
+  const masterParams = new URLSearchParams(params);
+  masterParams.set("view", "master");
   return (
     <div className="page-wrap regular-page knowledge-page">
       <PageHeading
         eyebrow="근거를 따라가요"
-        title="근거 그래프"
-        description="이 서비스가 쓰는 규칙·법령·데이터·모델이 어떻게 이어지는지 보여 줘요 — 예보서의 모든 문장은 이 그래프의 근거에 닿아요"
+        title={master ? "전체 자료·규칙 연결" : "예보 근거"}
+        description={
+          master
+            ? "예보 시스템의 공통 자료·모델·규칙이 어떻게 연결되는지 살펴봐요."
+            : "행사와 발행 시점을 고르고, 그 예보의 수치가 어떤 자료·가정·규칙에 연결되는지 확인해요."
+        }
       />
-      <nav className="knowledge-page__nav" aria-label="검증 화면">
-        <Link to="/validation">검증으로 돌아가기</Link>
-        <span>근거 그래프</span>
-      </nav>
-      {error ? (
-        <ErrorState
-          message={error}
-          action={
-            <button
-              type="button"
-              onClick={() => {
-                setGraph(null);
-                setAttempt((value) => value + 1);
-              }}
-            >
-              다시 시도
-            </button>
-          }
-        />
-      ) : graph ? (
-        <KnowledgeGraphView graph={graph} />
-      ) : (
-        <LoadingState message="전체 근거 그래프를 불러오는 중이에요." />
+      {master && (
+        <nav className="knowledge-page__nav" aria-label="예보 근거로 돌아가기">
+          <Link to={`/graph?${snapshotParams}`}>
+            ← 선택한 예보 근거로 돌아가기
+          </Link>
+        </nav>
+      )}
+      {master ? <MasterGraph /> : <ForecastEvidenceBrowser />}
+      {!master && (
+        <aside className="evidence-explore" aria-label="전체 근거 상세 탐색">
+          <div>
+            <h2>전체 자료와 규칙도 궁금하다면</h2>
+            <p>공통 기준의 연결을 3D 그래프와 표로 살펴볼 수 있어요.</p>
+          </div>
+          <Link to={`/graph?${masterParams}`}>
+            전체 자료·규칙 연결 살펴보기 →
+          </Link>
+        </aside>
       )}
     </div>
   );

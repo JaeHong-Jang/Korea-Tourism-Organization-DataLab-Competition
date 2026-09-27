@@ -1,4 +1,4 @@
-// 여섯 메뉴와 서울 해 상태, 사용자 테마 선택을 제공한다.
+// 역할별 주 메뉴와 서울 해 상태, 사용자 테마 선택을 제공한다.
 
 import { Menu, SunMoon } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -10,7 +10,8 @@ const menus = [
   { label: "미니 대한민국", to: "/", end: true },
   { label: "예보 상담", to: "/consult", end: false },
   { label: "내 행사", to: "/my", end: false },
-  { label: "검증", to: "/validation", end: false },
+  { label: "모델 검증", to: "/validation", end: false },
+  { label: "예보 근거", to: "/graph", end: false },
   { label: "인사이트", to: "/insights", end: false },
   { label: "운영", to: "/ops", end: false },
 ];

@@ -77,7 +77,7 @@ export function sortAndFilter(
     });
 }
 
-// 한 행의 선택 상태를 버튼으로 드러내고 값이 없는 예보는 공백으로 두지 않는다.
+// 이름 단추와 같은 행의 날짜·등급·상태 칸도 그 행사를 선택한다.
 export function EventList({
   rows,
   selectedId,
@@ -144,6 +144,8 @@ export function EventList({
                   <tr
                     key={event.id}
                     className={selectedId === event.id ? "is-selected" : ""}
+                    aria-selected={selectedId === event.id}
+                    onClick={() => onSelect(event.id)}
                   >
                     <th scope="row" data-label="행사명">
                       <button

@@ -20,6 +20,7 @@ import {
   SIZE_BIAS_NOTICE,
   UNVERIFIED_NOTICE,
 } from "../forecast-report/report-judgment";
+import { forecastEvidenceHref } from "../knowledge-graph/forecast-evidence-data";
 import { buildEvidenceMap } from "./graph-data";
 
 type Caution = { id: string; title: string; text: string; evidence?: Evidence };
@@ -329,7 +330,8 @@ export function EvidenceBrief({
         </ul>
         <p className="evidence-brief__foot">
           데이터랩 자료까지 이어지는 문장 {datalabClaimCount}개 / {claimCount}개
-          · <Link to="/graph">전체 근거 그래프 보기</Link>
+          ·{" "}
+          <Link to={forecastEvidenceHref(report)}>이 예보의 근거 살펴보기</Link>
         </p>
       </section>
     </section>

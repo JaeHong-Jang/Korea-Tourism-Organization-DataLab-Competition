@@ -10,12 +10,13 @@ import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
 import { getBacktest } from "../../../lib/validation/api";
-import { EvidenceDashboard } from "../evidence-dashboard";
+import { EvidenceDashboard } from "../../ops/evidence-dashboard";
 import { GoldenCases } from "../golden-cases";
 import { ModelDetails } from "../model-details";
 import { PerformanceMetrics } from "../performance-metrics";
 import { PredictionScatter } from "../prediction-scatter";
 import { PreregistrationBoard } from "../preregistration-board";
+import { validationLead } from "../validation-story";
 import { backtest, usage } from "./validation-fixtures";
 
 const ready = <T,>(value: T) => ({ status: "ready" as const, value });
@@ -26,6 +27,16 @@ type GoldenCase = BacktestSummary["golden"][number];
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 afterEach(() => vi.unstubAllGlobals());
+
+// 첫 화면은 일평균 채점의 한계를 한 문장으로 말한다.
+it("검증 첫 문장에 오차·구간·정답 종류를 함께 적는다", () => {
+  const lead = validationLead(backtest);
+  expect(lead).toContain("49.3%");
+  expect(lead).toContain("86건 중 49건");
+  expect(lead).toContain("행사장 정답은 1건");
+  expect(lead).toContain("시군구 방문자에서 평시를 뺀 값");
+  expect(lead).toContain("순간 최대도, 1,000명 경계도 채점하지 못했습니다");
+});
 
 // 지표는 비율만 백분율로 바꾸고 비교 불가 값을 0으로 그리지 않는다.
 it("포함률·표본·경계 한계와 기준선 비교 쌍을 함께 읽는다", () => {

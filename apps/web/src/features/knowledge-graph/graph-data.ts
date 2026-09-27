@@ -21,6 +21,19 @@ export const graphKinds: { kind: GraphKind; label: string }[] = [
 export const kindLabel = (kind: GraphKind) =>
   graphKinds.find((item) => item.kind === kind)?.label ?? "기타";
 
+// 화면 필터는 내부 종류 9개 대신 읽는 순서의 네 묶음만 보여 준다.
+export const readerGroups: { id: string; label: string; kinds: GraphKind[] }[] =
+  [
+    { id: "judgment", label: "판정", kinds: ["rule", "clause", "assumption"] },
+    { id: "data", label: "자료", kinds: ["dataset", "file"] },
+    { id: "compute", label: "계산", kinds: ["model", "stage"] },
+    {
+      id: "maker",
+      label: "만드는 주체",
+      kinds: ["agent", "class", "other"],
+    },
+  ];
+
 // 계약 순서를 보존하며 중복 관계에도 안정적인 화면 식별자를 붙인다.
 export function buildGraph(graph: KnowledgeGraph): GraphData {
   const known = new Set(graph.nodes.map((node) => node.id));

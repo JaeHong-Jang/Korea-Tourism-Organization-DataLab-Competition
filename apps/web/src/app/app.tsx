@@ -1,6 +1,6 @@
 // 공용 헤더와 각 화면의 주소를 연결한다.
 import type { MouseEvent } from "react";
-import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { LiveUpdatePill } from "../components/common/live-update-pill";
 import { SiteHeader } from "../components/common/site-header";
 import { AssistantShell } from "../features/assistant/assistant-shell";
@@ -21,7 +21,6 @@ import { PlanPage } from "../pages/plan-page";
 import { SharedPage } from "../pages/shared-page";
 import { ValidationPage } from "../pages/validation-page";
 import { ForecastMapAnchor } from "./forecast-map-anchor";
-import { GraphMenuLink } from "./graph-menu-link";
 import { HeaderWeatherChip } from "./header-weather-chip";
 
 // 이후 각 레인이 페이지 내부만 구현할 수 있게 라우트를 고정한다.
@@ -35,7 +34,6 @@ export function App() {
 
 // 요약 패널의 기존 상담 링크도 현재 선택 행사를 즉시 전송한다.
 function AppLayout() {
-  const location = useLocation();
   const chooseFestival = useAssistantStore((state) => state.chooseFestival);
   const selectedId = useSelectionStore((state) => state.selectedFestivalId);
   const festivals = useSelectionStore((state) => state.timelineFestivals);
@@ -54,16 +52,9 @@ function AppLayout() {
   return (
     <div className="app-shell">
       <SiteHeader />
-      <GraphMenuLink />
       <HeaderWeatherChip />
       <ForecastMapAnchor />
       <main id="main-content" onClickCapture={openSummaryForecast}>
-        {location.pathname === "/validation" && (
-          <nav className="validation-graph-nav" aria-label="검증 둘러보기">
-            <span>검증</span>
-            <Link to="/graph">근거 그래프</Link>
-          </nav>
-        )}
         <Routes>
           <Route path="/" element={<MiniKoreaPage />} />
           <Route path="/consult" element={<ConsultPage />} />

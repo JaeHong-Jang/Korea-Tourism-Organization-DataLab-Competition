@@ -35,7 +35,7 @@ it("다섯 안내 단계가 해당 화면으로 이동한다", async () => {
     "목록에서 행사 고르기",
     "예보 받기",
     "고래와 대화하기",
-    "근거 그래프 보기",
+    "예보 근거 보기",
   ];
   const paths = ["/", "/", "/consult", "/consult", "/graph"];
   for (const [index, title] of titles.entries()) {

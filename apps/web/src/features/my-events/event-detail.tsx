@@ -10,6 +10,7 @@ import {
   postReforecast,
   postShare,
 } from "../../lib/my-events-api";
+import { forecastEvidenceHref } from "../knowledge-graph/forecast-evidence-data";
 import { ActualForm } from "./actual-form";
 import type { SavedEvent } from "./event-list";
 import { ReforecastCard } from "./reforecast-card";
@@ -99,6 +100,7 @@ export function EventDetail({
                   <small className="my-events-whatif">조건 바꿈(what-if)</small>
                 )}
                 <small>발행 당시 기록 · 수정 불가</small>
+                <a href={forecastEvidenceHref(snapshot)}>근거 보기 →</a>
               </li>
             ))}
           </ol>
