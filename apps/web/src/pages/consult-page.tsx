@@ -1,6 +1,7 @@
 // 공유 상담 세션의 작업판·예보서·행사 카드만 한 화면에 보여 준다.
 import { FeaturePanel } from "../components/common/feature-panel";
 import { PageHeading } from "../components/common/page-heading";
+import { ConsultFestivalHeading } from "../features/consult-chat/consult-festival-heading";
 import { EventDraftCard } from "../features/consult-chat/event-draft-card";
 import { ForecastComparison } from "../features/consult-chat/forecast-comparison";
 import { ForecastPreview } from "../features/consult-chat/forecast-preview";
@@ -22,6 +23,7 @@ export function ConsultPage() {
     forecastId,
     session,
     sent,
+    busy,
   } = useSharedConsultSession();
   const openPanel = useAssistantStore((state) => state.openPanel);
   const original = forecasts[0];
@@ -33,6 +35,13 @@ export function ConsultPage() {
         title="예보 상담"
         description="예보팀의 작업과 발행 준비 상태를 이곳에서 확인하세요."
       />
+      {sent.length > 0 && (
+        <ConsultFestivalHeading
+          draft={draft}
+          busy={busy}
+          needsAnswer={asks.length > 0}
+        />
+      )}
       {!sent.length && (
         <div className="consult-start" role="status">
           <p>고래를 눌러 행사를 고르거나 설명해 보세요.</p>

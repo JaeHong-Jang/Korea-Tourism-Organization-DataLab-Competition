@@ -14,6 +14,7 @@ import { consultErrorMessage } from "../consult-chat/error-message";
 import { whatIfChips } from "../consult-chat/followup-chips";
 import { FestivalPicker } from "./festival-picker";
 import { RecommendationCards } from "./recommendation-cards";
+import { useConversationScroll } from "./use-conversation-scroll";
 
 const examples = ["불꽃놀이 행사에 가고 싶어", "행사를 직접 설명할게요"];
 
@@ -49,6 +50,7 @@ export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
   );
   const takeRequest = useAssistantStore((state) => state.takeRequest);
   const panelRef = useRef<HTMLElement>(null);
+  const { viewportRef, contentRef } = useConversationScroll(sent.at(-1)?.id);
   const [nearError, setNearError] = useState("");
   const pick = (festival: { name: string; eventId: string }) =>
     void send({
@@ -117,98 +119,100 @@ export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
           사용법 +
         </button>
       </header>
-      <div className="assistant-panel__conversation">
-        {!sent.length && (
-          <>
-            <div className="consult-greeting">
-              <PetAvatar agentId="lead" state="idle" size={48} />
-              <p>안녕하세요. 어떤 행사를 찾으시나요?</p>
-            </div>
-            <FestivalPicker onPick={pick} />
-            <div className="consult-examples">
-              {examples.map((example) => (
+      <div className="assistant-panel__conversation" ref={viewportRef}>
+        <div className="assistant-panel__messages" ref={contentRef}>
+          {!sent.length && (
+            <>
+              <div className="consult-greeting">
+                <PetAvatar agentId="lead" state="idle" size={48} />
+                <p>안녕하세요. 어떤 행사를 찾으시나요?</p>
+              </div>
+              <FestivalPicker onPick={pick} />
+              <div className="consult-examples">
+                {examples.map((example) => (
+                  <button
+                    key={example}
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      example === examples[1]
+                        ? document.getElementById("consult-text")?.focus()
+                        : void send({ text: example })
+                    }
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <ConsultMessages
+            sent={sent}
+            claims={claims}
+            forecasts={forecasts}
+            replies={replies}
+            work={work}
+            gateReplies={gateReplies}
+            completed={completed}
+            busy={busy}
+          />
+          {recommendation && (
+            <RecommendationCards
+              recommendation={recommendation}
+              onChangeConditions={() => {
+                setText("다른 지역이나 날짜로 찾아줘");
+                document.getElementById("consult-text")?.focus();
+              }}
+            />
+          )}
+          {forecastId && !asks.length && (
+            <fieldset className="consult-choices" aria-label="다음 할 일">
+              <legend className="sr-only">후속 질문과 다음 할 일</legend>
+              {["왜 이렇게 많아?", ...whatIfChips(draft)].map((question) => (
                 <button
-                  key={example}
                   type="button"
                   disabled={busy}
-                  onClick={() =>
-                    example === examples[1]
-                      ? document.getElementById("consult-text")?.focus()
-                      : void send({ text: example })
-                  }
+                  key={question}
+                  onClick={() => void send({ text: question })}
                 >
-                  {example}
+                  {question}
                 </button>
               ))}
-            </div>
-          </>
-        )}
-        <ConsultMessages
-          sent={sent}
-          claims={claims}
-          forecasts={forecasts}
-          replies={replies}
-          work={work}
-          gateReplies={gateReplies}
-          completed={completed}
-          busy={busy}
-        />
-        {recommendation && (
-          <RecommendationCards
-            recommendation={recommendation}
-            onChangeConditions={() => {
-              setText("다른 지역이나 날짜로 찾아줘");
-              document.getElementById("consult-text")?.focus();
-            }}
-          />
-        )}
-        {forecastId && !asks.length && (
-          <fieldset className="consult-choices" aria-label="다음 할 일">
-            <legend className="sr-only">후속 질문과 다음 할 일</legend>
-            {["왜 이렇게 많아?", ...whatIfChips(draft)].map((question) => (
-              <button
-                type="button"
-                disabled={busy}
-                key={question}
-                onClick={() => void send({ text: question })}
-              >
-                {question}
-              </button>
-            ))}
-            {suggestions.map((suggestion) =>
-              suggestion.href ? (
-                <a key={suggestion.id} href={suggestion.href}>
-                  {suggestion.label}
-                </a>
-              ) : (
-                <button
+              {suggestions.map((suggestion) =>
+                suggestion.href ? (
+                  <a key={suggestion.id} href={suggestion.href}>
+                    {suggestion.label}
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    key={suggestion.id}
+                    onClick={() => void send({ text: suggestion.label })}
+                  >
+                    {suggestion.label}
+                  </button>
+                ),
+              )}
+            </fieldset>
+          )}
+          {error && (
+            <ErrorState
+              message={consultErrorMessage(error)}
+              action={
+                <Button
                   type="button"
-                  disabled={busy}
-                  key={suggestion.id}
-                  onClick={() => void send({ text: suggestion.label })}
+                  variant="outline"
+                  onClick={() => {
+                    if (lastMessage.current) void send(lastMessage.current);
+                  }}
                 >
-                  {suggestion.label}
-                </button>
-              ),
-            )}
-          </fieldset>
-        )}
-        {error && (
-          <ErrorState
-            message={consultErrorMessage(error)}
-            action={
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  if (lastMessage.current) void send(lastMessage.current);
-                }}
-              >
-                다시 시도
-              </Button>
-            }
-          />
-        )}
+                  다시 시도
+                </Button>
+              }
+            />
+          )}
+        </div>
       </div>
       <p className="consult-live" aria-live="polite">
         {nearError || summary}

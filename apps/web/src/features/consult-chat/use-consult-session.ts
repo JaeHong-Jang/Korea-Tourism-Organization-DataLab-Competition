@@ -205,6 +205,11 @@ export function useConsultSession() {
     setError("");
     setReplyError("");
     setRecommendation(null);
+    // 다른 축제를 명시해 요청하면 이전 행사명이 새 상담에 남지 않게 비운다.
+    if (message.eventId) {
+      draftRef.current = null;
+      setDraft(null);
+    }
     const messageId = crypto.randomUUID();
     requestId.current = messageId;
     setSent((current) => [...current, { id: messageId, text: message.text }]);

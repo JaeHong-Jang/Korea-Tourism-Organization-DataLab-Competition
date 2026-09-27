@@ -1,0 +1,8 @@
+/* 낮과 밤 모두 준비 항목의 번호·본문·여백을 같은 구조로 유지한다. */
+.forecast-preparation { min-width: 0; margin-block: var(--space-2); }
+.forecast-preparation summary { padding-block: var(--space-2); color: var(--link); font-weight: 700; cursor: pointer; }
+.forecast-preparation summary span { margin-left: var(--space-2); font-size: var(--text-sm); color: var(--ink-2); font-weight: 400; }
+.forecast-preparation__list { display: grid; gap: var(--space-3); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.forecast-preparation__item { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); }
+.forecast-preparation__number { display: grid; place-items: center; min-width: var(--space-6); height: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--link); font-size: var(--text-caption); font-weight: 700; }
+.forecast-preparation__text { color: var(--ink); font-size: var(--text-sm); font-weight: 400; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }

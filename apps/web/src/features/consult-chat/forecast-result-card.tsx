@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { LevelBadge } from "../../components/common/level-badge";
 import { formatQuantity } from "../../lib/format";
 import { renderClaim } from "../../lib/render-claim";
+import { ForecastPreparation } from "./forecast-preparation";
 import type { ForecastSnapshot } from "./use-consult-session";
 
 // 수치는 예보 카드에서만 가져오고 준비 문장은 발행된 권고에서만 가져온다.
@@ -36,16 +37,7 @@ export function ForecastResultCard({
       {conclusion && (
         <p className="consult-result__conclusion">{renderClaim(conclusion)}</p>
       )}
-      {tasks.length > 0 && (
-        <details>
-          <summary>준비할 것 {tasks.length}가지</summary>
-          <ul>
-            {tasks.map((claim) => (
-              <li key={claim.id}>{renderClaim(claim)}</li>
-            ))}
-          </ul>
-        </details>
-      )}
+      <ForecastPreparation tasks={tasks} />
       <nav className="consult-result__actions" aria-label="예보 이어보기">
         <Link to={href}>예보서 보기</Link>
         <Link to="/graph">근거 그래프</Link>
