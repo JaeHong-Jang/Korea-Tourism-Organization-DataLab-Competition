@@ -15,12 +15,13 @@ import {
   postActual,
   postReforecast,
 } from "../../lib/my-events-api";
+import { ActualForm, actualQuantity, actualSubmitLabel } from "./actual-form";
 import {
-  ActualForm,
-  actualQuantity,
-  actualSubmitLabel,
-} from "./actual-form";
-import { changedCondition, isUnchanged, reforecastError } from "./event-detail";
+  changedCondition,
+  EventDetail,
+  isUnchanged,
+  reforecastError,
+} from "./event-detail";
 import {
   eventIdForForecast,
   firstEventIdByDate,
@@ -33,6 +34,29 @@ import { SharedReport } from "./shared-report";
 
 const event = eventFixture as Event;
 const report = reportFixture as unknown as ForecastReport;
+
+// 여러 발행본의 버튼은 각 예보 ID에 해당하는 읽기 전용 예보서로 연결한다.
+it("예보 이력마다 별도 예보서 보기 버튼을 제공한다", () => {
+  const first = { ...report, forecastId: "f-busan-first" };
+  const second = { ...report, forecastId: "f-busan-second" };
+  const html = renderToStaticMarkup(
+    <MemoryRouter>
+      <EventDetail
+        row={{ event, snapshots: [first, second] }}
+        onForecast={async () => {}}
+        onActualSaved={() => {}}
+      />
+    </MemoryRouter>,
+  );
+  expect(html).toMatch(
+    /href="\/f\/f-busan-first"[^>]*aria-label="1차 예보서 보기"/,
+  );
+  expect(html).toMatch(
+    /href="\/f\/f-busan-second"[^>]*aria-label="2차 예보서 보기"/,
+  );
+  expect(html).toContain("1차 예보");
+  expect(html).toContain("2차 예보");
+});
 
 // 응답 순서와 무관하게 발행 순으로 타임라인에 넘긴다.
 it("스냅샷을 발행 시각 순으로 놓고 최신 발행으로 표를 정렬한다", () => {

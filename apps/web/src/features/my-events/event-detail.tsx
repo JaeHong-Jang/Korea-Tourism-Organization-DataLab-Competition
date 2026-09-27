@@ -76,7 +76,7 @@ export function EventDetail({
       <FeaturePanel
         id="M5-F2"
         title="예보 이력"
-        description="발행된 예보는 수정할 수 없어요."
+        description="발행할 때마다 별도 예보서가 남아요. 지난 예보도 다시 볼 수 있어요."
       >
         <h3>{event.name}</h3>
         <p>
@@ -86,21 +86,33 @@ export function EventDetail({
           <p>아직 발행된 예보가 없어요.</p>
         ) : (
           <ol className="my-events-timeline">
-            {snapshots.map((snapshot) => (
+            {snapshots.map((snapshot, index) => (
               <li key={snapshot.forecastId}>
-                <a href={`/f/${encodeURIComponent(snapshot.forecastId)}`}>
-                  <span>{formatDate(snapshot.publishedAt)}</span>
-                  <strong>
-                    {formatSnapshotNumber(snapshot.forecast.peakConcurrent.p50)}{" "}
-                    명 · 순간 최대 중앙값
-                  </strong>
-                </a>
+                <div className="my-events-timeline-heading">
+                  <strong>{index + 1}차 예보</strong>
+                  <time dateTime={snapshot.publishedAt}>
+                    {formatDate(snapshot.publishedAt)} 발행
+                  </time>
+                </div>
+                <strong>
+                  {formatSnapshotNumber(snapshot.forecast.peakConcurrent.p50)}{" "}
+                  명 · 순간 최대 중앙값
+                </strong>
                 <LevelBadge judgment={snapshot.forecast.judgment} />
                 {changedCondition(snapshot.event, event) && (
                   <small className="my-events-whatif">조건 바꿈(what-if)</small>
                 )}
                 <small>발행 당시 기록 · 수정 불가</small>
-                <a href={forecastEvidenceHref(snapshot)}>근거 보기 →</a>
+                <div className="my-events-timeline-actions">
+                  <a
+                    className="my-events-snapshot-report"
+                    href={`/f/${encodeURIComponent(snapshot.forecastId)}`}
+                    aria-label={`${index + 1}차 예보서 보기`}
+                  >
+                    예보서 보기
+                  </a>
+                  <a href={forecastEvidenceHref(snapshot)}>근거 보기 →</a>
+                </div>
               </li>
             ))}
           </ol>

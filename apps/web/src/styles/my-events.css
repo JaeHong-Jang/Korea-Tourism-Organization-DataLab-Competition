@@ -27,6 +27,12 @@
 .my-events-timeline li::before { position: absolute; top: var(--space-2); left: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--brand); content: ""; }
 .my-events-timeline a, .my-events-timeline small { display: grid; gap: var(--space-1); }
 .my-events-timeline small { color: var(--ink-2); }
+/* 발행 순서와 발행일을 묶고 예보서 링크를 각 이력의 주 행동으로 보인다. */
+.my-events-timeline-heading, .my-events-timeline-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
+.my-events-timeline-heading time { color: var(--ink-2); font-size: var(--text-sm); }
+.my-events-timeline-actions { margin-top: var(--space-2); }
+.my-events-timeline-actions a { display: inline-flex; align-items: center; min-height: 36px; padding: var(--space-1) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); font-weight: 600; }
+.my-events-timeline-actions .my-events-snapshot-report { border-color: var(--brand); background: var(--brand); color: var(--on-brand); }
 .my-events-reforecast-card { display: grid; gap: var(--space-3); margin-top: var(--space-5); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
 .my-events-reforecast-card h3, .my-events-reforecast-card p { margin: 0; }
 .my-events-reforecast-card dl { display: grid; gap: var(--space-3); margin: 0; }
