@@ -86,7 +86,6 @@ export function MiniKoreaCanvas({
   const weather = useSceneWeather(festivals, selectedId, at);
   const selectFestival = useSelectionStore((state) => state.selectFestival);
   const selectSigungu = useSelectionStore((state) => state.selectSigungu);
-  const setFilters = useSelectionStore((state) => state.setFilters);
   // 행사를 고르면 그 동네를 실제 건물·길이 있는 3D 미니어처로 펼친다(sceneCity=0이면 전국 판만).
   const cityFestival =
     diagnostics.city && selectedId
@@ -115,12 +114,10 @@ export function MiniKoreaCanvas({
   const width = bounds ? bounds.maxX - bounds.minX + 90 : 600;
   const depth = bounds ? bounds.maxZ - bounds.minZ + 90 : 900;
 
-  // 시군구 선택을 저장하고 기존 시도 필터와 카메라 이동을 함께 유지한다.
+  // 지도 클릭은 지역 선택과 카메라 이동만 수행하고 행사 필터는 바꾸지 않는다.
   const onPick = (code: string) => {
     selectFestival(null);
     selectSigungu(code);
-    const sido = model?.sidoByCode.get(code);
-    if (sido) setFilters({ sido });
   };
 
   if (!webgl)
