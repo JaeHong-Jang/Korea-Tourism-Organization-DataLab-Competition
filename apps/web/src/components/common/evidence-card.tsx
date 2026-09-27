@@ -34,6 +34,20 @@ const checkLabels = {
   ood: "분포 이탈",
 };
 
+// 설명 뒤에 붙은 구조화 기록은 분리해 기본 카드에서 긴 원문을 숨긴다.
+function splitSummary(summary: string) {
+  const rawStart = summary.search(/\{\s*"|\[\s*[{"]/);
+  if (rawStart < 0) return { summary, raw: null };
+  const readable = summary
+    .slice(0, rawStart)
+    .trim()
+    .replace(/[·:;,\s]+$/, "");
+  return {
+    summary: readable || "발행 당시 기록의 세부 값을 확인할 수 있어요.",
+    raw: summary,
+  };
+}
+
 // 계약 근거에 없는 수치는 만들지 않고 실제 관측·모델·가정을 받은 경우에만 덧붙인다.
 export function EvidenceCard({
   evidence,
@@ -72,7 +86,7 @@ export function EvidenceCard({
   const observation = context?.observation;
   const observationName = observation && featureLabels[observation.featureName];
   const title = evidenceDisplayTitle(evidence, observation?.featureName);
-  const rawSummary = /^[[{]/.test(evidence.summary.trim());
+  const parsedSummary = splitSummary(evidence.summary);
   const assumption = context?.assumption;
   const similar = context?.similar;
   const rule = evidence.ruleId
@@ -108,22 +122,20 @@ export function EvidenceCard({
         <span className="evidence-card__number">[{resolvedNumber}]</span>
         <span>{title}</span>
         <small>{label}</small>
-        <span className="evidence-card__toggle" aria-hidden="true" />
       </summary>
       <div className="evidence-card__body">
         <p>
           {hideProbability && evidence.summary.includes("%")
             ? "구간 기준 표시"
-            : rawSummary
-              ? "발행 당시의 관측 기록과 출처를 아래에서 확인할 수 있어요."
-              : evidence.summary}
+            : parsedSummary.summary}
         </p>
-        {rawSummary && !(hideProbability && evidence.summary.includes("%")) && (
-          <details className="evidence-card__raw">
-            <summary>원본 기록 보기</summary>
-            <code>{evidence.summary}</code>
-          </details>
-        )}
+        {parsedSummary.raw &&
+          !(hideProbability && evidence.summary.includes("%")) && (
+            <details className="evidence-card__raw">
+              <summary>원본 데이터 자세히 보기</summary>
+              <code>{parsedSummary.raw}</code>
+            </details>
+          )}
         {/* 데이터 근거에는 출처와 공개일, 연결된 관측값을 함께 둔다. */}
         {evidence.kind === "data" && (
           <>

@@ -48,8 +48,28 @@ describe("근거 카드", () => {
     );
     expect(markup).toContain("관측 자료 · 외지인 비율");
     expect(markup).toContain("지표 외지인 비율");
-    expect(markup).toContain("원본 기록 보기");
+    expect(markup).toContain("원본 데이터 자세히 보기");
     expect(markup).not.toContain("예측 입력 관측: nonlocal_share");
+  });
+
+  // 설명 뒤에 붙은 JSON은 기본 문장에서 빼고 펼친 원문에만 남긴다.
+  it("긴 규정 원문을 접힌 상세 영역으로 분리한다", () => {
+    const item = report.evidence.find((entry) => entry.kind === "rule");
+    if (!item) throw new Error("규정 근거 견본 없음");
+    const markup = renderToStaticMarkup(
+      <EvidenceCard
+        evidence={{
+          ...item,
+          summary:
+            '자체 기준에 따라 검토합니다. {"threshold":5000,"hazards":[]}',
+        }}
+        number={16}
+        defaultOpen
+      />,
+    );
+    expect(markup).toContain("자체 기준에 따라 검토합니다.</p>");
+    expect(markup).toContain("<summary>원본 데이터 자세히 보기</summary>");
+    expect(markup).not.toContain("펼치기");
   });
 
   // 여섯 종류의 유효한 계약 견본에서 필수 본문과 근거 번호를 확인한다.
