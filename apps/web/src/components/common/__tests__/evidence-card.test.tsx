@@ -25,6 +25,33 @@ const validEvidence = ajv.compile(evidenceSchema);
 
 // 원본 계약 견본과 검증 근거를 카드의 읽기 순서로 살핀다.
 describe("근거 카드", () => {
+  // 기술용 관측 이름과 JSON 원문은 읽기 쉬운 제목·접힌 원본으로 나눈다.
+  it("외지인 비율 관측을 사람이 읽는 제목으로 보인다", () => {
+    const observation = report.forecast.observations[0];
+    const item = {
+      ...evidence,
+      title: "예측 입력 관측: nonlocal_share",
+      summary: JSON.stringify({
+        id: observation.id,
+        featureName: "nonlocal_share",
+      }),
+    };
+    const markup = renderToStaticMarkup(
+      <EvidenceCard
+        evidence={item}
+        number={2}
+        context={{
+          observation: { ...observation, featureName: "nonlocal_share" },
+        }}
+        defaultOpen
+      />,
+    );
+    expect(markup).toContain("관측 자료 · 외지인 비율");
+    expect(markup).toContain("지표 외지인 비율");
+    expect(markup).toContain("원본 기록 보기");
+    expect(markup).not.toContain("예측 입력 관측: nonlocal_share");
+  });
+
   // 여섯 종류의 유효한 계약 견본에서 필수 본문과 근거 번호를 확인한다.
   it("근거 카드 6종", () => {
     const model = report.evidence.find(

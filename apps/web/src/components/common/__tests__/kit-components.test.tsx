@@ -269,14 +269,19 @@ describe("도메인 부품", () => {
         <KitPage />
       </MemoryRouter>,
     );
-    expect(markup).toContain('href="#evidence-ev-rule-internal-5000"');
+    expect(markup).toContain('aria-controls="evidence-ev-rule-internal-5000"');
     expect(markup).toContain('id="evidence-ev-rule-internal-5000"');
-    expect(markup.match(/근거 4, 규정/g)).toHaveLength(2);
-    expect(markup.match(/근거 7, 사례/g)).toHaveLength(2);
-    expect(markup).toContain('href="#evidence-ev-model-f-yeongjong-2025"');
-    expect(markup).toContain('href="#evidence-ev-as-concurrency-fireworks"');
+    expect(markup).toContain("근거 4 열기, 규정");
+    expect(markup).toContain("근거 4, 규정");
+    expect(markup).toContain("근거 7 열기, 사례");
+    expect(markup).toContain("근거 7, 사례");
+    expect(markup).toContain(
+      'aria-controls="evidence-ev-model-f-yeongjong-2025"',
+    );
+    expect(markup).toContain(
+      'aria-controls="evidence-ev-as-concurrency-fireworks"',
+    );
   });
-
   // 평가 수치의 정보 버튼은 계약에 있는 묶음과 실행 시각만 제공한다.
   it("KPI 평가 출처", () => {
     const markup = renderToStaticMarkup(<KpiTile ops={ops} metric="cases" />);

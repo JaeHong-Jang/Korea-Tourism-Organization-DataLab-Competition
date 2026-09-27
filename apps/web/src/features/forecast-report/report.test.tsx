@@ -54,8 +54,8 @@ it("수치·빈 자료·문장 근거를 계약 픽스처대로 표시한다", (
   expect(output).toContain("13,000");
   expect(output).toContain("평시 자료 없음");
   expect(output).toContain("유사 행사 자료 없음");
-  expect(output).toContain("근거 3, 규정:");
-  expect(output).toContain('href="#evidence-ev-rule-legal-hazard"');
+  expect(output).toContain("근거 3 열기, 규정:");
+  expect(output).toContain('aria-controls="evidence-ev-rule-legal-hazard"');
   expect(output).toContain("순간 최대 1,000명 이상일 확률 99%");
   expect(
     html({ ...fixture, forecast: { ...fixture.forecast, peakHours: null } }),
@@ -68,7 +68,7 @@ it("일평균 수치에 직접 연결된 근거 칩을 표시한다", () => {
     <ReportNumbers report={fixture} onOpen={noOpen} />,
   );
   const daily = output.split("일평균 방문객")[1]?.split("피크 시간")[0];
-  expect(daily).toContain('href="#evidence-ev-model-f-yeongjong-2025"');
+  expect(daily).toContain('aria-controls="evidence-ev-model-f-yeongjong-2025"');
 });
 
 // 비교 자료가 있으면 서로 다른 집계 단위와 추정 여부를 수치 옆에 붙인다.

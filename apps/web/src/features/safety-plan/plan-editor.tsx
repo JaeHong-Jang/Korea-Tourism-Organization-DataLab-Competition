@@ -1,6 +1,7 @@
 // 계획 목차와 섹션 메모, 근거 서랍, 저장 상태를 한 화면에 묶는다.
 import type { ForecastReport, Plan } from "@crowdcast/contracts/types";
 import { useEffect, useState } from "react";
+import { EvidenceSelectionContext } from "../../components/common/evidence-chip";
 import { Button } from "../../components/ui/button";
 import { ReportDrawer, useEvidenceDrawer } from "../evidence/report-drawer";
 import { PlanContents } from "./plan-contents";
@@ -89,32 +90,35 @@ export function PlanEditor({
         )}
       </div>
       <p className="plan-watermark">{editor.plan.watermark}</p>
-      <div className="plan-editor-layout">
-        <PlanContents
-          sections={editor.plan.sections}
-          active={active}
-          onSelect={select}
-        />
-        <section className="plan-document" aria-label="계획 초안 편집기">
-          <h2>{editor.plan.title}</h2>
-          {editor.plan.sections.map((section, index) => (
-            <PlanSection
-              key={section.key}
-              section={section}
-              index={index}
-              report={report}
-              note={editor.notes[index]}
-              onNote={editor.editNote}
-              onOpen={drawer.open}
-            />
-          ))}
-        </section>
-        <ReportDrawer
-          report={report}
-          selectedId={drawer.selectedId}
-          onClose={drawer.close}
-        />
-      </div>
+      <EvidenceSelectionContext.Provider value={drawer.selectedId}>
+        <div className="plan-editor-layout">
+          <PlanContents
+            sections={editor.plan.sections}
+            active={active}
+            onSelect={select}
+          />
+          <section className="plan-document" aria-label="계획 초안 편집기">
+            <h2>{editor.plan.title}</h2>
+            {editor.plan.sections.map((section, index) => (
+              <PlanSection
+                key={section.key}
+                section={section}
+                index={index}
+                report={report}
+                note={editor.notes[index]}
+                onNote={editor.editNote}
+                onOpen={drawer.open}
+              />
+            ))}
+          </section>
+          <ReportDrawer
+            report={report}
+            selectedId={drawer.selectedId}
+            onClose={drawer.close}
+            onDeselect={drawer.deselect}
+          />
+        </div>
+      </EvidenceSelectionContext.Provider>
     </>
   );
 }

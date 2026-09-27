@@ -7,21 +7,20 @@ import {
   CheckCircle2,
   ExternalLink,
 } from "lucide-react";
+import { useContext } from "react";
 import { Link } from "react-router-dom";
 import {
   EvidenceChip,
+  EvidenceSelectionContext,
   evidenceKinds,
 } from "../../components/common/evidence-chip";
 import { evidenceNumber } from "../../components/common/evidence-number";
+import { evidenceDisplayTitle } from "../../lib/evidence-feature-labels";
 import { formatPeople, formatRange } from "../../lib/format";
 import type { OpenEvidence } from "../forecast-report/report-claims";
 import { claimText, orderedClaims } from "../forecast-report/report-content";
 import { forecastEvidenceHref } from "../knowledge-graph/forecast-evidence-data";
-import {
-  cautions,
-  readableSummary,
-  sourceCards,
-} from "./evidence-brief-data";
+import { cautions, readableSummary, sourceCards } from "./evidence-brief-data";
 
 export { cautions, readableSummary, sourceCards } from "./evidence-brief-data";
 
@@ -36,6 +35,7 @@ export function EvidenceBrief({
   onViewClaim: (id: string) => void;
 }) {
   const { judgment, peakConcurrent } = report.forecast;
+  const selectedId = useContext(EvidenceSelectionContext);
   const rule =
     masterLabels.rules[judgment.ruleIds[0] as keyof typeof masterLabels.rules];
   const clause = rule?.clauseId
@@ -108,14 +108,19 @@ export function EvidenceBrief({
                 <li key={item.id}>
                   <button
                     type="button"
+                    aria-controls={`evidence-${item.id}`}
+                    aria-expanded={selectedId === item.id}
                     onClick={(event) => onOpen(item.id, event.currentTarget)}
                   >
                     <span className="evidence-brief__kind">
                       <Icon size={14} aria-hidden="true" />
                       {label} [{evidenceNumber(item.id, report.evidence)}]
                     </span>
-                    <strong>{item.title}</strong>
+                    <strong>{evidenceDisplayTitle(item)}</strong>
                     <span>{readableSummary(item)}</span>
+                    <span className="evidence-brief__open">
+                      {selectedId === item.id ? "근거 접기 ▴" : "근거 열기 ▾"}
+                    </span>
                   </button>
                 </li>
               );
@@ -137,6 +142,8 @@ export function EvidenceBrief({
                   {item.evidence ? (
                     <button
                       type="button"
+                      aria-controls={`evidence-${item.id}`}
+                      aria-expanded={selectedId === item.id}
                       onClick={(event) => onOpen(item.id, event.currentTarget)}
                     >
                       <span className="evidence-brief__kind">
@@ -145,6 +152,9 @@ export function EvidenceBrief({
                       </span>
                       <strong>{item.title}</strong>
                       <span>{item.text}</span>
+                      <span className="evidence-brief__open">
+                        {selectedId === item.id ? "근거 접기 ▴" : "근거 열기 ▾"}
+                      </span>
                     </button>
                   ) : (
                     <div>

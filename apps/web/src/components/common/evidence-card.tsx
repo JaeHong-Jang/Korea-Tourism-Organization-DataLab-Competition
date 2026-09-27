@@ -7,6 +7,10 @@ import type {
   SimilarEvent,
 } from "@crowdcast/contracts/types";
 import {
+  evidenceDisplayTitle,
+  featureLabels,
+} from "../../lib/evidence-feature-labels";
+import {
   formatDate,
   formatSnapshotNumber,
   formatSnapshotQuantity,
@@ -40,6 +44,7 @@ export function EvidenceCard({
   highlighted = false,
   status = "ready",
   hideProbability = false,
+  onToggle,
 }: {
   evidence?: Evidence | null;
   number?: number;
@@ -49,6 +54,7 @@ export function EvidenceCard({
   highlighted?: boolean;
   status?: ComponentStatus;
   hideProbability?: boolean;
+  onToggle?: (open: boolean) => void;
 }) {
   if (status !== "ready" || !evidence)
     return (
@@ -64,6 +70,9 @@ export function EvidenceCard({
     return <ComponentState name="근거 번호" status="error" />;
   const { Icon, label } = evidenceKinds[evidence.kind];
   const observation = context?.observation;
+  const observationName = observation && featureLabels[observation.featureName];
+  const title = evidenceDisplayTitle(evidence, observation?.featureName);
+  const rawSummary = /^[[{]/.test(evidence.summary.trim());
   const assumption = context?.assumption;
   const similar = context?.similar;
   const rule = evidence.ruleId
@@ -90,21 +99,31 @@ export function EvidenceCard({
       id={`evidence-${evidence.id}`}
       className={`evidence-card evidence-card--${evidence.kind}${highlighted ? " evidence-card--highlighted" : ""}`}
       open={defaultOpen}
+      onToggle={
+        onToggle ? (event) => onToggle(event.currentTarget.open) : undefined
+      }
     >
-      <summary
-        aria-label={`근거 ${resolvedNumber}, ${label}: ${evidence.title}`}
-      >
+      <summary aria-label={`근거 ${resolvedNumber}, ${label}: ${title}`}>
         <Icon size={17} aria-hidden="true" />
         <span className="evidence-card__number">[{resolvedNumber}]</span>
-        <span>{evidence.title}</span>
+        <span>{title}</span>
         <small>{label}</small>
+        <span className="evidence-card__toggle" aria-hidden="true" />
       </summary>
       <div className="evidence-card__body">
         <p>
           {hideProbability && evidence.summary.includes("%")
             ? "구간 기준 표시"
-            : evidence.summary}
+            : rawSummary
+              ? "발행 당시의 관측 기록과 출처를 아래에서 확인할 수 있어요."
+              : evidence.summary}
         </p>
+        {rawSummary && !(hideProbability && evidence.summary.includes("%")) && (
+          <details className="evidence-card__raw">
+            <summary>원본 기록 보기</summary>
+            <code>{evidence.summary}</code>
+          </details>
+        )}
         {/* 데이터 근거에는 출처와 공개일, 연결된 관측값을 함께 둔다. */}
         {evidence.kind === "data" && (
           <>
@@ -122,7 +141,7 @@ export function EvidenceCard({
             )}
             {observation && (
               <p>
-                지표 {observation.featureName} ·{" "}
+                지표 {observationName ?? observation.featureName} ·{" "}
                 {formatSnapshotNumber(observation.value)}
                 {observation.unit}
               </p>

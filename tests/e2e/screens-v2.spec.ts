@@ -130,11 +130,11 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
     await expect(page.getByRole("tab", { name: "예보서" })).toBeVisible();
     if (scene.state === "drawer") {
       await page
-        .locator('a[href="#evidence-ev-rule-legal-hazard"]')
+        .locator('button[aria-controls="evidence-ev-rule-legal-hazard"]')
         .first()
         .click();
       await expect(
-        page.getByRole("dialog", { name: "근거 서랍" }),
+        page.getByRole("complementary", { name: "근거 서랍" }),
       ).toBeVisible();
     }
     if (scene.state === "map") {
@@ -145,6 +145,7 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
     }
     if (scene.state === "venue") {
       await page.getByRole("tab", { name: "행사장 3D" }).click();
+      await expect(page.getByRole("complementary", { name: "근거 서랍" })).toHaveCount(0);
       await expect(page.locator("html")).toHaveAttribute(
         "data-venue-ready",
         "true",

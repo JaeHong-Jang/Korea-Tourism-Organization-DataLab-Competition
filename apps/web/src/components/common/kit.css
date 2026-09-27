@@ -50,14 +50,23 @@
 .key-number { display: grid; justify-items: start; gap: var(--space-1); }
 .key-number strong { font-size: var(--text-hero); line-height: 1.1; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .kit-evidence-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.evidence-chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--link); cursor: pointer; }
+.evidence-chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--link); font: inherit; font-size: var(--text-caption); cursor: pointer; vertical-align: middle; }
+.evidence-chip[aria-expanded="true"] { border-color: var(--brand); background: var(--select-soft); }
+.evidence-chip__action { margin-left: var(--space-1); font-weight: 700; }
+.evidence-chip[aria-expanded="true"] > svg:last-child { transform: rotate(180deg); }
 .evidence-card { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .evidence-card--highlighted { outline: 3px solid var(--focus); outline-offset: var(--space-1); }
-.evidence-card summary { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3); cursor: pointer; font-weight: 700; }
-.evidence-card summary svg, .evidence-card__number { color: var(--link); }
-.evidence-card summary small { margin-left: auto; color: var(--ink-2); }
+.evidence-card > summary { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-3); cursor: pointer; font-weight: 700; }
+.evidence-card > summary svg, .evidence-card__number { color: var(--link); }
+.evidence-card > summary small { margin-left: auto; color: var(--ink-2); }
+.evidence-card__toggle { color: var(--link); font-size: var(--text-caption); white-space: nowrap; }
+.evidence-card__toggle::before { content: "펼치기 ▾"; }
+.evidence-card[open] .evidence-card__toggle::before { content: "접기 ▴"; }
 .evidence-card__body { padding: 0 var(--space-4) var(--space-3); color: var(--ink-2); font-size: var(--text-sm); }
 .evidence-card__body p { margin: var(--space-2) 0; }
+.evidence-card__raw { margin-block: var(--space-2); }
+.evidence-card__raw summary { color: var(--link); cursor: pointer; }
+.evidence-card__raw code { display: block; max-height: 12rem; overflow: auto; margin-top: var(--space-2); overflow-wrap: anywhere; white-space: pre-wrap; }
 .evidence-card a, .source-tip a { color: var(--link); text-decoration: underline; }
 .festival-card p { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
 .festival-card--compact { padding: var(--space-3); }

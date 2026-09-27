@@ -66,9 +66,10 @@ test("S3 예보서와 근거 서랍, 인쇄, 링크, docx", async ({ page, conte
   await page.screenshot({ path: resolve(screens, "T-406-report.png") });
 
   // 같은 근거 칩이 반복되어도 실제 눌렀던 칩에 Escape 포커스가 복귀한다.
-  const chip = page.locator('a[href="#evidence-ev-rule-legal-hazard"]').first();
+  const chip = page.locator('button[aria-controls="evidence-ev-rule-legal-hazard"]').first();
   await chip.focus();
   await chip.press("Enter");
+  await expect(chip).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator("#evidence-ev-rule-legal-hazard")).toHaveAttribute(
     "open",
     "",
@@ -79,6 +80,9 @@ test("S3 예보서와 근거 서랍, 인쇄, 링크, docx", async ({ page, conte
   await page.screenshot({ path: resolve(screens, "T-406-drawer.png") });
   await page.keyboard.press("Escape");
   await expect(chip).toBeFocused();
+  await expect(chip).toHaveAttribute("aria-expanded", "false");
+  await page.locator(".report-actions").scrollIntoViewIfNeeded();
+  await expect(page.getByRole("complementary", { name: "근거 서랍" })).toBeInViewport();
 
   // A4 미디어에서 판정·수치·체크리스트가 남는 인쇄 화면을 기록한다.
   await page.emulateMedia({ media: "print" });

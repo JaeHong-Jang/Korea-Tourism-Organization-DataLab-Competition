@@ -32,7 +32,8 @@
 .evidence-brief__column li > button, .evidence-brief__column li > div { display: grid; gap: var(--space-1); width: 100%; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font: inherit; text-align: left; }
 .evidence-brief__column li > button { cursor: pointer; }
 .evidence-brief__column li > button:hover { border-color: var(--select); }
-.evidence-brief__column li span:last-child { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--ink-2); font-size: var(--text-caption); overflow-wrap: anywhere; }
+.evidence-brief__column li span:not(.evidence-brief__kind, .evidence-brief__open) { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--ink-2); font-size: var(--text-caption); overflow-wrap: anywhere; }
+.evidence-brief__column li .evidence-brief__open { display: block; color: var(--link); font-weight: 700; }
 .evidence-brief, .evidence-brief * { min-width: 0; }
 .evidence-brief__sources li span, .evidence-brief__sources li strong { overflow-wrap: anywhere; }
 .evidence-brief__column--support h3 svg { color: var(--level-1); }
