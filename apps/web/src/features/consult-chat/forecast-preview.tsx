@@ -45,21 +45,28 @@ export function ForecastPreview({
         />
       )}
       {forecastId && (
-        <div className="consult-preview__actions">
-          <Button asChild variant="outline">
-            <Link to={`/f/${encodeURIComponent(forecastId)}`}>예보서 보기</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to={`/f/${encodeURIComponent(forecastId)}/plan`}>
-              계획 초안 받기
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to={`/my?forecastId=${encodeURIComponent(forecastId)}`}>
-              저장
-            </Link>
-          </Button>
-        </div>
+        <>
+          <p className="consult-muted">
+            예보를 발행해 내 행사에 자동 저장했어요.
+          </p>
+          <div className="consult-preview__actions">
+            <Button asChild variant="outline">
+              <Link to={`/f/${encodeURIComponent(forecastId)}`}>
+                예보서 보기
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={`/f/${encodeURIComponent(forecastId)}/plan`}>
+                계획 초안 받기
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={`/my?forecastId=${encodeURIComponent(forecastId)}`}>
+                내 행사에서 보기
+              </Link>
+            </Button>
+          </div>
+        </>
       )}
       {!forecastId && <p className="consult-muted">검증팀 발행 뒤에 열려요.</p>}
     </div>

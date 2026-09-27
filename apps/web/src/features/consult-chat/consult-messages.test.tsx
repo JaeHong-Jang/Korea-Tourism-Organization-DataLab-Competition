@@ -65,6 +65,9 @@ it("픽스처 예보를 한 카드와 답으로 보여 준다", () => {
   expect(markup).toContain("19:00~21:00");
   expect(markup).toContain("예보서를 살펴보세요.");
   expect(markup).toContain("예보팀이 확인했어요 · 게이트 통과");
+  expect(markup).toContain("내 행사에 자동 저장했어요");
+  expect(markup).toContain("내 행사에서 보기");
+  expect(markup).toContain(`/my?forecastId=`);
   expect(markup).not.toContain("근거 ·");
 });
 

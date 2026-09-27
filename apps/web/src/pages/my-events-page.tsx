@@ -1,5 +1,6 @@
 // 저장 행사 목록과 선택한 행사의 예보 이력·후속 행동을 연결한다.
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { EmptyState } from "../components/common/empty-state";
 import { ErrorState } from "../components/common/error-state";
 import { FeaturePanel } from "../components/common/feature-panel";
@@ -7,6 +8,8 @@ import { PageHeading } from "../components/common/page-heading";
 import { EventDetail } from "../features/my-events/event-detail";
 import {
   EventList,
+  eventIdForForecast,
+  firstEventIdByDate,
   orderedSnapshots,
   type SavedEvent,
 } from "../features/my-events/event-list";
@@ -15,6 +18,8 @@ import "../styles/my-events.css";
 
 // 목록과 각 행사 스냅샷을 함께 읽어 등급·발행 시각을 계약 값으로 채운다.
 export function MyEventsPage() {
+  const [searchParams] = useSearchParams();
+  const linkedForecastId = searchParams.get("forecastId");
   const [rows, setRows] = useState<SavedEvent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [savedActuals, setSavedActuals] = useState<Set<string>>(
@@ -38,7 +43,10 @@ export function MyEventsPage() {
         );
         if (!controller.signal.aborted) {
           setRows(loaded);
-          setSelectedId(loaded[0]?.event.id ?? null);
+          setSelectedId(
+            eventIdForForecast(loaded, linkedForecastId) ??
+              firstEventIdByDate(loaded),
+          );
           setState("ready");
         }
       })
@@ -49,7 +57,7 @@ export function MyEventsPage() {
         }
       });
     return () => controller.abort();
-  }, []);
+  }, [linkedForecastId]);
 
   // 재예보 발행 후에는 선택 행사의 이력을 다시 읽어 표와 타임라인을 맞춘다.
   const refreshSnapshots = async () => {

@@ -15,6 +15,28 @@ export function orderedSnapshots(snapshots: ForecastReport[]) {
   );
 }
 
+// 예보 결과에서 들어온 경우 그 예보가 속한 행사를 바로 선택한다.
+export function eventIdForForecast(
+  rows: SavedEvent[],
+  forecastId: string | null,
+) {
+  if (!forecastId) return null;
+  return (
+    rows.find(({ snapshots }) =>
+      snapshots.some((snapshot) => snapshot.forecastId === forecastId),
+    )?.event.id ?? null
+  );
+}
+
+// 기본 정렬과 같은 날짜 순서의 첫 행을 상세 패널에도 선택한다.
+export function firstEventIdByDate(rows: SavedEvent[]) {
+  return (
+    [...rows].sort((a, b) =>
+      a.event.startsAt.localeCompare(b.event.startsAt),
+    )[0]?.event.id ?? null
+  );
+}
+
 // 실측 완료는 현재 세션의 저장 성공에 한해 표시한다.
 export function eventStatus(
   event: Event,
