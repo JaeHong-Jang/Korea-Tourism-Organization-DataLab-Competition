@@ -5,8 +5,8 @@ import { useState } from "react";
 import type { ContractState } from "../../lib/validation/use-contract";
 import { ContractMessage } from "./contract-state";
 import { JudgmentQuadrants } from "./judgment-quadrants";
+import { PredictionTable } from "./prediction-table";
 
-const marks = { goldA: "◆", goldB: "■", silver: "●" };
 const labels = { goldA: "골드 A", goldB: "골드 B", silver: "실버" };
 const fmt = (value: number) => Math.round(value).toLocaleString("ko-KR");
 
@@ -253,41 +253,7 @@ export function PredictionScatter({
           </p>
         )
       ) : (
-        <section
-          className="validation-table-scroll"
-          tabIndex={0}
-          role="region"
-          aria-label="예측·실측 표, 좌우로 스크롤"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>행사</th>
-                <th>연도</th>
-                <th>등급</th>
-                <th>예측 p10~p90 (명/일)</th>
-                <th>p50 (명/일)</th>
-                <th>실측 (명/일)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {points.map((point) => (
-                <tr key={`${point.eventId}-${point.year}-${point.tier}`}>
-                  <th>{point.name}</th>
-                  <td>{point.year}</td>
-                  <td>
-                    {marks[point.tier]} {labels[point.tier]}
-                  </td>
-                  <td>
-                    {fmt(point.p10)}~{fmt(point.p90)}
-                  </td>
-                  <td>{fmt(point.p50)}</td>
-                  <td>{fmt(point.actual)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+        <PredictionTable points={points} />
       )}
       {pinnedPoint && grouped.get(pinnedPoint) && (
         <p className="validation-point-detail">

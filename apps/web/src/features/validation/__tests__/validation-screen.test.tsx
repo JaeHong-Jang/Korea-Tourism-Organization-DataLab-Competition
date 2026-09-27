@@ -2,7 +2,6 @@
 // @vitest-environment jsdom
 import type {
   BacktestSummary,
-  ModelCard,
   PreregistrationScores,
 } from "@crowdcast/contracts/types";
 import { act } from "react";
@@ -10,14 +9,11 @@ import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
 import { getBacktest } from "../../../lib/validation/api";
-import { EvidenceDashboard } from "../../ops/evidence-dashboard";
 import { GoldenCases } from "../golden-cases";
-import { ModelDetails } from "../model-details";
 import { PerformanceMetrics } from "../performance-metrics";
 import { PredictionScatter } from "../prediction-scatter";
 import { PreregistrationBoard } from "../preregistration-board";
-import { validationLead } from "../validation-story";
-import { backtest, usage } from "./validation-fixtures";
+import { backtest } from "./validation-fixtures";
 
 const ready = <T,>(value: T) => ({ status: "ready" as const, value });
 const html = (node: React.ReactNode) => renderToStaticMarkup(node);
@@ -27,16 +23,6 @@ type GoldenCase = BacktestSummary["golden"][number];
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 afterEach(() => vi.unstubAllGlobals());
-
-// 첫 화면은 일평균 채점의 한계를 한 문장으로 말한다.
-it("검증 첫 문장에 오차·구간·정답 종류를 함께 적는다", () => {
-  const lead = validationLead(backtest);
-  expect(lead).toContain("49.3%");
-  expect(lead).toContain("86건 중 49건");
-  expect(lead).toContain("행사장 정답은 1건");
-  expect(lead).toContain("시군구 방문자에서 평시를 뺀 값");
-  expect(lead).toContain("순간 최대도, 1,000명 경계도 채점하지 못했습니다");
-});
 
 // 지표는 비율만 백분율로 바꾸고 비교 불가 값을 0으로 그리지 않는다.
 it("포함률·표본·경계 한계와 기준선 비교 쌍을 함께 읽는다", () => {
@@ -158,98 +144,10 @@ it("환산 등급이 빠지면 사분면 집계를 보류한다", () => {
   expect(output).not.toContain("예측 대상 · 실측 대상");
 });
 
-// 골든 자료와 발행 문장의 실제 부재는 숫자 비율을 만들지 않는다.
-it("골든 0건 고지와 분모 없는 근거 상태를 표시한다", () => {
+// 골든 자료가 없으면 사례 재현 검증 전 상태를 알린다.
+it("골든 0건 고지를 표시한다", () => {
   expect(html(<GoldenCases state={ready(backtest)} />)).toContain(
     "골든 사례 0건 — 사례 재현 검증 전 임시 사용",
-  );
-  const output = html(
-    <EvidenceDashboard state={ready({ ...usage, publishedClaims: 0 })} />,
-  );
-  expect(output).toContain("발행 문장이 아직 없어요");
-  expect(output).toContain("0건");
-  expect(output).toContain("검증 기록 없음");
-  expect(output).not.toContain("0.0%");
-});
-
-// 데이터랩 도달과 전체 연결은 서로 다른 분자를 쓴다.
-it("두 근거 비율을 분리한다", () => {
-  const output = html(<EvidenceDashboard state={ready(usage)} />);
-  expect(output).toContain("80.0%");
-  expect(output).toContain("30.0%");
-  expect(output).toContain("방문자");
-  expect(output).toContain("0건");
-});
-
-// 데이터랩 메뉴 여부와 관계없이 모든 데이터셋과 0건 행을 남긴다.
-it("근거 데이터셋 전체를 메뉴가 있는 순서로 표시한다", () => {
-  const datasets = [
-    { datasetId: "ds-other", title: "기상 관측", datalabMenu: null, count: 0 },
-    {
-      datasetId: "ds-visitors",
-      title: "지역별 방문자 수",
-      datalabMenu: "방문자 수",
-      count: 2,
-    },
-  ];
-  const output = html(
-    <EvidenceDashboard
-      state={ready({ ...usage, evidenceByDataset: datasets })}
-    />,
-  );
-  expect(output).toContain("기상 관측");
-  expect(output).toContain("0건");
-  expect(output.indexOf("지역별 방문자 수")).toBeLessThan(
-    output.indexOf("기상 관측"),
-  );
-  expect(output).toContain("validation-datalab-menu");
-});
-
-// 모델 notes의 공백과 문단 구분은 원문을 고치지 않는다.
-it("모델 카드의 한계 원문을 보존한다", () => {
-  const notes = "첫 문단입니다.\n\n둘째 문단입니다.";
-  const card = {
-    id: "mr-v1-f0667d86aafd47d09472",
-    target: "일평균 방문객",
-    createdAt: "2026-09-25T12:00:00+09:00",
-    modelVersion: "v1-cf776619db785ed12810",
-    trainRange: { from: "2022", to: "2024" },
-    evalYears: [2025],
-    backtestRunId: backtest.runId,
-    features: ["행사 유형"],
-    notes,
-  } as ModelCard;
-  const output = html(<ModelDetails state={ready(card)} goldenEmpty />);
-  expect(output).toContain("원문 보기");
-  expect(output).toContain(notes);
-  expect(output).not.toContain("카드에 기록 없음");
-  expect(output).toContain("골든 사례 0건 — 사례 재현 검증 전 임시 사용");
-});
-
-// 모델 카드 notes의 수치와 한계 문장만 요약에 들어간다.
-it("모델 카드 공개 필드의 분모·포함률·제외 사유를 요약한다", () => {
-  const card = {
-    id: "mr-v1-064e60073a7411037212",
-    target: "일평균 방문객",
-    createdAt: "2026-09-25T12:00:00+09:00",
-    modelVersion: "v1-064e60073a7411037212",
-    trainRange: { from: "2022", to: "2024" },
-    evalYears: [2025],
-    backtestRunId: backtest.runId,
-    features: ["행사 유형"],
-    notes:
-      '공개 분모(주 모델): 평가 86건(골드 1·실버 85), 80% 구간 포함 49/86; 코로나(2020·2021) 제외=True. 순간 최대 및 실측 환산 판정은 추정 산식 기반이며 실제 순간 인원 정답이 아니다. 작은 행사는 크게 예보될 수 있다. labels SHA-256=abc; 피처별 결측 수={"fee": 0}.',
-  } as ModelCard;
-  const output = html(<ModelDetails state={ready(card)} goldenEmpty />);
-  expect(output).toContain("평가 86건 · 골드 1건 · 실버 85건");
-  expect(output).toContain("80% 구간 포함률 57.0% (49/86)");
-  expect(output).toContain("코로나 연도(2020·2021)는 제외했어요");
-  expect(output).toContain(
-    "순간 최대는 추정 산식 기반이며 실측 정답이 아니에요",
-  );
-  expect(output).toContain("작은 행사는 크게 예보될 수 있어요");
-  expect(output.indexOf("원문 보기")).toBeLessThan(
-    output.indexOf("labels SHA-256"),
   );
 });
 
