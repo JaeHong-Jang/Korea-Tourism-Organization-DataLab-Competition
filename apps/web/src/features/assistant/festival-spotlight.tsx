@@ -40,7 +40,7 @@ export function FestivalSpotlight({
       ? spotlightPlacement(whale.point, whale.size, cardSize)
       : null;
   return (
-    // 요약의 "이 행사 예보 받기"는 화면을 옮기지 않고 고래 봇 대화에서 이 행사로 예보를 요청한다(T-442와 같은 동작).
+    // 요약의 예보 받기는 공용 요청을 통해 상담 페이지로 이동하고 해당 행사 예보를 시작한다.
     <div
       ref={card}
       className={`assistant-invitation assistant-spotlight${place ? ` assistant-spotlight--anchored assistant-spotlight--${place.side}` : ""}`}

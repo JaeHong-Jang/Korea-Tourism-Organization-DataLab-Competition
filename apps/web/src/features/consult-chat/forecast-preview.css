@@ -1,0 +1,15 @@
+/* 예보 요약을 판정·동시 인원·하루 방문객·상세 근거 순서로 구분한다. */
+.forecast-overview__judgment { display: grid; justify-items: start; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.forecast-overview__eyebrow { font-size: var(--text-sm); font-weight: 700; color: var(--ink); }
+.forecast-overview__judgment p { margin: 0; color: var(--ink-2); font-size: var(--text-caption); }
+.forecast-overview__numbers { gap: var(--space-3); }
+.forecast-overview__metric { min-width: 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.forecast-overview__metric h3 { margin: 0 0 var(--space-4); font-size: var(--text-sm); line-height: 1.5; color: var(--ink); }
+.forecast-overview__metric .key-number { gap: var(--space-3); }
+.forecast-overview__metric .key-number strong { font-size: clamp(1.75rem, 3vw, 2.75rem); overflow-wrap: anywhere; }
+.forecast-overview__metric .key-number small { line-height: 1.7; word-break: keep-all; overflow-wrap: anywhere; }
+.forecast-overview__notice { margin: 0; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.7; }
+.forecast-overview__details { min-width: 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-input); }
+.forecast-overview__details > summary { color: var(--link); cursor: pointer; font-size: var(--text-sm); font-weight: 600; }
+.forecast-overview__details[open] > summary { margin-bottom: var(--space-4); }
+.forecast-overview__details .consult-muted { overflow-wrap: anywhere; }

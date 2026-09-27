@@ -209,6 +209,7 @@ export function useConsultSession() {
     if (message.eventId) {
       draftRef.current = null;
       setDraft(null);
+      setSuggestions([]);
     }
     const messageId = crypto.randomUUID();
     requestId.current = messageId;

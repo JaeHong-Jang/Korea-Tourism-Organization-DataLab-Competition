@@ -1,5 +1,6 @@
 // 전역 상담 세션의 대화·되묻기·후속 질문을 오른쪽 서랍에 모은다.
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ErrorState } from "../../components/common/error-state";
 import { PetAvatar } from "../../components/pets";
 import { Button } from "../../components/ui/button";
@@ -11,7 +12,7 @@ import { AskReply } from "../consult-chat/ask-reply";
 import { ConsultInput } from "../consult-chat/consult-input";
 import { ConsultMessages } from "../consult-chat/consult-messages";
 import { consultErrorMessage } from "../consult-chat/error-message";
-import { whatIfChips } from "../consult-chat/followup-chips";
+import { AssistantNextActions } from "./assistant-next-actions";
 import { FestivalPicker } from "./festival-picker";
 import { RecommendationCards } from "./recommendation-cards";
 import { useConversationScroll } from "./use-conversation-scroll";
@@ -20,6 +21,7 @@ const examples = ["불꽃놀이 행사에 가고 싶어", "행사를 직접 설�
 
 // 화면 밖에서 고른 행사는 입력을 채우지 않고 eventId를 넣어 바로 전송한다.
 export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
+  const navigate = useNavigate();
   const session = useSharedConsultSession();
   const {
     text,
@@ -52,11 +54,14 @@ export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
   const panelRef = useRef<HTMLElement>(null);
   const { viewportRef, contentRef } = useConversationScroll(sent.at(-1)?.id);
   const [nearError, setNearError] = useState("");
-  const pick = (festival: { name: string; eventId: string }) =>
+  // 대화창에서 선택한 행사도 상담 페이지에서 진행 상황을 바로 보여 준다.
+  const pick = (festival: { name: string; eventId: string }) => {
+    navigate("/consult");
     void send({
       text: `${festival.name} 예보해 줘`,
       eventId: festival.eventId,
     });
+  };
 
   // 위치는 허락받은 한 번의 메시지에만 넣고 저장하지 않는다.
   const findNear = () => {
@@ -94,11 +99,12 @@ export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
     if (!requestedFestival || busy) return;
     const festival = takeRequest();
     if (!festival) return;
+    navigate("/consult");
     void send({
       text: `${festival.name} 예보해 줘`,
       eventId: festival.eventId,
     });
-  }, [requestedFestival, busy, takeRequest, send]);
+  }, [requestedFestival, busy, takeRequest, send, navigate]);
 
   return (
     <aside
@@ -165,36 +171,13 @@ export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
               }}
             />
           )}
-          {forecastId && !asks.length && (
-            <fieldset className="consult-choices" aria-label="다음 할 일">
-              <legend className="sr-only">후속 질문과 다음 할 일</legend>
-              {["왜 이렇게 많아?", ...whatIfChips(draft)].map((question) => (
-                <button
-                  type="button"
-                  disabled={busy}
-                  key={question}
-                  onClick={() => void send({ text: question })}
-                >
-                  {question}
-                </button>
-              ))}
-              {suggestions.map((suggestion) =>
-                suggestion.href ? (
-                  <a key={suggestion.id} href={suggestion.href}>
-                    {suggestion.label}
-                  </a>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    key={suggestion.id}
-                    onClick={() => void send({ text: suggestion.label })}
-                  >
-                    {suggestion.label}
-                  </button>
-                ),
-              )}
-            </fieldset>
+          {forecastId && !busy && !error && !asks.length && (
+            <AssistantNextActions
+              forecastId={forecastId}
+              draft={draft}
+              suggestions={suggestions}
+              onAsk={(text) => void send({ text })}
+            />
           )}
           {error && (
             <ErrorState
@@ -231,6 +214,17 @@ export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
         />
       ) : (
         <ConsultInput
+          context={
+            error
+              ? "error"
+              : recommendation
+                ? "recommendation"
+                : forecastId
+                  ? "forecast"
+                  : sent.length
+                    ? "continuing"
+                    : "initial"
+          }
           text={text}
           onText={setText}
           busy={busy}

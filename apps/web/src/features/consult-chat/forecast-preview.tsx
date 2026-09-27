@@ -6,6 +6,7 @@ import { EmptyState } from "../../components/common/empty-state";
 import { KeyNumber } from "../../components/common/key-number";
 import { LevelBadge } from "../../components/common/level-badge";
 import { Button } from "../../components/ui/button";
+import "./forecast-preview.css";
 
 // 발행 id가 없으면 세 행동의 이유를 함께 알려 준다.
 export function ForecastPreview({
@@ -19,17 +20,48 @@ export function ForecastPreview({
     <div className="consult-preview">
       {card ? (
         <>
-          <div className="consult-preview__numbers">
-            <KeyNumber quantity={card.peakConcurrent} />
-            <KeyNumber quantity={card.dailyMean} />
+          <section
+            className="forecast-overview__judgment"
+            aria-label="안전관리 검토 결과"
+          >
+            <span className="forecast-overview__eyebrow">
+              안전관리 검토 결과
+            </span>
+            <LevelBadge judgment={card.judgment} provisional={!forecastId} />
+            <p>참고용 — 담당자 검토 필수</p>
+          </section>
+          <div className="consult-preview__numbers forecast-overview__numbers">
+            <section
+              className="forecast-overview__metric"
+              aria-label="동시 인원 예측"
+            >
+              <h3>가장 붐빌 때, 동시에 몇 명?</h3>
+              <KeyNumber quantity={card.peakConcurrent} />
+            </section>
+            <section
+              className="forecast-overview__metric"
+              aria-label="하루 방문객 예측"
+            >
+              <h3>하루 평균, 몇 명이 방문할까?</h3>
+              <KeyNumber quantity={card.dailyMean} />
+            </section>
           </div>
-          <LevelBadge judgment={card.judgment} provisional={!forecastId} />
-          <RangeBar range={card.peakConcurrent} />
-          <p className="consult-muted">
-            숫자 출처: 예보 모델 {card.modelVersion} · 기준일 {card.asOf}
-            <br />
-            참고용 — 담당자 검토 필수 · 추정 산식 기반
+          <p className="forecast-overview__notice">
+            큰 숫자는 예측 중앙값이에요. 예상 범위를 함께 확인하세요. 순간 최대
+            인원은 추정 산식 기반입니다.
           </p>
+          <details className="forecast-overview__details">
+            <summary>예상 범위와 기준 자세히 보기</summary>
+            <RangeBar range={card.peakConcurrent} />
+          </details>
+          <details className="forecast-overview__details">
+            <summary>예보 기준일·모델 출처</summary>
+            <p className="consult-muted">
+              기준일 {card.asOf}
+              <br />
+              예보 모델 {card.modelVersion}
+            </p>
+          </details>
         </>
       ) : (
         <EmptyState
@@ -46,7 +78,7 @@ export function ForecastPreview({
       )}
       {forecastId && (
         <div className="consult-preview__actions">
-          <Button asChild variant="outline">
+          <Button asChild>
             <Link to={`/f/${encodeURIComponent(forecastId)}`}>예보서 보기</Link>
           </Button>
           <Button asChild variant="outline">

@@ -1,9 +1,9 @@
-/* 현재 행사 이름을 강조하고 작은 화면에서는 상태와 일정이 자연스럽게 줄바꿈되게 한다. */
-.consult-festival-heading { margin-block: var(--space-4) var(--space-6); padding: var(--space-5); border: 1px solid var(--line); border-left: 4px solid var(--brand); border-radius: var(--radius-card); background: var(--surface); }
-.consult-festival-heading__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); color: var(--ink-2); font-size: var(--text-sm); }
-.consult-festival-heading__status { padding: var(--space-1) var(--space-2); border-radius: var(--radius-button); background: var(--surface-sunken); color: var(--link); }
-.consult-festival-heading h2 { margin: var(--space-3) 0; font-size: var(--text-section); color: var(--ink); overflow-wrap: anywhere; }
-.consult-festival-heading dl { display: grid; gap: var(--space-2); margin: 0; font-size: var(--text-sm); }
+/* 현재 상담 행사는 장식 박스 없이 글자 크기와 여백으로 구분한다. */
+.consult-festival-heading { margin-block: var(--space-6) var(--space-8); }
+.consult-festival-heading__top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); color: var(--ink-2); font-size: var(--text-body); }
+.consult-festival-heading__status { color: var(--ink-2); }
+.consult-festival-heading h2 { margin: var(--space-3) 0 var(--space-5); font-size: clamp(var(--text-title), 4vw, calc(var(--text-title) * 1.5)); font-weight: 800; line-height: 1.25; letter-spacing: -0.03em; color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
+.consult-festival-heading dl { display: grid; gap: var(--space-3); margin: 0; font-size: var(--text-body); line-height: 1.6; }
 .consult-festival-heading dl > div { display: flex; gap: var(--space-3); }
 .consult-festival-heading dt { flex-shrink: 0; color: var(--ink-2); }
 .consult-festival-heading dd { margin: 0; overflow-wrap: anywhere; }

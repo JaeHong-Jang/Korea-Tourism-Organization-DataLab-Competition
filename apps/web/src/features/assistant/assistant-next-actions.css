@@ -1,0 +1,17 @@
+/* 질문·담당자 확인·문서 이동은 제목과 여백으로 구분하고 장식 강조선은 쓰지 않는다. */
+.assistant-next { display: grid; gap: var(--space-6); padding-block: var(--space-4); }
+.assistant-next__section { min-width: 0; }
+.assistant-next__section h3 { margin: 0 0 var(--space-3); font-size: var(--text-body); }
+.assistant-next__section > p { margin: 0 0 var(--space-3); color: var(--ink-2); font-size: var(--text-caption); line-height: 1.6; }
+.assistant-next__section .consult-choices { margin: 0; }
+.assistant-next__section .consult-choices a { padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); color: var(--link); }
+.assistant-next__conditions { margin-top: var(--space-3); }
+.assistant-next summary { cursor: pointer; line-height: 1.6; }
+.assistant-next__conditions > summary { color: var(--link); font-size: var(--text-sm); }
+.assistant-next__conditions[open] > summary { margin-bottom: var(--space-3); }
+.assistant-next__checklist { display: grid; gap: var(--space-5); }
+.assistant-next__check { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: var(--space-2); }
+.assistant-next__check input { margin-top: var(--space-1); accent-color: var(--brand); width: 18px; height: 18px; }
+.assistant-next__check summary { font-weight: 600; font-size: var(--text-sm); }
+.assistant-next__check ul { display: grid; gap: var(--space-3); padding-left: var(--space-4); margin-block: var(--space-3) 0; color: var(--ink); font-size: var(--text-body); font-weight: 400; line-height: 1.8; word-break: keep-all; overflow-wrap: anywhere; }
+.assistant-next__section > .assistant-next__weather-note { margin-top: var(--space-3); font-size: var(--text-sm); line-height: 1.7; }
