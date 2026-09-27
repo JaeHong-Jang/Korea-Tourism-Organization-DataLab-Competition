@@ -33,6 +33,7 @@ import { weatherEffects } from "./weather/state";
 import { useSceneWeather } from "./weather/use-scene-weather";
 import { WeatherScene } from "./weather/weather-scene";
 import { WetHighlights } from "./weather/wet-highlights";
+import "./scene-theme.css";
 
 const EMPTY_TOTALS = new Map<string, number>();
 
@@ -217,6 +218,7 @@ export function MiniKoreaCanvas({
                 center={center}
                 quality={activeQuality}
                 reducedMotion={reducedMotion}
+                sunStrength={0.025}
               />
             )}
             <Board center={center} width={width} depth={depth} />
@@ -296,21 +298,6 @@ export function MiniKoreaCanvas({
               width={width}
               depth={depth}
               overviewRevision={overviewRevision}
-              onDeepZoom={
-                diagnostics.city
-                  ? ([x, z]) => {
-                      // 화면 중심에서 30km 안의 가장 가까운 행사 동네로 들어간다.
-                      const nearest = scene.placed
-                        .map((item) => ({
-                          item,
-                          distance: Math.hypot(item.x - x, item.z - z),
-                        }))
-                        .sort((a, b) => a.distance - b.distance)[0];
-                      if (nearest && nearest.distance < 30)
-                        selectFestival(nearest.item.festival.eventId);
-                    }
-                  : undefined
-              }
             />
           </>
         )}

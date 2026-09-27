@@ -246,8 +246,11 @@ export function LandTiles({
       rotation={[-Math.PI / 2, 0, 0]}
       position={[0, 7, 0]}
       castShadow
+      receiveShadow
       onClick={(event) => {
         event.stopPropagation();
+        // 지도를 끈 뒤 놓은 포인터는 지역 선택으로 처리하지 않는다.
+        if (event.delta > 2) return;
         const code = codeForFace(faces, event.faceIndex ?? -1);
         if (code) onPick(code);
       }}

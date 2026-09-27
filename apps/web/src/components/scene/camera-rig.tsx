@@ -15,8 +15,6 @@ type CameraRigProps = {
   width: number;
   depth: number;
   overviewRevision: number;
-  // 끝까지 확대하면 화면 중심 좌표로 동네 3D에 들어갈지 묻는다.
-  onDeepZoom?: (point: [number, number]) => void;
 };
 
 // 고른 곳을 가까이 볼 때의 카메라 위치(표적 기준, 장면 단위 km).
@@ -45,7 +43,6 @@ export function CameraRig({
   width,
   depth,
   overviewRevision,
-  onDeepZoom,
 }: CameraRigProps) {
   const controls = useRef<OrbitControlsImpl>(null);
   const desired = useRef(new Vector3(center[0], 0, center[1] + 90));
@@ -193,18 +190,6 @@ export function CameraRig({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [camera]);
-
-  // 자동 이동이 아닐 때 최소 거리 가까이 확대하면 한 번만 알린다(다시 멀어지면 재무장).
-  const deepZoomed = useRef(false);
-  useFrame(() => {
-    const orbit = controls.current;
-    if (!orbit || !onDeepZoom || moving.current) return;
-    const close = camera.position.distanceTo(orbit.target) < 58;
-    if (close && !deepZoomed.current) {
-      deepZoomed.current = true;
-      onDeepZoom([orbit.target.x, orbit.target.z]);
-    } else if (!close) deepZoomed.current = false;
-  });
 
   // 자동 이동은 매 프레임 기존 벡터를 재사용해 부드럽게 끝낸다.
   useFrame((_, delta) => {

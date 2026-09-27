@@ -30,6 +30,8 @@ final class Controller
     {
         $path = dirname(__DIR__, 4) . '/packages/contracts/openapi/records.yaml';
         $yaml = file_get_contents($path);
+        // Windows 체크아웃의 줄바꿈도 같은 계약으로 읽는다.
+        $yaml = is_string($yaml) ? str_replace("\r\n", "\n", $yaml) : $yaml;
         if ($yaml === false || preg_match('/(?ms)^  \/health:\n(.*?)(?=^  \/|\z)/', $yaml, $block) !== 1) {
             throw new RuntimeException('health OpenAPI 계약을 읽을 수 없습니다');
         }
