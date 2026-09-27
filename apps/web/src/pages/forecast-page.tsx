@@ -1,6 +1,6 @@
 // 발행된 예보서 스냅샷 한 건으로 문서·근거 정리·행사장 3D·근거 서랍을 그린다.
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { ErrorState } from "../components/common/error-state";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { LoadingState } from "../components/common/loading-state";
@@ -84,9 +84,17 @@ export function ForecastPage() {
   };
   return (
     <div className="forecast-page page-wrap">
+      {forecastId && (
+        <Link
+          className="forecast-back-to-events"
+          to={`/my?forecastId=${encodeURIComponent(forecastId)}`}
+        >
+          ← 내 행사로 돌아가기
+        </Link>
+      )}
       <div className="page-title-row">
         <PageHeading
-          eyebrow={`S3 · ${forecastId ?? "예보"}`}
+          eyebrow="내 행사 · 발행 예보"
           title="예보서"
           description="판정과 수치, 그 판단을 뒷받침하는 근거를 함께 확인해요."
         />

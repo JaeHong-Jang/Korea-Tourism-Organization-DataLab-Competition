@@ -1,5 +1,8 @@
 /* 발행 예보서를 문서 폭으로 두고 근거 카드는 읽는 자리 옆에 둔다. */
 .forecast-page { padding-block: var(--space-8) var(--space-14); }
+/* 예보서를 본 뒤 해당 발행 이력이 선택된 내 행사로 돌아간다. */
+.forecast-back-to-events { display: inline-flex; align-items: center; min-height: 36px; margin-bottom: var(--space-4); color: var(--link); font-weight: 600; }
+.forecast-back-to-events:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .document-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: var(--space-10); align-items: start; }
 .document-main { min-width: 0; }
 .document-sheet { padding: var(--space-8); border-radius: var(--radius-input); }
@@ -61,7 +64,7 @@
 @page { size: A4 portrait; margin: 12mm; }
 @media print {
   body { background: var(--surface); }
-  .site-header, .site-footer, .page-title-row, .evidence-drawer, .report-context, .report-explanations, .report-next { display: none; }
+  .site-header, .site-footer, .forecast-back-to-events, .page-title-row, .evidence-drawer, .report-context, .report-explanations, .report-next { display: none; }
   .forecast-page { width: 100%; padding: 0; }
   .document-layout { display: block; }
   .document-sheet { border: 0; box-shadow: none; padding: 0; }
