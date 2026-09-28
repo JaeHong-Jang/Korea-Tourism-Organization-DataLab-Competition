@@ -95,11 +95,7 @@ export function ForecastPage() {
         </Link>
       )}
       <div className="page-title-row">
-        <PageHeading
-          eyebrow="내 행사 · 발행 예보"
-          title="예보서"
-          description="판정과 수치, 그 판단을 뒷받침하는 근거를 함께 확인해요."
-        />
+        <PageHeading eyebrow="내 행사 · 발행 예보" title="예보서" />
         {state.status === "ready" && <ReportToolbar report={state.report} />}
       </div>
       {state.status === "loading" && (
@@ -166,7 +162,6 @@ export function ForecastPage() {
                   <FeaturePanel
                     id="M3-F1"
                     title="발행 예보서"
-                    description="참고용 — 담당자 검토 필수"
                     className="document-sheet"
                   >
                     <ReportJudgment

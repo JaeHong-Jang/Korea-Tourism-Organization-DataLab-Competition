@@ -1,7 +1,7 @@
 // 발행 문장을 원래 레이아웃 순서와 근거 칩으로 표시한다.
 import type { Claim, ForecastReport } from "@crowdcast/contracts/types";
 import { EvidenceChip } from "../../components/common/evidence-chip";
-import { claimText, orderedClaims } from "./report-content";
+import { claimText, orderedClaims, SAMPLE_LIMIT_TEXT } from "./report-content";
 
 export type OpenEvidence = (id: string, origin: HTMLElement) => void;
 
@@ -16,9 +16,11 @@ export function ClaimLine({
   onOpen: OpenEvidence;
 }) {
   const evidence = new Map(report.evidence.map((item) => [item.id, item]));
+  const text = claimText(claim, report);
+  if (text === SAMPLE_LIMIT_TEXT) return null;
   return (
     <p className="report-claim">
-      {claimText(claim, report)}{" "}
+      {text}{" "}
       {claim.evidenceIds.map((id) => {
         const item = evidence.get(id);
         return item ? (

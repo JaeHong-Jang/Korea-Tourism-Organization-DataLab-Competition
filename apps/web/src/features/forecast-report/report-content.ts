@@ -2,6 +2,7 @@
 import type { Claim, ForecastReport } from "@crowdcast/contracts/types";
 import { formatSnapshotNumber } from "../../lib/format";
 import { renderClaim } from "../../lib/render-claim";
+import { stripReviewNotice } from "../../lib/review-notice";
 
 // 수치 필드의 원래 값을 천 단위 쉼표만 더해 표시한다.
 export function reportNumber(value: number | null): string {
@@ -28,6 +29,12 @@ export function orderedClaims(report: ForecastReport): Claim[] {
   ];
 }
 
+// 구간 판정에서 확률 문장을 대신하는 문장(예보서에서는 줄을 그리지 않는다).
+export const SAMPLE_LIMIT_TEXT = "표본 한계로 확률 수치를 표시하지 않아요.";
+
+// 발행 문장 끝의 검토 안내는 공용 함수로 화면에서만 뗀다.
+export { stripReviewNotice };
+
 // 자리표시자의 숫자는 결정적 예보 수치에서만 찾고 문장에 삽입한다.
 export function claimText(claim: Claim, report: ForecastReport): string {
   const quantities = [
@@ -36,8 +43,8 @@ export function claimText(claim: Claim, report: ForecastReport): string {
     report.event.expectedByHost,
     ...report.similar.flatMap((item) => [item.measured, item.announced]),
   ].filter((item) => item != null);
-  const text = renderClaim(claim, quantities);
+  const text = stripReviewNotice(renderClaim(claim, quantities));
   return report.forecast.judgment.basis === "구간" && text.includes("%")
-    ? "표본 한계로 확률 수치를 표시하지 않아요."
+    ? SAMPLE_LIMIT_TEXT
     : text;
 }

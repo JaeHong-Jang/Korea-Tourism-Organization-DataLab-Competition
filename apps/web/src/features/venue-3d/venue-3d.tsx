@@ -231,8 +231,7 @@ export function Venue3D({
         </p>
       )}
       <p className="venue-3d__note">
-        참고용 — 담당자 검토 필수. 차량·지하철 위치와 흐름은 실제 교통량이
-        아니에요.
+        차량·지하철 위치와 흐름은 실제 교통량이 아니에요.
       </p>
     </section>
   );

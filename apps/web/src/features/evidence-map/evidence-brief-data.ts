@@ -2,10 +2,7 @@
 import type { Evidence, ForecastReport } from "@crowdcast/contracts/types";
 import { evidenceKinds } from "../../components/common/evidence-chip";
 import { evidenceNumber } from "../../components/common/evidence-number";
-import {
-  SIZE_BIAS_NOTICE,
-  UNVERIFIED_NOTICE,
-} from "../forecast-report/report-judgment";
+import { stripReviewNotice } from "../../lib/review-notice";
 import { buildEvidenceMap } from "./graph-data";
 
 export type Caution = {
@@ -18,7 +15,15 @@ export type Caution = {
 // 기계용 JSON 요약은 출처·기간·모델만 짧게 쓰고, 일반 문장은 그대로 쓴다.
 export function readableSummary(evidence: Evidence): string {
   const text = evidence.summary.trim();
-  if (!text.startsWith("{") && !text.startsWith("[")) return text;
+  if (!text.startsWith("{") && !text.startsWith("[")) {
+    // 문장 중간에 붙은 원본 JSON과 "입력:" 머리, 검토 안내 꼬리말은 화면에서 뗀다.
+    const rawStart = text.search(/\{\s*"|\[\s*[{"]/);
+    const readable =
+      rawStart < 0
+        ? text
+        : text.slice(0, rawStart).replace(/\s*입력\s*:?\s*$/, "");
+    return stripReviewNotice(readable);
+  }
   const period = evidence.period
     ? `관측 ${evidence.period.from.slice(0, 10)}~${evidence.period.to.slice(0, 10)}`
     : null;
@@ -48,26 +53,12 @@ export function cautions(report: ForecastReport): Caution[] {
       text: readableSummary(item),
       evidence: item,
     }));
-  if (report.forecast.judgment.basis === "구간")
-    items.push({
-      id: "basis",
-      title: "구간 기준 판정",
-      text: "표본이 적어 확률 대신 예측 구간으로 판정했어요.",
-    });
   if (report.forecast.ood)
     items.push({
       id: "ood",
       title: "학습 범위 밖 입력",
       text: "과거 자료에 비슷한 행사가 적어 오차가 클 수 있어요.",
     });
-  if (report.forecast.predictionRun.modelVerdict === "미검증") {
-    items.push({
-      id: "unverified",
-      title: "검증 전 모델",
-      text: UNVERIFIED_NOTICE,
-    });
-    items.push({ id: "size-bias", title: "규모 쏠림", text: SIZE_BIAS_NOTICE });
-  }
   return items;
 }
 

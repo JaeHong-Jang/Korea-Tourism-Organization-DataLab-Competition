@@ -10,7 +10,7 @@ import {
 } from "./forecast-evidence-data";
 import { sourceUrl } from "./graph-data";
 
-// 해석할 수 없는 원문은 접어서 보존하고 출처 없는 근거에는 링크를 만들지 않는다.
+// 기록된 값만 보여 주고 출처 없는 근거에는 링크를 만들지 않는다.
 export function SnapshotEvidenceDetail({
   report,
   evidence,
@@ -25,6 +25,7 @@ export function SnapshotEvidenceDetail({
   const role = evidenceRole(report, evidence);
   const payload = evidencePayload(evidence);
   const url = sourceUrl(evidence.source?.accessUrl ?? undefined);
+  const available = observation?.availableAt ?? evidence.availableAt;
   const reasons = report.forecast.judgment.reasons.flatMap((item) =>
     (item.evidenceId === evidence.id ||
       (evidence.ruleId && item.ruleId === evidence.ruleId)) &&
@@ -49,16 +50,7 @@ export function SnapshotEvidenceDetail({
       <span className="snapshot-evidence__role">{roleLabels[role]}</span>
       <h3>{evidenceTitle(evidence)}</h3>
       {role === "unconfirmed" && (
-        <p>
-          발행 예보에 첨부된 자료예요. 계산에 직접 사용했는지는 이 기록만으로
-          확인할 수 없어요.
-        </p>
-      )}
-      {role === "factor" && (
-        <p>
-          모델이 남긴 요인 설명에 연결되어 있어요. 영향의 크기는 이 연결만으로
-          판단하지 않아요.
-        </p>
+        <p className="snapshot-evidence__hint">계산에 쓰였는지 기록 없음</p>
       )}
       {reasons.map((reason) => (
         <p key={reason.ruleId}>
@@ -108,36 +100,34 @@ export function SnapshotEvidenceDetail({
             </dd>
           </>
         )}
-        <dt>자료 기간</dt>
-        <dd>
-          {evidence.period
-            ? `${evidence.period.from}–${evidence.period.to}`
-            : "기간 기록 없음"}
-        </dd>
-        <dt>이용 가능일</dt>
-        <dd>
-          {observation?.availableAt ?? evidence.availableAt ?? "시점 기록 없음"}
-        </dd>
-        <dt>예측 기준일</dt>
-        <dd>{report.forecast.asOf}</dd>
-        <dt>출처</dt>
-        <dd>
-          {evidence.source
-            ? `${evidence.source.title} · ${evidence.source.publisher}`
-            : "외부 출처 기록 없음"}
-        </dd>
+        {evidence.period && (
+          <>
+            <dt>자료 기간</dt>
+            <dd>
+              {evidence.period.from}–{evidence.period.to}
+            </dd>
+          </>
+        )}
+        {available && (
+          <>
+            <dt>이용 가능일</dt>
+            <dd>{available}</dd>
+          </>
+        )}
+        {evidence.source && (
+          <>
+            <dt>출처</dt>
+            <dd>
+              {evidence.source.title} · {evidence.source.publisher}
+            </dd>
+          </>
+        )}
       </dl>
       {url && (
         <a href={url} target="_blank" rel="noreferrer">
           출처 원문 열기 ↗
         </a>
       )}
-      <details>
-        <summary>발행 당시 근거 원문</summary>
-        <pre>
-          {payload ? JSON.stringify(payload, null, 2) : evidence.summary}
-        </pre>
-      </details>
     </aside>
   );
 }

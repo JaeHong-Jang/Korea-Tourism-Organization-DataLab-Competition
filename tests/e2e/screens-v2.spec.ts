@@ -179,9 +179,6 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
     ).toBeVisible();
   if (scene.screen === "s6" || scene.screen === "g") {
     await expect(page.locator('[data-feature="M6-F1"]')).toContainText("49.3%");
-    await expect(page.locator('[data-feature="M6-F5"]')).toContainText(
-      "근거 연결률",
-    );
     await expect(page.locator('[data-feature="M6-F4"]')).toContainText(
       "9/29 사전 등록 뒤",
     );

@@ -1,10 +1,14 @@
 // 준비 항목과 다음 할 일을 발행 스냅샷의 참조만으로 표시한다.
 import type { ForecastReport } from "@crowdcast/contracts/types";
+import { useState } from "react";
 import { EvidenceChip } from "../../components/common/evidence-chip";
 import { ClaimLine, type OpenEvidence } from "./report-claims";
-import { orderedClaims } from "./report-content";
+import { claimText, orderedClaims } from "./report-content";
 
-// 권고 문장과 판정 체크리스트 모두 인용 근거를 함께 둔다.
+// 같은 항목이 권고 문장·체크리스트·다음 할 일에 겹쳐 있으면 체크리스트 한 번만 보인다.
+const same = (text: string) => text.replace(/\s+/g, " ").trim();
+
+// 체크리스트 항목은 눌러서 확인 표시(배경)를 켜고 끈다. 저장하지 않는 화면 표시다.
 export function ReportActions({
   report,
   onOpen,
@@ -12,10 +16,24 @@ export function ReportActions({
   report: ForecastReport;
   onOpen: OpenEvidence;
 }) {
+  const [done, setDone] = useState<ReadonlySet<string>>(() => new Set());
+  const checklist = report.forecast.judgment.checklist;
+  const listed = new Set(checklist.map((item) => same(item.text)));
   const recommendations = orderedClaims(report).filter(
-    (claim) => claim.claimType === "권고",
+    (claim) =>
+      claim.claimType === "권고" && !listed.has(same(claimText(claim, report))),
+  );
+  const actions = report.brief.actions.filter(
+    (action) => !listed.has(same(action.label)),
   );
   const byId = new Map(report.evidence.map((item) => [item.id, item]));
+  const toggle = (id: string) =>
+    setDone((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   return (
     <section
       className="report-section report-actions"
@@ -30,16 +48,20 @@ export function ReportActions({
           onOpen={onOpen}
         />
       ))}
-      {!recommendations.length &&
-        !report.forecast.judgment.checklist.length && (
-          <p>준비 항목 자료 없음</p>
-        )}
+      {!recommendations.length && !checklist.length && (
+        <p>준비 항목 자료 없음</p>
+      )}
       <ul className="report-checklist">
-        {report.forecast.judgment.checklist.map((item) => (
-          <li key={item.id}>
-            <label>
-              <input type="checkbox" /> {item.text}
-            </label>{" "}
+        {checklist.map((item) => (
+          <li key={item.id} className={done.has(item.id) ? "is-done" : ""}>
+            <button
+              type="button"
+              className="report-checklist__item"
+              aria-pressed={done.has(item.id)}
+              onClick={() => toggle(item.id)}
+            >
+              {item.text}
+            </button>
             {item.evidenceIds.map((id) => {
               const evidence = byId.get(id);
               return evidence ? (
@@ -55,21 +77,22 @@ export function ReportActions({
           </li>
         ))}
       </ul>
-      <div className="report-next">
-        <h3>다음 할 일</h3>
-        {!report.brief.actions.length && <p>다음 할 일이 아직 없어요.</p>}
-        <ul>
-          {report.brief.actions.map((action) => (
-            <li key={action.id}>
-              {action.href ? (
-                <a href={action.href}>{action.label}</a>
-              ) : (
-                action.label
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {actions.length > 0 && (
+        <div className="report-next">
+          <h3>다음 할 일</h3>
+          <ul>
+            {actions.map((action) => (
+              <li key={action.id}>
+                {action.href ? (
+                  <a href={action.href}>{action.label}</a>
+                ) : (
+                  action.label
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }

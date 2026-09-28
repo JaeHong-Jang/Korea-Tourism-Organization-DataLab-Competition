@@ -66,7 +66,7 @@ export function ReforecastCard({
             <Level value={result.level.after} />
           </dd>
         </div>
-        <QuantityChange title="순간 최대" value={result.peakConcurrent} />
+        <QuantityChange title="최대 동시 인원" value={result.peakConcurrent} />
         <QuantityChange title="일평균" value={result.dailyMean} />
       </dl>
       <p>

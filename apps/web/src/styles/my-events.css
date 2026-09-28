@@ -2,9 +2,15 @@
 .my-events-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); align-items: start; gap: var(--space-8); }
 .my-events-layout > *, .my-events-detail > * { min-width: 0; }
 /* 선택한 표 행의 높이에서 상세 패널이 시작되도록 목록이 계산한 간격을 적용한다. */
-.my-events-detail { display: grid; gap: var(--space-8); margin-top: var(--my-events-detail-offset, 0); }
+.my-events-detail { display: grid; gap: var(--space-4); max-height: calc(100vh - 2 * var(--space-4)); overflow-y: auto; overscroll-behavior: contain; padding: 4px; margin: -4px; transition: transform .5s cubic-bezier(.22, .8, .3, 1); will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .my-events-detail { transition: none; } }
 .my-events-list { min-height: 500px; }
-.my-events-filters { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: var(--space-5) 0; }
+.my-events-list { position: relative; }
+.my-events-filters { position: absolute; top: var(--space-5); right: var(--space-5); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); margin: 0; }
+.my-events-filters + * { margin-top: var(--space-5); }
+/* 정렬·상태는 라벨을 왼쪽에 둔 한 줄로 만들어 제목 줄 높이에 맞춘다. */
+.my-events-list .my-events-filters { top: var(--space-4); }
+.my-events-list .my-events-filters label { display: flex; align-items: center; gap: var(--space-2); }
 .my-events-filters label, .my-events-actual-form label, .my-events-share label { display: grid; gap: var(--space-1); color: var(--ink-2); font-size: var(--text-sm); }
 .my-events-filters select, .my-events-actual-form select, .my-events-actual-form input, .my-events-share input { min-height: 38px; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); font: inherit; }
 
@@ -16,6 +22,13 @@
 .my-events-table tbody th { font-weight: 600; }
 .my-events-table tbody tr { cursor: pointer; }
 .my-events-table tbody tr:hover { background: var(--surface-sunken); }
+/* 지난 행사는 흐리게, 상태는 색 칩으로 구분한다. */
+.my-events-status { display: inline-block; padding: 1px var(--space-2); border: 1px solid transparent; border-radius: 999px; font-size: var(--text-sm); font-weight: 700; white-space: nowrap; }
+.my-events-status--upcoming { border-color: var(--select); background: var(--select-soft); color: var(--link); }
+.my-events-status--past { background: var(--surface-sunken); color: var(--ink-2); }
+.my-events-status--actual { border: 1px solid var(--level-1); background: var(--surface-sunken); color: var(--ink); }
+.my-events-table tbody tr.is-past td, .my-events-table tbody tr.is-past th button { color: var(--ink-2); }
+.my-events-table tbody tr.is-past .level-badge { filter: grayscale(1); }
 .my-events-table tbody tr.is-selected,
 .my-events-table tbody tr.is-selected:hover { background: var(--select-soft); outline: 1px solid var(--select); outline-offset: -1px; }
 .my-events-table button { padding: var(--space-1); border: 0; background: transparent; color: var(--link); font: inherit; text-align: left; cursor: pointer; }
@@ -23,7 +36,7 @@
 .my-events-table .level-badge { white-space: nowrap; }
 
 /* 발행 이력과 변화 카드의 값은 계약 순서대로 읽을 수 있게 배치한다. */
-.my-events-timeline { display: grid; gap: var(--space-4); margin: var(--space-5) 0 0; padding-left: var(--space-5); }
+.my-events-timeline { display: grid; gap: var(--space-4); margin: var(--space-2) 0 0; padding-left: var(--space-5); }
 .my-events-timeline li { position: relative; padding-left: var(--space-2); }
 .my-events-timeline li::before { position: absolute; top: var(--space-2); left: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--brand); content: ""; }
 .my-events-timeline a, .my-events-timeline small { display: grid; gap: var(--space-1); }
@@ -32,6 +45,15 @@
 .my-events-timeline-heading, .my-events-timeline-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
 .my-events-timeline-heading time { color: var(--ink-2); font-size: var(--text-sm); }
 .my-events-timeline-actions { margin-top: var(--space-2); }
+.my-events-timeline-figure { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-1); }
+.my-events-timeline-figure > span { color: var(--ink-2); font-size: var(--text-sm); }
+.my-events-timeline-figure > strong { font-variant-numeric: tabular-nums; }
+.my-events-detail .feature-panel h2 { line-height: 1.25; }
+.my-events-detail > .feature-panel > p { margin: var(--space-1) 0 var(--space-4); }
+.my-events-detail .my-events-actual-form { margin-top: 0; }
+.my-events-detail > .feature-panel > h3 + p { margin-bottom: 0; }
+.my-events-detail > .feature-panel > .feature-panel__heading + :not(p) { margin-top: var(--space-3); }
+.my-events-detail .my-events-actual-locked { margin-top: 0; }
 .my-events-timeline-actions a { display: inline-flex; align-items: center; min-height: 36px; padding: var(--space-1) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); font-weight: 600; }
 .my-events-timeline-actions .my-events-snapshot-report { border-color: var(--brand); background: var(--brand); color: var(--on-brand); }
 .my-events-reforecast-card { display: grid; gap: var(--space-3); margin-top: var(--space-5); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
@@ -46,7 +68,6 @@
 
 /* 입력·공유 행동은 한 패널 안에서 로딩과 오류 문장까지 유지한다. */
 .my-events-actual-form { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
-.my-events-actual-help { margin: 0; color: var(--ink-2); font-size: var(--text-sm); }
 .my-events-actual-locked { display: grid; gap: var(--space-1); margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); color: var(--ink-2); }
 .my-events-actual-locked p { margin: 0; }
 .my-events-actual-form button, .my-events-share button, .my-events-detail > .feature-panel > button { justify-self: start; padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--link); font: inherit; cursor: pointer; }
@@ -58,11 +79,13 @@
 .my-events-detail [role="alert"] { color: var(--ink); }
 @media (max-width: 1100px) {
   .my-events-layout { grid-template-columns: 1fr; }
-  .my-events-detail { margin-top: 0; }
+  .my-events-detail { max-height: none; overflow: visible; transform: none !important; }
 }
 
 /* 좁은 화면에서는 같은 표 행을 항목별 이름이 붙은 카드로 읽는다. */
 @media (max-width: 640px) {
+  .my-events-filters { position: static; justify-content: flex-start; margin-top: var(--space-4); }
+  .my-events-list .my-events-filters label { display: grid; gap: var(--space-1); }
   .my-events-table-wrap { overflow: visible; }
   .my-events-table { display: block; min-width: 0; }
   .my-events-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -75,8 +98,11 @@
   .my-events-detail { gap: var(--space-4); }
   .my-events-share input { width: 100%; }
 }
-/* what-if로 바꾼 조건의 이력은 저장 행사와 다르다는 것을 글자로 밝힌다 */
-.my-events-whatif { color: var(--ink-2); font-weight: 600; }
 /* 재예보 "바뀐 것 없음"은 오류가 아니라 안내라서 차분한 칸으로 보여 준다. */
 .my-events-unchanged { display: grid; gap: var(--space-1); margin-top: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); font-size: var(--text-sm); }
 .my-events-unchanged p { margin: 0; color: var(--ink-2); }
+/* 실측 비교는 범위 안(초록)·밖(주황)을 글자와 왼쪽 띠로 함께 표시한다. */
+.my-events-comparison { display: grid; gap: var(--space-1); margin-top: var(--space-2); padding: var(--space-3) var(--space-4); border-left: 3px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); }
+.my-events-comparison.is-in { border-left-color: var(--level-1); }
+.my-events-comparison.is-out { border-left-color: var(--level-2); }
+.my-events-comparison p { margin: 0; color: var(--ink-2); font-size: var(--text-sm); }

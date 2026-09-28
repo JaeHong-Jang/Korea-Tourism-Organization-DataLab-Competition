@@ -12,7 +12,10 @@ import {
   MOUSE,
   OctahedronGeometry,
   SphereGeometry,
+  SRGBColorSpace,
   TetrahedronGeometry,
+  type Texture,
+  TextureLoader,
   TOUCH,
   TorusGeometry,
   Vector3,
@@ -21,7 +24,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useCssVars } from "../../lib/theme/use-css-var";
 import type { GraphData, GraphEdge, GraphNode } from "./graph-data";
 import { kindStyle, type NodeShape, nodeRadius } from "./graph-style";
-import type { Point3 } from "./layout-3d";
+import { type Point3, whaleBackdrop } from "./layout-3d";
 
 const TOKENS = [
   "--cat-1",
@@ -74,7 +77,7 @@ export function GraphScene3d(props: SceneProps) {
   const background = colors["--surface-sunken"];
   return (
     <Canvas
-      camera={{ position: [0, 160, 720], fov: 45, near: 1, far: 4000 }}
+      camera={{ position: [0, 40, 740], fov: 45, near: 1, far: 4000 }}
       dpr={[1, 1.5]}
       onPointerMissed={props.onClear}
       gl={{ antialias: true }}
@@ -83,8 +86,41 @@ export function GraphScene3d(props: SceneProps) {
       <fog attach="fog" args={[background, 680, 1600]} />
       <ambientLight intensity={0.75} />
       <directionalLight position={[120, 220, 160]} intensity={1.15} />
+      <WhaleBackdrop />
       <GraphContent {...props} colors={colors} />
     </Canvas>
+  );
+}
+
+// 노드가 앉은 고래 모양이 한눈에 읽히도록 같은 자리에 로고를 옅게 깐다. 클릭은 받지 않는다.
+function WhaleBackdrop() {
+  const [texture, setTexture] = useState<Texture | null>(null);
+  useEffect(() => {
+    let alive = true;
+    let loaded: Texture | null = null;
+    new TextureLoader().load("/assistant/whale.png", (value) => {
+      value.colorSpace = SRGBColorSpace;
+      loaded = value;
+      if (alive) setTexture(value);
+      else value.dispose();
+    });
+    return () => {
+      alive = false;
+      loaded?.dispose();
+    };
+  }, []);
+  if (!texture) return null;
+  const { center, size } = whaleBackdrop();
+  return (
+    <mesh position={center} raycast={() => null}>
+      <planeGeometry args={[size[0], size[1]]} />
+      <meshBasicMaterial
+        map={texture}
+        transparent
+        opacity={0.34}
+        depthWrite={false}
+      />
+    </mesh>
   );
 }
 
@@ -206,7 +242,7 @@ function GraphContent({
         edges={data.edges}
         positions={positions}
         color={colors["--axis"]}
-        opacity={active ? 0.12 : 0.55}
+        opacity={active ? 0.1 : 0.22}
       />
       {lit.length > 0 && (
         <EdgeLines
@@ -300,8 +336,6 @@ function GraphContent({
         makeDefault
         enableDamping={!reducedMotion}
         dampingFactor={0.08}
-        autoRotate={!selectedId && !hovered && !reducedMotion}
-        autoRotateSpeed={0.35}
         minDistance={40}
         maxDistance={1500}
         zoomToCursor

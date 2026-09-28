@@ -16,12 +16,7 @@ import {
   postReforecast,
 } from "../../lib/my-events-api";
 import { ActualForm, actualQuantity, actualSubmitLabel } from "./actual-form";
-import {
-  changedCondition,
-  EventDetail,
-  isUnchanged,
-  reforecastError,
-} from "./event-detail";
+import { EventDetail, isUnchanged, reforecastError } from "./event-detail";
 import {
   eventIdForForecast,
   firstEventIdByDate,
@@ -201,8 +196,8 @@ it("행사 종료 전에는 실측 입력칸 대신 열리는 시점을 보여 �
         onSaved={() => {}}
       />,
     );
-    expect(html).toContain("행사 종료 후 입력할 수 있어요");
-    expect(html).toContain("10.04");
+    expect(html).toContain("행사 종료 후 입력할 수 있습니다.");
+    expect(html).toContain("오픈 일자: 10월 4일");
     expect(html).not.toContain('type="submit"');
     const past = renderToStaticMarkup(
       <ActualForm
@@ -210,7 +205,7 @@ it("행사 종료 전에는 실측 입력칸 대신 열리는 시점을 보여 �
         onSaved={() => {}}
       />,
     );
-    expect(past).not.toContain("행사 종료 후 입력할 수 있어요");
+    expect(past).not.toContain("행사 종료 후 입력할 수 있습니다.");
     expect(past).not.toContain('type="submit" disabled=""');
   } finally {
     vi.useRealTimers();
@@ -257,17 +252,4 @@ it("공유 예보서는 읽기 전용으로 판정·수치·근거를 보여 준
   expect(html).not.toContain("계획 초안 docx 받기");
   expect(html).not.toContain("재예보");
   expect(html).not.toContain("실측 저장");
-});
-
-// what-if 예보가 저장 행사 이력에 붙으면 조건이 바뀐 것만 표시한다
-it("이력의 행사 조건이 저장 행사와 다를 때만 조건 바꿈으로 본다", () => {
-  const saved = event;
-  expect(changedCondition(saved, saved)).toBe(false);
-  expect(
-    changedCondition(
-      { ...saved, startsAt: "2025-10-19T19:00:00+09:00" },
-      saved,
-    ),
-  ).toBe(true);
-  expect(changedCondition({ ...saved, fee: "유료" }, saved)).toBe(true);
 });

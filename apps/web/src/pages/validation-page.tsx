@@ -1,25 +1,20 @@
-// 연구 모델의 기록을 먼저 읽게 하고, 발행 예보가 쓰는 모델의 기록은 원래 배치대로 뒤에 둔다.
+// 지금 모델의 검증 기록 → 축제 총 방문객 추이 → 개선 중인 모델 → 앞으로의 채점 순으로 읽게 한다.
+import { Link } from "react-router-dom";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { PageHeading } from "../components/common/page-heading";
-import { GoldenCases } from "../features/validation/golden-cases";
-import { ModelDetails } from "../features/validation/model-details";
+import { FestivalVisitorsChart } from "../features/validation/festival-visitors-chart";
 import { PerformanceMetrics } from "../features/validation/performance-metrics";
-import { PredictionScatter } from "../features/validation/prediction-scatter";
 import { PreregistrationBoard } from "../features/validation/preregistration-board";
 import { ResearchComputationRecord } from "../features/validation/research-computation-record";
-import { num } from "../features/validation/research-format";
 import { ResearchSplitDetails } from "../features/validation/research-split-details";
-import { researchV2 } from "../features/validation/research-v2-data";
 import { ResearchValidationSummary } from "../features/validation/research-validation-summary";
-import { ValidationStory } from "../features/validation/validation-story";
-import { getBacktest, getModelCard, getScores } from "../lib/validation/api";
+import { getBacktest, getScores } from "../lib/validation/api";
 import { useContract } from "../lib/validation/use-contract";
 
-// 연구 기록은 고정 산출물에서, 발행 모델 기록은 API에서 온다 — 둘을 섞지 않는다.
+// 지금 모델 기록은 API에서, 개선 모델 기록은 고정 산출물에서 온다 — 둘을 섞지 않는다.
 export function ValidationPage() {
   const backtest = useContract(getBacktest);
   const scores = useContract(getScores);
-  const model = useContract(getModelCard);
   const summary = backtest.value;
   const skipped = summary?.disclosure?.skippedYears ?? [];
   return (
@@ -27,101 +22,55 @@ export function ValidationPage() {
       <PageHeading
         eyebrow="과거 예측 성능을 확인해요"
         title="모델 검증"
-        description={`${num(researchV2.rows)}건으로 매달 다시 학습한 연구 모델 v2의 기록입니다. 발행 예보가 쓰는 모델과는 구분해 둡니다.`}
+        description="예보 모델이 지난 행사를 얼마나 맞혔는지 봐요."
       />
-      <ResearchValidationSummary />
-      <section className="validation-folds" aria-label="연구 모델 상세 기록">
-        <details className="validation-fold">
-          <summary>연구 모델 v2: 어떻게 나눴나</summary>
-          <div className="validation-content">
-            <ResearchSplitDetails />
-          </div>
-        </details>
-        <details className="validation-fold">
-          <summary>연구 모델 v2: 계산 기록</summary>
-          <div className="validation-content">
-            <ResearchComputationRecord />
-          </div>
-        </details>
-      </section>
-
-      <section
-        className="validation-current"
-        aria-labelledby="current-model-title"
+      <nav className="page-links" aria-label="관련 화면">
+        <Link to="/my">내 행사에 실측 입력하기 →</Link>
+      </nav>
+      <FeaturePanel
+        id="M6-F1"
+        title="지금 모델: 검증 방법과 계산 기록"
+        className="validation-method-current"
       >
-        <header>
-          <span>현재 발행 모델 기록</span>
-          <h2 id="current-model-title">발행 예보가 쓰는 모델</h2>
+        <div className="validation-content">
           <p>
-            위 연구 모델은 아직 예보에 쓰지 않습니다. 지금 예보서에 나오는
-            수치는 아래 모델이 만든 것이라 기록을 따로 남깁니다.
+            {summary?.evalYears.join(", ") || "—"}년을 평가할 때 학습은 2년
+            전까지, 보정은 직전 해로 나눴어요. 건너뛴 연도:{" "}
+            {skipped.length
+              ? skipped
+                  .map((item) => `${item.year}년 ${item.reason}`)
+                  .join(" · ")
+              : "없음"}
           </p>
-        </header>
-        <ValidationStory state={backtest} />
-      </section>
+          <PerformanceMetrics state={backtest} />
+        </div>
+      </FeaturePanel>
+      <details className="validation-fold validation-method validation-method--top">
+        <summary>개선 중인 모델 v2: 검증 방법과 계산 기록</summary>
+        <div className="validation-content">
+          <ResearchSplitDetails />
+          <ResearchComputationRecord />
+        </div>
+      </details>
       <div className="validation-layout">
         <FeaturePanel
           id="M6-F2"
-          title="발행 모델: 예측과 실측"
-          description="점은 일평균입니다. 색은 구간 안에 들어왔는지이고, 점을 누르면 행사 이름과 구간이 남습니다."
+          title="축제 총 방문객 추이와 2026 예측"
+          description="2017~2025년은 실제 발표 합계, 2026년은 예측이에요."
           className="validation-chart"
         >
-          <PredictionScatter state={backtest} />
+          <FestivalVisitorsChart />
+        </FeaturePanel>
+        <ResearchValidationSummary />
+        <FeaturePanel
+          id="M6-F4"
+          title="앞으로의 채점"
+          description="행사 전에 예보를 등록해 두고, 끝난 뒤 실측으로 채점해요."
+          className="validation-evidence"
+        >
+          <PreregistrationBoard state={scores} />
         </FeaturePanel>
       </div>
-      <section className="validation-folds" aria-label="발행 모델 상세 기록">
-        <details className="validation-fold">
-          <summary>어떻게 나눴나</summary>
-          <div className="validation-content">
-            <p>
-              평가 연도가 {summary?.evalYears.join(", ") || "—"}년이면 학습은 그
-              2년 전까지, 보정은 직전 해, 시험은 그 해의 행사입니다. 외부 자료는
-              시험 행사 기준일(개최 14일 전)까지 공개된 것만 학습에 남깁니다.
-            </p>
-            <p>
-              건너뛴 연도:{" "}
-              {skipped.length
-                ? skipped
-                    .map((item) => `${item.year}년 ${item.reason}`)
-                    .join(" · ")
-                : "없음"}
-            </p>
-          </div>
-        </details>
-        <details className="validation-fold">
-          <summary>아직 말 못 하는 것</summary>
-          <div className="validation-content">
-            <p>
-              순간 최대는 일평균에 피크일 계수와 동시체류율을 곱한 추정이고,
-              순간 인원 정답으로 채점하지 않았습니다. 시험 행사 가운데 실측이
-              1,000명 미만인 건이 없으면 등급이 경계를 가려 냈다고 말할 수
-              없습니다.
-            </p>
-            <GoldenCases state={backtest} />
-            <ModelDetails
-              state={model}
-              goldenEmpty={summary?.golden.length === 0}
-            />
-          </div>
-        </details>
-        <details className="validation-fold">
-          <summary>앞으로의 채점</summary>
-          <div className="validation-content">
-            <p>
-              아래는 과거 성적이 아닙니다. 행사가 열리기 전에 예보를 공개 등록해
-              두고, 끝난 뒤 맞출 약속과 그 원장입니다.
-            </p>
-            <PreregistrationBoard state={scores} />
-          </div>
-        </details>
-        <details className="validation-fold">
-          <summary>계산 기록</summary>
-          <div className="validation-content">
-            <p>비교 쌍과 실행 식별자입니다. 위 세 칸과 같은 백테스트입니다.</p>
-            <PerformanceMetrics state={backtest} />
-          </div>
-        </details>
-      </section>
     </div>
   );
 }

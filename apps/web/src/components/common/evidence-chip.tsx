@@ -2,7 +2,6 @@
 import type { Evidence } from "@crowdcast/contracts/types";
 import {
   BookOpen,
-  ChevronDown,
   Database,
   FlaskConical,
   Gavel,
@@ -11,6 +10,7 @@ import {
 } from "lucide-react";
 import { createContext, useContext } from "react";
 import { evidenceDisplayTitle } from "../../lib/evidence-feature-labels";
+import { stripReviewNotice } from "../../lib/review-notice";
 import { ComponentState, type ComponentStatus } from "./component-state";
 import { evidenceNumber } from "./evidence-number";
 
@@ -55,14 +55,10 @@ export function EvidenceChip({
     : (number ?? 1);
   if (resolvedNumber == null)
     return <ComponentState name="근거 번호" status="error" />;
-  const { Icon, label } = evidenceKinds[evidence.kind];
+  const { label } = evidenceKinds[evidence.kind];
   const title = evidenceDisplayTitle(evidence);
   const expanded = selectedId === evidence.id;
-  const content = (
-    <>
-      <Icon size={14} aria-hidden="true" />[{resolvedNumber}]
-    </>
-  );
+  const content = <>[{resolvedNumber}]</>;
   const props = {
     className: "evidence-chip",
     title: `${title} 근거 ${expanded ? "접기" : "열기"}`,
@@ -71,7 +67,7 @@ export function EvidenceChip({
         ? "구간 기준 표시"
         : /^[[{]/.test(evidence.summary.trim())
           ? "선택하면 근거 서랍에서 관측 기록과 출처를 볼 수 있어요."
-          : evidence.summary,
+          : stripReviewNotice(evidence.summary),
   };
   if (onOpen)
     return (
@@ -84,10 +80,6 @@ export function EvidenceChip({
         onClick={(event) => onOpen(evidence.id, event.currentTarget)}
       >
         {content}
-        <span className="evidence-chip__action">
-          {expanded ? "접기" : "열기"}
-        </span>
-        <ChevronDown size={13} aria-hidden="true" />
       </button>
     );
   return (

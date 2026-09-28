@@ -1,5 +1,5 @@
 // 저장 행사 목록과 선택한 행사의 예보 이력·후속 행동을 연결한다.
-import { type CSSProperties, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { EmptyState } from "../components/common/empty-state";
 import { ErrorState } from "../components/common/error-state";
@@ -22,7 +22,6 @@ export function MyEventsPage() {
   const linkedForecastId = searchParams.get("forecastId");
   const [rows, setRows] = useState<SavedEvent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [detailOffset, setDetailOffset] = useState(0);
   const [savedActuals, setSavedActuals] = useState<Set<string>>(
     () => new Set(),
   );
@@ -73,11 +72,7 @@ export function MyEventsPage() {
   const selected = rows.find((row) => row.event.id === selectedId);
   return (
     <div className="page-wrap regular-page my-events-page">
-      <PageHeading
-        eyebrow="S5 · 저장한 행사"
-        title="내 행사"
-        description="저장한 행사와 발행 예보를 다시 찾아보세요."
-      />
+      <PageHeading title="내 행사" />
       {state === "loading" && (
         <EmptyState
           message="저장한 행사를 불러오고 있어요."
@@ -92,25 +87,16 @@ export function MyEventsPage() {
         />
       )}
       {state === "ready" && rows.length > 0 && (
-        <div
-          className="my-events-layout"
-          style={
-            {
-              "--my-events-detail-offset": `${detailOffset}px`,
-            } as CSSProperties
-          }
-        >
+        <div className="my-events-layout">
           <FeaturePanel
             id="M5-F1"
             title="저장한 행사"
-            description="행사명·일자·등급·상태·마지막 예보를 살펴보세요."
             className="my-events-list"
           >
             <EventList
               rows={rows}
               selectedId={selectedId}
               onSelect={setSelectedId}
-              onSelectedOffset={setDetailOffset}
               saved={savedActuals}
             />
           </FeaturePanel>

@@ -27,12 +27,12 @@ export function ForecastPath({
       id: "daily",
       title: "일평균 예측",
       value: `${formatSnapshotNumber(dailyMean.p50)} ${dailyMean.unit}`,
-      detail: `P10–P90 · ${formatSnapshotNumber(dailyMean.p10)}–${formatSnapshotNumber(dailyMean.p90)} ${dailyMean.unit}`,
+      detail: `범위 ${formatSnapshotNumber(dailyMean.p10)}–${formatSnapshotNumber(dailyMean.p90)}`,
     },
     {
       id: "conversion",
       title: "순간 최대 환산",
-      value: `${peakConcurrent.assumptionIds.length}개 가정 연결`,
+      value: `가정 ${peakConcurrent.assumptionIds.length}개`,
       detail:
         used.map((item) => item.name).join(" · ") || "환산 가정 기록 없음",
     },
@@ -40,13 +40,13 @@ export function ForecastPath({
       id: "peak",
       title: `순간 최대${peakConcurrent.estimated ? " 추정" : ""}`,
       value: `${formatSnapshotNumber(peakConcurrent.p50)} ${peakConcurrent.unit}`,
-      detail: `P10–P90 · ${formatSnapshotNumber(peakConcurrent.p10)}–${formatSnapshotNumber(peakConcurrent.p90)} ${peakConcurrent.unit}`,
+      detail: `범위 ${formatSnapshotNumber(peakConcurrent.p10)}–${formatSnapshotNumber(peakConcurrent.p90)}`,
     },
     {
       id: "judgment",
       title: "최종 판정",
       value: `등급 ${judgment.level} · ${judgment.label}`,
-      detail: `${judgment.basis ? `${judgment.basis} 기준 · ` : ""}${judgment.ruleIds.length}개 판정 규칙 연결`,
+      detail: `${judgment.basis ? `${judgment.basis} 기준 · ` : ""}규칙 ${judgment.ruleIds.length}개`,
     },
   ];
   return (
@@ -61,10 +61,7 @@ export function ForecastPath({
           전체 근거
         </button>
       </div>
-      <p>
-        각 단계를 누르면 그 수치에 연결된 근거를 볼 수 있어요. 인원은
-        중앙값(P50), 범위는 예측 구간(P10–P90)이에요.
-      </p>
+      <p>단계를 누르면 그 숫자에 연결된 근거만 보여요.</p>
       <ol>
         {steps.map((step, index) => (
           <li key={step.id}>
@@ -82,10 +79,6 @@ export function ForecastPath({
           </li>
         ))}
       </ol>
-      <p className="snapshot-evidence__note">
-        순간 최대는 일평균 분포와 환산 가정을 반영한 추정 산식 기반 결과예요. 각
-        중앙값을 곱한 값과 다를 수 있어요.
-      </p>
     </section>
   );
 }

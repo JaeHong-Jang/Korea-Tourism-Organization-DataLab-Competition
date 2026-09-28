@@ -14,9 +14,8 @@ export function MasterGraph() {
   const graph = useGraphResource("master", loadGraph);
   return (
     <section aria-label="전체 기준 그래프 보기">
-      <p>
-        전체 자료·규칙·모델의 연결을 탐색해요. 이 화면은 현재 공통 기준이며 개별
-        예보의 발행 당시 기록과 다를 수 있어요.
+      <p className="knowledge-page__graph-note">
+        지금 공통 기준이라 개별 예보의 발행 당시 기록과 다를 수 있어요.
       </p>
       {graph.status === "error" ? (
         <ErrorState

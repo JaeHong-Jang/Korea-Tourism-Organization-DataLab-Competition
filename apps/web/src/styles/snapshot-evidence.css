@@ -1,11 +1,7 @@
 /* 발행 예보 선택과 계산 경로를 화면 크기에 맞춰 배치한다. */
 .knowledge-page__nav { flex-wrap: wrap; }
-.evidence-explore { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); margin-top: var(--space-8); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
-.evidence-explore h2 { margin: 0; font-size: var(--text-subtitle); }
-.evidence-explore p { margin: var(--space-2) 0 0; color: var(--ink-2); font-size: var(--text-ui); }
-.evidence-explore a { color: var(--link); font-size: var(--text-ui); }
 .forecast-evidence-browser { display: grid; gap: var(--space-5); }
-.snapshot-selector { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.snapshot-selector { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .snapshot-selector label { display: grid; gap: var(--space-2); min-width: 0; font-size: var(--text-ui); font-weight: 700; }
 .snapshot-selector select { width: 100%; min-width: 0; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--ink); }
 .snapshot-evidence { display: grid; gap: var(--space-5); min-width: 0; }
@@ -15,7 +11,12 @@
 .snapshot-evidence__summary h2 { margin-block: var(--space-2); }
 .snapshot-evidence__summary p { margin-top: var(--space-2); color: var(--ink-2); font-size: var(--text-ui); }
 .snapshot-evidence__eyebrow { color: var(--select-ink); font-size: var(--text-caption); font-weight: 700; }
-.snapshot-evidence__summary > dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); width: 100%; margin: 0; padding-top: var(--space-4); border-top: 1px solid var(--line); }
+/* 발행 정보는 한 줄로, 관련 화면은 오른쪽 링크로 둔다. */
+.snapshot-evidence__meta { font-size: var(--text-sm); }
+.snapshot-evidence__links { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.snapshot-evidence__links a { font-weight: 700; text-decoration: none; }
+.snapshot-evidence__hint { margin: 0; color: var(--ink-2); font-size: var(--text-sm); }
+.snapshot-selector__my { padding-block: var(--space-3); color: var(--link); font-size: var(--text-ui); font-weight: 700; text-decoration: none; white-space: nowrap; }
 .snapshot-evidence dt { color: var(--ink-2); font-size: var(--text-caption); }
 .snapshot-evidence dd { margin: var(--space-1) 0 0; overflow-wrap: anywhere; font-size: var(--text-ui); }
 .snapshot-evidence a { color: var(--link); font-size: var(--text-ui); }
@@ -57,8 +58,26 @@
   .snapshot-path li:nth-child(2)::after { content: none; }
 }
 @media (max-width: 640px) {
-  .snapshot-selector, .snapshot-evidence__summary > dl, .snapshot-evidence__explorer, .snapshot-path ol { grid-template-columns: minmax(0, 1fr); }
+  .snapshot-selector, .snapshot-evidence__explorer, .snapshot-path ol { grid-template-columns: minmax(0, 1fr); }
   .snapshot-path li:not(:last-child)::after { content: "↓"; left: 50%; top: 100%; }
   .snapshot-evidence__explorer > ul { max-height: 300px; }
   .snapshot-evidence__summary, .snapshot-evidence__detail { padding: var(--space-4); }
 }
+
+/* 위쪽 두 칸: 왼쪽은 예보 선택·요약·경로, 오른쪽은 전체 자료·규칙 3D 그래프. 좁은 화면에서는 한 칸으로 쌓는다. */
+.evidence-top { display: grid; gap: var(--space-5); align-items: start; }
+.evidence-top.has-aside { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+.evidence-top__main { display: grid; gap: var(--space-5); min-width: 0; }
+.evidence-top.has-aside .snapshot-selector { grid-template-columns: 1fr 1fr; }
+.evidence-top.has-aside .snapshot-selector__my { grid-column: 1 / -1; padding-block: 0; }
+.evidence-top.has-aside .snapshot-path ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.evidence-top.has-aside .snapshot-path li:nth-child(2)::after { content: none; }
+.knowledge-page__graph { display: grid; gap: var(--space-3); min-width: 0; scroll-margin-top: var(--space-6); }
+.knowledge-page__graph > h2 { margin: 0; }
+.knowledge-page__graph-note { margin: 0; color: var(--ink-2); font-size: var(--text-sm); }
+.knowledge-page__graph .knowledge-graph { padding: var(--space-4); }
+.knowledge-page__graph .knowledge-graph__body { grid-template-columns: minmax(0, 1fr); }
+.knowledge-page__graph .knowledge-graph__blueprint { position: static; }
+.knowledge-page__graph .knowledge-graph__canvas { height: min(62vh, 560px); min-height: 380px; }
+.knowledge-page__graph .knowledge-detail { min-height: 0; max-height: 360px; }
+@media (max-width: 1100px) { .evidence-top.has-aside { grid-template-columns: minmax(0, 1fr); } }

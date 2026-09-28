@@ -52,7 +52,6 @@
 .kit-evidence-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .evidence-chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface); color: var(--link); font: inherit; font-size: var(--text-caption); cursor: pointer; vertical-align: middle; }
 .evidence-chip[aria-expanded="true"] { border-color: var(--brand); background: var(--select-soft); }
-.evidence-chip__action { margin-left: var(--space-1); font-weight: 700; }
 .evidence-chip[aria-expanded="true"] > svg:last-child { transform: rotate(180deg); }
 .evidence-card { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .evidence-card--highlighted { outline: 3px solid var(--focus); outline-offset: var(--space-1); }

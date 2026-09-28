@@ -11,11 +11,7 @@ import { formatSnapshotNumber } from "../../lib/format";
 import { ReportActions } from "./report-actions";
 import { ReportClaims } from "./report-claims";
 import { ReportContext } from "./report-context";
-import {
-  ReportJudgment,
-  SIZE_BIAS_NOTICE,
-  UNVERIFIED_NOTICE,
-} from "./report-judgment";
+import { ReportJudgment } from "./report-judgment";
 import { ReportNumbers } from "./report-numbers";
 import { ReportToolbar, requestPlan } from "./report-toolbar";
 
@@ -93,7 +89,7 @@ it("유사 행사와 평시 자료의 원래 값과 집계 단위를 표시한�
 });
 
 // 구간 기준에서는 확률 수치를 출력하지 않고 미검증 문구는 판정 곁에 둔다.
-it("구간과 미검증 상태를 판정·수치에 반영한다", () => {
+it("구간 판정에서 확률을 숨기고 검토·검증 안내 문구는 싣지 않는다", () => {
   const report = {
     ...fixture,
     forecast: {
@@ -107,8 +103,13 @@ it("구간과 미검증 상태를 판정·수치에 반영한다", () => {
   };
   const output = html(report);
   expect(output.replace(/<[^>]*>/g, "")).not.toContain("%");
-  expect(output.match(new RegExp(UNVERIFIED_NOTICE, "g"))).toHaveLength(2);
-  expect(output.match(new RegExp(SIZE_BIAS_NOTICE, "g"))).toHaveLength(2);
+  for (const text of [
+    "골든 사례",
+    "작은 행사는 크게",
+    "표본 한계로",
+    "참고용 — 담당자",
+  ])
+    expect(output).not.toContain(text);
 });
 
 // 근거 카드 번호는 칩 번호표와 같고 법령 이름·게시처·원문을 보인다.

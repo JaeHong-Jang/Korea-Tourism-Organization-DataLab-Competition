@@ -5,16 +5,6 @@ import { ContractMessage } from "./contract-state";
 
 const number = (value: number) => value.toLocaleString("ko-KR");
 
-// 각 핵심 지표에서 같은 백테스트 실행을 바로 확인하게 한다.
-function BacktestSource({ runId }: { runId: string }) {
-  return (
-    <details className="source-tip">
-      <summary>ⓘ 출처</summary>
-      <p>백테스트 {runId}</p>
-    </details>
-  );
-}
-
 // 계약의 포함률 비율만 백분율로 바꾸고 이미 %p인 값은 그대로 읽는다.
 export function PerformanceMetrics({
   state,
@@ -41,7 +31,6 @@ export function PerformanceMetrics({
           <span>MdAPE</span>
           <strong>{metrics.mdape.toFixed(1)}%</strong>
           <small>일평균 방문객 · 평가 {number(denominator)}건</small>
-          <BacktestSource runId={runId} />
         </div>
         <div>
           <span>80% 구간 포함률</span>
@@ -49,7 +38,6 @@ export function PerformanceMetrics({
           <small>
             ({number(covered)}/{number(denominator)})
           </small>
-          <BacktestSource runId={runId} />
         </div>
         <div>
           <span>판정 재현율</span>
@@ -63,7 +51,6 @@ export function PerformanceMetrics({
               ? "실측 대상 미만 0건 — 경계 성능은 아직 말할 수 없어요"
               : "환산 판정"}
           </small>
-          <BacktestSource runId={runId} />
         </div>
         <div>
           <span>판정 정밀도</span>
@@ -77,7 +64,6 @@ export function PerformanceMetrics({
               ? "실측 대상 미만 0건 — 경계 성능은 아직 말할 수 없어요"
               : "환산 판정"}
           </small>
-          <BacktestSource runId={runId} />
         </div>
         <div>
           <span>기준선 대비</span>
@@ -93,7 +79,6 @@ export function PerformanceMetrics({
               ? "비교 쌍 없음"
               : `비교 ${number(metrics.comparablePairs)}쌍`}
           </small>
-          <BacktestSource runId={runId} />
         </div>
       </div>
       <p className="validation-source">

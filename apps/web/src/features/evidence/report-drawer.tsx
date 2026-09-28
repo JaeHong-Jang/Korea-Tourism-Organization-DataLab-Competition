@@ -37,14 +37,17 @@ export function observationForEvidence(
 export function useEvidenceDrawer() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const origin = useRef<HTMLElement | null>(null);
+  // 서랍 카드로 옮기는 포커스는 다음 프레임에 예약되므로, 그 전에 닫히면 예약을 취소한다.
+  const pendingFocus = useRef(0);
   const open: OpenEvidence = (id, element) => {
+    cancelAnimationFrame(pendingFocus.current);
     if (selectedId === id) {
       setSelectedId(null);
       return;
     }
     origin.current = element;
     setSelectedId(id);
-    requestAnimationFrame(() => {
+    pendingFocus.current = requestAnimationFrame(() => {
       const card = document.getElementById(`evidence-${id}`);
       const summary = card?.querySelector("summary");
       const scroller = card?.closest<HTMLElement>(".evidence-drawer");
@@ -52,8 +55,12 @@ export function useEvidenceDrawer() {
       summary?.focus({ preventScroll: true });
     });
   };
-  const deselect = () => setSelectedId(null);
+  const deselect = () => {
+    cancelAnimationFrame(pendingFocus.current);
+    setSelectedId(null);
+  };
   const close = () => {
+    cancelAnimationFrame(pendingFocus.current);
     setSelectedId(null);
     origin.current?.scrollIntoView({ block: "center" });
     origin.current?.focus();
@@ -90,12 +97,7 @@ export function ReportDrawer({
   }, [selectedId, onClose]);
   return (
     <aside className="report-drawer-slot" aria-label="근거 서랍">
-      <FeaturePanel
-        id="M3-F2"
-        title="근거 서랍"
-        description="번호 버튼을 누르면 이곳에서 근거가 열려요. 카드 제목을 눌러 직접 펼칠 수도 있어요."
-        className="evidence-drawer"
-      >
+      <FeaturePanel id="M3-F2" title="근거 서랍" className="evidence-drawer">
         {selectedId && (
           <div className="report-drawer-actions">
             <button type="button" onClick={onClose}>

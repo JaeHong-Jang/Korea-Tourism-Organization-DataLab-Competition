@@ -86,7 +86,7 @@ it("단계 화면은 선택한 예보 수치를 그대로 읽고 성능 숫자�
     "12,345",
     "14,850",
     "추정",
-    "수정 불가",
+    "기준일",
   ])
     expect(html).toContain(text);
   for (const text of ["부산바다축제", "49.3%", "57.0%", "13,000", "21,000"])
@@ -96,7 +96,7 @@ it("단계 화면은 선택한 예보 수치를 그대로 읽고 성능 숫자�
 });
 
 // 잘못된 외부 주소나 해석 불가능한 요약도 실행하거나 추측하지 않는다.
-it("상세에 출처 없는 상태와 원문을 보존하고 위험한 링크는 숨긴다", () => {
+it("상세는 기록된 값만 보이고 원문 덤프와 위험한 링크는 숨긴다", () => {
   const source = report.evidence[0].source;
   if (!source) throw new Error("테스트 출처가 필요해요.");
   const evidence = {
@@ -108,6 +108,6 @@ it("상세에 출처 없는 상태와 원문을 보존하고 위험한 링크는
     <SnapshotEvidenceDetail report={report} evidence={evidence} />,
   );
   expect(html).toContain("사용 확인 필요");
-  expect(html).toContain("요약 기록");
+  expect(html).not.toContain("요약 기록");
   expect(html).not.toContain("javascript:");
 });

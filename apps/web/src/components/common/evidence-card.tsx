@@ -15,6 +15,7 @@ import {
   formatSnapshotNumber,
   formatSnapshotQuantity,
 } from "../../lib/format";
+import { stripReviewNotice } from "../../lib/review-notice";
 import { ComponentState, type ComponentStatus } from "./component-state";
 import { evidenceKinds } from "./evidence-chip";
 import { evidenceNumber } from "./evidence-number";
@@ -124,11 +125,9 @@ export function EvidenceCard({
         <small>{label}</small>
       </summary>
       <div className="evidence-card__body">
-        <p>
-          {hideProbability && evidence.summary.includes("%")
-            ? "구간 기준 표시"
-            : parsedSummary.summary}
-        </p>
+        {!(hideProbability && evidence.summary.includes("%")) && (
+          <p>{stripReviewNotice(parsedSummary.summary)}</p>
+        )}
         {parsedSummary.raw &&
           !(hideProbability && evidence.summary.includes("%")) && (
             <details className="evidence-card__raw">

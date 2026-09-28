@@ -183,9 +183,6 @@
 @media (max-width: 640px) { .consult-preview__numbers, .consult-compare__columns { grid-template-columns: 1fr; } .consult-time { display: grid; } }
 
 /* 검증 성적을 앞에, 근거와 제한을 뒤에 놓고 인사이트는 중요도 순으로 배치한다. */
-.validation-story { display: grid; gap: var(--space-5); margin-bottom: var(--space-8); }
-.validation-story > p { max-width: 72ch; margin: 0; font-size: var(--text-body); }
-.validation-folds { display: grid; gap: var(--space-4); margin-top: var(--space-8); }
 .validation-fold { padding: var(--space-4) var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .validation-fold summary { cursor: pointer; font-weight: 700; }
 .validation-point-detail { padding: var(--space-3) var(--space-4); border: 1px solid var(--select); border-radius: var(--radius-input); background: var(--select-soft); }
@@ -198,12 +195,8 @@
 .forecast-path__links button { padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--link); cursor: pointer; }
 .validation-layout, .insights-layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-8); }
 .validation-layout > *, .insights-layout > * { min-width: 0; }
-.validation-kpis { grid-column: span 12; }
 .validation-chart { grid-column: span 12; }
 .validation-evidence { grid-column: span 12; } /* 근거와 골든 케이스는 한 줄에 하나씩 */
-.validation-cases { grid-column: span 12; }
-.validation-score { grid-column: span 5; }
-.validation-model { grid-column: span 7; }
 .insights-main { grid-column: span 12; min-height: 170px; } /* 카드와 활용 명세 표는 한 줄에 하나씩 — 표 칸이 잘리지 않게 */
 .insights-spec { grid-column: span 12; min-height: 170px; }
 
@@ -221,30 +214,33 @@
 .feature-panel .validation-disclosure p + p { margin-top: var(--space-2); }
 .validation-source, .validation-assumption { color: var(--ink-2); font-size: var(--text-sm); }
 
-/* 산점도는 같은 로그 척도와 표 전환을 제공하며 점 모양도 범례에 적는다. */
+/* 축제 총 방문객 추이: 실제는 실선, 2026 예측은 점선과 범위 막대, 코로나 시기는 옅은 띠로 구분한다. */
 .validation-chart-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--text-sm); }
 .validation-legend i { font-style: normal; }
-.validation-legend--covered i { color: var(--cat-3); }
-.validation-legend--outside i { color: var(--cat-2); }
 .validation-chart-tools button, .insight-result button { padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-button); background: var(--surface); color: var(--link); cursor: pointer; }
-.validation-quadrant-wrap { display: grid; gap: var(--space-2); }
-.validation-quadrants { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin: 0; }
-.validation-quadrants > div { display: flex; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); }
-.validation-quadrants dt { color: var(--ink-2); }
-.validation-quadrants dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
-.validation-svg-wrap { width: min(100%, 650px); margin: auto; overflow-x: auto; }
-.validation-svg-wrap svg { display: block; width: 100%; min-width: 600px; height: auto; }
+.validation-legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); color: var(--ink-2); }
+.validation-svg-wrap { width: 100%; overflow-x: auto; }
+.validation-svg-wrap svg { display: block; width: 100%; min-width: 640px; height: auto; }
 .validation-svg-wrap text { fill: var(--ink-2); font-size: 12px; }
-.validation-svg-wrap .validation-point { cursor: help; }
-.validation-svg-wrap .validation-point:focus-visible { outline: none; }
-.validation-svg-wrap .validation-point--covered circle { fill: var(--cat-3); stroke: var(--surface); stroke-width: 1; }
-.validation-svg-wrap .validation-point--outside rect { fill: var(--cat-2); stroke: var(--surface); stroke-width: 1; }
-.validation-svg-wrap .validation-point:focus-visible circle, .validation-svg-wrap .validation-point:focus-visible rect { stroke: var(--focus); stroke-width: 3; }
-.validation-svg-wrap .validation-overlap-count { fill: var(--ink); font-size: var(--text-caption); font-weight: 700; }
-.validation-svg-wrap .validation-diagonal-label { fill: var(--ink); font-weight: 700; }
-.validation-axis { stroke: var(--ink-2); stroke-width: 1; }
-.validation-diagonal { stroke: var(--line); stroke-width: 2; stroke-dasharray: 5 4; }
-.validation-whisker { stroke: var(--brand); stroke-width: 2; }
+.validation-grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 4; }
+.validation-grid.is-major { stroke-dasharray: none; }
+.festival-legend--actual i { color: var(--select); font-weight: 700; }
+.festival-legend--forecast i { color: var(--cat-2); font-weight: 700; }
+.festival-legend--covid i { color: var(--surface-sunken); -webkit-text-stroke: 1px var(--line); }
+.festival-covid rect { fill: var(--surface-sunken); }
+.validation-svg-wrap .festival-covid text { fill: var(--muted); }
+.festival-line { fill: none; stroke: var(--select); stroke-width: 3; stroke-linejoin: round; }
+.validation-svg-wrap .festival-axis-title { fill: var(--ink); font-size: 13px; font-weight: 600; }
+.feature-panel .validation-content .festival-source { margin-top: calc(var(--space-2) * -1); text-align: right; font-size: var(--text-caption); }
+.festival-point { cursor: pointer; }
+.festival-point:focus-visible { outline: none; }
+.validation-grid, .festival-covid, .festival-line { pointer-events: none; }
+.festival-point .festival-hit { fill: transparent; stroke: none; }
+.festival-point .festival-dot { fill: var(--surface); stroke: var(--select); stroke-width: 2.5; }
+.festival-point.is-covid .festival-dot { stroke: var(--muted); }
+.festival-point.is-forecast .festival-dot { fill: var(--cat-2); stroke: var(--surface); stroke-width: 2; }
+.festival-point.is-active .festival-dot, .festival-point:focus-visible .festival-dot { stroke-width: 4; }
+.validation-svg-wrap .festival-value { fill: var(--ink); font-weight: 600; }
 .validation-table-scroll { overflow-x: auto; margin-top: var(--space-4); }
 .validation-table-scroll table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 .validation-table-scroll th, .validation-table-scroll td { padding: var(--space-2); border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
@@ -262,13 +258,6 @@
 .validation-dataset-track { height: 8px; border-radius: 4px; background: var(--surface-sunken); }
 .validation-dataset-track span { display: block; height: 100%; border-radius: 4px; background: var(--brand); }
 .validation-primary { justify-self: start; padding: var(--space-2) var(--space-5); border: 0; border-radius: var(--radius-button); background: var(--brand); color: var(--on-brand); cursor: pointer; }
-.validation-model-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
-.validation-model-list dt { color: var(--ink-2); font-size: var(--text-sm); }
-.validation-model-list dd { margin: 0; overflow-wrap: anywhere; }
-.validation-notes { white-space: pre-wrap; overflow-wrap: anywhere; }
-.validation-limit-summary { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-5); }
-.validation-raw-notes__summary { color: var(--link); cursor: pointer; }
-.validation-raw-notes .validation-notes { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); }
 
 /* 새 signed 순증 연구와 현재 발행 모델을 분리해 성적·상태·약점을 함께 읽게 한다. */
 .research-validation { display: grid; gap: var(--space-6); margin-bottom: var(--space-10); padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
@@ -293,17 +282,18 @@
 .research-comparison__track > span.is-selected { background: var(--brand); }
 .research-year-card__interval { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); color: var(--ink-2); font-size: var(--text-sm); }
 .research-year-card__interval strong { color: var(--ink); }
-.research-method { border-top: 1px solid var(--line); padding-top: var(--space-4); }
-.research-method > summary { cursor: pointer; font-weight: 700; }
-.research-method > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
-.research-method h3 { margin: 0; font-size: var(--text-ui); }
-.research-method ul { margin-bottom: 0; padding-left: var(--space-5); }
-.research-method p { grid-column: 1 / -1; margin: 0; color: var(--ink-2); font-size: var(--text-sm); }
-.validation-current { display: grid; gap: var(--space-5); margin-bottom: var(--space-6); padding-top: var(--space-3); border-top: 1px solid var(--line); }
-.validation-current > header { display: grid; gap: var(--space-1); }
-.validation-current > header span { color: var(--ink-2); font-size: var(--text-caption); font-weight: 700; }
-.validation-current > header h2, .validation-current > header p { margin: 0; }
-.validation-current > header p { max-width: 72ch; color: var(--ink-2); }
+/* 화면 사이 이동 링크는 제목 바로 아래 한 줄에 모은다. */
+.page-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin-bottom: var(--space-6); }
+.page-links a { color: var(--link); font-size: var(--text-ui); font-weight: 700; text-decoration: none; }
+.validation-layout > .research-validation { grid-column: span 12; margin-bottom: 0; }
+.research-validation__note { color: var(--ink-2); font-size: var(--text-sm); }
+.validation-method { margin-top: var(--space-8); }
+.validation-method--top { margin: 0 0 var(--space-6); }
+.validation-method-current { margin-bottom: var(--space-4); }
+.validation-method-current .validation-content p { margin: 0; color: var(--ink); font-size: var(--text-ui); }
+.validation-method > .validation-content { gap: var(--space-8); }
+.validation-method section { display: grid; gap: var(--space-4); }
+.validation-method h3 { margin: 0; font-size: var(--text-subtitle); }
 /* 연구 상세는 규칙 목록 → 표 → 판정 순으로 읽히게 한다. */
 .research-detail { display: grid; gap: var(--space-4); }
 .research-detail p { margin: 0; }
@@ -328,8 +318,7 @@
 .feature-panel.insights-main .insight-result h3, .feature-panel.insights-main .insight-result p { margin: 0; }
 .insight-result small { color: var(--ink-2); }
 @media (max-width: 1024px) { .validation-layout > .feature-panel, .insights-layout > .feature-panel { grid-column: span 12; } .validation-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .research-validation__header { grid-template-columns: 1fr; } }
-@media (max-width: 640px) { .validation-metrics, .validation-rates, .validation-model-list, .validation-quadrants, .research-year-grid, .research-method > div, .research-validation__snapshot, .research-rules, .research-rules--checks { grid-template-columns: 1fr; } .validation-datasets li { grid-template-columns: minmax(0, 1fr) auto; } .validation-dataset-track { grid-column: 1 / -1; grid-row: 2; } .research-validation { padding: var(--space-4); } .research-comparison__row { grid-template-columns: 1fr 72px; } .research-comparison__track { grid-column: 1 / -1; grid-row: 2; } }
-
+@media (max-width: 640px) { .validation-metrics, .validation-rates, .research-year-grid, .research-validation__snapshot, .research-rules, .research-rules--checks { grid-template-columns: 1fr; } .validation-datasets li { grid-template-columns: minmax(0, 1fr) auto; } .validation-dataset-track { grid-column: 1 / -1; grid-row: 2; } .research-validation { padding: var(--space-4); } .research-comparison__row { grid-template-columns: 1fr 72px; } .research-comparison__track { grid-column: 1 / -1; grid-row: 2; } }
 /* 행사와 운영 화면은 표 영역을 넓게 두고 세부 상태를 옆에 둔다. */
 .table-layout, .ops-layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-8); }
 .table-layout > *, .ops-layout > * { grid-column: span 4; min-height: 175px; }

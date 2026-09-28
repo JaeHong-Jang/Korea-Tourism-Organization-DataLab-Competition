@@ -1,11 +1,18 @@
 // 저장 행사 표의 정렬·상태 필터와 행 선택을 제공한다.
 import type { Event, ForecastReport } from "@crowdcast/contracts/types";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { LevelBadge } from "../../components/common/level-badge";
 import { formatDate } from "../../lib/format";
 
 export type SavedEvent = { event: Event; snapshots: ForecastReport[] };
 export type EventStatus = "예정" | "지남" | "실측 입력됨";
+
+// 상태 칩 색 구분(글자와 함께 쓰므로 색만으로 구분하지 않는다).
+const statusTone: Record<EventStatus, string> = {
+  예정: "upcoming",
+  지남: "past",
+  "실측 입력됨": "actual",
+};
 export type SortKey = "date" | "level" | "forecast";
 
 // 발행 시각으로 정렬해 최신 스냅샷을 하나로 고른다.
@@ -82,38 +89,16 @@ export function EventList({
   rows,
   selectedId,
   onSelect,
-  onSelectedOffset,
   saved,
 }: {
   rows: SavedEvent[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onSelectedOffset?: (offset: number) => void;
   saved: ReadonlySet<string>;
 }) {
   const [sort, setSort] = useState<SortKey>("date");
   const [filter, setFilter] = useState<EventStatus | "전체">("전체");
   const visible = sortAndFilter(rows, sort, filter, saved);
-  const selectedRow = useRef<HTMLTableRowElement | null>(null);
-
-  // 상단 목록은 기존 배치를 지키고 스크롤한 목록은 선택 행 옆으로 상세를 내린다.
-  useLayoutEffect(() => {
-    const update = () => {
-      const row = selectedRow.current;
-      const layout = row?.closest<HTMLElement>(".my-events-layout");
-      if (!row || !layout) {
-        onSelectedOffset?.(0);
-        return;
-      }
-      const layoutTop = layout.getBoundingClientRect().top;
-      const offset =
-        layoutTop >= 0 ? 0 : row.getBoundingClientRect().top - layoutTop;
-      onSelectedOffset?.(Math.max(0, Math.round(offset)));
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  });
   return (
     <>
       <div className="my-events-filters">
@@ -162,11 +147,17 @@ export function EventList({
             <tbody>
               {visible.map(({ event, snapshots }) => {
                 const latest = snapshots.at(-1);
+                const status = eventStatus(event, saved.has(event.id));
+                const rowClass = [
+                  selectedId === event.id ? "is-selected" : "",
+                  status === "예정" ? "" : "is-past",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
                 return (
                   <tr
                     key={event.id}
-                    ref={selectedId === event.id ? selectedRow : undefined}
-                    className={selectedId === event.id ? "is-selected" : ""}
+                    className={rowClass}
                     aria-selected={selectedId === event.id}
                     onClick={() => onSelect(event.id)}
                   >
@@ -179,7 +170,9 @@ export function EventList({
                         {event.name}
                       </button>
                     </th>
-                    <td data-label="일자">{formatDate(event.startsAt)}</td>
+                    <td data-label="일자">
+                      {formatDate(event.startsAt, { time: false })}
+                    </td>
                     <td data-label="등급">
                       {latest ? (
                         <LevelBadge judgment={latest.forecast.judgment} />
@@ -188,7 +181,11 @@ export function EventList({
                       )}
                     </td>
                     <td data-label="상태">
-                      {eventStatus(event, saved.has(event.id))}
+                      <span
+                        className={`my-events-status my-events-status--${statusTone[status]}`}
+                      >
+                        {status}
+                      </span>
                     </td>
                     <td data-label="마지막 예보">
                       {latest ? formatDate(latest.publishedAt) : "예보 없음"}
