@@ -33,6 +33,7 @@ models/v*/
 models/g0/
 models/.staging-*/
 models/.backtest.lock
+models/insight-*/
 reports/backtest/.staging-*/
 *.model
 *.weights
