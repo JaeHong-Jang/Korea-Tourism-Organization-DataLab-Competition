@@ -3,13 +3,16 @@
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { useEffect, useMemo } from "react";
 import {
+  AlwaysStencilFunc,
   BufferAttribute,
   type BufferGeometry,
   Color,
   ExtrudeGeometry,
   MeshStandardMaterial,
   Path,
+  ReplaceStencilOp,
   Shape,
+  ShapeGeometry,
 } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { feature } from "topojson-client";
@@ -50,8 +53,10 @@ function ringPath(ring: number[][], path: Shape | Path): void {
 }
 
 // 하나의 시군구가 여러 섬이나 구멍을 가져도 같은 코드로 묶는다.
+// flat이면 옆면·바닥 없이 윗면만 만든다(평평한 지도에서 보이지 않는 면을 그리지 않는다).
 function regionGeometry(
   region: SigunguFeature["features"][number],
+  flat = false,
 ): BufferGeometry {
   const polygons =
     region.geometry.type === "Polygon"
@@ -69,6 +74,13 @@ function regionGeometry(
       }
       return shape;
     });
+  if (flat) {
+    // 입체 타일의 윗면 높이(2.5)에 맞추고, 면 인덱스·국토 판정이 쓰는 비색인 삼각형으로 바꾼다.
+    const top = new ShapeGeometry(shapes, 1).toNonIndexed();
+    top.translate(0, 0, 2.5);
+    top.clearGroups();
+    return top;
+  }
   return new ExtrudeGeometry(shapes, {
     depth: 2.5,
     bevelEnabled: false,
@@ -97,6 +109,7 @@ export function buildLandModel(topology: Topology): LandModel {
 export function buildLandModelForData(
   topology: Topology,
   totals: Map<string, number> | null,
+  flat = false,
 ): LandModel {
   const collection = Object.values(topology.objects)[0] as
     | GeometryCollection<SigunguProperties>
@@ -144,7 +157,7 @@ export function buildLandModelForData(
     const { sgg: code, sidonm: sido, sggnm } = region.properties;
     const anchor = landAnchor(region.geometry, sggnm);
     if (anchor) anchors.set(code, anchor);
-    const geometry = regionGeometry(region);
+    const geometry = regionGeometry(region, flat);
     const step = tileStep(totals?.get(code) ?? null, maximum);
     if (totals) geometry.scale(1, 1, Math.max(1, step));
     const positions = geometry.getAttribute("position");
@@ -163,7 +176,10 @@ export function buildLandModelForData(
                 : "rural"
           ][index % 2];
     const colors = new Float32Array(positions.count * 3);
-    // 윗면은 지역색, 옆면은 토큰의 흙 가장자리 색으로 칠한다.
+    // 윗면은 지역색, 옆면은 토큰의 흙 가장자리 색으로 칠한다(윗면만 있는 평면 타일은 전부 지역색).
+    if (!geometry.groups.length)
+      for (let vertex = 0; vertex < positions.count; vertex++)
+        colors.set([color.r, color.g, color.b], vertex * 3);
     for (const group of geometry.groups) {
       const faceColor = group.materialIndex === 0 ? color : edgeColor;
       for (
@@ -221,9 +237,11 @@ export function buildLandModelForData(
 export function LandTiles({
   model,
   onPick,
+  interactive = true,
 }: {
   model: LandModel;
   onPick: (code: string) => void;
+  interactive?: boolean;
 }) {
   const material = useMemo(
     () =>
@@ -231,6 +249,10 @@ export function LandTiles({
         vertexColors: true,
         roughness: 1,
         metalness: 0,
+        stencilWrite: true,
+        stencilRef: 1,
+        stencilFunc: AlwaysStencilFunc,
+        stencilZPass: ReplaceStencilOp,
       }),
     [],
   );
@@ -246,11 +268,16 @@ export function LandTiles({
       rotation={[-Math.PI / 2, 0, 0]}
       position={[0, 7, 0]}
       castShadow
-      onClick={(event) => {
-        event.stopPropagation();
-        const code = codeForFace(faces, event.faceIndex ?? -1);
-        if (code) onPick(code);
-      }}
+      // 선택을 쓰지 않는 지도에서는 처리기를 달지 않아 포인터 이벤트마다 지형 삼각형을 검사하지 않는다.
+      onClick={
+        interactive
+          ? (event) => {
+              event.stopPropagation();
+              const code = codeForFace(faces, event.faceIndex ?? -1);
+              if (code) onPick(code);
+            }
+          : undefined
+      }
     />
   ));
 }

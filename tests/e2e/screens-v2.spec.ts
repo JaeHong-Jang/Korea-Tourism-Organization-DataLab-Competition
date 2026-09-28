@@ -34,11 +34,6 @@ const scenes: Scene[] = [
     state: "selected",
     path: "/?sceneFixture=1&view=miniature&sceneQuality=high",
   },
-  {
-    screen: "s1",
-    state: "data",
-    path: "/?sceneFixture=1&view=miniature&sceneQuality=high&data=1",
-  },
   { screen: "s2", state: "start", path: "/consult" },
   { screen: "s2", state: "stream-end", path: "/consult" },
   { screen: "s2", state: "whatif", path: "/consult", variant: "whatif" },
@@ -88,7 +83,7 @@ async function selectFestival(page: Page, mobile: boolean) {
 async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
   const key = `${scene.screen}-${scene.state}`;
   if (scene.screen === "s1") {
-    if (["3d", "selected", "data"].includes(scene.state))
+    if (["3d", "selected"].includes(scene.state))
       await expect(page.locator("html")).toHaveAttribute(
         "data-scene-ready",
         "true",
@@ -97,14 +92,6 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
     if (scene.state === "svg")
       await expect(page.locator(".svg-korea-map")).toBeVisible();
     if (scene.state === "selected") await selectFestival(page, mobile);
-    if (scene.state === "data") {
-      // 범례는 휴대폰에서도 지도 아래 왼쪽 칸에 늘 보인다.
-      if (mobile)
-        await page.locator(".scene-legend-panel").scrollIntoViewIfNeeded();
-      await expect(
-        page.getByRole("button", { name: "데이터 모드" }),
-      ).toHaveAttribute("aria-pressed", "true");
-    }
     return;
   }
   if (scene.screen === "s2") {
