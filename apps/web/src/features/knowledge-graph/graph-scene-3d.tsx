@@ -315,16 +315,21 @@ function GraphContent({
             }
             center
             zIndexRange={[20, 0]}
-            style={{
-              pointerEvents: "none",
-              display: node ? undefined : "none",
-            }}
+            style={{ display: node ? undefined : "none" }}
           >
-            <span
+            {/* 이름표를 눌러도 그 노드를 고른 것처럼 이어진 노드만 밝힌다. 키보드 선택은 노드 검색이 맡는다. */}
+            <button
+              type="button"
+              tabIndex={-1}
               className={`knowledge3d-label${node && node.id === selectedId ? " is-selected" : ""}`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (node) onSelect(node.id);
+              }}
             >
               {node ? labelText(node) : ""}
-            </span>
+            </button>
           </Html>
         );
       })}
