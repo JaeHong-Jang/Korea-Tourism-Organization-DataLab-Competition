@@ -1,4 +1,4 @@
-// 검증을 성적 한 문장, 산점도, 나눈 방법, 한계, 앞으로의 채점 순으로 읽게 한다.
+// 연구 모델의 기록을 먼저 읽게 하고, 발행 예보가 쓰는 모델의 기록은 원래 배치대로 뒤에 둔다.
 import { FeaturePanel } from "../components/common/feature-panel";
 import { PageHeading } from "../components/common/page-heading";
 import { GoldenCases } from "../features/validation/golden-cases";
@@ -6,12 +6,16 @@ import { ModelDetails } from "../features/validation/model-details";
 import { PerformanceMetrics } from "../features/validation/performance-metrics";
 import { PredictionScatter } from "../features/validation/prediction-scatter";
 import { PreregistrationBoard } from "../features/validation/preregistration-board";
+import { ResearchComputationRecord } from "../features/validation/research-computation-record";
+import { num } from "../features/validation/research-format";
+import { ResearchSplitDetails } from "../features/validation/research-split-details";
+import { researchV2 } from "../features/validation/research-v2-data";
 import { ResearchValidationSummary } from "../features/validation/research-validation-summary";
 import { ValidationStory } from "../features/validation/validation-story";
 import { getBacktest, getModelCard, getScores } from "../lib/validation/api";
 import { useContract } from "../lib/validation/use-contract";
 
-// 같은 백테스트 응답을 요약·산점도·한계에서 공유한다.
+// 연구 기록은 고정 산출물에서, 발행 모델 기록은 API에서 온다 — 둘을 섞지 않는다.
 export function ValidationPage() {
   const backtest = useContract(getBacktest);
   const scores = useContract(getScores);
@@ -23,19 +27,34 @@ export function ValidationPage() {
       <PageHeading
         eyebrow="과거 예측 성능을 확인해요"
         title="모델 검증"
-        description="새 1,804건 연구모델과 현재 발행 모델의 기록을 구분해 확인합니다."
+        description={`${num(researchV2.rows)}건으로 매달 다시 학습한 연구 모델 v2의 기록입니다. 발행 예보가 쓰는 모델과는 구분해 둡니다.`}
       />
       <ResearchValidationSummary />
+      <section className="validation-folds" aria-label="연구 모델 상세 기록">
+        <details className="validation-fold">
+          <summary>연구 모델 v2: 어떻게 나눴나</summary>
+          <div className="validation-content">
+            <ResearchSplitDetails />
+          </div>
+        </details>
+        <details className="validation-fold">
+          <summary>연구 모델 v2: 계산 기록</summary>
+          <div className="validation-content">
+            <ResearchComputationRecord />
+          </div>
+        </details>
+      </section>
+
       <section
         className="validation-current"
         aria-labelledby="current-model-title"
       >
         <header>
           <span>현재 발행 모델 기록</span>
-          <h2 id="current-model-title">발행 예보의 기존 백테스트</h2>
+          <h2 id="current-model-title">발행 예보가 쓰는 모델</h2>
           <p>
-            아래 API 기록은 위 연구 후보와 다른 모델입니다. 새 연구 결과를 아직
-            발행 예보에 적용하지 않았습니다.
+            위 연구 모델은 아직 예보에 쓰지 않습니다. 지금 예보서에 나오는
+            수치는 아래 모델이 만든 것이라 기록을 따로 남깁니다.
           </p>
         </header>
         <ValidationStory state={backtest} />
@@ -43,17 +62,14 @@ export function ValidationPage() {
       <div className="validation-layout">
         <FeaturePanel
           id="M6-F2"
-          title="현재 발행 모델: 예측과 실측"
+          title="발행 모델: 예측과 실측"
           description="점은 일평균입니다. 색은 구간 안에 들어왔는지이고, 점을 누르면 행사 이름과 구간이 남습니다."
           className="validation-chart"
         >
           <PredictionScatter state={backtest} />
         </FeaturePanel>
       </div>
-      <section
-        className="validation-folds"
-        aria-label="현재 발행 모델 상세 기록"
-      >
+      <section className="validation-folds" aria-label="발행 모델 상세 기록">
         <details className="validation-fold">
           <summary>어떻게 나눴나</summary>
           <div className="validation-content">
@@ -101,10 +117,7 @@ export function ValidationPage() {
         <details className="validation-fold">
           <summary>계산 기록</summary>
           <div className="validation-content">
-            <p>
-              비교 쌍과 실행 식별자입니다. 첫 화면의 세 칸과 같은
-              백테스트입니다.
-            </p>
+            <p>비교 쌍과 실행 식별자입니다. 위 세 칸과 같은 백테스트입니다.</p>
             <PerformanceMetrics state={backtest} />
           </div>
         </details>

@@ -1,11 +1,19 @@
-// 새 연구 후보의 성적과 운영 적용 상태를 같은 분모로 비교해 보여 준다.
-import { researchValidation } from "./research-validation-data";
+// v2 연구 모델의 성적을 v1·기준선과 같은 분모로 비교해 보여 준다.
+import { num as number, percent } from "./research-format";
+import { researchV2 } from "./research-v2-data";
 
-const number = (value: number, digits = 0) =>
-  value.toLocaleString("ko-KR", {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  });
+// 예측에 쓴 입력과 일부러 뺀 입력은 수치가 아니라 설계 설명이라 여기에 둔다.
+const features = [
+  "행사 일정·유형·주야·요금·주최·회차",
+  "법정공휴일과 주말 구성",
+  "예측일에 공개된 시군구 평시 방문·외지인 비중·주말 비율",
+  "같은 행사의 앞선 회차 실제 순증 (D-14 전에 공개된 것만)",
+];
+const excludedFeatures = [
+  "행사 뒤 실제 방문량",
+  "SNR과 실제 순증",
+  "발표 시점을 확인할 수 없는 예산·발표 인원·주최 측 과거 방문객",
+];
 
 // MAE 막대는 세 방법 중 가장 큰 값을 기준으로 하고 정확한 값은 직접 표기한다.
 function ComparisonBar({
@@ -33,9 +41,9 @@ function ComparisonBar({
   );
 }
 
-// 연구 상태를 먼저 밝히고 연도별 성적과 취약 구간을 이어서 읽게 한다.
+// 연구 상태를 먼저 밝히고 연도별 성적을 이어서 읽게 한다.
 export function ResearchValidationSummary() {
-  const data = researchValidation;
+  const data = researchV2;
   const totalEvaluation = data.evaluation.reduce(
     (sum, item) => sum + item.events,
     0,
@@ -49,11 +57,14 @@ export function ResearchValidationSummary() {
       <header className="research-validation__header">
         <div>
           <span className="research-status">{data.status}</span>
-          <h2 id="research-validation-title">1,804건 전체 자료 연구</h2>
+          <h2 id="research-validation-title">
+            v2 · {data.selected.label} 연구 모델
+          </h2>
           <p>
-            SNR·음수·명절을 삭제하지 않고 {data.target}을 예측했습니다.
-            2024년으로 설정을 정한 뒤 2025·2026년 {number(totalEvaluation)}건을
-            같은 방식으로 평가했습니다.
+            {number(data.rows)}건을 삭제 없이 쓰고, 같은 행사의 앞선 회차 순증(
+            {number(data.priorRows)}행)을 입력에 더했습니다. 2024년으로 설정을
+            고른 뒤 2025·2026년 {number(totalEvaluation)}건을 매달 다시 학습해
+            평가했습니다.
           </p>
         </div>
         <dl className="research-validation__snapshot">
@@ -71,9 +82,9 @@ export function ResearchValidationSummary() {
       <div className="research-year-grid">
         {data.evaluation.map((item) => {
           const maximum = Math.max(
-            item.mae,
-            item.typeMedianMae,
-            item.snrFilteredMae,
+            item.v2.mae,
+            item.v1.mae,
+            item.typeMedian.mae,
           );
           return (
             <article key={item.year} className="research-year-card">
@@ -90,58 +101,32 @@ export function ResearchValidationSummary() {
               <p className="research-comparison__caption">
                 평균 절대오차(MAE) · 낮을수록 좋음 · 명/일
               </p>
-              <div
-                className="research-comparison"
-                role="img"
-                aria-label={`${item.year}년 평균 절대오차 비교, 단위 명/일`}
-              >
+              <div className="research-comparison">
                 <ComparisonBar
-                  label="전체 자료 모델"
-                  value={item.mae}
+                  label="v2 (이번)"
+                  value={item.v2.mae}
                   maximum={maximum}
                   selected
                 />
                 <ComparisonBar
-                  label="유형 중앙값"
-                  value={item.typeMedianMae}
+                  label="v1"
+                  value={item.v1.mae}
                   maximum={maximum}
                 />
                 <ComparisonBar
-                  label="SNR>3만 학습"
-                  value={item.snrFilteredMae}
+                  label="유형 중앙값"
+                  value={item.typeMedian.mae}
                   maximum={maximum}
                 />
               </div>
               <p className="research-year-card__interval">
-                10–90% 구간 포함률{" "}
-                <strong>{(item.coverage * 100).toFixed(1)}%</strong>
-                <span>평균 폭 {number(item.meanWidth)}명/일</span>
+                10–90% 구간 포함률 <strong>{percent(item.v2.coverage)}</strong>
+                <span>평균 폭 {number(item.v2.meanWidth)}명/일</span>
               </p>
             </article>
           );
         })}
       </div>
-
-      <section className="research-risk" aria-labelledby="research-risk-title">
-        <div>
-          <span>운영 적용을 보류한 이유</span>
-          <h3 id="research-risk-title">큰 행사에서 과소예측이 남았습니다</h3>
-          <p>{data.caveat}</p>
-          <p>평균 오차가 음수면 실제 순증보다 적게 예측했다는 뜻입니다.</p>
-        </div>
-        <div className="research-risk__items">
-          {data.cautions.map((item) => (
-            <article key={item.label}>
-              <strong>{item.label}</strong>
-              <span>{number(item.count)}건</span>
-              <p>MAE {number(item.mae)}명/일</p>
-              <p>평균 오차 {number(item.bias)}명/일</p>
-              <p>구간 포함률 {(item.coverage * 100).toFixed(1)}%</p>
-              <small>{item.definition}</small>
-            </article>
-          ))}
-        </div>
-      </section>
 
       <details className="research-method" id="research-method">
         <summary>학습 자료와 검증 방법 보기</summary>
@@ -149,7 +134,7 @@ export function ResearchValidationSummary() {
           <section>
             <h3>예측에 사용</h3>
             <ul>
-              {data.features.map((item) => (
+              {features.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
@@ -157,7 +142,7 @@ export function ResearchValidationSummary() {
           <section>
             <h3>예측에서 제외</h3>
             <ul>
-              {data.excludedFeatures.map((item) => (
+              {excludedFeatures.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
