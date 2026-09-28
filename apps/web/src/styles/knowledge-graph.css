@@ -6,14 +6,14 @@
 .research-evidence { display: grid; gap: var(--space-4); margin-bottom: var(--space-6); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .research-evidence__heading { display: flex; justify-content: space-between; align-items: end; gap: var(--space-4); }
 .research-evidence__heading > div { display: grid; gap: var(--space-1); }
-.research-evidence__heading span { justify-self: start; padding: var(--space-1) var(--space-2); border: 1px solid var(--warn); border-radius: 999px; font-size: var(--text-caption); font-weight: 700; }
+.research-evidence__heading span { justify-self: start; padding: var(--space-1) var(--space-2); border: 1px solid var(--level-2); border-radius: 999px; font-size: var(--text-caption); font-weight: 700; }
 .research-evidence__heading h2, .research-evidence p { margin: 0; }
 .research-evidence__heading a { color: var(--link); font-weight: 700; text-decoration: none; }
 .research-evidence ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); margin: 0; padding: 0; list-style: none; counter-reset: evidence-step; }
 .research-evidence li { display: grid; align-content: start; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-input); background: var(--surface-sunken); counter-increment: evidence-step; }
 .research-evidence li strong::before { content: counter(evidence-step) ". "; color: var(--brand); }
 .research-evidence li p { color: var(--ink-2); font-size: var(--text-sm); }
-.research-evidence__notice { padding: var(--space-3); border-left: 3px solid var(--warn); background: var(--surface-sunken); font-size: var(--text-sm); }
+.research-evidence__notice { padding: var(--space-3); border-left: 3px solid var(--level-2); background: var(--surface-sunken); font-size: var(--text-sm); }
 .knowledge-graph { padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .knowledge-graph__toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
 .knowledge-graph__toolbar p { margin: 0; color: var(--ink-2); font-size: var(--text-ui); }

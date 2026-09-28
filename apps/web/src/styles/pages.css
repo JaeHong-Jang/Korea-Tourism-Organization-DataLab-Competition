@@ -275,7 +275,7 @@
 .research-validation__header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-6); align-items: start; }
 .research-validation__header h2, .research-validation__header p, .research-year-card h3, .research-year-card p, .research-risk h3, .research-risk p { margin: 0; }
 .research-validation__header > div:first-child { display: grid; gap: var(--space-2); max-width: 72ch; }
-.research-status { justify-self: start; padding: var(--space-1) var(--space-3); border: 1px solid var(--warn); border-radius: 999px; color: var(--ink); font-size: var(--text-caption); font-weight: 700; }
+.research-status { justify-self: start; padding: var(--space-1) var(--space-3); border: 1px solid var(--level-2); border-radius: 999px; color: var(--ink); font-size: var(--text-caption); font-weight: 700; }
 .research-validation__snapshot { display: grid; grid-template-columns: repeat(2, minmax(140px, 1fr)); gap: var(--space-2); margin: 0; }
 .research-validation__snapshot > div { padding: var(--space-3); border-radius: var(--radius-input); background: var(--surface-sunken); }
 .research-validation__snapshot dt { color: var(--ink-2); font-size: var(--text-caption); }
@@ -289,11 +289,11 @@
 .research-comparison__row { display: grid; grid-template-columns: minmax(100px, 128px) minmax(120px, 1fr) 86px; gap: var(--space-3); align-items: center; font-size: var(--text-sm); }
 .research-comparison__row strong { text-align: right; font-variant-numeric: tabular-nums; }
 .research-comparison__track { height: 10px; overflow: hidden; border-radius: 999px; background: var(--surface); }
-.research-comparison__track > span { display: block; height: 100%; border-radius: inherit; background: var(--ink-3); }
+.research-comparison__track > span { display: block; height: 100%; border-radius: inherit; background: var(--muted); }
 .research-comparison__track > span.is-selected { background: var(--brand); }
 .research-year-card__interval { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); color: var(--ink-2); font-size: var(--text-sm); }
 .research-year-card__interval strong { color: var(--ink); }
-.research-risk { display: grid; grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr); gap: var(--space-5); padding: var(--space-5); border: 1px solid var(--warn); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.research-risk { display: grid; grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr); gap: var(--space-5); padding: var(--space-5); border: 1px solid var(--level-2); border-radius: var(--radius-card); background: var(--surface-sunken); }
 .research-risk > div:first-child { display: grid; align-content: start; gap: var(--space-2); }
 .research-risk > div:first-child > span { color: var(--ink-2); font-size: var(--text-caption); font-weight: 700; }
 .research-risk__items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
