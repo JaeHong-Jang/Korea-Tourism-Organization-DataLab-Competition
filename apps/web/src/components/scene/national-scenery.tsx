@@ -21,6 +21,7 @@ import type { SceneQuality } from "./quality";
 import { LAND_SURFACE_Y } from "./scene-height";
 
 export function NationalScenery({
+  boundary,
   anchors,
   clusters,
   festivals,
@@ -29,6 +30,7 @@ export function NationalScenery({
   motion,
   diagnostic,
 }: {
+  boundary: [number, number][][][];
   anchors: Map<string, LandAnchor>;
   // 땅을 숨기면 건물 무리도 숨긴다.
   clusters: boolean;
@@ -51,7 +53,7 @@ export function NationalScenery({
     loadNationalBasemap(controller.signal)
       .then((value) => {
         if (controller.signal.aborted) return;
-        setBasemap(withinLand(value, anchors));
+        setBasemap(withinLand(value, anchors, boundary));
         document.documentElement.dataset.sceneBasemap = "ready";
       })
       // 지도 타일이 없으면(자료 미설치) 바탕 지도 없이 시군구 땅색만 쓴다.
@@ -63,7 +65,7 @@ export function NationalScenery({
       controller.abort();
       delete document.documentElement.dataset.sceneBasemap;
     };
-  }, [anchors]);
+  }, [anchors, boundary]);
   const carRoutes = useMemo(
     () => (basemap ? highwayRoutes(basemap) : roadRoutes),
     [basemap],

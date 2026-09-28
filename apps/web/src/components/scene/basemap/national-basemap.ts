@@ -5,6 +5,7 @@ import Pbf from "pbf";
 import { PMTiles } from "pmtiles";
 import { insidePolygon } from "../city/free-space";
 import { projectKorea } from "../projection";
+import { clipLandCover } from "./clip-land-cover";
 
 export type Point2 = [number, number];
 export type BaseArea = { kind: string; rings: Point2[][] };
@@ -166,10 +167,11 @@ export async function loadNationalBasemap(
   };
 }
 
-// 남한 시군구 땅 안(가운데 점 기준)의 피복·호수·도로만 남긴다 — z7 타일에 걸친 일본·북한 땅을 판 밖에 그리지 않게.
+// 피복·호수는 실제 경계로 자르고 도로는 남한과 접하는 경로만 남긴다.
 export function withinLand(
   basemap: Basemap,
   anchors: Map<string, { ring: Point2[] }>,
+  boundary: Point2[][][],
 ): Basemap {
   const boxes = [...anchors.values()].map(({ ring }) => {
     const xs = ring.map(([x]) => x);
@@ -199,8 +201,7 @@ export function withinLand(
     return false;
   };
   return {
-    areas: basemap.areas.filter((area) => touches(area.rings[0])),
-    water: basemap.water.filter((area) => touches(area.rings[0])),
+    ...clipLandCover(basemap, boundary),
     roads: basemap.roads.filter((road) => touches(road.points)),
   };
 }

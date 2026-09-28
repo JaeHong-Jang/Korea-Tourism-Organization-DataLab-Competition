@@ -2,7 +2,7 @@
 
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { Canvas } from "@react-three/fiber";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelectionStore } from "../../lib/selection-store";
 import { useTheme } from "../../lib/theme/theme-provider";
 import { Board } from "./board";
@@ -55,6 +55,7 @@ export function MiniKoreaCanvas({
   homeward?: boolean;
 }) {
   const [regressFactor, setRegressFactor] = useState(1);
+  const officeLabels = useRef<HTMLDivElement>(null);
   const [showLand, setShowLand] = useState(true);
   const [cityStatus, setCityStatus] = useState<CityStatus | null>(null);
   const diagnostics = useMemo(readSceneOptions, []);
@@ -116,7 +117,7 @@ export function MiniKoreaCanvas({
 
   // 지도 클릭은 지역 선택과 카메라 이동만 수행하고 행사 필터는 바꾸지 않는다.
   const onPick = (code: string) => {
-    selectFestival(null);
+    if (selectedId) return;
     selectSigungu(code);
   };
 
@@ -141,6 +142,12 @@ export function MiniKoreaCanvas({
       aria-label="시군구를 선택할 수 있는 3D 미니 대한민국"
       data-focus-id={selectedId ?? ""}
       data-city-mode={cityFestival ? "true" : "false"}
+      onDoubleClick={(event) => {
+        // 이름표·버튼을 제외한 지도 배경의 더블클릭만 전국 보기로 돌아간다.
+        if (!(event.target instanceof HTMLCanvasElement)) return;
+        selectFestival(null);
+        selectSigungu(null);
+      }}
     >
       {cityFestival && cityStatus !== "ready" && (
         <p className="scene-city-status" role="status">
@@ -156,15 +163,6 @@ export function MiniKoreaCanvas({
         )}
       </p>
       <Canvas
-        onPointerMissed={(event) => {
-          if (
-            event.target instanceof Element &&
-            event.target.closest(".scene-name-tag")
-          )
-            return;
-          selectFestival(null);
-          selectSigungu(null);
-        }}
         shadows={activeQuality === "high"}
         dpr={qualityDpr(activeQuality) * regressFactor}
         frameloop={visible ? "always" : "never"}
@@ -246,6 +244,7 @@ export function MiniKoreaCanvas({
               <DataBorders anchors={model.anchors} totals={totals} />
             )}
             <NationalScenery
+              boundary={model.boundary}
               anchors={model.anchors}
               clusters={showLand}
               festivals={scene.placed}
@@ -300,6 +299,7 @@ export function MiniKoreaCanvas({
         )}
         {t435 && (
           <ForecastOffice
+            portal={officeLabels}
             x={center[0] - width / 2 + 38}
             z={center[1] - depth / 2 + 38}
             hidden={Boolean(cityFestival)}
@@ -318,6 +318,10 @@ export function MiniKoreaCanvas({
           diagnostic={diagnostics.debug}
         />
       </Canvas>
+      <div
+        ref={officeLabels}
+        style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+      />
     </section>
   );
 }
