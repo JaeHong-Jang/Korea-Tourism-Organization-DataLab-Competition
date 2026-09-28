@@ -6,6 +6,7 @@ import {
   BoxGeometry,
   type BufferGeometry,
   ConeGeometry,
+  DoubleSide,
   Float32BufferAttribute,
   BufferGeometry as Geometry,
   IcosahedronGeometry,
@@ -77,7 +78,7 @@ export function GraphScene3d(props: SceneProps) {
   const background = colors["--surface-sunken"];
   return (
     <Canvas
-      camera={{ position: [0, 40, 740], fov: 45, near: 1, far: 4000 }}
+      camera={{ position: [330, 90, 660], fov: 45, near: 1, far: 4000 }}
       dpr={[1, 1.5]}
       onPointerMissed={props.onClear}
       gl={{ antialias: true }}
@@ -92,7 +93,7 @@ export function GraphScene3d(props: SceneProps) {
   );
 }
 
-// 노드가 앉은 고래 모양이 한눈에 읽히도록 같은 자리에 로고를 옅게 깐다. 클릭은 받지 않는다.
+// 노드가 앉은 고래 모양이 한눈에 읽히도록 같은 자리에 로고를 옅게 깐다. 뒤에서 봐도 보이게 양면으로 그리고, 클릭은 받지 않는다.
 function WhaleBackdrop() {
   const [texture, setTexture] = useState<Texture | null>(null);
   useEffect(() => {
@@ -116,6 +117,7 @@ function WhaleBackdrop() {
       <planeGeometry args={[size[0], size[1]]} />
       <meshBasicMaterial
         map={texture}
+        side={DoubleSide}
         transparent
         opacity={0.34}
         depthWrite={false}

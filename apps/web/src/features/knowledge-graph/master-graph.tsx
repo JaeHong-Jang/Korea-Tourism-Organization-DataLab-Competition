@@ -14,9 +14,6 @@ export function MasterGraph() {
   const graph = useGraphResource("master", loadGraph);
   return (
     <section aria-label="전체 기준 그래프 보기">
-      <p className="knowledge-page__graph-note">
-        지금 공통 기준이라 개별 예보의 발행 당시 기록과 다를 수 있어요.
-      </p>
       {graph.status === "error" ? (
         <ErrorState
           message={graph.error ?? "전체 그래프를 불러오지 못했어요."}

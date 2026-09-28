@@ -35,8 +35,6 @@
 .snapshot-path button strong { font-size: var(--text-section); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .snapshot-evidence button[aria-pressed="true"] { border-color: var(--select); background: var(--select-soft); }
 .snapshot-evidence button:hover { border-color: var(--select); }
-.snapshot-evidence__notice { padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
-.snapshot-evidence__notice p { margin-top: var(--space-2); font-size: var(--text-ui); }
 .snapshot-evidence__explorer { display: grid; grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr); align-items: start; gap: var(--space-5); }
 .snapshot-evidence__explorer > ul { display: grid; gap: var(--space-2); max-height: 620px; overflow-y: auto; list-style: none; margin: 0; padding: 0 var(--space-2) 0 0; }
 .snapshot-evidence__explorer li > button { display: grid; gap: var(--space-2); width: 100%; padding: var(--space-4); text-align: left; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
@@ -73,11 +71,23 @@
 .evidence-top.has-aside .snapshot-path ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .evidence-top.has-aside .snapshot-path li:nth-child(2)::after { content: none; }
 .knowledge-page__graph { display: grid; gap: var(--space-3); min-width: 0; scroll-margin-top: var(--space-6); }
-.knowledge-page__graph > h2 { margin: 0; }
-.knowledge-page__graph-note { margin: 0; color: var(--ink-2); font-size: var(--text-sm); }
 .knowledge-page__graph .knowledge-graph { padding: var(--space-4); }
-.knowledge-page__graph .knowledge-graph__body { grid-template-columns: minmax(0, 1fr); }
-.knowledge-page__graph .knowledge-graph__blueprint { position: static; }
 .knowledge-page__graph .knowledge-graph__canvas { height: min(62vh, 560px); min-height: 380px; }
 .knowledge-page__graph .knowledge-detail { min-height: 0; max-height: 360px; }
 @media (max-width: 1100px) { .evidence-top.has-aside { grid-template-columns: minmax(0, 1fr); } }
+
+/* 선택한 예보의 두 칸과 아래 공통 그래프를 각각 테두리 틀로 묶는다. */
+.evidence-col { display: grid; gap: var(--space-5); min-width: 0; padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.evidence-col__head { display: grid; gap: var(--space-1); }
+.evidence-col__head h2 { margin: 0; font-size: var(--text-section); }
+.evidence-col__tag { justify-self: start; padding: 2px var(--space-2); border-radius: 999px; font-size: var(--text-caption); font-weight: 700; }
+.evidence-col--forecast .evidence-col__tag { background: var(--select-soft); color: var(--select-ink); }
+.evidence-col .snapshot-path h3 { margin: 0; font-size: var(--text-subtitle); }
+.snapshot-evidence__summary h3 { margin-block: var(--space-2); font-size: var(--text-section); }
+/* 오른쪽 연결된 근거 칸: 목록과 상세를 나란히, 왼쪽 칸 높이에 맞춰 목록을 스크롤한다. */
+.evidence-linked { align-content: start; }
+.evidence-col__head h2 small { color: var(--ink-2); font-size: var(--text-ui); font-weight: 400; }
+.evidence-linked .snapshot-evidence__explorer { grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.2fr); }
+.forecast-evidence-browser + .knowledge-page__graph { margin-top: var(--space-6); }
+@media (max-width: 1100px) { .evidence-linked .snapshot-evidence__explorer { grid-template-columns: minmax(0, 1fr); } }
+.evidence-linked .snapshot-evidence__explorer > ul { max-height: 700px; }

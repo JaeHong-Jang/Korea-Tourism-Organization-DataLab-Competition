@@ -52,7 +52,7 @@ export function ForecastPath({
   return (
     <section className="snapshot-path" aria-label="이 예보의 계산 경로">
       <div className="snapshot-evidence__heading">
-        <h2>예보가 만들어진 경로</h2>
+        <h3>예보가 만들어진 경로</h3>
         <button
           type="button"
           aria-pressed={selected === "all"}
@@ -61,7 +61,6 @@ export function ForecastPath({
           전체 근거
         </button>
       </div>
-      <p>단계를 누르면 그 숫자에 연결된 근거만 보여요.</p>
       <ol>
         {steps.map((step, index) => (
           <li key={step.id}>

@@ -13,13 +13,6 @@ export function evidenceTitle(evidence: Evidence) {
     : evidence.title;
 }
 
-// 기술용 열 이름을 치환하되 원래의 범위 밖 판단 내용은 유지한다.
-export function readableOodReason(reason: string) {
-  return reason
-    .replace("학습 범위 밖 피처", "학습 자료의 범위를 벗어난 입력")
-    .replace(/\b[a-z_]+\b/g, (key) => featureLabels[key] ?? key);
-}
-
 // 내부 문서 경로와 불리언 표기는 접힌 원문에서 확인할 수 있다.
 export function readableAssumption(note: string) {
   return note

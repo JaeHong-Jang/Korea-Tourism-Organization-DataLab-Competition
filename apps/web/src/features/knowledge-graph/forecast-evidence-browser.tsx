@@ -14,8 +14,8 @@ const loadEvents = (_key: string, signal: AbortSignal) =>
   getSavedEvents(signal);
 
 // 직접 링크로 연 발행본은 행사 목록이나 다른 서비스의 실패와 독립적으로 표시한다.
-// aside는 선택기·요약 오른쪽 칸에 함께 놓을 내용(전체 자료·규칙 그래프)이다.
-export function ForecastEvidenceBrowser({ aside }: { aside?: ReactNode } = {}) {
+// below는 선택한 예보 아래 전체 폭에 놓을 내용(전체 자료·규칙 그래프)이다.
+export function ForecastEvidenceBrowser({ below }: { below?: ReactNode } = {}) {
   const [params, setParams] = useSearchParams();
   const requestedEvent = params.get("eventId");
   const forecastId = params.get("forecastId");
@@ -156,58 +156,66 @@ export function ForecastEvidenceBrowser({ aside }: { aside?: ReactNode } = {}) {
     </>
   );
   return (
-    <section className="forecast-evidence-browser" aria-label="발행 예보 선택">
-      {report && state.status !== "error" && !mismatch ? (
-        <SnapshotEvidence
-          key={report.forecastId}
-          report={report}
-          head={head}
-          aside={aside}
-        />
-      ) : (
-        <EvidenceTop head={head} aside={aside}>
-          {state.status === "error" ? (
-            <ErrorState
-              message={`요청한 예보를 불러오지 못했어요. ${state.error ?? ""}`}
-              action={
-                <button type="button" onClick={state.retry}>
-                  예보 재시도
-                </button>
-              }
-            />
-          ) : mismatch ? (
-            <ErrorState
-              message="주소의 행사와 발행 예보가 일치하지 않아요."
-              action={
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (report)
-                      setParams({
-                        eventId: report.event.id,
-                        forecastId: report.forecastId,
-                      });
-                  }}
-                >
-                  예보에 기록된 행사로 열기
-                </button>
-              }
-            />
-          ) : state.status === "loading" || events.status === "loading" ? (
-            <LoadingState message="발행 당시 예보와 근거를 불러오는 중이에요." />
-          ) : events.status === "error" && !eventId ? null : (
-            <div className="snapshot-evidence__empty">
-              <h2>
-                {eventId ? "아직 발행된 예보가 없어요" : "저장된 행사가 없어요"}
-              </h2>
-              <p>
-                내 행사에서 예보를 발행하면 당시 수치와 근거를 확인할 수 있어요.
-              </p>
-              <Link to="/my">내 행사로 이동 →</Link>
-            </div>
-          )}
-        </EvidenceTop>
-      )}
-    </section>
+    <>
+      <section
+        className="forecast-evidence-browser"
+        aria-label="발행 예보 선택"
+      >
+        {report && state.status !== "error" && !mismatch ? (
+          <SnapshotEvidence
+            key={report.forecastId}
+            report={report}
+            head={head}
+          />
+        ) : (
+          <EvidenceTop head={head}>
+            {state.status === "error" ? (
+              <ErrorState
+                message={`요청한 예보를 불러오지 못했어요. ${state.error ?? ""}`}
+                action={
+                  <button type="button" onClick={state.retry}>
+                    예보 재시도
+                  </button>
+                }
+              />
+            ) : mismatch ? (
+              <ErrorState
+                message="주소의 행사와 발행 예보가 일치하지 않아요."
+                action={
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (report)
+                        setParams({
+                          eventId: report.event.id,
+                          forecastId: report.forecastId,
+                        });
+                    }}
+                  >
+                    예보에 기록된 행사로 열기
+                  </button>
+                }
+              />
+            ) : state.status === "loading" || events.status === "loading" ? (
+              <LoadingState message="발행 당시 예보와 근거를 불러오는 중이에요." />
+            ) : events.status === "error" && !eventId ? null : (
+              <div className="snapshot-evidence__empty">
+                <h2>
+                  {eventId
+                    ? "아직 발행된 예보가 없어요"
+                    : "저장된 행사가 없어요"}
+                </h2>
+                <p>
+                  내 행사에서 예보를 발행하면 당시 수치와 근거를 확인할 수
+                  있어요.
+                </p>
+                <Link to="/my">내 행사로 이동 →</Link>
+              </div>
+            )}
+          </EvidenceTop>
+        )}
+      </section>
+      {below}
+    </>
   );
 }

@@ -2,7 +2,7 @@
 import type { ForecastReport } from "@crowdcast/contracts/types";
 import { type ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
-import { evidenceTitle, readableOodReason } from "./evidence-labels";
+import { evidenceTitle } from "./evidence-labels";
 import {
   type EvidenceStage,
   evidenceAtStage,
@@ -14,7 +14,7 @@ import {
 import { ForecastPath } from "./forecast-path";
 import { SnapshotEvidenceDetail } from "./snapshot-evidence-detail";
 
-// 위쪽은 선택기·요약·경로(왼쪽)와 옆 칸(오른쪽)으로 나누고, 근거 목록은 아래 전체 폭에 둔다.
+// 위쪽은 "이 예보의 근거"(왼쪽)와 옆 칸(오른쪽, 이 예보에 연결된 근거)으로 나눈다.
 export function EvidenceTop({
   head,
   aside,
@@ -26,10 +26,17 @@ export function EvidenceTop({
 }) {
   return (
     <div className={aside ? "evidence-top has-aside" : "evidence-top"}>
-      <div className="evidence-top__main">
+      <section
+        className="evidence-top__main evidence-col evidence-col--forecast"
+        aria-labelledby="forecast-evidence-title"
+      >
+        <header className="evidence-col__head">
+          <span className="evidence-col__tag">선택한 예보</span>
+          <h2 id="forecast-evidence-title">이 예보의 근거</h2>
+        </header>
         {head}
         {children}
-      </div>
+      </section>
       {aside}
     </div>
   );
@@ -39,11 +46,9 @@ export function EvidenceTop({
 export function SnapshotEvidence({
   report,
   head,
-  aside,
 }: {
   report: ForecastReport;
   head?: ReactNode;
-  aside?: ReactNode;
 }) {
   const [stage, setStage] = useState<EvidenceStage>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -55,65 +60,17 @@ export function SnapshotEvidence({
   const items = evidence.filter((item) => evidenceAtStage(report, item, stage));
   const selected = items.find((item) => item.id === selectedId) ?? items[0];
   const { forecast, event } = report;
-  const missingAssumptions = forecast.peakConcurrent.assumptionIds.filter(
-    (id) => !forecast.assumptions.some((item) => item.id === id),
-  );
-  return (
-    <article className="snapshot-evidence" aria-label="선택한 발행 예보의 근거">
-      <EvidenceTop head={head} aside={aside}>
-        <header className="snapshot-evidence__summary">
-          <div>
-            <span className="snapshot-evidence__eyebrow">발행 당시 기록</span>
-            <h2>{event.name}</h2>
-            <p>
-              {event.startsAt.slice(0, 10)}–{event.endsAt.slice(0, 10)} ·{" "}
-              {event.venue.name} · {event.type}
-            </p>
-            <p className="snapshot-evidence__meta">
-              {publishedLabel(report.publishedAt)} 발행 · 기준일 {forecast.asOf}{" "}
-              · 모델 {forecast.modelVersion}
-            </p>
-          </div>
-          <nav className="snapshot-evidence__links" aria-label="관련 화면">
-            <Link to={`/f/${encodeURIComponent(report.forecastId)}`}>
-              예보서 →
-            </Link>
-          </nav>
-        </header>
-        <ForecastPath
-          report={report}
-          selected={stage}
-          onSelect={(value) => {
-            setStage(value);
-            setSelectedId(null);
-          }}
-        />
-        {(forecast.ood ||
-          forecast.oodReasons.length > 0 ||
-          missingAssumptions.length > 0) && (
-          <section
-            className="snapshot-evidence__notice"
-            aria-label="이 예보의 한계"
-          >
-            <h3>확인할 점</h3>
-            {forecast.ood && <p>학습 범위 밖 입력이 포함되어 있어요.</p>}
-            {forecast.oodReasons.map((reason) => (
-              <p key={reason}>{readableOodReason(reason)}</p>
-            ))}
-            {missingAssumptions.length > 0 && (
-              <p>
-                연결된 환산 가정 중 상세 값이 없는 항목이{" "}
-                {missingAssumptions.length}개 있어요.
-              </p>
-            )}
-          </section>
-        )}
-      </EvidenceTop>
-      <div className="snapshot-evidence__heading">
-        <h2>
-          연결된 근거 <small>{items.length}개</small>
+  const linked = (
+    <section
+      className="evidence-col evidence-col--forecast evidence-linked"
+      aria-labelledby="linked-evidence-title"
+    >
+      <header className="evidence-col__head">
+        <span className="evidence-col__tag">선택한 예보</span>
+        <h2 id="linked-evidence-title">
+          이 예보에 연결된 근거 <small>{items.length}개</small>
         </h2>
-      </div>
+      </header>
       {items.length ? (
         <div className="snapshot-evidence__explorer">
           <ul aria-label="발행 예보 근거 목록">
@@ -139,6 +96,39 @@ export function SnapshotEvidence({
       ) : (
         <p role="status">이 단계에 연결된 근거 기록이 없어요.</p>
       )}
+    </section>
+  );
+  return (
+    <article className="snapshot-evidence" aria-label="선택한 발행 예보의 근거">
+      <EvidenceTop head={head} aside={linked}>
+        <header className="snapshot-evidence__summary">
+          <div>
+            <span className="snapshot-evidence__eyebrow">발행 당시 기록</span>
+            <h3>{event.name}</h3>
+            <p>
+              {event.startsAt.slice(0, 10)}–{event.endsAt.slice(0, 10)} ·{" "}
+              {event.venue.name} · {event.type}
+            </p>
+            <p className="snapshot-evidence__meta">
+              {publishedLabel(report.publishedAt)} 발행 · 기준일 {forecast.asOf}{" "}
+              · 모델 {forecast.modelVersion}
+            </p>
+          </div>
+          <nav className="snapshot-evidence__links" aria-label="관련 화면">
+            <Link to={`/f/${encodeURIComponent(report.forecastId)}`}>
+              예보서 →
+            </Link>
+          </nav>
+        </header>
+        <ForecastPath
+          report={report}
+          selected={stage}
+          onSelect={(value) => {
+            setStage(value);
+            setSelectedId(null);
+          }}
+        />
+      </EvidenceTop>
     </article>
   );
 }

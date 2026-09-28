@@ -1,4 +1,4 @@
-// 선택한 예보의 근거(왼쪽)와 전체 자료·규칙 연결 3D 그래프(오른쪽)를 한 화면 위쪽에 나란히 둔다.
+// 선택한 예보의 근거(왼쪽)와 연결된 근거(오른쪽)를 위에 나란히, 전체 자료·규칙 연결 3D 그래프는 아래 전체 폭에 둔다.
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHeading } from "../components/common/page-heading";
@@ -18,19 +18,17 @@ export function KnowledgeGraphPage() {
   }, [jumpToGraph]);
   return (
     <div className="page-wrap regular-page knowledge-page">
-      <PageHeading
-        eyebrow="근거를 따라가요"
-        title="예보 근거"
-        description="예보 하나의 숫자가 어떤 자료·가정·규칙에서 나왔는지 따라가요."
-      />
+      <PageHeading eyebrow="근거를 따라가요" title="예보 근거" />
       <ForecastEvidenceBrowser
-        aside={
+        below={
           <section
             id={GRAPH_ID}
-            className="knowledge-page__graph"
+            className="knowledge-page__graph evidence-col evidence-col--master"
             aria-labelledby="knowledge-graph-title"
           >
-            <h2 id="knowledge-graph-title">전체 자료·규칙 연결</h2>
+            <header className="evidence-col__head">
+              <h2 id="knowledge-graph-title">전체 자료·규칙 연결</h2>
+            </header>
             <MasterGraph />
           </section>
         }

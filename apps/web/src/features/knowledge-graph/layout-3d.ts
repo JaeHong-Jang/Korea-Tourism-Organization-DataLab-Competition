@@ -4,11 +4,13 @@ import { whaleCrop, whaleSilhouette } from "./whale-silhouette";
 
 export type Point3 = [number, number, number];
 
-// 모양틀 한 칸의 화면 크기와 몸통 두께(가장자리에서 멀수록 앞뒤로 부푼다).
+// 모양틀 한 칸의 화면 크기와 몸통 반두께(가운데가 가장 두껍고 가장자리로 갈수록 둥글게 얇아진다).
 const CELL = 10;
-const THICKNESS = 26;
+const THICKNESS = 110;
+// 물결은 몸통보다 납작하게 둔다.
+const WAVE_THICKNESS = 0.35;
 // 테두리 칸은 안쪽 칸보다 이만큼 더 자주 뽑아, 노드가 적어도 고래 윤곽이 먼저 읽히게 한다.
-const EDGE_WEIGHT = 14;
+const EDGE_WEIGHT = 4;
 const STEPS = [
   [1, 0],
   [-1, 0],
@@ -45,7 +47,13 @@ function hilbertIndex(size: number, x: number, y: number) {
   return index;
 }
 
-type Cell = { x: number; y: number; depth: number; order: number };
+type Cell = {
+  x: number;
+  y: number;
+  depth: number;
+  order: number;
+  wave: boolean;
+};
 
 // 모양틀의 채워진 칸마다 가장자리까지의 거리(두께 계산용)와 곡선 순서를 구한다.
 function silhouetteCells(): Cell[] {
@@ -77,7 +85,13 @@ function silhouetteCells(): Cell[] {
   return [...depth]
     .map(([key, value]) => {
       const [x, y] = key.split(",").map(Number);
-      return { x, y, depth: value, order: hilbertIndex(size, x, y) };
+      return {
+        x,
+        y,
+        depth: value,
+        order: hilbertIndex(size, x, y),
+        wave: rows[y][x] === "~",
+      };
     })
     .sort((a, b) => a.order - b.order);
 }
@@ -126,26 +140,30 @@ export function layoutGraph3d(data: GraphData) {
     const goal = ((index + 0.5) * total) / nodes.length;
     while (acc < goal && cursor < cells.length - 1) acc += weights[++cursor];
     const cell = cells[cursor];
-    // 칸 안에서 조금 흔들어 격자 무늬를 지우고, 앞뒤는 몸 두께 안에서 번갈아 놓는다.
-    const bulge = Math.sqrt(cell.depth / maxDepth) * THICKNESS;
+    // 칸 안에서 조금 흔들어 격자 무늬를 지운다. 앞뒤 높이는 가장자리까지 거리로 부풀린 둥근 몸(원 단면)을 따른다.
+    const inner = 1 - cell.depth / maxDepth;
+    const bulge =
+      Math.sqrt(1 - inner * inner) *
+      THICKNESS *
+      (cell.wave ? WAVE_THICKNESS : 1);
     const side = index % 2 ? 1 : -1;
     result.set(node.id, [
       (cell.x - width / 2 + (random() - 0.5) * 0.8) * CELL,
       (height / 2 - cell.y + (random() - 0.5) * 0.8) * CELL,
-      side * bulge * (0.35 + random() * 0.65),
+      side * bulge * (0.75 + random() * 0.25),
     ]);
   });
   return result;
 }
 
-// 노드 배치와 같은 좌표계에서 원본 로고 한 장이 놓일 중심과 크기(몸 두께보다 조금 뒤에 둔다).
+// 노드 배치와 같은 좌표계에서 원본 로고 한 장이 놓일 중심과 크기(몸 한가운데 단면에 둔다).
 export function whaleBackdrop() {
   const width = Math.max(...whaleSilhouette.map((row) => row.length));
   const height = whaleSilhouette.length;
   const center: Point3 = [
     (whaleCrop.width / 2 - 0.5 - whaleCrop.left - width / 2) * CELL,
     (height / 2 - (whaleCrop.height / 2 - 0.5 - whaleCrop.top)) * CELL,
-    -THICKNESS - 12,
+    0,
   ];
   return { center, size: [whaleCrop.width * CELL, whaleCrop.height * CELL] };
 }

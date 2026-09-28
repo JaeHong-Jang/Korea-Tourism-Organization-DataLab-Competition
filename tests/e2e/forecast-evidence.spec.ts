@@ -68,20 +68,20 @@ test("모델 검증·예보 근거·운영의 역할을 분리한다", async ({ 
   await expect(
     page.getByRole("article", { name: "선택한 발행 예보의 근거" }),
   ).toBeVisible();
-  // 전체 자료·규칙 연결 그래프는 선택한 예보 근거 오른쪽, 첫 화면 위쪽에 바로 보인다.
+  // 연결된 근거는 선택한 예보 근거 오른쪽에, 전체 자료·규칙 연결 그래프는 그 아래 전체 폭에 놓인다.
   const graphSection = page.getByRole("region", {
     name: "전체 자료·규칙 연결",
   });
-  await expect(graphSection).toBeInViewport();
   expect(
     await page.evaluate(() => {
       const summary = document.querySelector(".snapshot-evidence__summary");
+      const linked = document.querySelector(".evidence-linked");
       const graph = document.querySelector(".knowledge-page__graph");
-      return Boolean(
-        summary &&
-          graph &&
-          graph.getBoundingClientRect().left >=
-            summary.getBoundingClientRect().right,
+      if (!summary || !linked || !graph) return false;
+      const box = summary.getBoundingClientRect();
+      return (
+        linked.getBoundingClientRect().left >= box.right &&
+        graph.getBoundingClientRect().top >= box.bottom
       );
     }),
   ).toBe(true);
