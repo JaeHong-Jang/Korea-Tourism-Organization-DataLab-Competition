@@ -270,6 +270,49 @@
 .validation-raw-notes__summary { color: var(--link); cursor: pointer; }
 .validation-raw-notes .validation-notes { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface-sunken); }
 
+/* 새 signed 순증 연구와 현재 발행 모델을 분리해 성적·상태·약점을 함께 읽게 한다. */
+.research-validation { display: grid; gap: var(--space-6); margin-bottom: var(--space-10); padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.research-validation__header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-6); align-items: start; }
+.research-validation__header h2, .research-validation__header p, .research-year-card h3, .research-year-card p, .research-risk h3, .research-risk p { margin: 0; }
+.research-validation__header > div:first-child { display: grid; gap: var(--space-2); max-width: 72ch; }
+.research-status { justify-self: start; padding: var(--space-1) var(--space-3); border: 1px solid var(--warn); border-radius: 999px; color: var(--ink); font-size: var(--text-caption); font-weight: 700; }
+.research-validation__snapshot { display: grid; grid-template-columns: repeat(2, minmax(140px, 1fr)); gap: var(--space-2); margin: 0; }
+.research-validation__snapshot > div { padding: var(--space-3); border-radius: var(--radius-input); background: var(--surface-sunken); }
+.research-validation__snapshot dt { color: var(--ink-2); font-size: var(--text-caption); }
+.research-validation__snapshot dd { margin: var(--space-1) 0 0; font-size: var(--text-subtitle); font-weight: 800; font-variant-numeric: tabular-nums; }
+.research-year-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.research-year-card { display: grid; gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.research-year-card > header { display: flex; justify-content: space-between; gap: var(--space-4); align-items: end; }
+.research-year-card > header span, .research-year-card > header p { color: var(--ink-2); font-size: var(--text-caption); }
+.research-comparison { display: grid; gap: var(--space-3); }
+.research-comparison__caption { color: var(--ink-2); font-size: var(--text-caption); }
+.research-comparison__row { display: grid; grid-template-columns: minmax(100px, 128px) minmax(120px, 1fr) 86px; gap: var(--space-3); align-items: center; font-size: var(--text-sm); }
+.research-comparison__row strong { text-align: right; font-variant-numeric: tabular-nums; }
+.research-comparison__track { height: 10px; overflow: hidden; border-radius: 999px; background: var(--surface); }
+.research-comparison__track > span { display: block; height: 100%; border-radius: inherit; background: var(--ink-3); }
+.research-comparison__track > span.is-selected { background: var(--brand); }
+.research-year-card__interval { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); color: var(--ink-2); font-size: var(--text-sm); }
+.research-year-card__interval strong { color: var(--ink); }
+.research-risk { display: grid; grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr); gap: var(--space-5); padding: var(--space-5); border: 1px solid var(--warn); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.research-risk > div:first-child { display: grid; align-content: start; gap: var(--space-2); }
+.research-risk > div:first-child > span { color: var(--ink-2); font-size: var(--text-caption); font-weight: 700; }
+.research-risk__items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.research-risk__items article { padding: var(--space-4); border-radius: var(--radius-input); background: var(--surface); }
+.research-risk__items article > span { float: right; color: var(--ink-2); font-size: var(--text-caption); }
+.research-risk__items article p { margin-top: var(--space-2); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.research-risk__items article small { display: block; margin-top: var(--space-2); color: var(--ink-2); }
+.research-method { border-top: 1px solid var(--line); padding-top: var(--space-4); }
+.research-method > summary { cursor: pointer; font-weight: 700; }
+.research-method > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+.research-method h3 { margin: 0; font-size: var(--text-ui); }
+.research-method ul { margin-bottom: 0; padding-left: var(--space-5); }
+.research-method p { grid-column: 1 / -1; margin: 0; color: var(--ink-2); font-size: var(--text-sm); }
+.validation-current { display: grid; gap: var(--space-5); margin-bottom: var(--space-6); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.validation-current > header { display: grid; gap: var(--space-1); }
+.validation-current > header span { color: var(--ink-2); font-size: var(--text-caption); font-weight: 700; }
+.validation-current > header h2, .validation-current > header p { margin: 0; }
+.validation-current > header p { max-width: 72ch; color: var(--ink-2); }
+
 /* 인사이트 원문과 복사 행동을 표본·기간 아래에 배치한다. */
 .insight-results { display: grid; gap: var(--space-4); margin-top: var(--space-5); }
 .insight-result { display: grid; justify-items: start; gap: var(--space-2); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-sunken); }
@@ -281,8 +324,8 @@
 .insight-result--state .pet-avatar { margin: 0; }
 .feature-panel.insights-main .insight-result h3, .feature-panel.insights-main .insight-result p { margin: 0; }
 .insight-result small { color: var(--ink-2); }
-@media (max-width: 1024px) { .validation-layout > .feature-panel, .insights-layout > .feature-panel { grid-column: span 12; } .validation-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .validation-metrics, .validation-rates, .validation-model-list, .validation-quadrants { grid-template-columns: 1fr; } .validation-datasets li { grid-template-columns: minmax(0, 1fr) auto; } .validation-dataset-track { grid-column: 1 / -1; grid-row: 2; } }
+@media (max-width: 1024px) { .validation-layout > .feature-panel, .insights-layout > .feature-panel { grid-column: span 12; } .validation-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .research-validation__header, .research-risk { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .validation-metrics, .validation-rates, .validation-model-list, .validation-quadrants, .research-year-grid, .research-risk__items, .research-method > div, .research-validation__snapshot { grid-template-columns: 1fr; } .validation-datasets li { grid-template-columns: minmax(0, 1fr) auto; } .validation-dataset-track { grid-column: 1 / -1; grid-row: 2; } .research-validation { padding: var(--space-4); } .research-comparison__row { grid-template-columns: 1fr 72px; } .research-comparison__track { grid-column: 1 / -1; grid-row: 2; } }
 
 /* 행사와 운영 화면은 표 영역을 넓게 두고 세부 상태를 옆에 둔다. */
 .table-layout, .ops-layout { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-8); }

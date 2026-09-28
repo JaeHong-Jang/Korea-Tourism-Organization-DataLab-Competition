@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { PageHeading } from "../components/common/page-heading";
 import { ForecastEvidenceBrowser } from "../features/knowledge-graph/forecast-evidence-browser";
 import { MasterGraph } from "../features/knowledge-graph/master-graph";
+import { ResearchModelEvidence } from "../features/knowledge-graph/research-model-evidence";
 import "../styles/snapshot-evidence.css";
 
 // 보기 전환에도 행사·발행 식별자를 보존해 같은 예보로 돌아온다.
@@ -21,7 +22,7 @@ export function KnowledgeGraphPage() {
         description={
           master
             ? "예보 시스템의 공통 자료·모델·규칙이 어떻게 연결되는지 살펴봐요."
-            : "행사와 발행 시점을 고르고, 그 예보의 수치가 어떤 자료·가정·규칙에 연결되는지 확인해요."
+            : "연구 모델의 검증 범위와 발행 예보의 자료·가정·규칙을 나누어 확인해요."
         }
       />
       {master && (
@@ -31,7 +32,14 @@ export function KnowledgeGraphPage() {
           </Link>
         </nav>
       )}
-      {master ? <MasterGraph /> : <ForecastEvidenceBrowser />}
+      {master ? (
+        <MasterGraph />
+      ) : (
+        <>
+          <ResearchModelEvidence />
+          <ForecastEvidenceBrowser />
+        </>
+      )}
       {!master && (
         <aside className="evidence-explore" aria-label="전체 근거 상세 탐색">
           <div>

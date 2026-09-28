@@ -6,6 +6,7 @@ import { ModelDetails } from "../features/validation/model-details";
 import { PerformanceMetrics } from "../features/validation/performance-metrics";
 import { PredictionScatter } from "../features/validation/prediction-scatter";
 import { PreregistrationBoard } from "../features/validation/preregistration-board";
+import { ResearchValidationSummary } from "../features/validation/research-validation-summary";
 import { ValidationStory } from "../features/validation/validation-story";
 import { getBacktest, getModelCard, getScores } from "../lib/validation/api";
 import { useContract } from "../lib/validation/use-contract";
@@ -22,20 +23,37 @@ export function ValidationPage() {
       <PageHeading
         eyebrow="과거 예측 성능을 확인해요"
         title="모델 검증"
-        description="지금 쓰는 모델이 학습에 넣지 않은 행사에서 일평균을 얼마나 맞췄는지부터 읽습니다."
+        description="새 1,804건 연구모델과 현재 발행 모델의 기록을 구분해 확인합니다."
       />
-      <ValidationStory state={backtest} />
+      <ResearchValidationSummary />
+      <section
+        className="validation-current"
+        aria-labelledby="current-model-title"
+      >
+        <header>
+          <span>현재 발행 모델 기록</span>
+          <h2 id="current-model-title">발행 예보의 기존 백테스트</h2>
+          <p>
+            아래 API 기록은 위 연구 후보와 다른 모델입니다. 새 연구 결과를 아직
+            발행 예보에 적용하지 않았습니다.
+          </p>
+        </header>
+        <ValidationStory state={backtest} />
+      </section>
       <div className="validation-layout">
         <FeaturePanel
           id="M6-F2"
-          title="예측과 실측"
+          title="현재 발행 모델: 예측과 실측"
           description="점은 일평균입니다. 색은 구간 안에 들어왔는지이고, 점을 누르면 행사 이름과 구간이 남습니다."
           className="validation-chart"
         >
           <PredictionScatter state={backtest} />
         </FeaturePanel>
       </div>
-      <div className="validation-folds">
+      <section
+        className="validation-folds"
+        aria-label="현재 발행 모델 상세 기록"
+      >
         <details className="validation-fold">
           <summary>어떻게 나눴나</summary>
           <div className="validation-content">
@@ -90,7 +108,7 @@ export function ValidationPage() {
             <PerformanceMetrics state={backtest} />
           </div>
         </details>
-      </div>
+      </section>
     </div>
   );
 }
