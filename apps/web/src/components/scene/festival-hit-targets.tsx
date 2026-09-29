@@ -76,6 +76,8 @@ export function FestivalHitTargets({
       }}
       onClick={(event) => {
         event.stopPropagation();
+        // 지도를 끈 뒤 놓은 포인터는 행사 선택으로 처리하지 않는다.
+        if (event.delta > 2) return;
         const festival = placed[event.instanceId ?? -1]?.festival;
         if (festival) onPick(festival.eventId);
       }}

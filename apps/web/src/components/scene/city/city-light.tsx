@@ -27,7 +27,7 @@ export function CityLight({
   const night = sky === "night";
   const dusk = sky === "dusk";
   const { altitude, azimuth } = SunCalc.getPosition(at, lat, lng);
-  const height = Math.max(0.25, Math.sin(altitude));
+  const height = Math.max(sky === "day" ? 0.65 : 0.25, Math.sin(altitude));
   const position: [number, number, number] = night
     ? [CITY_MOON[0] * 0.6, 900, CITY_MOON[2] * 0.6]
     : [-Math.sin(azimuth) * 1100, height * 1300, Math.cos(azimuth) * 1100];

@@ -3,6 +3,11 @@
 .city-card__photo { flex: none; width: 64px; height: 64px; border-radius: var(--radius-input); object-fit: cover; }
 .city-card__body { display: grid; gap: 2px; min-width: 0; }
 .city-card__body strong { overflow: hidden; font-size: var(--text-sm); font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+/* 행사 이름만 클릭 가능한 버튼으로 열어 지도 조작과 예보 요청을 구분한다. */
+.city-card__forecast { display: grid; gap: var(--space-1); min-width: 0; min-height: 44px; padding: var(--space-1) 0; border: 0; border-radius: var(--radius-input); background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; pointer-events: auto; }
+.city-card__forecast > span { color: var(--link); font-size: var(--text-caption); }
+.city-card__forecast:hover strong { color: var(--link); text-decoration: underline; text-underline-offset: 3px; }
+.city-card__forecast:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
 .city-card__meta { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--ink-2); font-size: var(--text-caption); white-space: nowrap; }
 .city-card__note { color: var(--ink-2); font-size: 11px; }
 .city-pin { display: block; width: 14px; height: 14px; border: 3px solid var(--surface); border-radius: 50%; background: var(--select); box-shadow: var(--select-glow); }

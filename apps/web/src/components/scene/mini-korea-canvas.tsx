@@ -1,26 +1,23 @@
-// 성남 방식의 실제 전국 지도를 받침판 없이 하나의 캔버스에서 확대·이동한다.
+// 시군구 경계와 해 테마를 React Three Fiber 전국 장면으로 연결한다.
+
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { Canvas } from "@react-three/fiber";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelectionStore } from "../../lib/selection-store";
 import { useTheme } from "../../lib/theme/theme-provider";
+import { Board } from "./board";
+import { CameraRig } from "./camera-rig";
+import { CityScene, type CityStatus } from "./city/city-scene";
 import { DataBorders } from "./data-borders";
+import { Fireworks } from "./effects/fireworks";
+import { FestivalLayer } from "./festival-layer";
 import { LandTiles } from "./land-tiles";
-import {
-  groupFestivalPins,
-  MapFestivalPins,
-} from "./national-map/festival-pins";
-import { NationalMapLayer } from "./national-map/map-layer";
-import { NationalCamera } from "./national-map/national-camera";
-import { MapPinPositions } from "./national-map/pin-positions";
-import type {
-  MapCommand,
-  MapStatus,
-  MapViewport,
-  NavigationMode,
-} from "./national-map/types";
-import { projectKorea } from "./projection";
+import { WhaleBots } from "./motion/whale-bots";
+import { NameTags } from "./name-tag";
+import { NationalScenery } from "./national-scenery";
+import { ForecastOffice } from "./office/forecast-office";
 import { qualityDpr, sceneColor } from "./quality";
+import { nationalDescription } from "./scene-description";
 import { FrameSignal, QualityControl } from "./scene-diagnostics";
 import {
   hasWebGl2,
@@ -28,73 +25,51 @@ import {
   useScenePreferences,
   useSceneQuality,
 } from "./scene-options";
+import { SkyScene } from "./sky/sky-scene";
+import { SunLight } from "./sun-light";
 import { useLandModel } from "./use-land-model";
 import { type SceneScale, useScene } from "./use-scene";
+import { weatherEffects } from "./weather/state";
+import { useSceneWeather } from "./weather/use-scene-weather";
+import { WeatherScene } from "./weather/weather-scene";
+import { WetHighlights } from "./weather/wet-highlights";
+import "./scene-theme.css";
 
 const EMPTY_TOTALS = new Map<string, number>();
-const INITIAL_COMMAND: MapCommand = { id: 0, kind: "overview" };
 
-// 예보 선택·지역 경계·지도 로딩 상태를 같은 화면에 연결하고 장면을 교체하지 않는다.
+// 경계 로딩과 실패를 분리하고 선택 코드를 시도 필터에 연결한다.
 export function MiniKoreaCanvas({
   festivals = [],
   onScaleChange,
   dataMode = false,
   totals = EMPTY_TOTALS,
-  command = INITIAL_COMMAND,
-  navigationMode = "pan",
-  onMapStatus,
+  overviewRevision = 0,
+  homeward = false,
 }: {
   festivals?: FestivalSummary[];
   onScaleChange?: (scale: SceneScale) => void;
   dataMode?: boolean;
   totals?: Map<string, number>;
-  command?: MapCommand;
-  navigationMode?: NavigationMode;
-  onMapStatus?: (status: MapStatus) => void;
+  overviewRevision?: number;
+  // 동네 3D에서 귀가 인파(가장 가까운 역까지 걷는 길) 보기.
+  homeward?: boolean;
 }) {
   const [regressFactor, setRegressFactor] = useState(1);
+  const officeLabels = useRef<HTMLDivElement>(null);
   const [showLand, setShowLand] = useState(true);
-  const [view, setView] = useState<MapViewport | null>(null);
-  const [mapStatus, setMapStatus] = useState<MapStatus | null>(null);
-  const [navigating, setNavigating] = useState(false);
-  const elements = useRef(new Map<string, HTMLButtonElement>());
+  const [cityStatus, setCityStatus] = useState<CityStatus | null>(null);
   const diagnostics = useMemo(readSceneOptions, []);
-  const { mode, quality, change } = useSceneQuality(diagnostics);
-  const scene = useScene(festivals, quality, onScaleChange, null);
-  const [webgl] = useState(hasWebGl2);
-  const { model, error } = useLandModel(webgl, false, totals, true);
-  const { visible, reducedMotion } = useScenePreferences();
-  const still = reducedMotion || !diagnostics.motion;
-  const selectedId = useSelectionStore((state) => state.selectedFestivalId);
-  const selectFestival = useSelectionStore((state) => state.selectFestival);
-  const { sky } = useTheme();
-  const bounds = model?.bounds;
-  const center = useMemo<[number, number]>(
-    () =>
-      bounds
-        ? [(bounds.minX + bounds.maxX) / 2, (bounds.minZ + bounds.maxZ) / 2]
-        : [0, 0],
-    [bounds],
-  );
-  const selected = useMemo<[number, number] | null>(() => {
-    const festival = festivals.find((item) => item.eventId === selectedId);
-    return festival ? projectKorea(festival.lng, festival.lat) : null;
-  }, [festivals, selectedId]);
-  const pins = useMemo(
-    () => groupFestivalPins(festivals, selectedId, view, window.innerWidth),
-    [festivals, selectedId, view],
+  const { mode, quality: activeQuality, change } = useSceneQuality(diagnostics);
+  const t435 = diagnostics.t435;
+  const scene = useScene(
+    festivals,
+    activeQuality,
+    onScaleChange,
+    // 데이터 모드에서도 땅을 높이지 않으므로 행사 모형도 제자리에 둔다.
+    null,
   );
 
-  // 로딩 안내는 도구 패널 대신 지도 아래 작은 상태 문구로 표시한다.
-  const reportStatus = useCallback(
-    (status: MapStatus) => {
-      setMapStatus(status);
-      onMapStatus?.(status);
-    },
-    [onMapStatus],
-  );
-
-  // 진단용 지면 토글을 유지하되 일반 화면에는 정사각 받침을 생성하지 않는다.
+  // 명시적 진단 모드에서만 타일 재마운트를 허용해 GPU 해제량을 확인한다.
   useEffect(() => {
     if (!diagnostics.debug) return;
     window.__crowdcastToggleLand = setShowLand;
@@ -102,9 +77,49 @@ export function MiniKoreaCanvas({
       delete window.__crowdcastToggleLand;
     };
   }, [diagnostics.debug]);
-  useEffect(() => {
-    document.documentElement.dataset.sceneSky = sky;
-  }, [sky]);
+  const [webgl] = useState(hasWebGl2);
+  // 데이터 모드에서도 땅·풍경은 평소 모습 그대로 두고 값은 시군구 테두리 색으로만 보인다.
+  const { model, error } = useLandModel(webgl, false, totals);
+  const { visible, reducedMotion } = useScenePreferences();
+  const picked = useSelectionStore((state) => state.selectedSigunguCode);
+  const selectedId = useSelectionStore((state) => state.selectedFestivalId);
+  const { at, sky } = useTheme();
+  const weather = useSceneWeather(festivals, selectedId, at);
+  const selectFestival = useSelectionStore((state) => state.selectFestival);
+  const selectSigungu = useSelectionStore((state) => state.selectSigungu);
+  // 행사를 고르면 그 동네를 실제 건물·길이 있는 3D 미니어처로 펼친다(sceneCity=0이면 전국 판만).
+  const cityFestival =
+    diagnostics.city && selectedId
+      ? (festivals.find((festival) => festival.eventId === selectedId) ?? null)
+      : null;
+
+  // 나무판과 조명 범위는 땅 경계에 여백 90km를 더한 크기로 맞춘다.
+  const bounds = model?.bounds;
+  const center: [number, number] = bounds
+    ? [(bounds.minX + bounds.maxX) / 2, (bounds.minZ + bounds.maxZ) / 2]
+    : [0, 0];
+  const focusPoint = useMemo(() => {
+    const selectedEvent = scene.placed.find(
+      ({ festival }) => festival.eventId === selectedId,
+    );
+    if (selectedEvent)
+      return [selectedEvent.x, selectedEvent.z] as [number, number];
+    if (!diagnostics.focusCode) return null;
+    const event = scene.placed.find(
+      ({ festival }) => festival.sigunguCode === diagnostics.focusCode,
+    );
+    return event
+      ? ([event.x, event.z] as [number, number])
+      : (model?.centers.get(diagnostics.focusCode) ?? null);
+  }, [selectedId, diagnostics.focusCode, scene.placed, model]);
+  const width = bounds ? bounds.maxX - bounds.minX + 90 : 600;
+  const depth = bounds ? bounds.maxZ - bounds.minZ + 90 : 900;
+
+  // 지도 클릭은 지역 선택과 카메라 이동만 수행하고 행사 필터는 바꾸지 않는다.
+  const onPick = (code: string) => {
+    if (selectedId) return;
+    selectSigungu(code);
+  };
 
   if (!webgl)
     return <p role="status">3D를 쓸 수 없는 환경이에요 — 목록으로 보기</p>;
@@ -114,118 +129,199 @@ export function MiniKoreaCanvas({
     );
   if (!model)
     return <p role="status">미니 대한민국 지도를 불러오는 중이에요.</p>;
-  if (!model.tiles.length)
+  if (model.tiles.length === 0)
     return (
       <p role="status">
         표시할 시군구 경계가 없어요. 목록에서 행사를 살펴보세요.
       </p>
     );
+
   return (
     <section
       style={{ position: "absolute", inset: 0 }}
-      aria-label="실제 지도를 확대할 수 있는 3D 미니 대한민국"
+      aria-label="시군구를 선택할 수 있는 3D 미니 대한민국"
       data-focus-id={selectedId ?? ""}
-      data-map-mode="continuous"
-      data-map-base="no-board"
+      data-city-mode={cityFestival ? "true" : "false"}
+      onDoubleClick={(event) => {
+        // 이름표·버튼을 제외한 지도 배경의 더블클릭만 전국 보기로 돌아간다.
+        if (!(event.target instanceof HTMLCanvasElement)) return;
+        selectFestival(null);
+        selectSigungu(null);
+      }}
     >
+      {cityFestival && cityStatus !== "ready" && (
+        <p className="scene-city-status" role="status">
+          {cityStatus === "error"
+            ? "이 동네 지도를 불러오지 못했어요. 전국 보기로 돌아가 주세요."
+            : `${cityFestival.name} 주변 동네를 펼치는 중이에요.`}
+        </p>
+      )}
+      <p className="sr-only" aria-live="polite">
+        {nationalDescription(
+          scene.placed.map(({ festival }) => festival),
+          selectedId,
+        )}
+      </p>
       <Canvas
-        orthographic
-        dpr={qualityDpr(quality) * regressFactor}
-        frameloop={!visible ? "never" : "demand"}
+        shadows={activeQuality === "high"}
+        dpr={qualityDpr(activeQuality) * regressFactor}
+        frameloop={visible ? "always" : "never"}
         camera={{
-          position: [center[0] + 430, 809.5, center[1] + 550],
-          near: 0.1,
+          position: [center[0] + 430, 590, center[1] + 810],
+          fov: 44,
+          near: 10,
           far: 5000,
-          zoom: 1,
         }}
         gl={{
           antialias: true,
           alpha: false,
-          stencil: true,
           powerPreference: "high-performance",
         }}
-        onCreated={({ gl }) => {
-          gl.setClearColor(sceneColor("sea"));
-          gl.toneMappingExposure = 1.08;
-        }}
+        onCreated={({ gl }) => gl.setClearColor(sceneColor("sky-day"))}
       >
-        <color
-          attach="background"
-          args={[sceneColor(sky === "night" ? "sky-night-low" : "sea")]}
-        />
-        <hemisphereLight
-          intensity={sky === "night" ? 0.8 : 2}
-          color={sceneColor("city-roof")}
-          groundColor={sceneColor("land-edge")}
-        />
-        <directionalLight
-          position={[center[0] - 350, 1300, center[1] + 600]}
-          intensity={sky === "night" ? 0.9 : 2.1}
-        />
         <QualityControl
-          quality={quality}
+          quality={activeQuality}
           fixed={mode !== "auto"}
           diagnostic={diagnostics.debug}
           onQualityChange={change}
           onRegressFactor={setRegressFactor}
         />
-        {showLand && (
-          <LandTiles model={model} onPick={() => {}} interactive={false} />
+        {cityFestival ? (
+          <CityScene
+            key={cityFestival.eventId}
+            festival={cityFestival}
+            quality={activeQuality}
+            reducedMotion={reducedMotion}
+            onLeave={() => {
+              selectFestival(null);
+              selectSigungu(null);
+            }}
+            onStatus={setCityStatus}
+            homeward={homeward}
+          />
+        ) : (
+          <>
+            <SunLight
+              revision={scene.placed}
+              quality={activeQuality}
+              center={center}
+              width={width}
+              depth={depth}
+            />
+            {diagnostics.sky && (
+              <SkyScene
+                center={center}
+                quality={activeQuality}
+                reducedMotion={reducedMotion}
+                sunStrength={0.025}
+              />
+            )}
+            <Board center={center} width={width} depth={depth} />
+            {t435 && (
+              <WeatherScene
+                weather={weather}
+                quality={activeQuality}
+                reducedMotion={reducedMotion}
+                center={center}
+                width={width}
+                depth={depth}
+                surfaceY={9.5}
+                night={sky === "night"}
+              />
+            )}
+            {t435 &&
+              weatherEffects(weather, activeQuality).wetGround &&
+              scene.placed[0] && (
+                <WetHighlights
+                  center={[scene.placed[0].x, scene.placed[0].z]}
+                  y={11}
+                  radius={13}
+                  count={8}
+                />
+              )}
+            {showLand && <LandTiles model={model} onPick={onPick} />}
+            {dataMode && showLand && (
+              <DataBorders anchors={model.anchors} totals={totals} />
+            )}
+            <NationalScenery
+              boundary={model.boundary}
+              anchors={model.anchors}
+              clusters={showLand}
+              festivals={scene.placed}
+              quality={activeQuality}
+              reducedMotion={reducedMotion}
+              motion={diagnostics.motion}
+              diagnostic={diagnostics.debug}
+            />
+            <FestivalLayer
+              scene={scene}
+              center={center}
+              reducedMotion={reducedMotion || !t435}
+            />
+            {t435 &&
+              sky === "night" &&
+              scene.placed
+                .filter(({ festival }) => festival.type.includes("불꽃"))
+                .slice(0, 3)
+                .map(({ festival, x, y, z }) => (
+                  <Fireworks
+                    key={festival.eventId}
+                    position={[x, y + 36, z]}
+                    quality={activeQuality}
+                    reducedMotion={reducedMotion}
+                  />
+                ))}
+            {diagnostics.motion && (
+              <WhaleBots
+                selected={
+                  scene.placed.find(
+                    ({ festival }) => festival.eventId === selectedId,
+                  ) ?? null
+                }
+                quality={activeQuality}
+                reducedMotion={reducedMotion}
+                diagnostic={diagnostics.debug}
+              />
+            )}
+            <CameraRig
+              center={center}
+              selected={
+                focusPoint ??
+                (picked ? (model.centers.get(picked) ?? null) : null)
+              }
+              reducedMotion={reducedMotion}
+              focus={Boolean(diagnostics.focusCode || selectedId || picked)}
+              width={width}
+              depth={depth}
+              overviewRevision={overviewRevision}
+            />
+          </>
         )}
-        {showLand && (
-          <NationalMapLayer
-            view={view}
-            model={model}
-            quality={quality}
-            onStatus={reportStatus}
-            selected={selected}
-            count={
-              scene.scale.counts[
-                scene.placed.findIndex(
-                  ({ festival }) => festival.eventId === selectedId,
-                )
-              ] ?? 0
-            }
-            reducedMotion={still}
-            navigating={navigating}
+        {t435 && (
+          <ForecastOffice
+            portal={officeLabels}
+            x={center[0] - width / 2 + 38}
+            z={center[1] - depth / 2 + 38}
+            hidden={Boolean(cityFestival)}
           />
         )}
-        {dataMode && showLand && (
-          <DataBorders anchors={model.anchors} totals={totals} />
-        )}
-        <MapPinPositions pins={pins} elements={elements} />
-        <NationalCamera
+        {/* 이름표는 동네 모드에서도 떼지 않고 숨긴다(떼면 React 19 DOM 제거 오류). */}
+        <NameTags
+          placed={scene.placed}
           center={center}
-          width={bounds ? bounds.maxX - bounds.minX + 30 : 600}
-          depth={bounds ? bounds.maxZ - bounds.minZ + 30 : 900}
-          selected={selected}
-          command={command}
-          mode={navigationMode}
-          reducedMotion={still}
-          diagnostic={diagnostics.debug}
-          onView={setView}
-          onNavigation={setNavigating}
+          selectedId={selectedId}
+          onPick={selectFestival}
+          hidden={Boolean(cityFestival)}
         />
         <FrameSignal
           measure={diagnostics.measure}
           diagnostic={diagnostics.debug}
         />
       </Canvas>
-      <MapFestivalPins
-        pins={pins}
-        selectedId={selectedId}
-        elements={elements}
-        onPick={selectFestival}
+      <div
+        ref={officeLabels}
+        style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
       />
-      {mapStatus && mapStatus.state !== "ready" && (
-        <span className="scene-map-status" role="status" aria-live="polite">
-          {mapStatus.state === "loading"
-            ? "지도 불러오는 중…"
-            : mapStatus.state === "error"
-              ? "이 지역 지도를 불러오지 못했어요. 이동하면 다시 시도해요."
-              : "이 범위에는 저장된 상세 지도 자료가 없어요."}
-        </span>
-      )}
     </section>
   );
 }

@@ -37,8 +37,8 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-// 주 메뉴는 역할별로 한 번만 표시하고 전체 발행 통계는 운영에서만 읽는다.
-test("모델 검증·예보 근거·운영의 역할을 분리한다", async ({ page }) => {
+// 모델 검증과 예보 근거는 별도 메뉴로 유지하고 삭제된 운영 메뉴를 노출하지 않는다.
+test("모델 검증·예보 근거를 분리하고 운영 메뉴를 제거한다", async ({ page }) => {
   let statsRequests = 0;
   await page.route("**/api/evidence/stats", (route) => {
     statsRequests += 1;
@@ -90,12 +90,12 @@ test("모델 검증·예보 근거·운영의 역할을 분리한다", async ({ 
     page.getByRole("button", { name: "전체 그래프 재시도" }),
   ).toBeVisible();
   expect(statsRequests).toBe(0);
-  await menu.getByRole("link", { name: "운영", exact: true }).click();
   await expect(
-    main.getByRole("heading", { name: "전체 발행 기록의 근거 연결 현황" }),
-  ).toBeVisible();
-  await expect(main.getByText("근거 연결률", { exact: true })).toBeVisible();
-  expect(statsRequests).toBeGreaterThan(0);
+    menu.getByRole("link", { name: "운영", exact: true }),
+  ).toHaveCount(0);
+  await page.goto("/ops");
+  await expect(page).toHaveURL(/\/insights$/);
+  expect(statsRequests).toBe(0);
 });
 
 // 발행본 상세와 URL을 함께 검사해 선택 이력의 뒤로 가기도 보장한다.

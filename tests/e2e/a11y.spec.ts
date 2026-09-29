@@ -159,22 +159,15 @@ test("S3 세 탭과 S4 계획 초안", async ({ page }) => {
 	await checkWidths(page, "s4");
 });
 
-// 검증·인사이트·운영은 빈 자료와 운영 견본 상태에서도 끝까지 읽힌다.
+// 검증·인사이트는 빈 자료와 견본 상태에서도 끝까지 읽힌다.
 for (const [name, path] of [
 	["s6", "/validation"],
 	["s7", "/insights"],
-	["s8", "/ops"],
 ] as const) {
-	test(`S6~S8 ${name} 접근성과 폭`, async ({ page }) => {
+	test(`S6~S7 ${name} 접근성과 폭`, async ({ page }) => {
 		await routeFixtures(page);
 		await page.goto(`${path}?theme=day`);
 		await expect(page.getByRole("main")).toBeVisible();
-		if (name === "s8") {
-			const details = page.getByText("단계 펼치기").first();
-			await details.focus();
-			await page.keyboard.press("Enter");
-			await expect(page.locator(".ops-stage").first()).toBeVisible();
-		}
 		await checkAxe(page);
 		await checkWidths(page, name);
 	});

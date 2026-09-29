@@ -1,15 +1,18 @@
 // 판 모서리에 예보팀의 작은 사무실과 고래 봇을 놓고 상담 화면으로 연결한다.
 import { Html } from "@react-three/drei";
+import type { RefObject } from "react";
 import { useNavigate } from "react-router-dom";
 import { sceneColor } from "../quality";
 
 // 건물 전체의 클릭 영역을 키워 카메라 거리에서도 카메오를 열 수 있게 한다.
 // hidden이면 그리지 않고 이름표만 숨긴다 — 동네 모드에서 Html을 떼면 React 19 DOM 제거 오류가 난다.
 export function ForecastOffice({
+  portal,
   x,
   z,
   hidden = false,
 }: {
+  portal: RefObject<HTMLDivElement | null>;
   x: number;
   z: number;
   hidden?: boolean;
@@ -42,14 +45,21 @@ export function ForecastOffice({
         </group>
       ))}
       <Html
-        position={[0, 19, 0]}
+        portal={portal.current ? { current: portal.current } : undefined}
+        position={[0, 27, 0]}
         center
-        style={{ display: hidden ? "none" : undefined }}
+        zIndexRange={[9, 1]}
+        style={{ display: hidden ? "none" : "block", pointerEvents: "auto" }}
       >
         <button
           className="scene-office-link"
           type="button"
-          onClick={() => navigate("/consult")}
+          onPointerDown={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            navigate("/consult");
+          }}
         >
           예보팀 사무실
         </button>

@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import type { SseEvent } from "@crowdcast/contracts/types";
 import type { Page } from "@playwright/test";
 import { backtest } from "../../../apps/web/src/features/validation/__tests__/validation-fixtures";
+import { insight as makeInsight } from "../../../apps/web/src/features/insights/__tests__/insight-fixtures";
 import { planFixture } from "./plan-yeongjong";
 
 const root = resolve(process.cwd(), "../../packages/contracts");
@@ -49,6 +50,12 @@ const insight = {
   evidence: [insightEvidence],
   computedAt: "2026-09-27T12:00:00+09:00",
 };
+const insightI1 = makeInsight({
+  key: "I1",
+  title: "발표·관측 방문객",
+  sampleSize: 0,
+  comparablePairs: 0,
+});
 
 // 비교 상담은 기존 계약 흐름의 행사일과 예보값만 바꿔 두 번째 응답으로 돌려준다.
 function changedConsultation(): SseEvent[] {
@@ -112,9 +119,8 @@ export async function routeScreensV2(
     "/api/insights/datalab-spec": contract(
       "fixtures/datalab-spec/valid-example.json",
     ),
+    "/api/insights/I1": insightI1,
     "/api/insights/I2": insight,
-    "/api/ops/runs": [contract("fixtures/pipeline-run/valid-running.json")],
-    "/api/ops/status": contract("fixtures/ops-status/valid-example.json"),
     "/api/records/events": variant === "empty" ? [] : [event],
     "/api/records/shares/sh-yeongjong2025abcd": report,
     "/api/team/sessions": { sessionId: "s-screens-v2" },
@@ -155,8 +161,6 @@ export async function routeScreensV2(
       return route.fulfill({ json: snapshots });
     if (path === "/api/records/shares")
       return route.fulfill({ json: { token: "sh-yeongjong2025abcd" } });
-    if (variant === "error" && path === "/api/ops/runs")
-      return route.fulfill({ status: 503, json: {} });
     if (path in replies) return route.fulfill({ json: replies[path] });
     return route.fulfill({ status: 503, json: {} });
   });

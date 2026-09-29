@@ -8,7 +8,6 @@ export function useLandModel(
   webgl: boolean,
   dataMode: boolean,
   totals: Map<string, number>,
-  flat = false,
 ) {
   const [topology, setTopology] = useState<Topology | null>(null);
   const [error, setError] = useState(false);
@@ -29,12 +28,11 @@ export function useLandModel(
 
   // 색상 데이터 모드가 바뀌면 타일 버퍼만 다시 만들어 전달한다.
   const model = useMemo(
-    // flat이면 같은 윗면 높이의 평면 타일만 만든다(보이지 않는 옆면·바닥을 그리지 않는다).
     () =>
       topology
-        ? buildLandModelForData(topology, dataMode ? totals : null, flat)
+        ? buildLandModelForData(topology, dataMode ? totals : null)
         : null,
-    [topology, dataMode, totals, flat],
+    [topology, dataMode, totals],
   );
   useEffect(
     () => () => {

@@ -1,6 +1,6 @@
 // 공용 헤더와 각 화면의 주소를 연결한다.
 import type { MouseEvent } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { LiveUpdatePill } from "../components/common/live-update-pill";
 import { SiteHeader } from "../components/common/site-header";
 import { AssistantShell } from "../features/assistant/assistant-shell";
@@ -16,7 +16,6 @@ import { InsightsPage } from "../pages/insights-page";
 import { KnowledgeGraphPage } from "../pages/knowledge-graph-page";
 import { MiniKoreaPage } from "../pages/mini-korea-page";
 import { MyEventsPage } from "../pages/my-events-page";
-import { OpsPage } from "../pages/ops-page";
 import { PlanPage } from "../pages/plan-page";
 import { SharedPage } from "../pages/shared-page";
 import { ValidationPage } from "../pages/validation-page";
@@ -65,7 +64,7 @@ function AppLayout() {
           <Route path="/validation" element={<ValidationPage />} />
           <Route path="/graph" element={<KnowledgeGraphPage />} />
           <Route path="/insights" element={<InsightsPage />} />
-          <Route path="/ops" element={<OpsPage />} />
+          <Route path="/ops" element={<Navigate to="/insights" replace />} />
           <Route path="/dev/*" element={<DevPage />} />
         </Routes>
       </main>

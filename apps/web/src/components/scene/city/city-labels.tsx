@@ -2,6 +2,7 @@
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { Html } from "@react-three/drei";
 import { TrainFront } from "lucide-react";
+import { useAssistantStore } from "../../../lib/consult-store";
 import { formatDate, formatPeople } from "../../../lib/format";
 import { GradeMark } from "../grade-mark";
 import type { VenueStation } from "../venue/tiles";
@@ -14,6 +15,7 @@ export function CityLabels({
   festival: FestivalSummary;
   stations: VenueStation[];
 }) {
+  const chooseFestival = useAssistantStore((state) => state.chooseFestival);
   const nearest = [...stations]
     .sort((a, b) => Math.hypot(...a.point) - Math.hypot(...b.point))
     .filter(
@@ -35,7 +37,20 @@ export function CityLabels({
             <span className="city-card__meta">
               {festival.type} · {formatDate(festival.startsAt)}
             </span>
-            <strong>{festival.name}</strong>
+            <button
+              type="button"
+              className="city-card__forecast"
+              aria-label={`${festival.name} 예보 요청`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                // 이름표 선택은 지도 이동 없이 해당 행사 ID로 예보를 요청한다.
+                event.stopPropagation();
+                chooseFestival(festival);
+              }}
+            >
+              <strong>{festival.name}</strong>
+              <span>예보 받기 →</span>
+            </button>
             <span className="city-card__meta">
               <GradeMark level={festival.level} /> · 순간 최대 약{" "}
               {formatPeople(festival.peakP50)}
