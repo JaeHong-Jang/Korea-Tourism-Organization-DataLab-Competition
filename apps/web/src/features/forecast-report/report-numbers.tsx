@@ -4,7 +4,6 @@ import { EvidenceChip } from "../../components/common/evidence-chip";
 import { evidenceForQuantity } from "../../lib/evidence-for-quantity";
 import type { OpenEvidence } from "./report-claims";
 import { reportNumber } from "./report-content";
-import { SIZE_BIAS_NOTICE, UNVERIFIED_NOTICE } from "./report-judgment";
 
 // 대표값과 p10·p50·p90을 직접 표시하고 근거를 숫자 옆에 둔다.
 export function ReportNumbers({
@@ -25,12 +24,6 @@ export function ReportNumbers({
   return (
     <section className="report-section" aria-labelledby="report-numbers-title">
       <h3 id="report-numbers-title">핵심 수치</h3>
-      {report.forecast.predictionRun.modelVerdict === "미검증" && (
-        <div className="report-notices" role="note">
-          <p>{UNVERIFIED_NOTICE}</p>
-          <p>{SIZE_BIAS_NOTICE}</p>
-        </div>
-      )}
       <div className="report-number-grid">
         {quantities.map((quantity) => {
           const cited = evidenceForQuantity(

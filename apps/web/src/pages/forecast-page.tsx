@@ -1,7 +1,8 @@
 // 발행된 예보서 스냅샷 한 건으로 문서·근거 정리·행사장 3D·근거 서랍을 그린다.
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { ErrorState } from "../components/common/error-state";
+import { EvidenceSelectionContext } from "../components/common/evidence-chip";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { LoadingState } from "../components/common/loading-state";
 import { PageHeading } from "../components/common/page-heading";
@@ -67,6 +68,7 @@ export function ForecastPage() {
   // 좌우 화살표로 세 탭을 돌고 선택된 탭만 키보드 순서에 둔다.
   const chooseTab = (next: ForecastTab) => {
     setFocusClaimId(null);
+    if (next === "venue") drawer.deselect();
     setTab(next);
   };
   const onTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -84,12 +86,16 @@ export function ForecastPage() {
   };
   return (
     <div className="forecast-page page-wrap">
+      {forecastId && (
+        <Link
+          className="forecast-back-to-events"
+          to={`/my?forecastId=${encodeURIComponent(forecastId)}`}
+        >
+          ← 내 행사로 돌아가기
+        </Link>
+      )}
       <div className="page-title-row">
-        <PageHeading
-          eyebrow={`S3 · ${forecastId ?? "예보"}`}
-          title="예보서"
-          description="판정과 수치, 그 판단을 뒷받침하는 근거를 함께 확인해요."
-        />
+        <PageHeading eyebrow="내 행사 · 발행 예보" title="예보서" />
         {state.status === "ready" && <ReportToolbar report={state.report} />}
       </div>
       {state.status === "loading" && (
@@ -142,70 +148,79 @@ export function ForecastPage() {
               행사장 3D
             </button>
           </div>
-          <div className="document-layout">
-            <div className="document-main">
-              <div
-                id="forecast-panel-report"
-                className={`forecast-tab-panel forecast-tab-panel--report${tab === "report" ? " is-active" : ""}`}
-                role="tabpanel"
-                aria-labelledby="forecast-tab-report"
-              >
-                <FeaturePanel
-                  id="M3-F1"
-                  title="발행 예보서"
-                  description="참고용 — 담당자 검토 필수"
-                  className="document-sheet"
+          <EvidenceSelectionContext.Provider value={drawer.selectedId}>
+            <div
+              className={`document-layout${tab === "venue" ? " document-layout--full" : ""}`}
+            >
+              <div className="document-main">
+                <div
+                  id="forecast-panel-report"
+                  className={`forecast-tab-panel forecast-tab-panel--report${tab === "report" ? " is-active" : ""}`}
+                  role="tabpanel"
+                  aria-labelledby="forecast-tab-report"
                 >
-                  <ReportJudgment report={state.report} onOpen={drawer.open} />
-                  <ReportNumbers report={state.report} onOpen={drawer.open} />
-                  <ReportDensity report={state.report} />
-                  <ReportConcentration report={state.report} />
-                  <ReportClaims
-                    report={state.report}
-                    onOpen={drawer.open}
-                    exclude={["판정", "권고"]}
-                  />
-                  <ReportContext report={state.report} onOpen={drawer.open} />
-                  <ReportActions report={state.report} onOpen={drawer.open} />
-                  <ol className="report-print-notes" aria-label="근거 각주">
-                    {state.report.evidence.map((evidence) => (
-                      <li key={evidence.id}>{evidence.title}</li>
-                    ))}
-                  </ol>
-                </FeaturePanel>
+                  <FeaturePanel
+                    id="M3-F1"
+                    title="발행 예보서"
+                    className="document-sheet"
+                  >
+                    <ReportJudgment
+                      report={state.report}
+                      onOpen={drawer.open}
+                    />
+                    <ReportNumbers report={state.report} onOpen={drawer.open} />
+                    <ReportDensity report={state.report} />
+                    <ReportConcentration report={state.report} />
+                    <ReportClaims
+                      report={state.report}
+                      onOpen={drawer.open}
+                      exclude={["판정", "권고"]}
+                    />
+                    <ReportContext report={state.report} onOpen={drawer.open} />
+                    <ReportActions report={state.report} onOpen={drawer.open} />
+                    <ol className="report-print-notes" aria-label="근거 각주">
+                      {state.report.evidence.map((evidence) => (
+                        <li key={evidence.id}>{evidence.title}</li>
+                      ))}
+                    </ol>
+                  </FeaturePanel>
+                </div>
+                <div
+                  id="forecast-panel-map"
+                  className={`forecast-tab-panel forecast-tab-panel--map${tab === "map" ? " is-active" : ""}`}
+                  role="tabpanel"
+                  aria-labelledby="forecast-tab-map"
+                >
+                  {tab === "map" && (
+                    <EvidenceBrief
+                      report={state.report}
+                      onOpen={drawer.open}
+                      onViewClaim={(id) => {
+                        setFocusClaimId(id);
+                        setTab("report");
+                      }}
+                    />
+                  )}
+                </div>
+                <div
+                  id="forecast-panel-venue"
+                  className={`forecast-tab-panel forecast-tab-panel--venue${tab === "venue" ? " is-active" : ""}`}
+                  role="tabpanel"
+                  aria-labelledby="forecast-tab-venue"
+                >
+                  {tab === "venue" && <Venue3D report={state.report} />}
+                </div>
               </div>
-              <div
-                id="forecast-panel-map"
-                className={`forecast-tab-panel forecast-tab-panel--map${tab === "map" ? " is-active" : ""}`}
-                role="tabpanel"
-                aria-labelledby="forecast-tab-map"
-              >
-                {tab === "map" && (
-                  <EvidenceBrief
-                    report={state.report}
-                    onOpen={drawer.open}
-                    onViewClaim={(id) => {
-                      setFocusClaimId(id);
-                      setTab("report");
-                    }}
-                  />
-                )}
-              </div>
-              <div
-                id="forecast-panel-venue"
-                className={`forecast-tab-panel forecast-tab-panel--venue${tab === "venue" ? " is-active" : ""}`}
-                role="tabpanel"
-                aria-labelledby="forecast-tab-venue"
-              >
-                {tab === "venue" && <Venue3D report={state.report} />}
-              </div>
+              {tab !== "venue" && (
+                <ReportDrawer
+                  report={state.report}
+                  selectedId={drawer.selectedId}
+                  onClose={drawer.close}
+                  onDeselect={drawer.deselect}
+                />
+              )}
             </div>
-            <ReportDrawer
-              report={state.report}
-              selectedId={drawer.selectedId}
-              onClose={drawer.close}
-            />
-          </div>
+          </EvidenceSelectionContext.Provider>
         </>
       )}
     </div>

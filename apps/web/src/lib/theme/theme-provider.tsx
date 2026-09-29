@@ -52,7 +52,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const at = getDemoTime(search) ?? now;
   const forcedTheme = getDemoTheme(search);
   const actualSky = getSkyState(at);
-  const sky = forcedTheme ?? actualSky;
+  // 수동 낮·밤 선택을 UI뿐 아니라 장면 조명과 하늘에도 함께 적용한다.
+  const sky = forcedTheme ?? (choice === "auto" ? actualSky : choice);
   const theme = forcedTheme ?? getTheme(choice, sky);
 
   // 사용자 선택이 바뀌는 즉시 다음 방문에 쓸 설정을 저장한다.

@@ -48,11 +48,11 @@ test("고래 끌기와 키보드 이동, 사용법 단계", async ({ page }) => 
 	await guide.getByRole("button", { name: "다음" }).click();
 	await expect(guide).toContainText("고래와 대화하기");
 	await guide.getByRole("button", { name: "다음" }).click();
-	await expect(guide).toContainText("근거 그래프 보기");
+	await expect(guide).toContainText("예보 근거 보기");
 	await expect(
 		page
 			.getByRole("navigation", { name: "주 메뉴" })
-			.getByRole("link", { name: "근거 그래프" }),
+			.getByRole("link", { name: "예보 근거" }),
 	).toBeVisible();
 	await guide.getByRole("button", { name: "마치기" }).click();
 

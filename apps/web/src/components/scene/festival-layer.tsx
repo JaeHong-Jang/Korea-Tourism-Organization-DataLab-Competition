@@ -3,6 +3,7 @@
 import { useSelectionStore } from "../../lib/selection-store";
 import { useCssVar } from "../../lib/theme/use-css-var";
 import { DollCrowd } from "./crowd/doll-crowd";
+import { FestivalFootprints } from "./festival-footprints";
 import { FestivalHitTargets } from "./festival-hit-targets";
 import { FestivalModels } from "./festival-models";
 import { LAND_SURFACE_Y } from "./scene-height";
@@ -27,6 +28,7 @@ export function FestivalLayer({
   if (scene.placed.length === 0) return null;
   return (
     <>
+      <FestivalFootprints placed={scene.placed} />
       <FestivalModels placed={scene.placed} />
       <FestivalHitTargets placed={scene.placed} onPick={selectFestival} />
       {selected && (

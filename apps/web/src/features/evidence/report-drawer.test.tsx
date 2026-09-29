@@ -6,7 +6,10 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { expect, it, vi } from "vitest";
 import fixture from "../../../../../packages/contracts/fixtures/forecast-report/valid-yeongjong.json";
-import { EvidenceChip } from "../../components/common/evidence-chip";
+import {
+  EvidenceChip,
+  EvidenceSelectionContext,
+} from "../../components/common/evidence-chip";
 import {
   observationForEvidence,
   ReportDrawer,
@@ -60,7 +63,7 @@ it("Escape와 읽던 곳으로가 출발 칩에 포커스를 돌린다", async (
   function Example() {
     const drawer = useEvidenceDrawer();
     return (
-      <>
+      <EvidenceSelectionContext.Provider value={drawer.selectedId}>
         <EvidenceChip
           evidence={evidence}
           evidenceOrder={report.evidence}
@@ -75,8 +78,9 @@ it("Escape와 읽던 곳으로가 출발 칩에 포커스를 돌린다", async (
           report={report}
           selectedId={drawer.selectedId}
           onClose={drawer.close}
+          onDeselect={drawer.deselect}
         />
-      </>
+      </EvidenceSelectionContext.Provider>
     );
   }
   const node = document.createElement("div");
@@ -89,17 +93,30 @@ it("Escape와 읽던 곳으로가 출발 칩에 포커스를 돌린다", async (
       </MemoryRouter>,
     ),
   );
-  const chips = node.querySelectorAll<HTMLAnchorElement>("a.evidence-chip");
+  const chips = node.querySelectorAll<HTMLButtonElement>(
+    "button.evidence-chip",
+  );
   await act(async () => chips[1]?.click());
+  expect(chips[1]?.getAttribute("aria-expanded")).toBe("true");
+  expect(node.querySelector(".report-evidence-list > details")?.id).toBe(
+    `evidence-${evidence.id}`,
+  );
   expect(document.activeElement).toBe(
     node.querySelector("#evidence-ev-rule-legal-hazard summary"),
   );
+  await act(async () => chips[1]?.click());
+  expect(chips[1]?.getAttribute("aria-expanded")).toBe("false");
+  expect(
+    node.querySelector<HTMLDetailsElement>(`#evidence-${evidence.id}`)?.open,
+  ).toBe(false);
+  await act(async () => chips[1]?.click());
   await act(async () =>
     window.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
     ),
   );
   expect(document.activeElement).toBe(chips[1]);
+  expect(chips[1]?.getAttribute("aria-expanded")).toBe("false");
   await act(async () => chips[0]?.click());
   await act(async () =>
     node

@@ -1,178 +1,13 @@
-// 상담부터 운영까지 접근성과 네 화면 폭의 가로 넘침을 확인한다.
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
-import { backtest } from "../../apps/web/src/features/validation/__tests__/validation-fixtures";
-import { planFixture } from "./fixtures/plan-yeongjong";
+// 접근성 검증 시나리오에서 화면별 키보드 조작과 폭을 확인한다.
+import { expect, test } from "@playwright/test";
+import {
+	checkAxe,
+	checkWidths,
+	routeFixtures,
+	routeSavedReport,
+	savedEvent,
+} from "./fixtures/a11y-helpers";
 import { sendConsultDescription } from "./fixtures/start-consult";
-
-const root = resolve(process.cwd(), "../../");
-const screens = resolve(root, "reports/figures/screens");
-const report = JSON.parse(
-	readFileSync(
-		resolve(
-			root,
-			"packages/contracts/fixtures/forecast-report/valid-yeongjong.json",
-		),
-		"utf8",
-	),
-);
-const savedEvent = JSON.parse(
-	readFileSync(
-		resolve(root, "packages/contracts/fixtures/event/valid-yeongjong.json"),
-		"utf8",
-	),
-);
-const run = JSON.parse(
-	readFileSync(
-		resolve(
-			root,
-			"packages/contracts/fixtures/pipeline-run/valid-running.json",
-		),
-		"utf8",
-	),
-);
-const ops = JSON.parse(
-	readFileSync(
-		resolve(root, "packages/contracts/fixtures/ops-status/valid-example.json"),
-		"utf8",
-	),
-);
-const consultation = JSON.parse(
-	readFileSync(
-		resolve(root, "packages/contracts/fixtures-sse/valid-new-forecast.json"),
-		"utf8",
-	),
-) as { event: string; data: unknown }[];
-const usage = JSON.parse(
-	readFileSync(
-		resolve(
-			root,
-			"packages/contracts/fixtures/datalab-usage/valid-example.json",
-		),
-		"utf8",
-	),
-);
-const model = JSON.parse(
-	readFileSync(
-		resolve(root, "packages/contracts/fixtures/model-card/valid-v0-1-0.json"),
-		"utf8",
-	),
-);
-const spec = JSON.parse(
-	readFileSync(
-		resolve(
-			root,
-			"packages/contracts/fixtures/datalab-spec/valid-example.json",
-		),
-		"utf8",
-	),
-);
-const widths = [
-	{ width: 1440, height: 900, label: "1440" },
-	{ width: 1280, height: 800, label: "1280" },
-	{ width: 768, height: 1024, label: "768" },
-	{ width: 390, height: 844, label: "390" },
-];
-
-// 계약 견본으로 각 화면을 네트워크 없이 안정적으로 연다.
-async function routeFixtures(page: Page) {
-	await page.route("**/api/**", (route) =>
-		route.fulfill({ status: 503, json: {} }),
-	);
-	await page.route("**/api/team/sessions", (route) =>
-		route.fulfill({ json: { sessionId: "s-a11y" } }),
-	);
-	await page.route("**/api/team/sessions/*/steps", (route) =>
-		route.fulfill({ json: [] }),
-	);
-	await page.route("**/api/team/sessions/*/messages", (route) =>
-		route.fulfill({
-			contentType: "text/event-stream",
-			body: consultation
-				.map(
-					(item) => `event: ${item.event}\ndata: ${JSON.stringify(item)}\n\n`,
-				)
-				.join(""),
-		}),
-	);
-	await page.route("**/api/forecasts/f-yeongjong-2025/plan", (route) =>
-		route.fulfill({
-			json: {
-				plan: planFixture,
-				docxHref: "/api/plans/plan-yeongjong-example/export.docx",
-			},
-		}),
-	);
-	await page.route("**/api/forecasts/f-yeongjong-2025", (route) =>
-		route.fulfill({ json: report }),
-	);
-	await page.route("**/api/plans/plan-yeongjong-example", (route) =>
-		route.fulfill({ json: planFixture }),
-	);
-	await page.route("**/api/ops/runs", (route) =>
-		route.fulfill({ json: [run] }),
-	);
-	await page.route("**/api/ops/status", (route) =>
-		route.fulfill({ json: ops }),
-	);
-	await page.route("**/api/validation/backtest", (route) =>
-		route.fulfill({ json: backtest }),
-	);
-	await page.route("**/api/validation/model-card", (route) =>
-		route.fulfill({ json: model }),
-	);
-	await page.route("**/api/evidence/stats", (route) =>
-		route.fulfill({ json: usage }),
-	);
-	await page.route("**/api/insights/datalab-spec", (route) =>
-		route.fulfill({ json: spec }),
-	);
-}
-
-// 심각하거나 치명적인 위반의 위치를 실패 메시지에 남긴다.
-async function checkAxe(page: Page) {
-	const result = await new AxeBuilder({ page }).analyze();
-	const severe = result.violations.filter((item) =>
-		["serious", "critical"].includes(item.impact ?? ""),
-	);
-	expect(
-		severe.map((item) => ({
-			rule: item.id,
-			nodes: item.nodes.map((node) => node.target),
-		})),
-	).toEqual([]);
-}
-
-// 각 폭에서 문서 전체가 뷰포트 밖으로 밀리지 않는지 확인한다.
-async function checkWidths(page: Page, name: string, task = "T-411a") {
-	for (const { width, height, label } of widths) {
-		await page.setViewportSize({ width, height });
-		await page.evaluate(() => document.fonts.ready);
-		await expect
-			.poll(() => page.evaluate(() => document.documentElement.scrollWidth))
-			.toBeLessThanOrEqual(width);
-		if (label === "1440" || label === "390")
-			await page.screenshot({
-				path: resolve(screens, `${task}-${name}-${label}.png`),
-				fullPage: true,
-			});
-	}
-}
-
-// 저장 행사와 공유 예보는 같은 발행 견본을 읽기 전용으로 사용한다.
-async function routeSavedReport(page: Page) {
-	await page.route("**/api/records/events", (route) =>
-		route.fulfill({ json: [savedEvent] }),
-	);
-	await page.route("**/api/records/events/*/snapshots", (route) =>
-		route.fulfill({ json: [report] }),
-	);
-	await page.route("**/api/records/shares/*", (route) =>
-		route.fulfill({ json: report }),
-	);
-}
 
 // 미니어처와 간단 지도(WebGL 없는 기기)에서 작은 화면 패널을 키보드로 사용할 수 있다.
 for (const [name, query] of [
@@ -279,10 +114,12 @@ test("S3 세 탭과 S4 계획 초안", async ({ page }) => {
 	await expect(page.getByRole("tab", { name: "근거 정리" })).toBeFocused();
 	await page.keyboard.press("Home");
 	await expect(page.getByRole("tab", { name: "예보서" })).toBeFocused();
-	const chip = page.locator('a[href^="#evidence-"]').first();
+	const chip = page.locator('button[aria-controls^="evidence-"]').first();
 	await chip.focus();
 	await page.keyboard.press("Enter");
-	await expect(page.getByRole("dialog", { name: "근거 서랍" })).toBeVisible();
+	await expect(
+		page.getByRole("complementary", { name: "근거 서랍" }),
+	).toBeVisible();
 	await page.keyboard.press("Escape");
 	await expect(chip).toBeFocused();
 	for (const tab of ["예보서", "근거 정리", "행사장 3D"]) {
@@ -295,10 +132,14 @@ test("S3 세 탭과 S4 계획 초안", async ({ page }) => {
 			await card.focus();
 			await page.keyboard.press("Enter");
 			await expect(
-				page.getByRole("dialog", { name: "근거 서랍" }),
+				page.getByRole("complementary", { name: "근거 서랍" }),
 			).toBeVisible();
 			await page.keyboard.press("Escape");
 		}
+		if (tab === "행사장 3D")
+			await expect(
+				page.getByRole("complementary", { name: "근거 서랍" }),
+			).toHaveCount(0);
 		await checkAxe(page);
 		if (tab === "예보서") await checkWidths(page, "s3");
 	}
@@ -318,22 +159,15 @@ test("S3 세 탭과 S4 계획 초안", async ({ page }) => {
 	await checkWidths(page, "s4");
 });
 
-// 검증·인사이트·운영은 빈 자료와 운영 견본 상태에서도 끝까지 읽힌다.
+// 검증·인사이트는 빈 자료와 견본 상태에서도 끝까지 읽힌다.
 for (const [name, path] of [
 	["s6", "/validation"],
 	["s7", "/insights"],
-	["s8", "/ops"],
 ] as const) {
-	test(`S6~S8 ${name} 접근성과 폭`, async ({ page }) => {
+	test(`S6~S7 ${name} 접근성과 폭`, async ({ page }) => {
 		await routeFixtures(page);
 		await page.goto(`${path}?theme=day`);
 		await expect(page.getByRole("main")).toBeVisible();
-		if (name === "s8") {
-			const details = page.getByText("단계 펼치기").first();
-			await details.focus();
-			await page.keyboard.press("Enter");
-			await expect(page.locator(".ops-stage").first()).toBeVisible();
-		}
 		await checkAxe(page);
 		await checkWidths(page, name);
 	});

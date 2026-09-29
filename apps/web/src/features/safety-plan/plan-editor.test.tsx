@@ -71,7 +71,7 @@ it("아홉 목차를 이동하고 발행 본문과 잠금 수치를 읽기 전�
   expect(node.textContent).toContain("p50 · 21000 명");
   expect(node.querySelectorAll(".plan-locked input")).toHaveLength(0);
   expect(
-    node.querySelector('a[href="#evidence-ev-rule-legal-hazard"]'),
+    node.querySelector('button[aria-controls="evidence-ev-rule-legal-hazard"]'),
   ).not.toBeNull();
 });
 

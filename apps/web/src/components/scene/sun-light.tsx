@@ -28,7 +28,10 @@ export function SunLight({
   const { altitude, azimuth } = SunCalc.getPosition(at, 37.5665, 126.978);
   const daylight = sky === "day";
   const twilight = sky === "dusk";
-  const height = sky === "night" ? 0.55 : Math.max(0.12, Math.sin(altitude));
+  const height =
+    sky === "night"
+      ? 0.55
+      : Math.max(daylight ? 0.65 : 0.12, Math.sin(altitude));
   const shadowExtent = Math.hypot(width, depth) * 0.8;
   const target = useMemo(() => new Object3D(), []);
   // 밤에는 화면의 달 쪽(판 뒤 위)에서 달빛이 들어오게 한다.
@@ -49,7 +52,8 @@ export function SunLight({
   // 장면 밝기는 해 상태별로 조절하고 헤더와 같은 상태를 캡처에 기록한다.
   useEffect(() => {
     document.documentElement.dataset.sceneSky = sky;
-    gl.toneMappingExposure = sky === "night" ? 1.12 : 1.25;
+    gl.toneMappingExposure =
+      sky === "day" ? 1.1 : sky === "night" ? 1.12 : 1.25;
     return () => {
       delete document.documentElement.dataset.sceneSky;
     };
@@ -80,9 +84,11 @@ export function SunLight({
       <primitive object={target} />
       <color attach="background" args={[skyColor]} />
       <hemisphereLight
-        color={daylight ? skyColor : sceneColor("land-1")}
-        groundColor={sceneColor("board-side")}
-        intensity={daylight ? 1.25 : twilight ? 1.1 : 0.95}
+        color={daylight ? sceneColor("day-fill") : sceneColor("moonlight")}
+        groundColor={
+          daylight ? sceneColor("day-ground") : sceneColor("board-side")
+        }
+        intensity={daylight ? 1.35 : twilight ? 1.1 : 0.55}
       />
       <directionalLight
         position={position}
@@ -91,10 +97,10 @@ export function SunLight({
           twilight
             ? sceneColor("window-glow")
             : daylight
-              ? sceneColor("sky-day")
+              ? sceneColor("day-sun")
               : sceneColor("moonlight")
         }
-        intensity={daylight ? 1.7 : twilight ? 1.35 : 1.05}
+        intensity={daylight ? 1.65 : twilight ? 1.35 : 0.8}
         castShadow={quality === "high" && !twilight}
         shadow-mapSize={[1024, 1024]}
         shadow-camera-near={1}
@@ -105,6 +111,7 @@ export function SunLight({
         shadow-camera-bottom={-shadowExtent}
         shadow-bias={-0.0001}
         shadow-normalBias={0.02}
+        shadow-radius={3}
       />
     </>
   );

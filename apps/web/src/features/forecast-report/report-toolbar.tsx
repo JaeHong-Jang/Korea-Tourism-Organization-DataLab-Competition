@@ -2,6 +2,7 @@
 import type { ForecastReport } from "@crowdcast/contracts/types";
 import { useState } from "react";
 import { Button } from "../../components/ui/button";
+import { forecastEvidenceHref } from "../knowledge-graph/forecast-evidence-data";
 
 type PlanState = "idle" | "loading" | "downloaded" | "unavailable" | "error";
 
@@ -51,6 +52,7 @@ export function ReportToolbar({ report }: { report: ForecastReport }) {
           : "";
   return (
     <div className="report-toolbar">
+      <a href={forecastEvidenceHref(report)}>예보 근거 보기</a>
       <Button
         type="button"
         size="sm"

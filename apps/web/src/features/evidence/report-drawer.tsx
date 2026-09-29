@@ -2,6 +2,7 @@
 import type { Evidence, ForecastReport } from "@crowdcast/contracts/types";
 import { useEffect, useRef, useState } from "react";
 import { EvidenceCard } from "../../components/common/evidence-card";
+import { evidenceNumber } from "../../components/common/evidence-number";
 import { FeaturePanel } from "../../components/common/feature-panel";
 import type { OpenEvidence } from "../forecast-report/report-claims";
 
@@ -36,102 +37,93 @@ export function observationForEvidence(
 export function useEvidenceDrawer() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const origin = useRef<HTMLElement | null>(null);
+  // 서랍 카드로 옮기는 포커스는 다음 프레임에 예약되므로, 그 전에 닫히면 예약을 취소한다.
+  const pendingFocus = useRef(0);
   const open: OpenEvidence = (id, element) => {
+    cancelAnimationFrame(pendingFocus.current);
+    if (selectedId === id) {
+      setSelectedId(null);
+      return;
+    }
     origin.current = element;
     setSelectedId(id);
-    requestAnimationFrame(() => {
+    pendingFocus.current = requestAnimationFrame(() => {
       const card = document.getElementById(`evidence-${id}`);
-      if (card instanceof HTMLDetailsElement) card.open = true;
       const summary = card?.querySelector("summary");
-      summary?.scrollIntoView({ block: "nearest" });
-      summary?.focus();
+      const scroller = card?.closest<HTMLElement>(".evidence-drawer");
+      if (scroller) scroller.scrollTop = 0;
+      summary?.focus({ preventScroll: true });
     });
   };
+  const deselect = () => {
+    cancelAnimationFrame(pendingFocus.current);
+    setSelectedId(null);
+  };
   const close = () => {
+    cancelAnimationFrame(pendingFocus.current);
     setSelectedId(null);
     origin.current?.scrollIntoView({ block: "center" });
     origin.current?.focus();
   };
-  return { selectedId, open, close };
+  return { selectedId, open, close, deselect };
 }
 
-// 카드 선택 시 요약으로 이동하고 Escape는 출발 칩에 돌려준다.
+// 선택한 근거를 서랍 맨 위에 펼치고 Escape는 출발 번호로 돌려준다.
 export function ReportDrawer({
   report,
   selectedId,
   onClose,
+  onDeselect,
 }: {
   report: ForecastReport;
   selectedId: string | null;
   onClose: () => void;
+  onDeselect: () => void;
 }) {
-  const dialog = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!selectedId) return;
-    const card = document.getElementById(`evidence-${selectedId}`);
-    const summary = card?.querySelector("summary");
-    summary?.scrollIntoView({ block: "nearest" });
-    summary?.focus();
-  }, [selectedId]);
+  const selected = report.evidence.find((item) => item.id === selectedId);
+  const ordered = selected
+    ? [selected, ...report.evidence.filter((item) => item.id !== selectedId)]
+    : report.evidence;
   useEffect(() => {
     if (!selectedId) return;
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
-      } else if (event.key === "Tab" && dialog.current) {
-        const items = Array.from(
-          dialog.current.querySelectorAll<HTMLElement>(
-            'a[href], button:not(:disabled), summary, input, select, textarea, [tabindex]:not([tabindex="-1"])',
-          ),
-        ).filter((item) => item.getClientRects().length > 0);
-        const first = items[0];
-        const last = items.at(-1);
-        if (!first || !last) return;
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
       }
     };
     window.addEventListener("keydown", onEscape);
     return () => window.removeEventListener("keydown", onEscape);
   }, [selectedId, onClose]);
   return (
-    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: 선택된 근거에만 대화상자 역할과 모달 속성을 함께 준다.
-    <div
-      ref={dialog}
-      role={selectedId ? "dialog" : undefined}
-      aria-modal={selectedId ? true : undefined}
-      aria-labelledby={selectedId ? "M3-F2-title" : undefined}
-    >
-      <FeaturePanel
-        id="M3-F2"
-        title="근거 서랍"
-        description="문장 끝 번호와 아래 카드 번호가 같아요."
-        className="evidence-drawer"
-      >
+    <aside className="report-drawer-slot" aria-label="근거 서랍">
+      <FeaturePanel id="M3-F2" title="근거 서랍" className="evidence-drawer">
         {selectedId && (
           <div className="report-drawer-actions">
             <button type="button" onClick={onClose}>
               읽던 곳으로
             </button>
-            <button type="button" onClick={onClose} aria-label="근거 서랍 닫기">
-              닫기
+            <button type="button" onClick={onDeselect}>
+              선택 해제
             </button>
           </div>
         )}
+        {selected && (
+          <p className="report-drawer-selection" role="status">
+            선택한 근거 [{evidenceNumber(selected.id, report.evidence)}]
+          </p>
+        )}
         <div className="report-evidence-list">
-          {report.evidence.map((evidence) => (
+          {ordered.map((evidence) => (
             <EvidenceCard
               key={evidence.id}
               evidence={evidence}
               evidenceOrder={report.evidence}
               defaultOpen={selectedId === evidence.id}
               highlighted={selectedId === evidence.id}
+              onToggle={(open) => {
+                if (!open && selectedId === evidence.id) onDeselect();
+              }}
               hideProbability={report.forecast.judgment.basis === "구간"}
               context={{
                 observation: observationForEvidence(
@@ -150,6 +142,6 @@ export function ReportDrawer({
           ))}
         </div>
       </FeaturePanel>
-    </div>
+    </aside>
   );
 }

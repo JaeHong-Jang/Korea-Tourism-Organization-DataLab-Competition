@@ -6,12 +6,41 @@ import { formatDate } from "../../lib/format";
 
 export type SavedEvent = { event: Event; snapshots: ForecastReport[] };
 export type EventStatus = "예정" | "지남" | "실측 입력됨";
+
+// 상태 칩 색 구분(글자와 함께 쓰므로 색만으로 구분하지 않는다).
+const statusTone: Record<EventStatus, string> = {
+  예정: "upcoming",
+  지남: "past",
+  "실측 입력됨": "actual",
+};
 export type SortKey = "date" | "level" | "forecast";
 
 // 발행 시각으로 정렬해 최신 스냅샷을 하나로 고른다.
 export function orderedSnapshots(snapshots: ForecastReport[]) {
   return [...snapshots].sort((a, b) =>
     a.publishedAt.localeCompare(b.publishedAt),
+  );
+}
+
+// 예보 결과에서 들어온 경우 그 예보가 속한 행사를 바로 선택한다.
+export function eventIdForForecast(
+  rows: SavedEvent[],
+  forecastId: string | null,
+) {
+  if (!forecastId) return null;
+  return (
+    rows.find(({ snapshots }) =>
+      snapshots.some((snapshot) => snapshot.forecastId === forecastId),
+    )?.event.id ?? null
+  );
+}
+
+// 기본 정렬과 같은 날짜 순서의 첫 행을 상세 패널에도 선택한다.
+export function firstEventIdByDate(rows: SavedEvent[]) {
+  return (
+    [...rows].sort((a, b) =>
+      a.event.startsAt.localeCompare(b.event.startsAt),
+    )[0]?.event.id ?? null
   );
 }
 
@@ -55,7 +84,7 @@ export function sortAndFilter(
     });
 }
 
-// 한 행의 선택 상태를 버튼으로 드러내고 값이 없는 예보는 공백으로 두지 않는다.
+// 이름 단추와 같은 행의 날짜·등급·상태 칸도 그 행사를 선택한다.
 export function EventList({
   rows,
   selectedId,
@@ -118,10 +147,19 @@ export function EventList({
             <tbody>
               {visible.map(({ event, snapshots }) => {
                 const latest = snapshots.at(-1);
+                const status = eventStatus(event, saved.has(event.id));
+                const rowClass = [
+                  selectedId === event.id ? "is-selected" : "",
+                  status === "예정" ? "" : "is-past",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
                 return (
                   <tr
                     key={event.id}
-                    className={selectedId === event.id ? "is-selected" : ""}
+                    className={rowClass}
+                    aria-selected={selectedId === event.id}
+                    onClick={() => onSelect(event.id)}
                   >
                     <th scope="row" data-label="행사명">
                       <button
@@ -132,7 +170,9 @@ export function EventList({
                         {event.name}
                       </button>
                     </th>
-                    <td data-label="일자">{formatDate(event.startsAt)}</td>
+                    <td data-label="일자">
+                      {formatDate(event.startsAt, { time: false })}
+                    </td>
                     <td data-label="등급">
                       {latest ? (
                         <LevelBadge judgment={latest.forecast.judgment} />
@@ -141,7 +181,11 @@ export function EventList({
                       )}
                     </td>
                     <td data-label="상태">
-                      {eventStatus(event, saved.has(event.id))}
+                      <span
+                        className={`my-events-status my-events-status--${statusTone[status]}`}
+                      >
+                        {status}
+                      </span>
                     </td>
                     <td data-label="마지막 예보">
                       {latest ? formatDate(latest.publishedAt) : "예보 없음"}

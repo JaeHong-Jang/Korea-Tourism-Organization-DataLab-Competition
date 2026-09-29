@@ -1,84 +1,74 @@
-// 검증 성적을 앞에 두고 근거·사례·등록·모델의 한계를 이어 보여 준다.
+// 지금 모델의 검증 기록 → 축제 총 방문객 추이 → 개선 중인 모델 → 앞으로의 채점 순으로 읽게 한다.
+import { Link } from "react-router-dom";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { PageHeading } from "../components/common/page-heading";
-import { EvidenceDashboard } from "../features/validation/evidence-dashboard";
-import { GoldenCases } from "../features/validation/golden-cases";
-import { ModelDetails } from "../features/validation/model-details";
+import { FestivalVisitorsChart } from "../features/validation/festival-visitors-chart";
 import { PerformanceMetrics } from "../features/validation/performance-metrics";
-import { PredictionScatter } from "../features/validation/prediction-scatter";
 import { PreregistrationBoard } from "../features/validation/preregistration-board";
-import {
-  getBacktest,
-  getModelCard,
-  getScores,
-  getUsage,
-} from "../lib/validation/api";
+import { ResearchComputationRecord } from "../features/validation/research-computation-record";
+import { ResearchSplitDetails } from "../features/validation/research-split-details";
+import { ResearchValidationSummary } from "../features/validation/research-validation-summary";
+import { getBacktest, getScores } from "../lib/validation/api";
 import { useContract } from "../lib/validation/use-contract";
 
-// 같은 백테스트 응답을 성적·산점도·골든 사례에서 공유한다.
+// 지금 모델 기록은 API에서, 개선 모델 기록은 고정 산출물에서 온다 — 둘을 섞지 않는다.
 export function ValidationPage() {
   const backtest = useContract(getBacktest);
-  const usage = useContract(getUsage);
   const scores = useContract(getScores);
-  const model = useContract(getModelCard);
+  const summary = backtest.value;
+  const skipped = summary?.disclosure?.skippedYears ?? [];
   return (
     <div className="page-wrap regular-page validation-page">
       <PageHeading
-        eyebrow="S6 · 결과를 다시 확인해요"
-        title="검증"
-        description="예보가 얼마나 맞았는지와 근거가 어디까지 연결되는지 살펴보세요."
+        eyebrow="과거 예측 성능을 확인해요"
+        title="모델 검증"
+        description="예보 모델이 지난 행사를 얼마나 맞혔는지 봐요."
       />
+      <nav className="page-links" aria-label="관련 화면">
+        <Link to="/my">내 행사에 실측 입력하기 →</Link>
+      </nav>
+      <FeaturePanel
+        id="M6-F1"
+        title="지금 모델: 검증 방법과 계산 기록"
+        className="validation-method-current"
+      >
+        <div className="validation-content">
+          <p>
+            {summary?.evalYears.join(", ") || "—"}년을 평가할 때 학습은 2년
+            전까지, 보정은 직전 해로 나눴어요. 건너뛴 연도:{" "}
+            {skipped.length
+              ? skipped
+                  .map((item) => `${item.year}년 ${item.reason}`)
+                  .join(" · ")
+              : "없음"}
+          </p>
+          <PerformanceMetrics state={backtest} />
+        </div>
+      </FeaturePanel>
+      <details className="validation-fold validation-method validation-method--top">
+        <summary>개선 중인 모델 v2: 검증 방법과 계산 기록</summary>
+        <div className="validation-content">
+          <ResearchSplitDetails />
+          <ResearchComputationRecord />
+        </div>
+      </details>
       <div className="validation-layout">
         <FeaturePanel
-          id="M6-F1"
-          title="성능 지표"
-          description="평가 표본과 비교 가능 범위를 함께 확인해요."
-          className="validation-kpis"
-        >
-          <PerformanceMetrics state={backtest} />
-        </FeaturePanel>
-        <FeaturePanel
           id="M6-F2"
-          title="예측과 실측"
-          description="일평균 방문객 예측과 실측을 같은 로그 척도로 비교해요."
+          title="축제 총 방문객 추이와 2026 예측"
+          description="2017~2025년은 실제 발표 합계, 2026년은 예측이에요."
           className="validation-chart"
         >
-          <PredictionScatter state={backtest} />
+          <FestivalVisitorsChart />
         </FeaturePanel>
-        <FeaturePanel
-          id="M6-F5"
-          title="근거 대시보드"
-          description="문장별 근거 연결과 데이터랩까지 이어진 비율을 따로 봐요."
-          className="validation-evidence"
-        >
-          <EvidenceDashboard state={usage} />
-        </FeaturePanel>
-        <FeaturePanel
-          id="M6-F3"
-          title="골든 케이스"
-          description="보도된 인원의 단위와 비교 가능 여부를 살펴봐요."
-          className="validation-cases"
-        >
-          <GoldenCases state={backtest} />
-        </FeaturePanel>
+        <ResearchValidationSummary />
         <FeaturePanel
           id="M6-F4"
-          title="사전 등록 예보 채점판"
-          description="공개된 채점과 원장 해시 체인을 확인해요."
-          className="validation-score"
+          title="앞으로의 채점"
+          description="행사 전에 예보를 등록해 두고, 끝난 뒤 실측으로 채점해요."
+          className="validation-evidence"
         >
           <PreregistrationBoard state={scores} />
-        </FeaturePanel>
-        <FeaturePanel
-          id="M6-F6"
-          title="모델 카드"
-          description="사용 모델의 학습 범위와 한계를 읽어 보세요."
-          className="validation-model"
-        >
-          <ModelDetails
-            state={model}
-            goldenEmpty={backtest.value?.golden.length === 0}
-          />
         </FeaturePanel>
       </div>
     </div>

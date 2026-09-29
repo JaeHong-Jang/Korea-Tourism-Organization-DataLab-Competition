@@ -1,0 +1,81 @@
+/* 인사이트의 사례 제안과 일평균 방문객 막대를 간결하게 배치한다. */
+.insights-page .page-heading :empty { display: none; }
+.insights-focused-heading { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-5); }
+.insights-focused-heading h2 { margin: 0; font-size: var(--text-section); }
+.insights-focused-heading p { margin: 0; color: var(--ink-2); font-size: var(--text-sm); }
+.daily-forecast-controls { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-4); }
+.daily-forecast-controls label { display: grid; gap: var(--space-2); color: var(--ink-2); font-size: var(--text-sm); }
+.daily-forecast-controls input, .daily-forecast-controls select { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-input); padding: var(--space-2) var(--space-3); }
+.daily-forecast-legend { display: flex; flex-wrap: wrap; gap: var(--space-4); color: var(--ink-2); font-size: var(--text-sm); }
+.daily-forecast-axis { display: flex; justify-content: space-between; color: var(--ink-2); font-size: var(--text-sm); margin: var(--space-3) 9rem 0 15rem; }
+.daily-forecast-list { list-style: none; padding: 0; margin: 0; }
+.daily-forecast-row { display: grid; grid-template-columns: 15rem minmax(0, 1fr) 9rem; align-items: center; gap: var(--space-3); padding: var(--space-4) 0; border-bottom: 1px solid var(--line); }
+.daily-forecast-name { display: grid; gap: var(--space-2); min-width: 0; }
+.daily-forecast-name a { color: var(--ink); font-weight: 600; text-decoration: none; }
+.daily-forecast-name span { color: var(--ink-2); font-size: var(--text-sm); }
+.daily-forecast-row svg { display: block; width: 100%; height: 3rem; overflow: visible; }
+.daily-forecast-value { display: grid; gap: var(--space-2); text-align: right; font-variant-numeric: tabular-nums; }
+.daily-forecast-value strong { font-size: var(--text-body); }
+.daily-forecast-value span { color: var(--ink-2); font-size: var(--text-sm); }
+.daily-forecast-footer { display: flex; justify-content: space-between; align-items: center; margin-top: var(--space-4); color: var(--ink-2); font-size: var(--text-sm); }
+.insights-case-list { display: grid; gap: var(--space-5); }
+.insights-case { border-top: 1px solid var(--line); padding-top: var(--space-4); }
+.insights-case h3 { margin: 0 0 var(--space-2); }
+.insights-case-period, .insights-case-note, .insights-case-links { color: var(--ink-2); font-size: var(--text-sm); }
+.insights-case-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: var(--space-4) 0; }
+.insights-case-values div { display: grid; gap: var(--space-2); }
+.insights-case-values dt { color: var(--ink-2); font-size: var(--text-sm); }
+.insights-case-values dd { margin: 0; font-size: var(--text-section); font-variant-numeric: tabular-nums; }
+.insights-case-proposal { margin: var(--space-3) 0; }
+.insights-case-links { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+@media (max-width: 640px) {
+  .insights-focused-heading { display: grid; }
+  .daily-forecast-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .daily-forecast-row svg { grid-column: 1 / -1; grid-row: 2; }
+  .daily-forecast-axis { margin: var(--space-3) 0 0; }
+  .daily-forecast-value { grid-column: 2; grid-row: 1; }
+  .daily-forecast-controls { display: grid; grid-template-columns: minmax(0, 1fr); }
+}
+/* 같은 차트 위에 등급 경계를 나란히 표시한다. */
+.daily-scale-key { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-5); }
+.daily-scale-key > span { border-bottom: 3px solid var(--line); padding: var(--space-2) 0; font-size: var(--text-sm); color: var(--ink-2); }
+.daily-scale-key strong { color: var(--ink); margin-right: var(--space-2); }
+.daily-forecast-value small { color: var(--ink-2); font-size: var(--text-sm); font-weight: normal; }
+.daily-forecast-name .daily-forecast-grade { font-size: var(--text-sm); font-weight: 600; }/* 전체 행사 목록은 생략 없이 스크롤로 탐색한다. */
+.insights-event-picker { flex: 1; min-width: 0; }
+.insights-event-picker select { width: 100%; min-width: 0; max-width: 100%; }
+.daily-forecast-list { max-height: 42rem; overflow-y: auto; scrollbar-gutter: stable; }
+.past-comparison-table { max-height: 42rem; overflow: auto; }
+.past-comparison-table table { width: 100%; border-collapse: collapse; min-width: 42rem; }
+.past-comparison-table th, .past-comparison-table td { text-align: left; padding: var(--space-3); border-bottom: 1px solid var(--line); }
+.past-comparison-table thead th { position: sticky; top: 0; background: var(--surface); }
+.past-comparison-table small { display: block; color: var(--ink-2); margin-top: var(--space-2); font-size: var(--text-sm); }
+.past-comparison-table button { text-align: left; color: var(--ink); background: none; border: 0; padding: 0; }/* 막대 수치와 단위는 스크롤바에서 떨어진 같은 칸에 정렬한다. */
+.daily-forecast-list { padding-inline-end: var(--space-4); }
+.daily-forecast-value { min-width: max-content; padding-inline-end: var(--space-2); }
+.daily-forecast-value strong { display: inline-flex; justify-content: flex-end; align-items: baseline; gap: var(--space-1); white-space: nowrap; }
+.daily-forecast-value small { flex-shrink: 0; white-space: nowrap; }
+@media (max-width: 640px) {
+  .daily-forecast-row { grid-template-columns: minmax(0, 1fr) max-content; }
+  .daily-forecast-name { overflow-wrap: anywhere; }
+}/* 계산 방법은 제목 바로 아래 작은 문장 하나로 표시한다. */
+.insights-focused-heading .insights-model-summary { margin-top: var(--space-2); font-size: var(--text-sm); color: var(--ink-2); }
+.past-comparison-period { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* 자료 카드의 제목·설명·메타정보를 같은 행 높이로 맞춘다. */
+.insights-page .insights-datasets { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+.insights-page .insights-dataset { grid-template-rows: subgrid; grid-row: span 3; min-width: 0; }
+.insights-page .insights-dataset > h3, .insights-page .insights-dataset > p { margin: 0; }
+.insights-page .insights-dataset .insights-meta { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 640px) {
+  .insights-page .insights-datasets { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* 각 지표의 출처 묶음을 독립적으로 펼치거나 접는다. */
+.insights-source-section { border: 1px solid var(--line); border-radius: var(--radius-button); padding: var(--space-4); margin-bottom: var(--space-4); }
+.insights-source-section > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); list-style: none; cursor: pointer; font-size: var(--text-body); font-weight: 700; color: var(--ink); }
+.insights-source-section > summary::-webkit-details-marker { display: none; }
+.insights-source-section > summary::after { content: "펼치기 +"; flex-shrink: 0; color: var(--ink-2); font-size: var(--text-sm); font-weight: 400; }
+.insights-source-section[open] > summary { margin-bottom: var(--space-4); }
+.insights-source-section[open] > summary::after { content: "접기 −"; }
+.insights-source-section > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: var(--space-1); }

@@ -46,9 +46,15 @@ export function ForecastResultCard({
           </ul>
         </details>
       )}
+      <p className="consult-muted">예보를 발행해 내 행사에 자동 저장했어요.</p>
       <nav className="consult-result__actions" aria-label="예보 이어보기">
         <Link to={href}>예보서 보기</Link>
-        <Link to="/graph">근거 그래프</Link>
+        <Link to={`/my?forecastId=${encodeURIComponent(card.id)}`}>
+          내 행사에서 보기
+        </Link>
+        <Link to={`/graph?forecastId=${encodeURIComponent(card.id)}`}>
+          예보 근거 보기
+        </Link>
         <Link to={`${href}#forecast-tab-map`}>근거 정리</Link>
         <Link to={`${href}/plan`}>계획 초안</Link>
       </nav>

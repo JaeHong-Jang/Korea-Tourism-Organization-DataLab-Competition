@@ -1,6 +1,6 @@
 // 선택 행사 오른쪽에 불변 예보 이력과 재예보·실측·공유 행동을 묶는다.
 
-import type { Event, ReforecastResult } from "@crowdcast/contracts/types";
+import type { ReforecastResult } from "@crowdcast/contracts/types";
 import { useRef, useState } from "react";
 import { FeaturePanel } from "../../components/common/feature-panel";
 import { LevelBadge } from "../../components/common/level-badge";
@@ -10,24 +10,14 @@ import {
   postReforecast,
   postShare,
 } from "../../lib/my-events-api";
+import { forecastEvidenceHref } from "../knowledge-graph/forecast-evidence-data";
+import { forecastBeforeEvent } from "./actual-comparison";
 import { ActualForm } from "./actual-form";
 import type { SavedEvent } from "./event-list";
 import { ReforecastCard } from "./reforecast-card";
+import { useFollowScroll } from "./use-follow-scroll";
 
 // 게이트 실패·행사 없음·서비스 실패를 다른 안내로 보여 준다.
-// what-if로 바꾼 조건(일시·시간대·요금·유형)의 예보가 저장 행사의 이력에 붙었는지 본다
-export function changedCondition(
-  snapshotEvent: Pick<
-    Event,
-    "startsAt" | "endsAt" | "timeOfDay" | "fee" | "type"
-  >,
-  saved: Pick<Event, "startsAt" | "endsAt" | "timeOfDay" | "fee" | "type">,
-): boolean {
-  return (["startsAt", "endsAt", "timeOfDay", "fee", "type"] as const).some(
-    (key) => snapshotEvent[key] !== saved[key],
-  );
-}
-
 // 같은 날 같은 조건이면 예보 id가 같아 새로 발행하지 않는다 — 실패가 아니라 "바뀐 것 없음" 안내다.
 export function isUnchanged(reason: unknown): boolean {
   return (
@@ -70,14 +60,23 @@ export function EventDetail({
   const [copied, setCopied] = useState(false);
   const { event, snapshots } = row;
   const latest = snapshots.at(-1);
-  const past = Date.parse(event.endsAt) < Date.now();
+  const ended = Date.parse(event.endsAt) < Date.now();
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  useFollowScroll(panelRef);
+
+  // 끝난 행사는 다음 할 일이 실측 입력이라 재예보보다 먼저 보여 준다.
+  const actualPanel = (
+    <FeaturePanel id="M5-F4" title="실측 입력">
+      <ActualForm
+        event={event}
+        forecast={forecastBeforeEvent(snapshots, event.startsAt)}
+        onSaved={() => onActualSaved(event.id)}
+      />
+    </FeaturePanel>
+  );
   return (
-    <div className="my-events-detail">
-      <FeaturePanel
-        id="M5-F2"
-        title="예보 이력"
-        description="발행된 예보는 수정할 수 없어요."
-      >
+    <div className="my-events-detail" ref={panelRef}>
+      <FeaturePanel id="M5-F2" title="예보 이력">
         <h3>{event.name}</h3>
         <p>
           {formatDate(event.startsAt)} · {event.venue.name}
@@ -86,30 +85,39 @@ export function EventDetail({
           <p>아직 발행된 예보가 없어요.</p>
         ) : (
           <ol className="my-events-timeline">
-            {snapshots.map((snapshot) => (
+            {snapshots.map((snapshot, index) => (
               <li key={snapshot.forecastId}>
-                <a href={`/f/${encodeURIComponent(snapshot.forecastId)}`}>
-                  <span>{formatDate(snapshot.publishedAt)}</span>
+                <div className="my-events-timeline-heading">
+                  <strong>{index + 1}차 예보</strong>
+                  <time dateTime={snapshot.publishedAt}>
+                    {formatDate(snapshot.publishedAt)} 발행
+                  </time>
+                </div>
+                <div className="my-events-timeline-figure">
+                  <span>최대 동시 인원</span>
                   <strong>
-                    {formatSnapshotNumber(snapshot.forecast.peakConcurrent.p50)}{" "}
-                    명 · 순간 최대 중앙값
+                    {formatSnapshotNumber(snapshot.forecast.peakConcurrent.p50)}
+                    명
                   </strong>
-                </a>
-                <LevelBadge judgment={snapshot.forecast.judgment} />
-                {changedCondition(snapshot.event, event) && (
-                  <small className="my-events-whatif">조건 바꿈(what-if)</small>
-                )}
-                <small>발행 당시 기록 · 수정 불가</small>
+                  <LevelBadge judgment={snapshot.forecast.judgment} />
+                </div>
+                <div className="my-events-timeline-actions">
+                  <a
+                    className="my-events-snapshot-report"
+                    href={`/f/${encodeURIComponent(snapshot.forecastId)}`}
+                    aria-label={`${index + 1}차 예보서 보기`}
+                  >
+                    예보서 보기
+                  </a>
+                  <a href={forecastEvidenceHref(snapshot)}>근거 보기 →</a>
+                </div>
               </li>
             ))}
           </ol>
         )}
       </FeaturePanel>
-      <FeaturePanel
-        id="M5-F3"
-        title="재예보"
-        description="저장한 행사로 새 예보를 발행하고 직전 예보와 비교해요."
-      >
+      {ended && actualPanel}
+      <FeaturePanel id="M5-F3" title="재예보">
         <button
           type="button"
           className="my-events-primary"
@@ -140,16 +148,13 @@ export function EventDetail({
         {forecastError && <p role="alert">{forecastError}</p>}
         {unchanged && (
           <div className="my-events-unchanged" role="status">
-            <strong>직전 예보와 달라진 게 없어요</strong>
-            <p>
-              예보는 방문자 자료나 날씨 예보가 새로 들어올 때 바뀌어요. 오늘은
-              같은 조건의 예보가 이미 발행돼 있어 새로 만들지 않았어요.
-            </p>
+            <strong>직전 예보와 같아요</strong>
+            <p>방문 자료나 날씨 예보가 새로 들어오면 달라져요.</p>
             {latest && (
               <p>
-                직전 예보: {formatDate(latest.publishedAt)} 발행 · 순간 최대
-                가운데{" "}
-                {formatSnapshotNumber(latest.forecast.peakConcurrent.p50)}명 ·{" "}
+                직전 예보: {formatDate(latest.publishedAt)} 발행 · 최대 동시
+                인원 {formatSnapshotNumber(latest.forecast.peakConcurrent.p50)}
+                명 ·{" "}
                 <a href={`/f/${encodeURIComponent(latest.forecastId)}`}>
                   예보서 보기
                 </a>
@@ -168,20 +173,8 @@ export function EventDetail({
           />
         )}
       </FeaturePanel>
-      {past && (
-        <FeaturePanel
-          id="M5-F4"
-          title="실측 입력·채점"
-          description="행사 후 확인한 인원과 관측 범위를 남겨요."
-        >
-          <ActualForm event={event} onSaved={() => onActualSaved(event.id)} />
-        </FeaturePanel>
-      )}
-      <FeaturePanel
-        id="M5-F5"
-        title="공유 링크"
-        description="발행 당시 예보서를 읽기 전용으로 공유해요."
-      >
+      {!ended && actualPanel}
+      <FeaturePanel id="M5-F5" title="공유 링크">
         {latest ? (
           <>
             <button

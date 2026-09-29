@@ -1,61 +1,86 @@
-// 실제 읽은 데이터랩 자료만 활용 명세표로 표시한다.
-// biome-ignore-all lint/a11y/noNoninteractiveTabindex lint/a11y/noRedundantRoles: 표의 가로 스크롤 영역을 명시적으로 포커스 가능하게 한다.
+// 데이터 활용 명세를 쉬운 용도와 원문 기록으로 나누어 보여 준다.
 import type { DatalabSpec } from "@crowdcast/contracts/types";
 import type { ContractState } from "../../lib/validation/use-contract";
-import { ContractMessage } from "../validation/contract-state";
 
-// 기간과 확인일을 각 행에 두어 출처를 확인할 수 있게 한다.
+const PURPOSES: Record<string, string> = {
+  "ds-datalab-festival-status":
+    "통신 기반 방문객 추정치를 확인해요. 행사장과 집계 구역의 일치 여부는 별도 확인이 필요해요.",
+  "ds-kto-visitors-15101972":
+    "지역의 평소 방문 규모와 방문객 구성을 파악하는 데 사용해요.",
+  "ds-mcst-festival-plans":
+    "행사 일정·유형을 확인하고 전년 발표 방문객을 규모 참고 자료로 사용해요.",
+};
+
+// 자료 확인일과 분석 계산 시각을 구분하고 원래 용도 설명도 보존한다.
 export function DatalabSpecTable({
   state,
+  retry,
+  datasetIds,
 }: {
   state: ContractState<DatalabSpec>;
+  retry?: () => void;
+  datasetIds?: string[];
 }) {
   if (!state.value)
     return (
-      <ContractMessage
-        state={state}
-        empty="데이터랩 활용 명세는 데이터 수집이 끝나면 채워져요 · 9/27"
-      />
+      <div className="insights-callout">
+        <p role={state.status === "error" ? "alert" : "status"}>
+          {state.status === "loading"
+            ? "자료 활용 기록을 불러오는 중이에요."
+            : state.status === "error"
+              ? "자료 활용 기록을 불러오지 못했어요. 다시 시도해 주세요."
+              : "아직 발행된 자료 활용 기록이 없어요."}
+        </p>
+        {retry && state.status !== "loading" && (
+          <button type="button" onClick={retry}>
+            활용 기록 다시 확인
+          </button>
+        )}
+      </div>
     );
-  if (!state.value.rows.length)
+  const rows = datasetIds
+    ? state.value.rows.filter((row) => datasetIds.includes(row.datasetId))
+    : state.value.rows;
+  if (!rows.length)
     return (
-      <p className="validation-state">
-        확인된 데이터랩 활용 기록이 아직 없어요.
+      <p className="insights-callout">
+        선택한 지표에 연결된 자료 활용 기록이 아직 없어요.
       </p>
     );
   return (
-    <section
-      className="validation-table-scroll"
-      tabIndex={0}
-      role="region"
-      aria-label="데이터랩 활용 명세 표, 좌우로 스크롤"
-    >
-      <table>
-        <thead>
-          <tr>
-            <th>메뉴·자료</th>
-            <th>지표</th>
-            <th>기간</th>
-            <th>단위</th>
-            <th>용도</th>
-            <th>확인일</th>
-          </tr>
-        </thead>
-        <tbody>
-          {state.value.rows.map((row) => (
-            <tr key={row.datasetId}>
-              <th>{row.datalabMenu ?? row.title}</th>
-              <td>{row.metric}</td>
-              <td>
-                {row.period.from}~{row.period.to}
-              </td>
-              <td>{row.unit}</td>
-              <td>{row.purpose}</td>
-              <td>{row.confirmedAt}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
+    <div className="insights-section-stack">
+      <div className="insights-datasets">
+        {rows.map((row) => (
+          <article className="insights-dataset" key={row.datasetId}>
+            <h3>{row.title}</h3>
+            <p>{PURPOSES[row.datasetId] ?? row.purpose}</p>
+            <dl className="insights-meta">
+              <div>
+                <dt>자료 지표</dt>
+                <dd>{row.metric}</dd>
+              </div>
+              <div>
+                <dt>집계 단위</dt>
+                <dd>{row.unit}</dd>
+              </div>
+              <div>
+                <dt>
+                  {row.datasetId === "ds-mcst-festival-plans"
+                    ? "행사 일정 범위 · 예정 포함"
+                    : "원자료 기간"}
+                </dt>
+                <dd>
+                  {row.period.from} ~ {row.period.to}
+                </dd>
+              </div>
+              <div>
+                <dt>자료 확인일</dt>
+                <dd>{row.confirmedAt}</dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+      </div>
+    </div>
   );
 }

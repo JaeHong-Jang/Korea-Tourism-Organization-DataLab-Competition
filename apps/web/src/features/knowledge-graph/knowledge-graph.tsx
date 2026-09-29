@@ -9,11 +9,11 @@ import {
   type GraphKind,
   graphKinds,
   kindLabel,
+  readerGroups,
   searchGraph,
 } from "./graph-data";
 import { GraphDetail } from "./graph-detail";
 import { GraphScene3d } from "./graph-scene-3d";
-import { kindStyle } from "./graph-style";
 import { GraphTable } from "./graph-table";
 import { layoutGraph3d, nodeDegrees } from "./layout-3d";
 
@@ -63,13 +63,15 @@ export function KnowledgeGraphView({ graph }: { graph: KnowledgeGraph }) {
   );
 
   // 선택 경로가 숨겨지면 상세를 닫아 보이지 않는 관계를 강조하지 않는다.
-  const toggleKind = (kind: GraphKind) => {
+  const toggleGroup = (groupKinds: GraphKind[]) => {
+    const allOn = groupKinds.every((kind) => kinds.includes(kind));
+    if (allOn && selected && groupKinds.includes(selected.kind))
+      setSelectedId(null);
     setKinds((current) =>
-      current.includes(kind)
-        ? current.filter((item) => item !== kind)
-        : [...current, kind],
+      allOn
+        ? current.filter((kind) => !groupKinds.includes(kind))
+        : [...new Set([...current, ...groupKinds])],
     );
-    if (selected?.kind === kind) setSelectedId(null);
   };
   const generatedAt = new Intl.DateTimeFormat("ko-KR", {
     dateStyle: "medium",
@@ -80,70 +82,61 @@ export function KnowledgeGraphView({ graph }: { graph: KnowledgeGraph }) {
   // 그래프를 그릴 수 없어도 동일한 필터 자료를 표로 열 수 있다.
   return (
     <section className="knowledge-graph" aria-label="전체 근거 그래프">
-      <div className="knowledge-graph__toolbar">
-        <p>
-          기준 그래프 버전 {graph.masterVersion} · 생성 {generatedAt} · 노드{" "}
-          {filtered.nodes.length}개 · 관계 {filtered.edges.length}개
-        </p>
-        <button type="button" onClick={() => setTable((value) => !value)}>
-          {table ? "그래프로 보기" : "표로 보기"}
-        </button>
-      </div>
-      <div className="knowledge-graph__body">
-        {table ? (
-          <GraphTable data={filtered} onSelect={selectNode} />
-        ) : (
-          <section
-            className="knowledge-graph__canvas"
-            aria-label="온톨로지와 기준 그래프"
-          >
-            {!data.nodes.length ? (
-              <p>표시할 기준 그래프가 없어요.</p>
-            ) : !filtered.nodes.length ? (
-              <p>선택한 종류에 노드가 없어요.</p>
-            ) : (
-              <>
-                <GraphScene3d
-                  data={filtered}
-                  positions={positions}
-                  degrees={degrees}
-                  selectedId={selectedId}
-                  active={active}
-                  onSelect={selectNode}
-                  onClear={() => setSelectedId(null)}
-                  reducedMotion={reducedMotion}
-                />
-                <p className="knowledge-graph__hint">
-                  왼쪽 끌기 이동 · 휠 버튼 끌기 회전 · 휠 확대 · 노드를 누르면
-                  이어진 것만 밝아져요
-                </p>
-              </>
-            )}
-          </section>
-        )}
-        <div className="knowledge-graph__side">
+      <div>
+        <div className="knowledge-graph__blueprint">
+          <div className="knowledge-graph__toolbar">
+            <p>
+              설계도 · 버전 {graph.masterVersion} · {generatedAt} · 노드{" "}
+              {filtered.nodes.length}개 · 관계 {filtered.edges.length}개
+            </p>
+            <button type="button" onClick={() => setTable((value) => !value)}>
+              {table ? "그래프로 보기" : "표로 보기"}
+            </button>
+          </div>
           <fieldset className="knowledge-graph__filters">
-            <legend>노드 종류 필터</legend>
-            {graphKinds.map(({ kind, label }) => (
+            <legend>보는 묶음</legend>
+            {readerGroups.map((group) => (
               <button
-                key={kind}
+                key={group.id}
                 type="button"
-                aria-pressed={kinds.includes(kind)}
-                onClick={() => toggleKind(kind)}
+                aria-pressed={group.kinds.every((kind) => kinds.includes(kind))}
+                onClick={() => toggleGroup(group.kinds)}
               >
-                <i
-                  className={`knowledge-graph__swatch knowledge-graph__swatch--${kindStyle[kind].shape}`}
-                  style={
-                    kindStyle[kind].shape === "torus"
-                      ? undefined
-                      : { background: `var(${kindStyle[kind].color})` }
-                  }
-                  aria-hidden="true"
-                />
-                {label}
+                {group.label}
               </button>
             ))}
           </fieldset>
+          {table ? (
+            <GraphTable data={filtered} onSelect={selectNode} />
+          ) : (
+            <section
+              className="knowledge-graph__canvas"
+              aria-label="온톨로지와 기준 그래프"
+            >
+              {!data.nodes.length ? (
+                <p>표시할 기준 그래프가 없어요.</p>
+              ) : !filtered.nodes.length ? (
+                <p>선택한 종류에 노드가 없어요.</p>
+              ) : (
+                <>
+                  <GraphScene3d
+                    data={filtered}
+                    positions={positions}
+                    degrees={degrees}
+                    selectedId={selectedId}
+                    active={active}
+                    onSelect={selectNode}
+                    onClear={() => setSelectedId(null)}
+                    reducedMotion={reducedMotion}
+                  />
+                  <p className="knowledge-graph__hint">
+                    왼쪽 끌기 이동 · 휠 버튼 끌기 회전 · 휠 확대 · 노드를 누르면
+                    이어진 것만 밝아져요
+                  </p>
+                </>
+              )}
+            </section>
+          )}
           <div className="knowledge-graph__search">
             <label htmlFor="knowledge-search">노드 검색</label>
             <input
@@ -183,13 +176,15 @@ export function KnowledgeGraphView({ graph }: { graph: KnowledgeGraph }) {
               </section>
             )}
           </div>
-          <GraphDetail
-            data={filtered}
-            selected={selected}
-            onSelect={selectNode}
-          />
         </div>
       </div>
+      {selected && (
+        <GraphDetail
+          data={filtered}
+          selected={selected}
+          onSelect={selectNode}
+        />
+      )}
     </section>
   );
 }

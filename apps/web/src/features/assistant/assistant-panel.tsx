@@ -122,7 +122,12 @@ export function AssistantPanel({ onGuide }: { onGuide: () => void }) {
           <>
             <div className="consult-greeting">
               <PetAvatar agentId="lead" state="idle" size={48} />
-              <p>안녕하세요. 어떤 행사를 찾으시나요?</p>
+              <div>
+                <p>안녕하세요. 어떤 행사를 찾으시나요?</p>
+                <small>
+                  행사를 고르고 예보를 발행하면 내 행사에 자동 저장돼요.
+                </small>
+              </div>
             </div>
             <FestivalPicker onPick={pick} />
             <div className="consult-examples">

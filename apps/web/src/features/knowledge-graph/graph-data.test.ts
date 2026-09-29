@@ -89,8 +89,8 @@ describe("전체 근거 그래프", () => {
   // 3D 배치는 같은 그래프에 늘 같은 좌표를 주고 모든 좌표가 유한하다.
   it("3D 배치가 결정적이고 유한하다", () => {
     const data = buildGraph(graph);
-    const first = layoutGraph3d(data, 60);
-    const second = layoutGraph3d(data, 60);
+    const first = layoutGraph3d(data);
+    const second = layoutGraph3d(data);
     expect(first).toHaveProperty("size", graph.nodes.length);
     for (const [id, point] of first) {
       expect(point.every(Number.isFinite)).toBe(true);

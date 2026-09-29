@@ -6,13 +6,17 @@ import {
   BoxGeometry,
   type BufferGeometry,
   ConeGeometry,
+  DoubleSide,
   Float32BufferAttribute,
   BufferGeometry as Geometry,
   IcosahedronGeometry,
   MOUSE,
   OctahedronGeometry,
   SphereGeometry,
+  SRGBColorSpace,
   TetrahedronGeometry,
+  type Texture,
+  TextureLoader,
   TOUCH,
   TorusGeometry,
   Vector3,
@@ -21,7 +25,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useCssVars } from "../../lib/theme/use-css-var";
 import type { GraphData, GraphEdge, GraphNode } from "./graph-data";
 import { kindStyle, type NodeShape, nodeRadius } from "./graph-style";
-import type { Point3 } from "./layout-3d";
+import { type Point3, whaleBackdrop } from "./layout-3d";
 
 const TOKENS = [
   "--cat-1",
@@ -74,7 +78,7 @@ export function GraphScene3d(props: SceneProps) {
   const background = colors["--surface-sunken"];
   return (
     <Canvas
-      camera={{ position: [0, 160, 720], fov: 45, near: 1, far: 4000 }}
+      camera={{ position: [330, 90, 660], fov: 45, near: 1, far: 4000 }}
       dpr={[1, 1.5]}
       onPointerMissed={props.onClear}
       gl={{ antialias: true }}
@@ -83,8 +87,42 @@ export function GraphScene3d(props: SceneProps) {
       <fog attach="fog" args={[background, 680, 1600]} />
       <ambientLight intensity={0.75} />
       <directionalLight position={[120, 220, 160]} intensity={1.15} />
+      <WhaleBackdrop />
       <GraphContent {...props} colors={colors} />
     </Canvas>
+  );
+}
+
+// 노드가 앉은 고래 모양이 한눈에 읽히도록 같은 자리에 로고를 옅게 깐다. 뒤에서 봐도 보이게 양면으로 그리고, 클릭은 받지 않는다.
+function WhaleBackdrop() {
+  const [texture, setTexture] = useState<Texture | null>(null);
+  useEffect(() => {
+    let alive = true;
+    let loaded: Texture | null = null;
+    new TextureLoader().load("/assistant/whale.png", (value) => {
+      value.colorSpace = SRGBColorSpace;
+      loaded = value;
+      if (alive) setTexture(value);
+      else value.dispose();
+    });
+    return () => {
+      alive = false;
+      loaded?.dispose();
+    };
+  }, []);
+  if (!texture) return null;
+  const { center, size } = whaleBackdrop();
+  return (
+    <mesh position={center} raycast={() => null}>
+      <planeGeometry args={[size[0], size[1]]} />
+      <meshBasicMaterial
+        map={texture}
+        side={DoubleSide}
+        transparent
+        opacity={0.34}
+        depthWrite={false}
+      />
+    </mesh>
   );
 }
 
@@ -206,7 +244,7 @@ function GraphContent({
         edges={data.edges}
         positions={positions}
         color={colors["--axis"]}
-        opacity={active ? 0.12 : 0.55}
+        opacity={active ? 0.1 : 0.22}
       />
       {lit.length > 0 && (
         <EdgeLines
@@ -277,16 +315,21 @@ function GraphContent({
             }
             center
             zIndexRange={[20, 0]}
-            style={{
-              pointerEvents: "none",
-              display: node ? undefined : "none",
-            }}
+            style={{ display: node ? undefined : "none" }}
           >
-            <span
+            {/* 이름표를 눌러도 그 노드를 고른 것처럼 이어진 노드만 밝힌다. 키보드 선택은 노드 검색이 맡는다. */}
+            <button
+              type="button"
+              tabIndex={-1}
               className={`knowledge3d-label${node && node.id === selectedId ? " is-selected" : ""}`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (node) onSelect(node.id);
+              }}
             >
               {node ? labelText(node) : ""}
-            </span>
+            </button>
           </Html>
         );
       })}
@@ -300,8 +343,6 @@ function GraphContent({
         makeDefault
         enableDamping={!reducedMotion}
         dampingFactor={0.08}
-        autoRotate={!selectedId && !hovered && !reducedMotion}
-        autoRotateSpeed={0.35}
         minDistance={40}
         maxDistance={1500}
         zoomToCursor

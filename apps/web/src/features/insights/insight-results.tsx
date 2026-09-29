@@ -1,154 +1,123 @@
-// 실제 계산된 인사이트만 중요도 순으로 보여 주고 서식4 문장을 복사한다.
+// I1의 안전 검토 사례와 I2의 하루 평균 방문객을 핵심 내용만 보여 준다.
 import type { Insight } from "@crowdcast/contracts/types";
-import { useState } from "react";
-import { PetAvatar } from "../../components/pets";
 import type { ContractState } from "../../lib/validation/use-contract";
+import { InsightComparison } from "./insight-comparison";
+import { InsightLevels } from "./insight-levels";
 
-// 각 인사이트가 무엇을 보는지 한 줄로 알려 준다.
-const QUESTIONS: Record<string, string> = {
-  I1: "지자체가 발표한 방문객 수가 데이터랩 실측(이동통신 기반)과 몇 배 차이 나는지 봐요.",
-  I2: "예상 인원이 법정 기준 1,000명 근처라 안전관리계획 수립 여부가 갈리는 행사가 얼마나 되는지 봐요.",
+export { headlineValue } from "./insight-data";
+
+const TITLES = {
+  I1: "과거 행사 주최측 발표·관측값 비교",
+  I2: "행사별 하루 평균 방문객",
 };
 
-// 표본이 없으면 요약값 0은 결측 표시라 숫자 대신 "표본 없음"으로, 비율은 %로 읽게 바꾼다.
-export function headlineValue(insight: Insight): string | null {
-  if (insight.sampleSize === 0 || insight.comparablePairs === 0) return null;
-  const { value, unit } = insight.headline;
-  if (unit === "비율") {
-    const percent = value * 100;
-    return `${percent.toFixed(Number.isInteger(percent) ? 0 : 1)}%`;
-  }
-  if (unit === "배") return `${value.toFixed(1)}배`;
-  return `${value.toLocaleString("ko-KR")}${unit}`;
-}
-
-// 인사이트 한 건의 계약 근거와 표본 기간을 함께 읽게 한다.
+// 연결된 근거가 있는 응답만 표시하고 수집 진단과 등급 합계는 본문에서 제외한다.
 function InsightResult({ insight }: { insight: Insight }) {
-  const [copied, setCopied] = useState(false);
-  const source = insight.evidenceIds
-    .map((id) => insight.evidence.find((item) => item.id === id))
-    .filter((item) => item != null);
-  if (source.length !== insight.evidenceIds.length)
-    return <p role="alert">인사이트 근거가 연결되지 않았어요.</p>;
-  const value = headlineValue(insight);
-  const sentence = `- ${insight.title}: ${value ?? "표본 없음"}, 표본 ${insight.sampleSize.toLocaleString("ko-KR")}건, ${insight.period.from}~${insight.period.to}.`;
-
-  // 복사 성공 뒤에만 완료 안내를 띄운다.
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(sentence);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  }
+  const sources = insight.evidenceIds.map((id) =>
+    insight.evidence.find((item) => item.id === id),
+  );
+  if (!sources.length || sources.some((item) => !item))
+    return <p role="alert">인사이트 근거를 확인할 수 없습니다.</p>;
+  const first = insight.key === "I1";
   return (
-    <article className="insight-result" data-insight={insight.key}>
-      <span>{insight.key}</span>
-      <h3>{insight.title}</h3>
-      {QUESTIONS[insight.key] && (
-        <p className="insight-result__question">{QUESTIONS[insight.key]}</p>
+    <article
+      className="insight-result insights-card insights-focused"
+      data-insight={insight.key}
+      id={`insight-${insight.key.toLowerCase()}`}
+      aria-labelledby={`insight-${insight.key}-title`}
+    >
+      <header className="insights-focused-heading">
+        <div>
+          <h2 id={`insight-${insight.key}-title`}>
+            {first ? TITLES.I1 : TITLES.I2}
+          </h2>
+          {!first && (
+            <p
+              className="insights-model-summary"
+              data-evidence-ids={insight.evidenceIds.join(" ")}
+            >
+              과거 방문객의 행사 유형·규모별 중앙값과 이전 개최 기록으로
+              일평균을 추정합니다.
+            </p>
+          )}
+        </div>
+        <span className="insights-caption">
+          {first
+            ? "2020–2026"
+            : `${insight.period.from} — ${insight.period.to}`}
+        </span>
+      </header>
+      {first ? (
+        <InsightComparison insight={insight} />
+      ) : (
+        <InsightLevels insight={insight} />
       )}
-      <strong className={value ? undefined : "insight-result__missing"}>
-        {value ?? "표본 없음"}
-      </strong>
-      <p>{insight.headline.text}</p>
-      <small>
-        표본 {insight.sampleSize.toLocaleString("ko-KR")}건 ·{" "}
-        {insight.period.from} ~ {insight.period.to}
-        {insight.comparablePairs != null &&
-          ` · 비교 ${insight.comparablePairs}쌍`}
-      </small>
-      <details className="source-tip">
-        <summary>ⓘ 근거</summary>
-        <ul>
-          {source.map((item) => (
-            <li key={item.id}>
-              {item.title}
-              {item.source?.accessUrl && (
-                <>
-                  {" "}
-                  ·{" "}
-                  <a
-                    href={item.source.accessUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    원문 보기
-                  </a>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
-      </details>
-      {value && (
-        <button type="button" onClick={copy}>
-          서식4용 문장 복사
-        </button>
-      )}
-      {copied && <span role="status">복사됨</span>}
     </article>
   );
 }
 
-// 각 카드의 대기·빈 값·오류에는 펫과 다시 확인할 행동을 붙인다.
+// 오류와 빈 자료를 구분하고 실패한 지표만 다시 요청한다.
 function InsightCard({
   insightKey,
   state,
+  retry,
 }: {
   insightKey: "I1" | "I2";
   state: ContractState<Insight>;
+  retry?: () => void;
 }) {
   if (state.status === "ready" && state.value)
     return <InsightResult insight={state.value} />;
-  const status = state.status === "ready" ? "empty" : state.status;
-  const message =
-    status === "loading"
-      ? "자료를 불러오는 중이에요."
-      : status === "error"
-        ? "자료 형식을 확인할 수 없어요."
-        : "인사이트는 데이터 수집이 끝나면 채워져요 · 9/27";
+  const loading = state.status === "loading";
   return (
     <article
-      className="insight-result insight-result--state"
+      className="insight-result insights-card insight-result--state"
       data-insight={insightKey}
     >
-      <span>{insightKey}</span>
-      <h3>{insightKey} 자료 확인</h3>
-      <div role={status === "error" ? "alert" : "status"}>
-        <PetAvatar
-          agentId={status === "error" ? "source-check" : "local-guide"}
-          state={
-            status === "error"
-              ? "error"
-              : status === "loading"
-                ? "working"
-                : "idle"
-          }
-          size={96}
-        />
-        <p>{message}</p>
-      </div>
-      <button type="button" onClick={() => window.location.reload()}>
-        자료 다시 확인
-      </button>
+      <h2>{TITLES[insightKey]}</h2>
+      <p role={state.status === "error" ? "alert" : "status"}>
+        {loading
+          ? "자료를 불러오는 중입니다."
+          : state.status === "error"
+            ? "자료를 불러오지 못했어요. 다시 시도해 주세요."
+            : "아직 발행된 자료가 없습니다."}
+      </p>
+      {!loading && (
+        <button
+          type="button"
+          onClick={retry ?? (() => window.location.reload())}
+        >
+          자료 다시 확인
+        </button>
+      )}
     </article>
   );
 }
 
-// I1과 I2의 요청 상태를 각각 그려 확인된 결과를 계속 보여 준다.
+// 선택한 지표만 표시하고 다른 지표의 오류를 전파하지 않는다.
 export function InsightResults({
   first,
   second,
+  activeKey,
+  retryFirst,
+  retrySecond,
 }: {
   first: ContractState<Insight>;
   second: ContractState<Insight>;
+  activeKey?: "I1" | "I2";
+  retryFirst?: () => void;
+  retrySecond?: () => void;
 }) {
   return (
-    <div className="insight-results">
-      <InsightCard insightKey="I1" state={first} />
-      <InsightCard insightKey="I2" state={second} />
+    <div
+      className={`insight-results${activeKey ? " insights-results-single" : ""}`}
+    >
+      {(!activeKey || activeKey === "I1") && (
+        <InsightCard insightKey="I1" state={first} retry={retryFirst} />
+      )}
+      {(!activeKey || activeKey === "I2") && (
+        <InsightCard insightKey="I2" state={second} retry={retrySecond} />
+      )}
     </div>
   );
 }

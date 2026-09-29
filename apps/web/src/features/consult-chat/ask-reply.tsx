@@ -3,6 +3,7 @@ import type { EventDraft } from "@crowdcast/contracts/types";
 import { useState } from "react";
 import { type Ask, askOptions, combinedAnswer } from "./answers";
 import { ConsultInput } from "./consult-input";
+import type { Message } from "./use-consult-session";
 
 // 질문별 선택은 전송 전까지 로컬에 보관한다.
 export function AskReply({
@@ -17,7 +18,7 @@ export function AskReply({
 }: {
   asks: Ask[];
   draft: EventDraft | null;
-  onReply: (reply: { text: string; answer: object }) => void;
+  onReply: (reply: Message) => void;
   disabled: boolean;
   replyError: string;
   text: string;
@@ -36,6 +37,14 @@ export function AskReply({
   // 질문에서 받은 선택지만 허용하고 시각은 날짜와 함께 검증한다.
   const submit = () => {
     try {
+      // 상담 목적은 행사 초안 필드가 아니므로 답 문장만 보낸다.
+      if (asks.length === 1 && asks[0].field === "intent") {
+        const choice = choices.intent || text.trim();
+        if (!choice) throw new Error("상담 목적을 선택하거나 입력해 주세요.");
+        onReply({ text: choice });
+        setError("");
+        return;
+      }
       const freeField = asks.find(
         (ask) =>
           ask.field !== "time" &&

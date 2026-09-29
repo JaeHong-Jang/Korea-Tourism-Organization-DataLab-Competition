@@ -2,7 +2,7 @@
 
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { Canvas } from "@react-three/fiber";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelectionStore } from "../../lib/selection-store";
 import { useTheme } from "../../lib/theme/theme-provider";
 import { Board } from "./board";
@@ -33,6 +33,7 @@ import { weatherEffects } from "./weather/state";
 import { useSceneWeather } from "./weather/use-scene-weather";
 import { WeatherScene } from "./weather/weather-scene";
 import { WetHighlights } from "./weather/wet-highlights";
+import "./scene-theme.css";
 
 const EMPTY_TOTALS = new Map<string, number>();
 
@@ -54,6 +55,7 @@ export function MiniKoreaCanvas({
   homeward?: boolean;
 }) {
   const [regressFactor, setRegressFactor] = useState(1);
+  const officeLabels = useRef<HTMLDivElement>(null);
   const [showLand, setShowLand] = useState(true);
   const [cityStatus, setCityStatus] = useState<CityStatus | null>(null);
   const diagnostics = useMemo(readSceneOptions, []);
@@ -85,7 +87,6 @@ export function MiniKoreaCanvas({
   const weather = useSceneWeather(festivals, selectedId, at);
   const selectFestival = useSelectionStore((state) => state.selectFestival);
   const selectSigungu = useSelectionStore((state) => state.selectSigungu);
-  const setFilters = useSelectionStore((state) => state.setFilters);
   // 행사를 고르면 그 동네를 실제 건물·길이 있는 3D 미니어처로 펼친다(sceneCity=0이면 전국 판만).
   const cityFestival =
     diagnostics.city && selectedId
@@ -114,12 +115,10 @@ export function MiniKoreaCanvas({
   const width = bounds ? bounds.maxX - bounds.minX + 90 : 600;
   const depth = bounds ? bounds.maxZ - bounds.minZ + 90 : 900;
 
-  // 시군구 선택을 저장하고 기존 시도 필터와 카메라 이동을 함께 유지한다.
+  // 지도 클릭은 지역 선택과 카메라 이동만 수행하고 행사 필터는 바꾸지 않는다.
   const onPick = (code: string) => {
-    selectFestival(null);
+    if (selectedId) return;
     selectSigungu(code);
-    const sido = model?.sidoByCode.get(code);
-    if (sido) setFilters({ sido });
   };
 
   if (!webgl)
@@ -143,6 +142,12 @@ export function MiniKoreaCanvas({
       aria-label="시군구를 선택할 수 있는 3D 미니 대한민국"
       data-focus-id={selectedId ?? ""}
       data-city-mode={cityFestival ? "true" : "false"}
+      onDoubleClick={(event) => {
+        // 이름표·버튼을 제외한 지도 배경의 더블클릭만 전국 보기로 돌아간다.
+        if (!(event.target instanceof HTMLCanvasElement)) return;
+        selectFestival(null);
+        selectSigungu(null);
+      }}
     >
       {cityFestival && cityStatus !== "ready" && (
         <p className="scene-city-status" role="status">
@@ -158,15 +163,6 @@ export function MiniKoreaCanvas({
         )}
       </p>
       <Canvas
-        onPointerMissed={(event) => {
-          if (
-            event.target instanceof Element &&
-            event.target.closest(".scene-name-tag")
-          )
-            return;
-          selectFestival(null);
-          selectSigungu(null);
-        }}
         shadows={activeQuality === "high"}
         dpr={qualityDpr(activeQuality) * regressFactor}
         frameloop={visible ? "always" : "never"}
@@ -217,6 +213,7 @@ export function MiniKoreaCanvas({
                 center={center}
                 quality={activeQuality}
                 reducedMotion={reducedMotion}
+                sunStrength={0.025}
               />
             )}
             <Board center={center} width={width} depth={depth} />
@@ -247,6 +244,7 @@ export function MiniKoreaCanvas({
               <DataBorders anchors={model.anchors} totals={totals} />
             )}
             <NationalScenery
+              boundary={model.boundary}
               anchors={model.anchors}
               clusters={showLand}
               festivals={scene.placed}
@@ -296,26 +294,12 @@ export function MiniKoreaCanvas({
               width={width}
               depth={depth}
               overviewRevision={overviewRevision}
-              onDeepZoom={
-                diagnostics.city
-                  ? ([x, z]) => {
-                      // 화면 중심에서 30km 안의 가장 가까운 행사 동네로 들어간다.
-                      const nearest = scene.placed
-                        .map((item) => ({
-                          item,
-                          distance: Math.hypot(item.x - x, item.z - z),
-                        }))
-                        .sort((a, b) => a.distance - b.distance)[0];
-                      if (nearest && nearest.distance < 30)
-                        selectFestival(nearest.item.festival.eventId);
-                    }
-                  : undefined
-              }
             />
           </>
         )}
         {t435 && (
           <ForecastOffice
+            portal={officeLabels}
             x={center[0] - width / 2 + 38}
             z={center[1] - depth / 2 + 38}
             hidden={Boolean(cityFestival)}
@@ -334,6 +318,10 @@ export function MiniKoreaCanvas({
           diagnostic={diagnostics.debug}
         />
       </Canvas>
+      <div
+        ref={officeLabels}
+        style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+      />
     </section>
   );
 }

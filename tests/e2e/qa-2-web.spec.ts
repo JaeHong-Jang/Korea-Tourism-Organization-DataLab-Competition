@@ -38,81 +38,22 @@ test("QA-2 구간 막대", async ({ page }) => {
   await bar.screenshot({ path: resolve(screens, "QA-2-rangebar.png") });
 });
 
-// 줄무늬 대신 점만 보이고 한 점을 가리킬 때 구간 하나가 나타나는지 기록한다.
-test("QA-2 산점도", async ({ page }) => {
+// 축제 총 방문객 꺾은선(2017~2025 실제, 2026 예측)이 보이고, 연도를 가리키면 설명 줄이 채워지는지 기록한다.
+test("QA-2 축제 총 방문객 추이", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await routeScreensV2(page);
-  const data = published(
-    "reports/backtest/bt-v1-064e60073a7411037212/backtest.json",
-    backtest,
-  );
-  await page.route("**/api/validation/backtest", (route) =>
-    route.fulfill({ json: data }),
-  );
   await page.goto("/validation?theme=day");
   const chart = page.locator('[data-feature="M6-F2"]');
-  await expect(chart.locator("[data-point]").first()).toBeVisible();
-  await expect(chart.locator(".validation-whisker")).toHaveCount(0);
-  await chart.screenshot({ path: resolve(screens, "QA-2-s6-scatter.png") });
-  await chart.locator("[data-point]").first().focus();
-  await expect(chart.locator(".validation-whisker")).toHaveCount(1);
-});
-
-// 모델 카드 원문이 요약 뒤 접힘 안에 들어간 상태를 기록한다.
-test("QA-2 모델 카드", async ({ page }) => {
-  await page.setViewportSize({ width: 1366, height: 768 });
-  await routeScreensV2(page);
-  const data = published(
-    "reports/backtest/bt-v1-064e60073a7411037212/backtest.json",
-    backtest,
-  );
-  const card = published(
-    "models/v1-064e60073a7411037212/model_card.json",
-    contract("model-card/valid-v0-1-0.json"),
-  );
-  await page.route("**/api/validation/backtest", (route) =>
-    route.fulfill({ json: data }),
-  );
-  await page.route("**/api/validation/model-card", (route) =>
-    route.fulfill({ json: card }),
-  );
-  await page.goto("/validation?theme=day");
-  const panel = page.locator('[data-feature="M6-F6"]');
-  await expect(panel.getByText("원문 보기")).toBeVisible();
-  await expect(panel.locator(".validation-limit-summary li")).toHaveCount(1);
-  await expect(panel.locator(".validation-limit-summary")).not.toContainText("카드에 기록 없음");
-  await panel.screenshot({ path: resolve(screens, "QA-2-s6-card.png") });
-});
-
-// 좁은 최신성 카드에서 긴 실행 ID와 미수집 자료가 칸 밖으로 나가지 않는지 기록한다.
-test("QA-2 최신성 카드", async ({ page, context }) => {
-  await page.setViewportSize({ width: 1100, height: 768 });
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await routeScreensV2(page);
-  const status = contract("ops-status/valid-example.json");
-  const modelRunId = "mr-v1-064e60073a7411037212";
-  status.model.modelRunId = modelRunId;
-  status.freshness.push({
-    datasetId: "ds-kma-short-forecast",
-    title: "기상청 단기예보",
-    lastCollectedAt: null,
-    lastObservedDate: null,
-    rows: null,
+  await expect(chart.locator(".festival-line")).toBeVisible();
+  await expect(chart.locator("[data-year]")).toHaveCount(10);
+  await chart.screenshot({
+    path: resolve(screens, "QA-2-s6-festival-trend.png"),
   });
-  await page.route("**/api/ops/status", (route) =>
-    route.fulfill({ json: status }),
+  await expect(chart.locator('[data-year="2026"]')).toHaveAttribute(
+    "aria-label",
+    /2026년 예측/,
   );
-  await page.goto("/ops?theme=day");
-  const panel = page.locator('[data-feature="M8-F3"]');
-  await expect(panel.getByText("아직 수집 전")).toBeVisible();
-  await panel.getByRole("button", { name: "모델 실행 ID 복사" }).click();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-    modelRunId,
-  );
-  expect(
-    await panel.evaluate((node) => node.scrollWidth <= node.clientWidth),
-  ).toBe(true);
-  await panel.screenshot({ path: resolve(screens, "QA-2-s8.png") });
+  await expect(chart.locator(".validation-point-detail")).toHaveCount(0);
 });
 
 // 재예보 근거와 새 예보서 행동, 페이지 제목을 함께 기록한다.

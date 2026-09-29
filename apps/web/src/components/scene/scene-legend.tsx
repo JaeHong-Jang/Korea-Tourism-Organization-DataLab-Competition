@@ -104,6 +104,12 @@ export function SceneLegend({
         <p className="scene-legend__note">
           조작: 왼쪽 끌기 이동 · 휠 버튼 끌기 회전 · 휠 확대 · 방향키 이동
         </p>
+        {!city && (
+          <p className="scene-legend__note">
+            확대하면 축제별 바닥 테두리가 나타나요. 모형을 구분하는 표시이며
+            실제 행사장 경계는 아니에요.
+          </p>
+        )}
         <p className="scene-legend__note">
           인원 규모는 예보값 비례 · 인형 위치는 실제 사람 위치가 아니에요 · 날씨
           효과 = 기상청 예보 기반 연출 ·

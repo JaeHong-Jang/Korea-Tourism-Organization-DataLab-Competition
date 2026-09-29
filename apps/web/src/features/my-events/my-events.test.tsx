@@ -15,14 +15,43 @@ import {
   postActual,
   postReforecast,
 } from "../../lib/my-events-api";
-import { actualQuantity } from "./actual-form";
-import { changedCondition, isUnchanged, reforecastError } from "./event-detail";
-import { orderedSnapshots, type SavedEvent, sortAndFilter } from "./event-list";
+import { ActualForm, actualQuantity, actualSubmitLabel } from "./actual-form";
+import { EventDetail, isUnchanged, reforecastError } from "./event-detail";
+import {
+  eventIdForForecast,
+  firstEventIdByDate,
+  orderedSnapshots,
+  type SavedEvent,
+  sortAndFilter,
+} from "./event-list";
 import { ReforecastCard } from "./reforecast-card";
 import { SharedReport } from "./shared-report";
 
 const event = eventFixture as Event;
 const report = reportFixture as unknown as ForecastReport;
+
+// 여러 발행본의 버튼은 각 예보 ID에 해당하는 읽기 전용 예보서로 연결한다.
+it("예보 이력마다 별도 예보서 보기 버튼을 제공한다", () => {
+  const first = { ...report, forecastId: "f-busan-first" };
+  const second = { ...report, forecastId: "f-busan-second" };
+  const html = renderToStaticMarkup(
+    <MemoryRouter>
+      <EventDetail
+        row={{ event, snapshots: [first, second] }}
+        onForecast={async () => {}}
+        onActualSaved={() => {}}
+      />
+    </MemoryRouter>,
+  );
+  expect(html).toMatch(
+    /href="\/f\/f-busan-first"[^>]*aria-label="1차 예보서 보기"/,
+  );
+  expect(html).toMatch(
+    /href="\/f\/f-busan-second"[^>]*aria-label="2차 예보서 보기"/,
+  );
+  expect(html).toContain("1차 예보");
+  expect(html).toContain("2차 예보");
+});
 
 // 응답 순서와 무관하게 발행 순으로 타임라인에 넘긴다.
 it("스냅샷을 발행 시각 순으로 놓고 최신 발행으로 표를 정렬한다", () => {
@@ -55,6 +84,9 @@ it("스냅샷을 발행 시각 순으로 놓고 최신 발행으로 표를 정�
       (item) => item.event.id,
     ),
   ).toEqual([event.id]);
+  expect(eventIdForForecast(rows, newer.forecastId)).toBe(event.id);
+  expect(eventIdForForecast(rows, "없는-예보")).toBeNull();
+  expect(firstEventIdByDate(rows)).toBe(other.id);
 });
 
 // 변화 카드의 인원은 비교 응답의 p50 값을 그대로 표기한다.
@@ -148,6 +180,36 @@ it("실측은 양수만 허용하고 항목에 맞는 단위를 붙인다", () =
     valueKind: "사후집계",
     estimated: false,
   });
+  expect(actualSubmitLabel(false, false)).toBe("실측 저장");
+  expect(actualSubmitLabel(false, true)).toBe("실측 수정");
+  expect(actualSubmitLabel(true, true)).toBe("저장 중…");
+});
+
+// 미래 행사에는 열리는 시점만 안내해 비활성 입력칸을 고장으로 오해하지 않게 한다.
+it("행사 종료 전에는 실측 입력칸 대신 열리는 시점을 보여 준다", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-09-27T12:00:00+09:00"));
+  try {
+    const html = renderToStaticMarkup(
+      <ActualForm
+        event={{ ...event, endsAt: "2026-10-04T23:59:59+09:00" }}
+        onSaved={() => {}}
+      />,
+    );
+    expect(html).toContain("행사 종료 후 입력할 수 있습니다.");
+    expect(html).toContain("오픈 일자: 10월 4일");
+    expect(html).not.toContain('type="submit"');
+    const past = renderToStaticMarkup(
+      <ActualForm
+        event={{ ...event, endsAt: "2026-09-26T23:59:59+09:00" }}
+        onSaved={() => {}}
+      />,
+    );
+    expect(past).not.toContain("행사 종료 후 입력할 수 있습니다.");
+    expect(past).not.toContain('type="submit" disabled=""');
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 // 저장 요청은 기록 서비스가 받는 quantity 본문만 전송한다.
@@ -190,17 +252,4 @@ it("공유 예보서는 읽기 전용으로 판정·수치·근거를 보여 준
   expect(html).not.toContain("계획 초안 docx 받기");
   expect(html).not.toContain("재예보");
   expect(html).not.toContain("실측 저장");
-});
-
-// what-if 예보가 저장 행사 이력에 붙으면 조건이 바뀐 것만 표시한다
-it("이력의 행사 조건이 저장 행사와 다를 때만 조건 바꿈으로 본다", () => {
-  const saved = event;
-  expect(changedCondition(saved, saved)).toBe(false);
-  expect(
-    changedCondition(
-      { ...saved, startsAt: "2025-10-19T19:00:00+09:00" },
-      saved,
-    ),
-  ).toBe(true);
-  expect(changedCondition({ ...saved, fee: "유료" }, saved)).toBe(true);
 });

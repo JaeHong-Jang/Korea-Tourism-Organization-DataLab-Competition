@@ -163,6 +163,85 @@ it("되묻기 자유 답을 공용 입력칸에서 보낸다", async () => {
   await act(async () => root.unmount());
 });
 
+// 상담 목적 선택은 행사 초안 답이 아니므로 문장만 보내 다음 단계로 넘긴다.
+it("고래 봇의 상담 목적 선택을 답 형식 오류 없이 보낸다", async () => {
+  const node = document.createElement("div");
+  const root = createRoot(node);
+  const reply = vi.fn();
+  await act(async () =>
+    root.render(
+      <AskReply
+        asks={[
+          {
+            field: "intent",
+            question: "행사를 여는 쪽인가요, 가 볼 행사를 찾는 쪽인가요?",
+            options: ["행사를 여는 쪽이에요", "가 볼 행사를 찾아요"].map(
+              (value) => ({ label: value, value }),
+            ),
+          },
+        ]}
+        draft={null}
+        text=""
+        onText={() => {}}
+        onStop={() => {}}
+        disabled={false}
+        replyError=""
+        onReply={reply}
+      />,
+    ),
+  );
+  const choice = Array.from(node.querySelectorAll("button")).find(
+    (button) => button.textContent === "행사를 여는 쪽이에요",
+  );
+  await act(async () => choice?.click());
+  await act(async () =>
+    node
+      .querySelector("form")
+      ?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })),
+  );
+  expect(reply).toHaveBeenCalledWith({ text: "행사를 여는 쪽이에요" });
+  expect(node.textContent).not.toContain("답 형식을 확인해 주세요");
+  await act(async () => root.unmount());
+});
+
+// 상담 목적을 문장으로 적어도 초안 스키마 검사 없이 예보팀에 전달한다.
+it("고래 봇의 상담 목적을 직접 입력해 보낸다", async () => {
+  const node = document.createElement("div");
+  const root = createRoot(node);
+  const reply = vi.fn();
+  await act(async () =>
+    root.render(
+      <AskReply
+        asks={[
+          {
+            field: "intent",
+            question: "행사를 여는 쪽인가요, 가 볼 행사를 찾는 쪽인가요?",
+            options: ["행사를 여는 쪽이에요", "가 볼 행사를 찾아요"].map(
+              (value) => ({ label: value, value }),
+            ),
+          },
+        ]}
+        draft={null}
+        text="정선아리랑제 안전 계획을 준비하고 있어요"
+        onText={() => {}}
+        onStop={() => {}}
+        disabled={false}
+        replyError=""
+        onReply={reply}
+      />,
+    ),
+  );
+  await act(async () =>
+    node
+      .querySelector("form")
+      ?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })),
+  );
+  expect(reply).toHaveBeenCalledWith({
+    text: "정선아리랑제 안전 계획을 준비하고 있어요",
+  });
+  await act(async () => root.unmount());
+});
+
 // 정지 설정은 WebGL 캔버스를 만들지 않고 접근 가능한 버튼의 펫 그림을 남긴다.
 it("움직임 줄이기에서도 사용자 고래 그림을 쓴다", () => {
   vi.stubGlobal("matchMedia", () => ({

@@ -8,6 +8,9 @@ import {
   ListChecks,
   Users,
 } from "lucide-react";
+import { createContext, useContext } from "react";
+import { evidenceDisplayTitle } from "../../lib/evidence-feature-labels";
+import { stripReviewNotice } from "../../lib/review-notice";
 import { ComponentState, type ComponentStatus } from "./component-state";
 import { evidenceNumber } from "./evidence-number";
 
@@ -19,6 +22,9 @@ export const evidenceKinds = {
   assumption: { label: "가정", Icon: BookOpen },
   check: { label: "검증", Icon: ListChecks },
 };
+
+// 예보서와 근거 정리에서 같은 번호 버튼의 펼침 상태를 공유한다.
+export const EvidenceSelectionContext = createContext<string | null>(null);
 
 // 근거 ID를 클릭 동작에 그대로 넘기고 미리보기는 제목으로 제공한다.
 export function EvidenceChip({
@@ -36,6 +42,7 @@ export function EvidenceChip({
   hideProbability?: boolean;
   status?: ComponentStatus;
 }) {
+  const selectedId = useContext(EvidenceSelectionContext);
   if (status !== "ready" || !evidence)
     return (
       <ComponentState
@@ -48,35 +55,40 @@ export function EvidenceChip({
     : (number ?? 1);
   if (resolvedNumber == null)
     return <ComponentState name="근거 번호" status="error" />;
-  const { Icon, label } = evidenceKinds[evidence.kind];
-  const content = (
-    <>
-      <Icon size={14} aria-hidden="true" />[{resolvedNumber}]
-    </>
-  );
+  const { label } = evidenceKinds[evidence.kind];
+  const title = evidenceDisplayTitle(evidence);
+  const expanded = selectedId === evidence.id;
+  const content = <>[{resolvedNumber}]</>;
   const props = {
     className: "evidence-chip",
-    title:
-      hideProbability && evidence.summary.includes("%")
-        ? "구간 기준 표시"
-        : evidence.summary,
-    "aria-label": `근거 ${resolvedNumber}, ${label}: ${evidence.title}`,
+    title: `${title} 근거 ${expanded ? "접기" : "열기"}`,
     "aria-description":
       hideProbability && evidence.summary.includes("%")
         ? "구간 기준 표시"
-        : evidence.summary,
+        : /^[[{]/.test(evidence.summary.trim())
+          ? "선택하면 근거 서랍에서 관측 기록과 출처를 볼 수 있어요."
+          : stripReviewNotice(evidence.summary),
   };
+  if (onOpen)
+    return (
+      <button
+        {...props}
+        type="button"
+        aria-label={`근거 ${resolvedNumber} ${expanded ? "접기" : "열기"}, ${label}: ${title}`}
+        aria-controls={`evidence-${evidence.id}`}
+        aria-expanded={expanded}
+        onClick={(event) => onOpen(evidence.id, event.currentTarget)}
+      >
+        {content}
+      </button>
+    );
   return (
     <a
       {...props}
       href={`#evidence-${evidence.id}`}
-      // 화면이 여는 방식을 주면 그쪽에 맡기고, 없으면 기본 앵커 이동에 접힌 카드만 펼친다
-      onClick={(event) => {
-        if (onOpen) {
-          event.preventDefault();
-          onOpen(evidence.id, event.currentTarget);
-          return;
-        }
+      aria-label={`근거 ${resolvedNumber}, ${label}: ${title}`}
+      // 독립 근거 링크는 앵커로 이동하면서 해당 카드를 펼친다.
+      onClick={() => {
         const card = document.getElementById(`evidence-${evidence.id}`);
         if (card instanceof HTMLDetailsElement) card.open = true;
       }}

@@ -164,30 +164,16 @@ for (const theme of ["day", "night"] as const) {
     await expect(page.locator('[data-feature="M6-F1"]')).toContainText("49.3%");
     await expect(page.locator('[data-feature="M6-F1"]')).toContainText("57.0%");
     await expect(page.locator('[data-feature="M6-F2"]')).toContainText(
-      "예측 대상 · 실측 대상3건",
+      "축제 총 방문객 추이와 2026 예측",
     );
     await expect(
-      page.locator('[data-feature="M6-F2"] [data-point]'),
-    ).toHaveCount(3);
+      page.locator('[data-feature="M6-F2"] [data-year]'),
+    ).toHaveCount(10);
     await page.getByRole("button", { name: "표로 보기" }).click();
     await expect(page.locator('[data-feature="M6-F2"] table')).toContainText(
-      "연천 구석기 축제",
+      "예측",
     );
     await page.getByRole("button", { name: "차트 보기" }).click();
-    await expect(page.locator('[data-feature="M6-F3"]')).toContainText(
-      "골든 사례 0건 — 사례 재현 검증 전 임시 사용",
-    );
-    await expect(page.locator('[data-feature="M6-F5"]')).toContainText(
-      "발행 문장이 아직 없어요",
-    );
-    await expect(page.locator('[data-feature="M6-F5"] li')).toHaveCount(14);
-    await page
-      .locator('[data-feature="M6-F6"] summary')
-      .getByText("원문 보기")
-      .click();
-    await expect(page.locator('[data-feature="M6-F6"]')).toContainText(
-      "명절 실버는 채점할 수 없습니다.",
-    );
     await page.getByRole("button", { name: "해시 체인 검증" }).click();
     await expect(page.locator('[data-feature="M6-F4"]')).toContainText(
       "검증 통과 · 1건 · 마지막 해시 aaaaaaaaaaaa",
@@ -205,20 +191,13 @@ test("S6 모바일", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await fakeGateway(page);
   await page.goto("/validation?theme=day");
-  await expect(page.locator('[data-feature="M6-F6"]')).toContainText(
-    "v1-064e60073a7411037212",
-  );
   await expect(page.locator('[data-feature="M6-F2"] table')).toBeVisible();
   await expect(page.getByRole("button", { name: "차트 보기" })).toBeVisible();
-  // 키보드로 가로 표를 움직여 마지막 실측 열까지 닿는지 확인한다.
+  // 좁은 화면에서도 표의 마지막 열까지 닿는지 확인한다.
   const table = page.getByRole("region", {
-    name: "예측·실측 표, 좌우로 스크롤",
+    name: "연도별 축제 총 방문객 표, 좌우로 스크롤",
   });
-  await table.focus();
-  await page.keyboard.press("ArrowRight");
-  await expect
-    .poll(() => table.evaluate((element) => element.scrollLeft))
-    .toBeGreaterThan(0);
+  await expect(table).toHaveAttribute("tabindex", "0");
   const lastColumnReachable = await table.evaluate((element) => {
     element.scrollLeft = element.scrollWidth - element.clientWidth;
     const lastCell = element.querySelector("tbody tr td:last-child");
@@ -236,16 +215,16 @@ test("S6 모바일", async ({ page }) => {
   });
 });
 
-// 인사이트 미공개 상태에서는 견본 지표와 복사 버튼이 없어야 한다.
-test("S7 빈 상태", async ({ page }) => {
+// 조회 실패는 자료 부족과 구분하고 결과 수치와 복사 버튼을 표시하지 않는다.
+test("S7 조회 실패", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await fakeGateway(page);
   await page.goto("/insights?theme=day");
   await expect(page.locator('[data-feature="M7-F1"]')).toContainText(
-    "인사이트는 데이터 수집이 끝나면 채워져요 · 9/27",
+    "자료를 불러오지 못했어요",
   );
   await expect(
-    page.getByRole("button", { name: "서식4용 문장 복사" }),
+    page.getByRole("button", { name: "분석 요약 복사" }),
   ).toHaveCount(0);
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({
@@ -254,58 +233,34 @@ test("S7 빈 상태", async ({ page }) => {
   });
 });
 
-// 같은 좌표는 겹침 수로 모으고 포함 여부의 모양·색을 범례와 맞춘다.
-test("T-407b S6 산점도 포함 여부와 겹침", async ({ page }) => {
+// 실제 실선·2026 예측 점의 색이 범례와 같고, 예측 점을 가리키면 범위가 설명된다.
+test("T-407b S6 축제 총 방문객 실제·예측 색", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await fakeGateway(page);
-  await page.route("**/api/validation/backtest", (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        ...backtest,
-        points: [
-          ...backtest.points,
-          { ...backtest.points[0], eventId: "e-2025-gold-b", tier: "goldB" },
-        ],
-      }),
-    }),
-  );
   await page.goto("/validation?theme=day");
-  await expect(page.locator(".validation-point--covered")).toHaveCount(2);
-  await expect(page.locator(".validation-point--outside")).toHaveCount(1);
-  await expect(page.locator(".validation-overlap-count")).toContainText(
-    "2건 겹침",
-  );
-  await expect(page.locator(".validation-whisker")).toHaveCount(0);
+  await expect(page.locator(".festival-point.is-forecast")).toHaveCount(1);
   const colors = await page.evaluate(() => {
-    return (["covered", "outside"] as const).map((kind, index) => {
-      const point = document.querySelector(
-        `.validation-point--${kind} ${kind === "covered" ? "circle" : "rect"}`,
-      );
-      const legend = document.querySelector(`.validation-legend--${kind} i`);
-      if (!point || !legend) throw new Error(`${kind} 산점도 범례 없음`);
-      const expected = (() => {
-        const swatch = document.createElement("span");
-        swatch.style.color = `var(--cat-${index === 0 ? 3 : 2})`;
-        document.body.append(swatch);
-        const value = getComputedStyle(swatch).color;
-        swatch.remove();
-        return value;
-      })();
-      return {
-        expected,
-        point: getComputedStyle(point).fill,
-        legend: getComputedStyle(legend).color,
-      };
-    });
+    const read = (selector: string, prop: "stroke" | "fill" | "color") => {
+      const element = document.querySelector(selector);
+      if (!element) throw new Error(`${selector} 없음`);
+      return getComputedStyle(element)[prop];
+    };
+    return {
+      line: read(".festival-line", "stroke"),
+      actualLegend: read(".festival-legend--actual i", "color"),
+      forecast: read(".festival-point.is-forecast .festival-dot", "fill"),
+      forecastLegend: read(".festival-legend--forecast i", "color"),
+    };
   });
-  for (const color of colors) {
-    expect(color.point).toBe(color.expected);
-    expect(color.legend).toBe(color.expected);
-  }
-  await page.locator(".validation-point--covered").first().hover();
-  await expect(page.locator(".validation-whisker")).toHaveCount(1);
+  expect(colors.line).toBe(colors.actualLegend);
+  expect(colors.forecast).toBe(colors.forecastLegend);
+  await page.locator('.festival-point[data-year="2026"] .festival-dot').hover();
+  await expect(page.locator('.festival-point[data-year="2026"]')).toHaveClass(
+    /is-active/,
+  );
+  await expect(
+    page.locator('.festival-point[data-year="2026"] title'),
+  ).toContainText("범위");
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({
     path: resolve(output, "T-407b-s6.png"),
@@ -330,14 +285,14 @@ test("T-407b S7 I1 실패 뒤 I2 표시", async ({ page }) => {
       contentType: "application/json",
       body: JSON.stringify({
         key: "I2",
-        title: "인천 중구 평시 방문",
+        title: "1,000명 경계선 행사 비중",
         headline: {
-          value: 14500,
-          unit: "명/일",
-          text: "방문자 수를 비교했어요.",
+          value: 0,
+          unit: "비율",
+          text: "2등급 행사 비중이며 전년 규모 참고 자료는 아직 없습니다.",
         },
         sampleSize: 86,
-        comparablePairs: 1,
+        comparablePairs: 0,
         period: { from: "2025-01-01", to: "2025-12-31" },
         series: [],
         evidenceIds: [insightEvidence.id],
@@ -348,38 +303,19 @@ test("T-407b S7 I1 실패 뒤 I2 표시", async ({ page }) => {
   );
   await page.goto("/insights?theme=day");
   await expect(page.locator('[data-insight="I1"]')).toContainText(
-    "자료 형식을 확인할 수 없어요",
+    "자료를 불러오지 못했어요",
   );
+  await page.getByRole("button", { name: "I2 · 예상 방문객", exact: true }).click();
   await expect(page.locator('[data-insight="I2"]')).toContainText(
-    "14,500명/일",
+    "일평균 예측 자료를 확인할 수 없습니다.",
   );
-  await expect(page.locator('[data-insight="I2"]')).toContainText("표본 86건");
-  await expect(page.locator('[data-insight="I2"] button')).toHaveText(
-    "서식4용 문장 복사",
-  );
+  await expect(page.locator('[data-insight="I2"]')).not.toContainText("86개 행사");
+  await expect(page.locator('[data-insight="I2"]').getByRole("button", { name: "분석 요약 복사", exact: true })).toHaveCount(0);
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({
     path: resolve(output, "T-407b-s7.png"),
     fullPage: true,
   });
-});
-
-// 계약 밖의 값은 통계 대신 오류 문장으로 바꾸고 수치를 남기지 않는다.
-test("S6 근거 계약 위반", async ({ page }) => {
-  await fakeGateway(page);
-  await page.route("**/api/evidence/stats", (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ ...usage, publishedClaims: "10" }),
-    }),
-  );
-  await page.goto("/validation?theme=day");
-  const panel = page.locator('[data-feature="M6-F5"]');
-  await expect(panel.getByRole("alert")).toContainText(
-    "자료 형식을 확인할 수 없어요",
-  );
-  await expect(panel).not.toContainText("데이터셋별 근거 인용");
 });
 
 // 정상 상태 코드여도 JSON이 깨지면 성적 숫자 대신 오류 상태만 남긴다.
@@ -398,4 +334,18 @@ test("S6 성적 JSON 파싱 실패", async ({ page }) => {
     "자료 형식을 확인할 수 없어요",
   );
   await expect(panel).not.toContainText("49.3%");
+});
+
+// 삭제한 운영 주소도 인사이트로 연결하고 주 메뉴에서 운영을 숨긴다.
+test("운영 주소는 인사이트로 이동한다", async ({ page }) => {
+  await fakeGateway(page);
+  await page.goto("/ops");
+  await expect(page).toHaveURL(/\/insights$/);
+  await expect(
+    page.getByRole("heading", { name: "인사이트", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "주 메뉴" })
+      .getByRole("link", { name: "운영", exact: true }),
+  ).toHaveCount(0);
 });

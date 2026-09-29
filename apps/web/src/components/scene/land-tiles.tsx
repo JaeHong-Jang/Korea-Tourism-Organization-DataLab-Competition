@@ -31,6 +31,7 @@ export type SidoTile = {
   faces: FaceRange[];
 };
 export type LandModel = {
+  boundary: [number, number][][][];
   tiles: SidoTile[];
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
   centers: Map<string, [number, number]>;
@@ -108,6 +109,7 @@ export function buildLandModelForData(
   ) {
     return {
       tiles: [],
+      boundary: [],
       bounds: { minX: 0, maxX: 0, minZ: 0, maxZ: 0 },
       centers: new Map(),
       sidoByCode: new Map(),
@@ -115,6 +117,15 @@ export function buildLandModelForData(
     };
   }
   const regions = feature(topology, collection) as SigunguFeature;
+  // 모든 섬과 내부 구멍을 포함한 경계를 피복 자르기에도 같은 좌표로 전달한다.
+  const boundary = regions.features.flatMap(({ geometry }) =>
+    (geometry.type === "Polygon"
+      ? [geometry.coordinates]
+      : geometry.coordinates
+    ).map((rings) =>
+      rings.map((ring) => ring.map(([lon, lat]) => projectKorea(lon, lat))),
+    ),
+  );
   const bySido = new Map<
     string,
     Array<{ code: string; geometry: BufferGeometry }>
@@ -214,7 +225,7 @@ export function buildLandModelForData(
     if (!geometry) throw new Error(`${sido} 타일을 병합할 수 없습니다.`);
     return { sido, geometry, faces };
   });
-  return { tiles, bounds, centers, sidoByCode, anchors };
+  return { tiles, bounds, centers, sidoByCode, anchors, boundary };
 }
 
 // 클릭한 삼각형을 시군구 코드로 바꿔 화면의 선택 동작에 넘긴다.
@@ -246,8 +257,11 @@ export function LandTiles({
       rotation={[-Math.PI / 2, 0, 0]}
       position={[0, 7, 0]}
       castShadow
+      receiveShadow
       onClick={(event) => {
         event.stopPropagation();
+        // 지도를 끈 뒤 놓은 포인터는 지역 선택으로 처리하지 않는다.
+        if (event.delta > 2) return;
         const code = codeForFace(faces, event.faceIndex ?? -1);
         if (code) onPick(code);
       }}

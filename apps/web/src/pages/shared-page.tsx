@@ -35,7 +35,7 @@ export function SharedPage() {
       <PageHeading
         eyebrow="읽기 전용"
         title="공유된 예보서"
-        description="발행 당시 예보와 근거를 확인하세요. 참고용 — 담당자 검토 필수"
+        description="발행 당시 예보와 근거를 확인하세요."
       />
       {!report && !error && (
         <EmptyState

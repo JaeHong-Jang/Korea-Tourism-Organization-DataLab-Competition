@@ -34,11 +34,6 @@ const scenes: Scene[] = [
     state: "selected",
     path: "/?sceneFixture=1&view=miniature&sceneQuality=high",
   },
-  {
-    screen: "s1",
-    state: "data",
-    path: "/?sceneFixture=1&view=miniature&sceneQuality=high&data=1",
-  },
   { screen: "s2", state: "start", path: "/consult" },
   { screen: "s2", state: "stream-end", path: "/consult" },
   { screen: "s2", state: "whatif", path: "/consult", variant: "whatif" },
@@ -56,9 +51,7 @@ const scenes: Scene[] = [
   { screen: "s5", state: "shared", path: "/s/sh-yeongjong2025abcd" },
   { screen: "s6", state: "validation", path: "/validation" },
   { screen: "s7", state: "insights", path: "/insights" },
-  { screen: "s8", state: "ops", path: "/ops" },
   { screen: "s5", state: "empty", path: "/my", variant: "empty" },
-  { screen: "s8", state: "error", path: "/ops", variant: "error" },
 ];
 
 // 같은 한국 시각을 주소에 넣고 장면 진단 플래그를 보존한다.
@@ -88,7 +81,7 @@ async function selectFestival(page: Page, mobile: boolean) {
 async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
   const key = `${scene.screen}-${scene.state}`;
   if (scene.screen === "s1") {
-    if (["3d", "selected", "data"].includes(scene.state))
+    if (["3d", "selected"].includes(scene.state))
       await expect(page.locator("html")).toHaveAttribute(
         "data-scene-ready",
         "true",
@@ -97,14 +90,6 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
     if (scene.state === "svg")
       await expect(page.locator(".svg-korea-map")).toBeVisible();
     if (scene.state === "selected") await selectFestival(page, mobile);
-    if (scene.state === "data") {
-      // 범례는 휴대폰에서도 지도 아래 왼쪽 칸에 늘 보인다.
-      if (mobile)
-        await page.locator(".scene-legend-panel").scrollIntoViewIfNeeded();
-      await expect(
-        page.getByRole("button", { name: "데이터 모드" }),
-      ).toHaveAttribute("aria-pressed", "true");
-    }
     return;
   }
   if (scene.screen === "s2") {
@@ -130,11 +115,11 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
     await expect(page.getByRole("tab", { name: "예보서" })).toBeVisible();
     if (scene.state === "drawer") {
       await page
-        .locator('a[href="#evidence-ev-rule-legal-hazard"]')
+        .locator('button[aria-controls="evidence-ev-rule-legal-hazard"]')
         .first()
         .click();
       await expect(
-        page.getByRole("dialog", { name: "근거 서랍" }),
+        page.getByRole("complementary", { name: "근거 서랍" }),
       ).toBeVisible();
     }
     if (scene.state === "map") {
@@ -145,6 +130,7 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
     }
     if (scene.state === "venue") {
       await page.getByRole("tab", { name: "행사장 3D" }).click();
+      await expect(page.getByRole("complementary", { name: "근거 서랍" })).toHaveCount(0);
       await expect(page.locator("html")).toHaveAttribute(
         "data-venue-ready",
         "true",
@@ -178,35 +164,16 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
     ).toBeVisible();
   if (scene.screen === "s6" || scene.screen === "g") {
     await expect(page.locator('[data-feature="M6-F1"]')).toContainText("49.3%");
-    await expect(page.locator('[data-feature="M6-F5"]')).toContainText(
-      "근거 연결률",
-    );
     await expect(page.locator('[data-feature="M6-F4"]')).toContainText(
       "9/29 사전 등록 뒤",
     );
   }
   if (scene.screen === "s7") {
-    await expect(page.locator('[data-insight="I2"]')).toContainText(
-      "14,500명/일",
+    await expect(page.locator('[data-insight="I1"] h2')).toHaveText(
+      "발표·관측 방문객",
     );
-    await expect(page.locator('[data-insight="I1"]')).toContainText(
-      "인사이트는 데이터 수집이 끝나면",
-    );
-    await expect(page.locator('[data-feature="M7-F2"] table')).toBeVisible();
+    await expect(page.getByRole("button", { name: "I2 · 예상 방문객" })).toBeVisible();
   }
-  if (key === "s8-ops") {
-    await expect(page.locator(".ops-run").first()).toBeVisible();
-    await expect(page.locator('[data-feature="M8-F2"]')).toContainText(
-      "근거 없는 발행",
-    );
-    await expect(page.locator('[data-feature="M8-F3"]')).toContainText(
-      "마지막 수집",
-    );
-  }
-  if (key === "s8-error")
-    await expect(page.locator('[data-feature="M8-F1"]')).toContainText(
-      "실행 기록을 확인할 수 없어요",
-    );
 }
 
 // 스크린샷 전에 폰트와 두 번의 그리기 프레임을 끝낸다.

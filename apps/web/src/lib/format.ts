@@ -87,7 +87,10 @@ export function formatQuantity(
 }
 
 // 서버 시각을 한국 표준시의 월일·요일·시각으로 고정한다(일괄 예보처럼 시각 없이 00:00이면 날짜만).
-export function formatDate(value: string): string {
+export function formatDate(
+  value: string,
+  { time = true }: { time?: boolean } = {},
+): string {
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "날짜 확인 필요";
@@ -104,7 +107,7 @@ export function formatDate(value: string): string {
     parts.find((item) => item.type === type)?.value ?? "";
   const day = `${part("month")}.${part("day")}(${part("weekday")})`;
   const midnight = part("hour") === "00" && part("minute") === "00";
-  return dateOnly || midnight
+  return dateOnly || midnight || !time
     ? day
     : `${day} ${part("hour")}:${part("minute")}`;
 }

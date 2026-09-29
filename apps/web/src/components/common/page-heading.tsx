@@ -7,20 +7,25 @@ export function PageHeading({
   eyebrow,
 }: {
   title: string;
-  description: string;
-  eyebrow: string;
+  description?: string;
+  eyebrow?: string;
 }) {
   const debug = new URLSearchParams(useLocation().search).get("debug") === "1";
-  const cleanEyebrow = eyebrow.startsWith("S3 ·")
-    ? "발행된 예보"
-    : eyebrow.replace(/^S[1-8]\s*·\s*/, "").replace(/\s*·?\s*DEMO\b/gi, "");
+  // 머리말·설명이 없으면 빈 줄을 남기지 않는다.
+  const cleanEyebrow = !eyebrow
+    ? ""
+    : eyebrow.startsWith("S3 ·")
+      ? "발행된 예보"
+      : eyebrow.replace(/^S[1-8]\s*·\s*/, "").replace(/\s*·?\s*DEMO\b/gi, "");
   return (
     <div className="page-heading">
-      <span className="eyebrow" data-feature={eyebrow.match(/^S[1-8]/)?.[0]}>
-        {debug ? eyebrow : cleanEyebrow}
-      </span>
+      {eyebrow && (
+        <span className="eyebrow" data-feature={eyebrow.match(/^S[1-8]/)?.[0]}>
+          {debug ? eyebrow : cleanEyebrow}
+        </span>
+      )}
       <h1>{title}</h1>
-      <p>{description}</p>
+      {description && <p>{description}</p>}
     </div>
   );
 }

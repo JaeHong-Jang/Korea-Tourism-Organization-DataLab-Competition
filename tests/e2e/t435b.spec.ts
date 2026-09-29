@@ -8,8 +8,8 @@ import { sendConsultDescription } from "./fixtures/start-consult";
 const screens = resolve(process.cwd(), "../../reports/figures/screens");
 const at = encodeURIComponent("2025-10-18T21:00:00+09:00");
 
-// 비가 오는 밤에 판 안쪽 효과와 지도 도구를 함께 촬영한다.
-test("비 오는 밤의 장면과 지도 도구", async ({ page }) => {
+// 비가 오는 밤의 장면과 날씨 칩을 함께 촬영한다.
+test("비 오는 밤의 장면", async ({ page }) => {
 	await page.setViewportSize({ width: 1366, height: 768 });
 	await page.route("**/api/weather?**", (route) => {
 		const query = new URL(route.request().url()).searchParams;
@@ -38,15 +38,12 @@ test("비 오는 밤의 장면과 지도 도구", async ({ page }) => {
 		},
 	);
 	await expect(page.locator(".weather-chip--forecast")).toContainText("비");
-	await page
-		.getByRole("button", { name: "데이터 모드" })
-		.click({ trial: true });
 	await page.evaluate(() => document.fonts.ready);
 	await page.screenshot({ path: resolve(screens, "T-435b-s1-rain-night.png") });
 });
 
 // 낮은 데스크톱과 전화 폭에서 필터 칸이 스크롤과 문서 순서대로 보인다.
-test("1366 필터와 네 폭의 지도 도구", async ({ page }) => {
+test("1366 필터와 네 폭의 장면", async ({ page }) => {
 	for (const width of [1366, 1024, 768, 390]) {
 		await page.setViewportSize({ width, height: 768 });
 		await page.goto(
@@ -59,9 +56,6 @@ test("1366 필터와 네 폭의 지도 도구", async ({ page }) => {
 				timeout: 45_000,
 			},
 		);
-		await page
-			.getByRole("button", { name: "데이터 모드" })
-			.click({ trial: true });
 		if (width === 1366) {
 			// 필터는 오른쪽 패널의 "필터" 탭에 있다.
 			await page.getByRole("tab", { name: "필터" }).click();
