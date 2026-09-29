@@ -1,0 +1,10 @@
+{
+  "minX": -350,
+  "minZ": -450,
+  "step": 0.5,
+  "width": 1601,
+  "height": 1701,
+  "zoom": 8,
+  "source": "Mapzen Terrain Tiles / USGS SRTM, GMTED2010 / NOAA ETOPO1",
+  "accessed": "2026-09-28"
+}

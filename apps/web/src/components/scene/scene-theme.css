@@ -1,20 +1,24 @@
-/* 미니어처의 맑은 하늘과 자연색 재질을 정의하고 낮밤 명암은 장면 조명으로 구분한다. */
+﻿/* 전국 지면과 확대 건물을 분리해 밝은 지붕이 도시 전체에 번지지 않게 한다. */
 :root[data-theme] {
-  --scene-sky-day: #d8edfa;
-  --scene-sky-day-top: #79bce8;
-  --scene-sky-day-low: #c5e5f5;
-  --scene-day-sun: #fff2d6;
-  --scene-day-fill: #e5f2ff;
-  --scene-day-ground: #d6cda6;
-  --scene-land-urban-1: #aab1a1;
-  --scene-land-urban-2: #9fa896;
-  --scene-land-city-1: #b5cc92;
-  --scene-land-city-2: #a8c383;
-  --scene-land-rural-1: #a5c581;
-  --scene-land-rural-2: #98ba75;
-  --scene-cover-urban: #9ea99c;
-  --scene-cover-forest: #86af6b;
-  --scene-cover-farm: #bdd391;
-  --scene-cover-grass: #a0c47e;
-  --scene-sea: #72bbd9;
+  --scene-building-gray: #d8d8d8;
+  --scene-land-urban-1: #d4dec5;
+  --scene-land-urban-2: #cedabd;
+  --scene-land-city-1: #b5d895;
+  --scene-land-city-2: #aed28b;
+  --scene-land-rural-1: #a3ce7d;
+  --scene-land-rural-2: #abd385;
+  --scene-land-edge: #819e65;
+  --scene-cover-forest: #88bc69;
+  --scene-cover-urban: #d4dec5;
+  --scene-cover-farm: #c7dc9a;
+  --scene-cover-grass: #b1d98b;
+  --scene-sea: #7bc5de;
+  --scene-city-land: #d0dbc1;
+  --scene-city-wall: #c9d0d3;
+  --scene-city-roof: #edf0ed;
+  --scene-city-road: #a2b0b3;
+  --scene-city-path: #e1d5af;
+  --scene-city-rail: #8d9ca2;
+  --scene-city-park: #a7d47f;
+  --scene-city-water: #7bc5de;
 }

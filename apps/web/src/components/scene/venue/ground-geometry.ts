@@ -6,10 +6,14 @@ import type { Point } from "./coordinates";
 import type { VenueArea, VenueLine } from "./tiles";
 
 // 각 도로 선분을 폭을 가진 사각형으로 만들고 한 버퍼에 담는다.
-export function stripGeometry(lines: VenueLine[], y: number): BufferGeometry {
+export function stripGeometry(
+  lines: VenueLine[],
+  y: number,
+  radius = 1200,
+): BufferGeometry {
   const positions: number[] = [];
   for (const { from, to, width } of lines) {
-    const limit = 1200 - width / 2;
+    const limit = radius - width / 2;
     const bounded = clipSegment(
       [from[0] + limit, from[1] + limit],
       [to[0] + limit, to[1] + limit],
@@ -43,14 +47,15 @@ export function stripGeometry(lines: VenueLine[], y: number): BufferGeometry {
 export function areaGeometry(
   areas: VenueArea[],
   kind: VenueArea["kind"],
+  radius = 1200,
 ): BufferGeometry | null {
   const pieces: BufferGeometry[] = [];
   for (const area of areas) {
     if (area.kind !== kind || area.points.length < 3) continue;
     const bounded = clipPolygon(
-      area.points.map(([x, z]) => [x + 1200, z + 1200]),
-      2400,
-    ).map(([x, z]) => [x - 1200, z - 1200] as Point);
+      area.points.map(([x, z]) => [x + radius, z + radius]),
+      radius * 2,
+    ).map(([x, z]) => [x - radius, z - radius] as Point);
     if (bounded.length < 3) continue;
     const shape = new Shape();
     bounded.forEach(([x, z], index) => {

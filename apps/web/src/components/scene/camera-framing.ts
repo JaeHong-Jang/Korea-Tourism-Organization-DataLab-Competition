@@ -67,6 +67,7 @@ export function overviewPose(
   width: number,
   depth: number,
   fov: number,
+  distanceScale = 1,
 ): OverviewPose {
   const empty = largestClearRect(bounds);
   const safe = {
@@ -137,5 +138,5 @@ export function overviewPose(
     if (fits(middle)) high = middle;
     else low = middle;
   }
-  return { ...pose(high), safe };
+  return { ...pose(high * distanceScale), safe };
 }

@@ -1,4 +1,4 @@
-// 가까운 행사 모형을 결정적으로 밀어 내 장면에서 서로 구별한다.
+// 행사 좌표를 그대로 투영해 확대 지점과 실제 건물 위치를 일치시킨다.
 import type { FestivalSummary } from "@crowdcast/contracts/types";
 import { tileStep } from "../../../features/mini-korea/data-mode";
 import { projectKorea } from "../projection";
@@ -15,26 +15,13 @@ export function placeFestivals(
   festivals: FestivalSummary[],
   totals: Map<string, number> | null = null,
 ): PlacedFestival[] {
-  const occupied: Array<[number, number]> = [];
   const maximum = totals ? Math.max(0, ...totals.values()) : 0;
   return [...festivals]
     .sort((a, b) => a.eventId.localeCompare(b.eventId))
     .map((festival) => {
       const [originX, originZ] = projectKorea(festival.lng, festival.lat);
-      let x = originX;
-      let z = originZ;
-      for (
-        let attempt = 0;
-        attempt < 40 &&
-        occupied.some(([px, pz]) => Math.hypot(px - x, pz - z) < 14);
-        attempt++
-      ) {
-        const angle = attempt * 2.399963229728653;
-        const radius = 8 + Math.sqrt(attempt + 1) * 7;
-        x = originX + Math.cos(angle) * radius;
-        z = originZ + Math.sin(angle) * radius;
-      }
-      occupied.push([x, z]);
+      const x = originX;
+      const z = originZ;
       const y = totals
         ? (tileStep(totals.get(festival.sigunguCode) ?? 0, maximum) - 1) * 2.5
         : 0;

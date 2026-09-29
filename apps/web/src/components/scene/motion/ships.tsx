@@ -5,7 +5,7 @@ import { type MoverPart, PartMovers } from "./part-movers";
 
 // 바다 윗면 높이(판 위 바다 면 5.5)에 선체 바닥을 맞춘다.
 const SEA_Y = 5.55;
-const SHIP: MoverPart[] = [
+export const SHIP: MoverPart[] = [
   { color: "ship-hull", offset: [0, 0.15, 0], scale: [0.5, 0.3, 1.6] },
   { color: "ship-cabin", offset: [0, 0.45, -0.1], scale: [0.42, 0.32, 0.95] },
   { color: "ship-cabin", offset: [0, 0.72, 0.2], scale: [0.34, 0.22, 0.3] },

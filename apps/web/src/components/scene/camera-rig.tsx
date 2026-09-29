@@ -4,7 +4,9 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MOUSE, TOUCH, Vector3 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { cameraNearPlane } from "./camera-clipping";
 import { overviewPose } from "./camera-framing";
+import { LAND_SURFACE_Y } from "./scene-height";
 import { observePanelBounds, type PanelBounds } from "./scene-panel-bounds";
 
 type CameraRigProps = {
@@ -15,10 +17,12 @@ type CameraRigProps = {
   width: number;
   depth: number;
   overviewRevision: number;
+  minDistance?: number;
+  active?: boolean;
 };
 
 // 고른 곳을 가까이 볼 때의 카메라 위치(표적 기준, 장면 단위 km).
-const CLOSE_OFFSET = new Vector3(75, 105, 155);
+const CLOSE_OFFSET = new Vector3(0.8, 1.1, 1.3);
 
 // 장면 컨테이너의 직접 포커스만 카메라 조작으로 인정한다.
 export function isSceneCameraKey(
@@ -43,6 +47,8 @@ export function CameraRig({
   width,
   depth,
   overviewRevision,
+  minDistance = 0.08,
+  active = true,
 }: CameraRigProps) {
   const controls = useRef<OrbitControlsImpl>(null);
   const desired = useRef(new Vector3(center[0], 0, center[1] + 90));
@@ -50,6 +56,8 @@ export function CameraRig({
     new Vector3(center[0] + 430, 590, center[1] + 810),
   );
   const moving = useRef(false);
+  const initialized = useRef(false);
+  const suspended = useRef(false);
   // 마지막으로 카메라를 맞춘 선택과 "전국 보기" 횟수.
   const shown = useRef<{
     selected: [number, number] | null;
@@ -69,9 +77,29 @@ export function CameraRig({
 
   // 선택 지점으로 카메라와 표적을 함께 옮겨 시선 각도를 보존한다.
   useEffect(() => {
+    // 지역 장면을 보는 동안 전국 카메라를 고정하고 복귀 시 기존 구도를 그대로 쓴다.
+    if (!active) {
+      suspended.current = true;
+      moving.current = false;
+      return;
+    }
+    if (suspended.current) {
+      suspended.current = false;
+      shown.current = { selected, overview: overviewRevision };
+      moving.current = false;
+      return;
+    }
+    // 패널 내용 변화가 사용자가 옮긴 전국 구도를 다시 맞추지 않게 한다.
+    if (
+      initialized.current &&
+      !selected &&
+      !shown.current.selected &&
+      shown.current.overview === overviewRevision
+    )
+      return;
     const overview =
       bounds && bounds.width > 0 && bounds.height > 0
-        ? overviewPose(bounds, center, width, depth, 44)
+        ? overviewPose(bounds, center, width, depth, 44, 0.48)
         : null;
     const point = selected ?? [center[0], center[1] + 90];
     const close = Boolean(selected && focus);
@@ -83,11 +111,17 @@ export function CameraRig({
     shown.current = { selected, overview: overviewRevision };
     if (cleared) return;
     if (!selected && overview) {
+      initialized.current = true;
       desired.current.copy(overview.target);
       desiredPosition.current.copy(overview.position);
+      // 최종 첨부 구도처럼 제주와 본토를 크게 담고 중심을 오른쪽으로 맞춘다.
+      desired.current.x -= 30;
+      desired.current.z += 65;
+      desiredPosition.current.x -= 30;
+      desiredPosition.current.z += 65;
     } else if (close) {
       // 고른 곳으로 가까이 가되, 이미 더 가까이 보고 있었다면 그 거리·각도를 유지한 채 옮기기만 한다.
-      desired.current.set(point[0], 0, point[1]);
+      desired.current.set(point[0], LAND_SURFACE_Y, point[1]);
       const offset = controls.current
         ? camera.position.clone().sub(controls.current.target)
         : CLOSE_OFFSET.clone();
@@ -98,7 +132,7 @@ export function CameraRig({
       desired.current.set(point[0], 0, point[1]);
       desiredPosition.current.set(point[0] + 430, 590, point[1] + 720);
     }
-    if (reducedMotion) {
+    if (reducedMotion || (!selected && shown.current.overview === 0)) {
       if (controls.current) {
         controls.current.target.copy(desired.current);
         camera.position.copy(desiredPosition.current);
@@ -119,6 +153,7 @@ export function CameraRig({
     width,
     depth,
     overviewRevision,
+    active,
   ]);
 
   // E2E 진단에서만 실제 OrbitControls 표적을 읽을 수 있게 한다.
@@ -194,14 +229,21 @@ export function CameraRig({
   // 자동 이동은 매 프레임 기존 벡터를 재사용해 부드럽게 끝낸다.
   useFrame((_, delta) => {
     const orbit = controls.current;
-    if (!orbit || reducedMotion || !moving.current) return;
+    if (!orbit || !active) return;
+    // 전국 화면에서 지나치게 작은 가까운 절단면 때문에 바다와 나무판이 겹쳐 보이는 현상을 막는다.
+    const near = cameraNearPlane(camera.position.distanceTo(orbit.target));
+    if (Math.abs(camera.near - near) > near * 0.01) {
+      camera.near = near;
+      camera.updateProjectionMatrix();
+    }
+    if (reducedMotion || !moving.current) return;
     const step = Math.min(1, delta * 4);
     orbit.target.lerp(desired.current, step);
     camera.position.lerp(desiredPosition.current, step);
     orbit.update();
     if (
-      orbit.target.distanceToSquared(desired.current) < 0.01 &&
-      camera.position.distanceToSquared(desiredPosition.current) < 0.01
+      orbit.target.distanceToSquared(desired.current) < 0.0000001 &&
+      camera.position.distanceToSquared(desiredPosition.current) < 0.0000001
     )
       moving.current = false;
   });
@@ -231,12 +273,14 @@ export function CameraRig({
   return (
     <OrbitControls
       ref={controls}
+      enabled={active}
+      makeDefault
       target={[center[0], 0, center[1] + 90]}
       minPolarAngle={0.35}
       maxPolarAngle={1.25}
-      minDistance={50}
+      minDistance={minDistance}
       maxDistance={4000}
-      enableDamping={!reducedMotion}
+      enableDamping={active && !reducedMotion}
       dampingFactor={0.09}
       enablePan
       screenSpacePanning={false}
@@ -250,7 +294,20 @@ export function CameraRig({
       onStart={() => {
         moving.current = false;
       }}
-      onChange={keepOnBoard}
+      onChange={() => {
+        keepOnBoard();
+        const orbit = controls.current;
+        if (!orbit || moving.current) return;
+        // 전국 판의 표적 높이를 지면에 맞춰 가까이 가도 땅 아래로 파고들지 않게 한다.
+        if (
+          camera.position.distanceTo(orbit.target) < 80 &&
+          orbit.target.y !== LAND_SURFACE_Y
+        ) {
+          const dy = LAND_SURFACE_Y - orbit.target.y;
+          orbit.target.y = LAND_SURFACE_Y;
+          camera.position.y += dy;
+        }
+      }}
     />
   );
 }

@@ -1,0 +1,1 @@
+본 데이터는 통계청 통계지리정보서비스(SGIS, https://sgis.kostat.go.kr)에서 공공누리 제1유형으로 개방한 행정동 경계를 가공한 것이며(가공: vuski/admdongkor ver20251231, https://github.com/vuski/admdongkor), CC BY 4.0으로 배포됩니다. 시군구 병합·단순화: 인파예보.

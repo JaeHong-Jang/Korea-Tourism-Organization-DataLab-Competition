@@ -4,7 +4,7 @@ import { LAND_SURFACE_Y } from "../scene-height";
 import { airways } from "./national-network";
 import { type MoverPart, PartMovers } from "./part-movers";
 
-const PLANE: MoverPart[] = [
+export const PLANE: MoverPart[] = [
   { color: "plane-body", offset: [0, 0, 0], scale: [0.22, 0.22, 1.6] },
   { color: "plane-body", offset: [0, 0, 0.1], scale: [1.5, 0.05, 0.32] },
   { color: "plane-body", offset: [0, 0.05, -0.72], scale: [0.6, 0.04, 0.18] },

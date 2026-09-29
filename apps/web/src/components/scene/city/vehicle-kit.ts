@@ -63,10 +63,10 @@ export function stampCar(
   index: number,
   pose: Pose,
   detail: 0 | 1 | 2,
+  kind: Kind = kindOf(index),
 ) {
   const { body, glass, roof, wheel, head, tail, sign } = parts;
   if (!body || !glass || !roof) return;
-  const kind = kindOf(index);
   const size = SIZES[kind];
   const bus = kind === "bus" ? 1.02 : 0.9;
   stamp(body, index, pose, [0, size.bodyY, 0], [size.w, size.bodyH, size.l]);

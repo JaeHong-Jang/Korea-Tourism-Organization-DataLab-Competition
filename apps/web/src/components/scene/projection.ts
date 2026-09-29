@@ -19,3 +19,10 @@ export function projectKorea(
   if (!point) throw new Error("시군구 좌표를 투영할 수 없습니다.");
   return [point[0], point[1]];
 }
+
+// 전국 장면에서 카메라가 보는 지점을 같은 투영의 경위도로 되돌린다.
+export function unprojectKorea(x: number, z: number): [number, number] {
+  const point = projection.invert?.([x, z]);
+  if (!point) throw new Error("지도 위치를 경위도로 변환할 수 없습니다.");
+  return point;
+}

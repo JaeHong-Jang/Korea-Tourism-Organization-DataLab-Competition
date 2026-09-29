@@ -1,10 +1,11 @@
-// 미니 대한민국 장면 위에 왼쪽 안내·지도 도구·범례와 오른쪽 탭 패널(목록·필터·현황)을 둔다.
-import { ArrowUpRight, Layers, Maximize } from "lucide-react";
+// 미니 대한민국 장면 위에 왼쪽 안내·범례와 오른쪽 탭 패널을 둔다.
+import { ArrowUpRight, Maximize } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FeaturePanel } from "../components/common/feature-panel";
 import { MiniKoreaCanvas } from "../components/scene";
 import { crowdScale } from "../components/scene/crowd-scale";
+import type { MapCommand } from "../components/scene/national-map/types";
 import { SceneLegend } from "../components/scene/scene-legend";
 import { Button } from "../components/ui/button";
 import { FestivalFiltersPanel } from "../features/festival-filters/festival-filters";
@@ -21,7 +22,6 @@ import { useSelectionStore } from "../lib/selection-store";
 // 장면이 화면을 차지하고 부가 정보는 가장자리에 머물게 한다(필터 결과를 판·목록·KPI가 함께 쓴다).
 export function MiniKoreaPage() {
   const location = useLocation();
-  const navigate = useNavigate();
   const debug = new URLSearchParams(location.search).get("debug") === "1";
   const dataMode = new URLSearchParams(location.search).get("data") === "1";
   const filters = useSelectionStore((state) => state.filters);
@@ -31,9 +31,7 @@ export function MiniKoreaPage() {
   const { festivals, all, status, receivedAt, fixture, retry } =
     useUpcomingFestivals(filters);
   const [scale, setScale] = useState(() => crowdScale([], "high"));
-  const [overviewRevision, setOverviewRevision] = useState(0);
-  // 동네 3D 귀가 인파 보기(범례 단추로 켜고 끈다).
-  const [homeward, setHomeward] = useState(false);
+  const [mapCommand, setMapCommand] = useState<MapCommand>({ id: 0, kind: "overview" });
   const [tab, setTab] = useState<"list" | "filter" | "status">("list");
   const showSpotlight = useAssistantStore((state) => state.showSpotlight);
   const selected =
@@ -74,13 +72,6 @@ export function MiniKoreaPage() {
     return () => window.removeEventListener("keydown", clear);
   }, [selectFestival, selectSigungu]);
 
-  // 데이터 모드는 다른 필터와 진단 쿼리를 보존해 링크로 공유한다.
-  const changeDataMode = (enabled: boolean) => {
-    const query = new URLSearchParams(location.search);
-    if (enabled) query.set("data", "1");
-    else query.delete("data");
-    navigate({ pathname: location.pathname, search: query.toString() });
-  };
   const [webglAvailable] = useState(() => {
     try {
       return Boolean(document.createElement("canvas").getContext("webgl2"));
@@ -139,14 +130,12 @@ export function MiniKoreaPage() {
             onScaleChange={setScale}
             dataMode={dataMode}
             totals={totals}
-            overviewRevision={overviewRevision}
-            homeward={homeward}
+            command={mapCommand}
           />
         )}
         {!svgMode && (
           <p className="scene-mobile-scale">
-            인형 1개 = {scale.peoplePerDoll.toLocaleString("ko-KR")}명 ·
-            움직임은 연출
+            축제 시설·보행·교통은 연출 · 실제 예보 인원은 행사 목록에서 확인
           </p>
         )}
       </section>
@@ -175,6 +164,15 @@ export function MiniKoreaPage() {
               </p>
             )}
             <div className="scene-cta">
+              {!svgMode && (
+                <Button size="sm" variant="outline" onClick={() => {
+                  selectFestival(null);
+                  selectSigungu(null);
+                  setMapCommand((previous) => ({ id: previous.id + 1, kind: "overview" }));
+                }}>
+                  <Maximize size={15} aria-hidden="true" /> 전국 보기
+                </Button>
+              )}
               <Button asChild size="sm">
                 <Link to="/consult">
                   예보 상담 열기 <ArrowUpRight size={15} aria-hidden="true" />
@@ -182,37 +180,6 @@ export function MiniKoreaPage() {
               </Button>
             </div>
           </section>
-          {!svgMode && (
-            <div
-              className="scene-map-tools"
-              role="toolbar"
-              aria-label="지도 도구"
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  selectFestival(null);
-                  selectSigungu(null);
-                  setOverviewRevision((value) => value + 1);
-                }}
-              >
-                <Maximize size={16} aria-hidden="true" />
-                전국 보기
-              </button>
-              <button
-                type="button"
-                className="data-mode-toggle"
-                aria-pressed={dataMode}
-                onClick={() => changeDataMode(!dataMode)}
-              >
-                <Layers size={16} aria-hidden="true" />
-                데이터 모드
-              </button>
-              <p className="scene-map-tools__hint">
-                왼쪽 끌기 이동 · 휠 끌기 회전 · 휠 굴려 확대
-              </p>
-            </div>
-          )}
         </div>
         <div className="scene-legend-panel">
           {svgMode && (
@@ -222,19 +189,13 @@ export function MiniKoreaPage() {
             </p>
           )}
           <SceneLegend
+            continuous={!svgMode}
             peoplePerDoll={scale.peoplePerDoll}
             capExceeded={scale.capExceeded}
             festivals={festivals}
             dataMode={dataMode && !svgMode}
             totals={totals}
             notices={<HonestNotices festivals={festivals} fixture={fixture} />}
-            city={
-              Boolean(selected) &&
-              !svgMode &&
-              new URLSearchParams(location.search).get("sceneCity") !== "0"
-            }
-            homeward={homeward}
-            onHomeward={() => setHomeward((value) => !value)}
           />
         </div>
       </div>
@@ -301,7 +262,7 @@ export function MiniKoreaPage() {
         </div>
       </FeaturePanel>
       <span className="scene-id" data-feature="M1-F1" aria-hidden="true">
-        {debug ? "M1-F1 · 전국 판" : null}
+        {debug ? "M1-F1 · 전국 지도" : null}
       </span>
     </div>
   );

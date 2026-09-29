@@ -1,0 +1,24 @@
+﻿/* 성남 3D 여행의 아이보리 카드와 녹색 글자·파스텔 도시 색상을 지역 화면에 적용한다. */
+.regional-diorama { position: absolute; inset: 0; background: #edf2e6; color: #31584a; }
+.regional-pin { display: flex; align-items: center; gap: 10px; border: 1px solid #bdcfa9; border-radius: 8px; padding: 9px 12px; color: #fffef5; background: #335b43; box-shadow: 0 3px 12px #3d49391a; cursor: pointer; text-align: left; max-width: 290px; }
+.regional-pin img { width: 46px; height: 42px; object-fit: cover; border-radius: 5px; }
+.regional-pin span { display: grid; gap: 3px; }
+.regional-pin strong { font-size: 13px; }
+.regional-pin small { font-size: 10px; opacity: .85; }
+.regional-tools { position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; flex-wrap: wrap; gap: 5px; padding: 8px; border: 1px solid #d8e1cf; border-radius: 12px; background: #fffef5ed; box-shadow: 0 3px 12px #3d49391a; max-width: calc(100% - 32px); }
+.regional-tools button { color: #355b43; border: 0; border-radius: 7px; background: #eaf0de; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+.regional-tools span { font-size: 10px; flex-basis: 100%; text-align: center; color: #73856b; }
+.regional-status { position: absolute; bottom: 144px; left: 50%; transform: translateX(-50%); background: #fffef5ed; color: #355b43; padding: 10px 16px; border-radius: 8px; font-size: 12px; }
+.regional-credit { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 10px; color: #60755b; background: #fffef5e6; padding: 4px 8px; }
+.scene-page:has(.regional-diorama[data-sky="day"]) { --surface: #fffef5; --surface-sunken: #edf2e6; --ink: #2d5345; --ink-2: #73856b; --line: #d8e1cf; --select: #355b43; }
+.regional-diorama button:focus-visible { outline: 2px solid #355b43; outline-offset: 3px; }
+.regional-pin { position: absolute; transform: translate(-50%, -100%); z-index: 2; }
+.scene-page:has(.regional-diorama[data-sky="day"]) { color: #2d5345; --select-ink: #2d5345; --select-soft: #e4edda; }
+
+/* 야간 도구와 안내판도 지도와 같은 어두운 팔레트를 따른다. */
+.regional-diorama:not([data-sky="day"]) .regional-tools,
+.regional-diorama:not([data-sky="day"]) .regional-status,
+.regional-diorama:not([data-sky="day"]) .regional-credit { background: #192638ed; color: #dbe5ef; border-color: #3b4b60; }
+.regional-diorama:not([data-sky="day"]) .regional-tools button { background: #2c3e51; color: #f5e6c6; }
+.regional-diorama:not([data-sky="day"]) .regional-tools span { color: #b4c2d1; }
+.regional-diorama:not([data-sky="day"]) .regional-pin { background: #243a4b; border-color: #d1ab63; }

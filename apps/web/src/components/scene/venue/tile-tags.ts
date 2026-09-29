@@ -14,6 +14,7 @@ export function isStationName(name: string): boolean {
 // 높이 태그가 없을 때 층수 또는 건물 종류의 낮은 기본값을 쓰고 상한을 둔다.
 export function buildingHeight(
   properties: Record<string, unknown>,
+  maximum = 100,
 ): [number, number] {
   const numeric = (value: unknown) =>
     typeof value === "number"
@@ -33,7 +34,7 @@ export function buildingHeight(
           : 9;
   const min = numeric(properties.min_height);
   return [
-    Math.min(100, Math.max(2.5, height)),
+    Math.min(maximum, Math.max(2.5, height)),
     Number.isFinite(min) ? Math.max(0, Math.min(min, height - 1)) : 0,
   ];
 }

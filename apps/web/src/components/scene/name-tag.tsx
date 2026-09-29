@@ -17,18 +17,16 @@ const FAR_HEIGHT = 30;
 const FAR_DISTANCE = 850;
 
 // 한 화면에 띄우는 이름표 칸 수(겹침 검사 뒤 이 수까지만 보인다).
-const TAG_SLOTS = 24;
+const TAG_SLOTS = 96;
 
 // 높은 등급부터 보면서 같은 등급은 행사 ID 순서로 고정한다.
 export function visibleTagIds(boxes: TagBox[], far = false): string[] {
   const picked: TagBox[] = [];
   const width = far ? FAR_WIDTH : CLOSE_WIDTH;
   const height = far ? FAR_HEIGHT : CLOSE_HEIGHT;
-  const maximum = far ? 6 : boxes.length;
   for (const box of [...boxes].sort(
     (a, b) => b.level - a.level || a.id.localeCompare(b.id),
   )) {
-    if (picked.length >= maximum) break;
     if (
       picked.every(
         (other) =>
@@ -105,7 +103,7 @@ export function NameTags({
     });
   }, [gl.domElement]);
 
-  // 실제 이름표 크기와 같은 경계로 가리고 먼 시점에는 여섯 개까지만 남긴다.
+  // 이름표 개수를 임의로 줄이지 않고 화면 경계와 겹침만 검사한다.
   useFrame(() => {
     if (hidden) return;
     const distance = Math.hypot(
@@ -158,11 +156,7 @@ export function NameTags({
           size.height,
           blockers.current,
         );
-        if (
-          !box.visible ||
-          (far && active.length >= 6 && box.id !== selectedId)
-        )
-          continue;
+        if (!box.visible) continue;
         let overlaps = false;
         for (const other of active) {
           if (

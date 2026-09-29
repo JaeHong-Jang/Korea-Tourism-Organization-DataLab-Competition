@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 type FeaturePanelProps = {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   className?: string;
   children?: ReactNode;
 };
@@ -29,7 +29,7 @@ export function FeaturePanel({
         {debug && <span className="feature-panel__id">{id}</span>}
         <h2 id={`${id}-title`}>{title}</h2>
       </div>
-      <p>{description}</p>
+      {description && <p>{description}</p>}
       {children ?? <div className="feature-panel__empty" aria-hidden="true" />}
     </section>
   );

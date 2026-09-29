@@ -12,7 +12,6 @@ import {
   towardShare,
 } from "../venue/routes";
 import { loadCityTiles, type VenueTiles } from "../venue/tiles";
-import { CityBuildings, cityBuildingCap } from "./city-buildings";
 import { CityControls } from "./city-controls";
 import { CityGround } from "./city-ground";
 import { CityLabels } from "./city-labels";
@@ -20,8 +19,8 @@ import { CITY_MOON, CityLight } from "./city-light";
 import { CityPeople } from "./city-people";
 import { CityTraffic } from "./city-traffic";
 import { CityTrees } from "./city-trees";
-import { fillBuildings } from "./fill-buildings";
 import { buildingIndex } from "./free-space";
+import { GrayCityBuildings } from "./gray-city-buildings";
 import { HomewardPath } from "./homeward-path";
 import "./city.css";
 
@@ -37,13 +36,15 @@ export function gatheredDolls(peak: number) {
 // 타일을 읽는 동안에는 받침만 두고, 다 읽으면 건물·길·사람·차를 올린다.
 export function CityScene({
   festival,
+  center,
   quality,
   reducedMotion,
   onLeave,
   onStatus,
   homeward = false,
 }: {
-  festival: FestivalSummary;
+  festival?: FestivalSummary;
+  center?: [number, number];
   quality: SceneQuality;
   reducedMotion: boolean;
   onLeave: () => void;
@@ -53,13 +54,16 @@ export function CityScene({
 }) {
   const [tiles, setTiles] = useState<VenueTiles | null>(null);
   const { sky, at } = useTheme();
+  const [lng, lat] = festival
+    ? [festival.lng, festival.lat]
+    : (center ?? [127.5, 36]);
 
   // 행사가 바뀌면 이전 요청을 취소하고 전국 z15 타일에서 새 동네를 읽는다.
   useEffect(() => {
     const controller = new AbortController();
     setTiles(null);
     onStatus?.("loading");
-    loadCityTiles([festival.lng, festival.lat], controller.signal)
+    loadCityTiles([lng, lat], controller.signal)
       .then((result) => {
         if (controller.signal.aborted) return;
         setTiles(result);
@@ -75,7 +79,7 @@ export function CityScene({
       controller.abort();
       delete document.documentElement.dataset.cityBuildings;
     };
-  }, [festival.lng, festival.lat, onStatus]);
+  }, [lng, lat, onStatus]);
 
   // 찻길(보행로 제외)과 사람 길(큰길 제외)을 한 번씩 그래프로 만든다.
   const roadGraph = useMemo(
@@ -135,22 +139,13 @@ export function CityScene({
       delete document.documentElement.dataset.cityHomeward;
     };
   }, [homeRoute]);
-  // 행사 무대 자리(원점 12m 안)를 덮는 건물만 빼 무대·모인 사람이 건물 속에 묻히지 않게 한다.
-  // OSM 건물이 없는 길가는 품질 상한까지 연출 건물로 채우고, 가까운 건물부터 세우도록 거리순으로 둔다.
+  // 실제 외곽선이 있는 건물만 거리순으로 두고 빈 지역에 가짜 건물을 채우지 않는다.
   const buildings = useMemo(() => {
     if (!tiles) return [];
-    const stage = buildingIndex(tiles.buildings);
-    const real = stage(0, 0, 12)
-      ? tiles.buildings.filter(
-          (building) => !buildingIndex([building])(0, 0, 12),
-        )
-      : tiles.buildings;
-    const cap = cityBuildingCap(quality);
-    return [
-      ...real,
-      ...fillBuildings(tiles, cap - Math.min(cap, real.length)),
-    ].sort((a, b) => Math.hypot(a.x, a.z) - Math.hypot(b.x, b.z));
-  }, [tiles, quality]);
+    return [...tiles.buildings]
+      .filter((building) => (building.footprint?.length ?? 0) >= 3)
+      .sort((a, b) => Math.hypot(a.x, a.z) - Math.hypot(b.x, b.z));
+  }, [tiles]);
   // 나무도 채운 건물 속에 심지 않게 같은 건물 목록을 준다.
   const planted = useMemo(
     () => (tiles ? { ...tiles, buildings } : null),
@@ -160,7 +155,7 @@ export function CityScene({
     () => (tiles ? buildingIndex(buildings) : undefined),
     [tiles, buildings],
   );
-  const eventHour = Number(festival.startsAt.slice(11, 13)) || 18;
+  const eventHour = Number(festival?.startsAt.slice(11, 13)) || 18;
   const hour = Number(
     new Intl.DateTimeFormat("en-GB", {
       timeZone: "Asia/Seoul",
@@ -168,7 +163,10 @@ export function CityScene({
       hourCycle: "h23",
     }).format(at),
   );
-  const placed = useMemo(() => [{ festival, x: 0, y: 0, z: 0 }], [festival]);
+  const placed = useMemo(
+    () => (festival ? [{ festival, x: 0, y: 0, z: 0 }] : []),
+    [festival],
+  );
 
   return (
     <>
@@ -180,18 +178,11 @@ export function CityScene({
         moonSize={420}
         sunStrength={0.3}
       />
-      <CityLight
-        lng={festival.lng}
-        lat={festival.lat}
-        quality={quality}
-        revision={tiles}
-      />
+      <CityLight lng={lng} lat={lat} quality={quality} revision={tiles} />
       {tiles && <CityGround tiles={tiles} />}
       {tiles && (
-        <CityBuildings
+        <GrayCityBuildings
           buildings={buildings}
-          zones={tiles.zones ?? []}
-          roads={tiles.roads}
           quality={quality}
           night={sky === "night"}
         />
@@ -205,7 +196,7 @@ export function CityScene({
           routes={walks.length ? walks : roads}
           nearby={nearbyWalks.length ? nearbyWalks : nearbyRoads}
           wide
-          gather={gatheredDolls(festival.peakP50)}
+          gather={festival ? gatheredDolls(festival.peakP50) : 0}
           towardShare={towardShare(hour, eventHour)}
           quality={quality}
           reducedMotion={reducedMotion}
@@ -237,7 +228,9 @@ export function CityScene({
           reducedMotion={reducedMotion}
         />
       )}
-      {tiles && <CityLabels festival={festival} stations={tiles.stations} />}
+      {tiles && festival && (
+        <CityLabels festival={festival} stations={tiles.stations} />
+      )}
       <CityControls reducedMotion={reducedMotion} onLeave={onLeave} />
     </>
   );

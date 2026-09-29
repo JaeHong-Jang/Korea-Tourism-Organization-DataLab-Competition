@@ -15,6 +15,7 @@ export function SceneLegend({
   city = false,
   homeward = false,
   onHomeward,
+  continuous = false,
 }: {
   peoplePerDoll: number;
   capExceeded: boolean;
@@ -25,6 +26,7 @@ export function SceneLegend({
   city?: boolean;
   homeward?: boolean;
   onHomeward?: () => void;
+  continuous?: boolean;
 }) {
   const maximum = totals ? Math.max(0, ...totals.values()) : 0;
   return (
@@ -56,7 +58,13 @@ export function SceneLegend({
         {dataMode && (
           <>시군구 테두리 색 = 기간 안 예보 순간 최대 중앙값 합 · </>
         )}
-        인형 1개 = {peoplePerDoll.toLocaleString("ko-KR")}명
+        {continuous ? "축제 시설·보행·교통 연출" : `인형 1개 = ${peoplePerDoll.toLocaleString("ko-KR")}명`}
+        {continuous && (
+          <span className="scene-legend__note">
+            지면 원 = 축제 위치 · 원에 마우스를 올리면 이름, 누르면 확대해요. 원 크기는 실제 행사 범위가 아니에요.<br />
+            화면에 보이는 지역의 도시 활동이에요. 인형 수는 예측 인원이 아니며 실제 행사 배치·실시간 운행 정보와 달라요.
+          </span>
+        )}
       </div>
       {dataMode && (
         <fieldset className="scene-legend__data">
@@ -104,19 +112,30 @@ export function SceneLegend({
         <p className="scene-legend__note">
           조작: 왼쪽 끌기 이동 · 휠 버튼 끌기 회전 · 휠 확대 · 방향키 이동
         </p>
-        {!city && (
+        {continuous ? (
           <p className="scene-legend__note">
-            확대하면 축제별 바닥 테두리가 나타나요. 모형을 구분하는 표시이며
-            실제 행사장 경계는 아니에요.
+            <a
+              href="https://www.openstreetmap.org/copyright"
+              target="_blank"
+              rel="noreferrer"
+            >
+              © OpenStreetMap contributors
+            </a>{" "}
+            · Protomaps. 건물 자리·도로·녹지 = 실제 지도 자료 · 높이 누락은 추정
+            · 사람·차량은 보이게 키운 연출이며 실제 위치·교통량이 아니에요. 주변
+            보행로 자료가 없는 행사에는 인형이 보이지 않을 수 있어요. 묶인
+            표식의 모든 행사는 목록에서 선택할 수 있어요. 행사장 좌표가 미확인인
+            행사는 시군구 대표 위치로 표시해요.
+          </p>
+        ) : (
+          <p className="scene-legend__note">
+            인원 규모는 예보값 비례 · 인형 위치는 실제 사람 위치가 아니에요 ·
+            날씨 효과 = 기상청 예보 기반 연출 ·
+            {dataMode
+              ? "데이터 모드에서도 땅·도로·건물은 그대로 두고 값은 테두리 색으로만 보여요 · 열차·차량·봇·인형 움직임은 연출이에요."
+              : "열차·차량·봇·인형 움직임은 연출 — 실제 운행·교통량이 아니에요."}
           </p>
         )}
-        <p className="scene-legend__note">
-          인원 규모는 예보값 비례 · 인형 위치는 실제 사람 위치가 아니에요 · 날씨
-          효과 = 기상청 예보 기반 연출 ·
-          {dataMode
-            ? "데이터 모드에서도 땅·도로·건물은 그대로 두고 값은 테두리 색으로만 보여요 · 열차·차량·봇·인형 움직임은 연출이에요."
-            : "열차·차량·봇·인형 움직임은 연출 — 실제 운행·교통량이 아니에요."}
-        </p>
         {notices}
       </details>
     </div>

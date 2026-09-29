@@ -58,10 +58,11 @@ export function readVenueTile(
   y: number,
   center: Point,
   into: VenueTiles,
+  radius = 1250,
 ): void {
   const tile = new VectorTile(new Pbf(data));
   const project = (point: Point) => tilePointToVenue(point, x, y, center);
-  const nearby = (point: Point) => Math.hypot(point[0], point[1]) <= 1250;
+  const nearby = (point: Point) => Math.hypot(point[0], point[1]) <= radius;
   const buildings = tile.layers.buildings;
   if (buildings)
     for (let index = 0; index < buildings.length; index++) {
@@ -84,7 +85,7 @@ export function readVenueTile(
       const centerPoint: Point = [(minX + maxX) / 2, (minZ + maxZ) / 2];
       if (!nearby(centerPoint) || maxX - minX < 0.4 || maxZ - minZ < 0.4)
         continue;
-      const [height, minHeight] = buildingHeight(feature.properties);
+      const [height, minHeight] = buildingHeight(feature.properties, 1000);
       const tags = feature.properties;
       into.buildings.push({
         guessed:
@@ -234,6 +235,7 @@ const CITY_ARCHIVES = [
 export async function loadCityTiles(
   center: Point,
   signal?: AbortSignal,
+  radius = 1200,
 ): Promise<VenueTiles> {
   const result: VenueTiles = {
     buildings: [],
@@ -242,6 +244,12 @@ export async function loadCityTiles(
     areas: [],
     stations: [],
   };
+  const remaining = new Map(
+    nearbyTiles(center[0], center[1], radius).map(([x, y]) => [
+      `${x},${y}`,
+      [x, y] as const,
+    ]),
+  );
   for (const url of CITY_ARCHIVES) {
     let archive = archives.get(url);
     if (!archive) {
@@ -251,7 +259,7 @@ export async function loadCityTiles(
     const source = archive;
     // 원본 파일이 없으면(다른 사람 컴퓨터) 빈 결과로 둔다.
     const tiles = await Promise.all(
-      nearbyTiles(center[0], center[1]).map(async ([x, y]) => {
+      [...remaining.values()].map(async ([x, y]) => {
         signal?.throwIfAborted();
         return [x, y, await source.getZxy(15, x, y, signal)] as const;
       }),
@@ -260,9 +268,13 @@ export async function loadCityTiles(
       return [];
     });
     if (!tiles.some(([, , tile]) => tile)) continue;
-    for (const [x, y, tile] of tiles)
-      if (tile) readVenueTile(tile.data, x, y, center, result);
-    break;
+    // 축제용 묶음에 없는 주변 타일만 전국 원본에서 보충한다.
+    for (const [x, y, tile] of tiles) {
+      if (!tile) continue;
+      readVenueTile(tile.data, x, y, center, result, radius + 50);
+      remaining.delete(`${x},${y}`);
+    }
+    if (!remaining.size) break;
   }
   result.buildings.sort(
     (a, b) => a.x * a.x + a.z * a.z - b.x * b.x - b.z * b.z,

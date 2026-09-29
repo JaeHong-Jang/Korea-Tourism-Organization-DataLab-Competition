@@ -115,7 +115,7 @@ test("같은 좌표의 군중은 서로 겹치지 않는다", () => {
 });
 
 // 실제 48px 이름표는 세로 40px 차이에서도 높은 등급만 남는다.
-test("이름표 실제 높이와 먼 시점의 최대 수를 지킨다", () => {
+test("겹친 이름표만 줄이고 먼 시점의 이름표 수는 제한하지 않는다", () => {
   expect(
     visibleTagIds([
       { id: "high", level: 4, x: 10, y: 10 },
@@ -128,5 +128,5 @@ test("이름표 실제 높이와 먼 시점의 최대 수를 지킨다", () => {
     x: index * 120,
     y: 0,
   }));
-  expect(visibleTagIds(separate, true)).toHaveLength(6);
+  expect(visibleTagIds(separate, true)).toHaveLength(separate.length);
 });
