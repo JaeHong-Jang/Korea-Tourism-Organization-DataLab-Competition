@@ -38,7 +38,7 @@ def test_i1_comparable_quartiles(inputs: Inputs) -> None:
             visitors_announced_time_unit="기간 누적",
         )
     inputs.events = pl.DataFrame(rows)
-    result = i1.calculate(inputs)
+    result = i1.calculate(inputs, years=(2025,))
     assert result["comparablePairs"] == 3
     assert result["headline"]["value"] == 2
     assert sum(row["value"] for row in result["series"]) == 3
@@ -81,7 +81,7 @@ def test_i1_mismatch_excluded(inputs: Inputs, field: str, value: object, target:
 
 # 전년 수치의 메타 누락을 묵시적으로 현재 행사 실측과 짝짓지 않는다.
 def test_i1_missing_metadata_is_zero(inputs: Inputs) -> None:
-    result = i1.calculate(inputs)
+    result = i1.calculate(inputs, years=(2025,))
     assert result["comparablePairs"] == 0
     assert "표본 없음" in result["headline"]["text"]
 
@@ -104,10 +104,10 @@ def test_i1_prior_year_alignment(inputs: Inputs) -> None:
         "visitors_announced_time_unit": "기간 누적",
     }
     inputs.events = pl.DataFrame([actual, announcement])
-    result = i1.calculate(inputs)
+    result = i1.calculate(inputs, years=(2025,))
     assert result["sampleSize"] == 1
     assert result["headline"]["value"] == 2
-    assert result["period"] == {"from": "2025-07-05", "to": "2025-07-06"}
+    assert result["period"] == {"from": "2025-01-01", "to": "2025-12-31"}
 
 
 # 모델과 발표 환산 각각 네 등급을 내고 다른 표본 분모·편중을 공개한다.

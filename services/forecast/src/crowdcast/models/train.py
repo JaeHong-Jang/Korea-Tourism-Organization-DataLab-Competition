@@ -99,7 +99,8 @@ def fit_quantiles(
 def save_quantiles(directory: Path, models: list[lgb.LGBMRegressor], encoding: dict[str, Any]) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     for alpha, model in zip((10, 50, 90), models, strict=True):
-        model.booster_.save_model(str(directory / f"p{alpha}.txt"))
+        # Windows의 한글 경로도 보존하도록 네이티브 파일 열기 대신 Python으로 저장한다.
+        (directory / f"p{alpha}.txt").write_bytes(model.booster_.model_to_string().encode("utf-8"))
     (directory / "features.json").write_text(
         json.dumps(encoding, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )

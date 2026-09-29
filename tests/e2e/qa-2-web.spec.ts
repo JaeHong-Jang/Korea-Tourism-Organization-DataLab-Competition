@@ -84,37 +84,6 @@ test("QA-2 모델 카드", async ({ page }) => {
   await panel.screenshot({ path: resolve(screens, "QA-2-s6-card.png") });
 });
 
-// 좁은 최신성 카드에서 긴 실행 ID와 미수집 자료가 칸 밖으로 나가지 않는지 기록한다.
-test("QA-2 최신성 카드", async ({ page, context }) => {
-  await page.setViewportSize({ width: 1100, height: 768 });
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await routeScreensV2(page);
-  const status = contract("ops-status/valid-example.json");
-  const modelRunId = "mr-v1-064e60073a7411037212";
-  status.model.modelRunId = modelRunId;
-  status.freshness.push({
-    datasetId: "ds-kma-short-forecast",
-    title: "기상청 단기예보",
-    lastCollectedAt: null,
-    lastObservedDate: null,
-    rows: null,
-  });
-  await page.route("**/api/ops/status", (route) =>
-    route.fulfill({ json: status }),
-  );
-  await page.goto("/ops?theme=day");
-  const panel = page.locator('[data-feature="M8-F3"]');
-  await expect(panel.getByText("아직 수집 전")).toBeVisible();
-  await panel.getByRole("button", { name: "모델 실행 ID 복사" }).click();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-    modelRunId,
-  );
-  expect(
-    await panel.evaluate((node) => node.scrollWidth <= node.clientWidth),
-  ).toBe(true);
-  await panel.screenshot({ path: resolve(screens, "QA-2-s8.png") });
-});
-
 // 재예보 근거와 새 예보서 행동, 페이지 제목을 함께 기록한다.
 test("QA-2 내 행사", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });

@@ -12,7 +12,6 @@ const menus = [
   { label: "내 행사", to: "/my", end: false },
   { label: "검증", to: "/validation", end: false },
   { label: "인사이트", to: "/insights", end: false },
-  { label: "운영", to: "/ops", end: false },
 ];
 
 const skyLabels = { day: "낮", dusk: "노을", night: "밤" };

@@ -56,9 +56,7 @@ const scenes: Scene[] = [
   { screen: "s5", state: "shared", path: "/s/sh-yeongjong2025abcd" },
   { screen: "s6", state: "validation", path: "/validation" },
   { screen: "s7", state: "insights", path: "/insights" },
-  { screen: "s8", state: "ops", path: "/ops" },
   { screen: "s5", state: "empty", path: "/my", variant: "empty" },
-  { screen: "s8", state: "error", path: "/ops", variant: "error" },
 ];
 
 // 같은 한국 시각을 주소에 넣고 장면 진단 플래그를 보존한다.
@@ -186,27 +184,11 @@ async function prepareScene(page: Page, scene: Scene, mobile: boolean) {
     );
   }
   if (scene.screen === "s7") {
-    await expect(page.locator('[data-insight="I2"]')).toContainText(
-      "14,500명/일",
+    await expect(page.locator('[data-insight="I1"] h2')).toHaveText(
+      "발표·관측 방문객",
     );
-    await expect(page.locator('[data-insight="I1"]')).toContainText(
-      "인사이트는 데이터 수집이 끝나면",
-    );
-    await expect(page.locator('[data-feature="M7-F2"] table')).toBeVisible();
+    await expect(page.getByRole("button", { name: "I2 · 예상 방문객" })).toBeVisible();
   }
-  if (key === "s8-ops") {
-    await expect(page.locator(".ops-run").first()).toBeVisible();
-    await expect(page.locator('[data-feature="M8-F2"]')).toContainText(
-      "근거 없는 발행",
-    );
-    await expect(page.locator('[data-feature="M8-F3"]')).toContainText(
-      "마지막 수집",
-    );
-  }
-  if (key === "s8-error")
-    await expect(page.locator('[data-feature="M8-F1"]')).toContainText(
-      "실행 기록을 확인할 수 없어요",
-    );
 }
 
 // 스크린샷 전에 폰트와 두 번의 그리기 프레임을 끝낸다.

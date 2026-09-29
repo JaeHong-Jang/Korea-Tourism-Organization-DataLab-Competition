@@ -236,16 +236,16 @@ test("S6 모바일", async ({ page }) => {
   });
 });
 
-// 인사이트 미공개 상태에서는 견본 지표와 복사 버튼이 없어야 한다.
-test("S7 빈 상태", async ({ page }) => {
+// 조회 실패는 자료 부족과 구분하고 결과 수치와 복사 버튼을 표시하지 않는다.
+test("S7 조회 실패", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await fakeGateway(page);
   await page.goto("/insights?theme=day");
   await expect(page.locator('[data-feature="M7-F1"]')).toContainText(
-    "인사이트는 데이터 수집이 끝나면 채워져요 · 9/27",
+    "자료를 불러오지 못했어요",
   );
   await expect(
-    page.getByRole("button", { name: "서식4용 문장 복사" }),
+    page.getByRole("button", { name: "분석 요약 복사" }),
   ).toHaveCount(0);
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({
@@ -330,14 +330,14 @@ test("T-407b S7 I1 실패 뒤 I2 표시", async ({ page }) => {
       contentType: "application/json",
       body: JSON.stringify({
         key: "I2",
-        title: "인천 중구 평시 방문",
+        title: "1,000명 경계선 행사 비중",
         headline: {
-          value: 14500,
-          unit: "명/일",
-          text: "방문자 수를 비교했어요.",
+          value: 0,
+          unit: "비율",
+          text: "2등급 행사 비중이며 전년 규모 참고 자료는 아직 없습니다.",
         },
         sampleSize: 86,
-        comparablePairs: 1,
+        comparablePairs: 0,
         period: { from: "2025-01-01", to: "2025-12-31" },
         series: [],
         evidenceIds: [insightEvidence.id],
@@ -348,15 +348,14 @@ test("T-407b S7 I1 실패 뒤 I2 표시", async ({ page }) => {
   );
   await page.goto("/insights?theme=day");
   await expect(page.locator('[data-insight="I1"]')).toContainText(
-    "자료 형식을 확인할 수 없어요",
+    "자료를 불러오지 못했어요",
   );
+  await page.getByRole("button", { name: "I2 · 예상 방문객", exact: true }).click();
   await expect(page.locator('[data-insight="I2"]')).toContainText(
-    "14,500명/일",
+    "일평균 예측 자료를 확인할 수 없습니다.",
   );
-  await expect(page.locator('[data-insight="I2"]')).toContainText("표본 86건");
-  await expect(page.locator('[data-insight="I2"] button')).toHaveText(
-    "서식4용 문장 복사",
-  );
+  await expect(page.locator('[data-insight="I2"]')).not.toContainText("86개 행사");
+  await expect(page.locator('[data-insight="I2"]').getByRole("button", { name: "분석 요약 복사", exact: true })).toHaveCount(0);
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({
     path: resolve(output, "T-407b-s7.png"),

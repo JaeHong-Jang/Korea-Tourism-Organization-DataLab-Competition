@@ -35,7 +35,8 @@ def relative_artifact(value: str) -> bool:
 # 고정된 공유 루트의 링크 해석은 재사용해 기록 문장마다 느린 공유 디스크를 조회하지 않는다.
 @lru_cache(maxsize=8)
 def _root_labels(roots: tuple[tuple[Path, str], ...]) -> list[tuple[str, str]]:
-    replacements = {str(p): label for root, label in roots for p in (root, root.resolve())}
+    # 상대 루트 '.'를 치환하면 소수점까지 가려지므로 절대 경로만 대상으로 삼는다.
+    replacements = {str(p): label for root, label in roots for p in (root, root.resolve()) if p.is_absolute()}
     return sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True)
 
 
